@@ -1,1 +1,22 @@
 project_id = "gmemxbfibakfpsjbsvyt"
+
+[functions.ai-chat]
+verify_jwt = false
+
+[functions.webhook-hotmart]
+verify_jwt = false
+
+[functions.webhook-kiwify]
+verify_jwt = false
+
+[functions.webhook-eduzz]
+verify_jwt = false
+
+[functions.webhook-stripe]
+verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
+
+[functions.send-whatsapp]
+verify_jwt = false

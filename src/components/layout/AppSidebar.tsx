@@ -53,6 +53,8 @@ const menuItems = [
   { label: 'Assistente IA', icon: Bot, path: '/ai-assistant' },
   { divider: true },
   { label: 'Organização', icon: Building2, path: '/organization' },
+  { label: 'Planos', icon: Target, path: '/plans' },
+  { label: 'Permissões', icon: Settings, path: '/permissions' },
   { label: 'Configurações', icon: Settings, path: '/settings' },
 ];
 

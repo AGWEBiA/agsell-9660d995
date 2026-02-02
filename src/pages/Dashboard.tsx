@@ -1,6 +1,9 @@
 import React from 'react';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Users,
   DollarSign,
@@ -12,7 +15,12 @@ import {
   CheckCircle2,
   Clock,
   Mail,
+  Phone,
   MessageSquare,
+  FileText,
+  Calendar,
+  Zap,
+  UserPlus,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -22,59 +30,46 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
   PieChart,
   Pie,
   Cell,
 } from 'recharts';
+import {
+  useDashboardStats,
+  useLeadsByMonth,
+  useDealsByStage,
+  useRecentActivities,
+  useTopLeads,
+} from '@/hooks/useDashboard';
 
-// Mock data
-const leadsData = [
-  { name: 'Jan', leads: 45 },
-  { name: 'Fev', leads: 52 },
-  { name: 'Mar', leads: 61 },
-  { name: 'Abr', leads: 58 },
-  { name: 'Mai', leads: 72 },
-  { name: 'Jun', leads: 85 },
-  { name: 'Jul', leads: 91 },
-];
-
-const salesData = [
-  { name: 'Jan', value: 12500 },
-  { name: 'Fev', value: 18200 },
-  { name: 'Mar', value: 15800 },
-  { name: 'Abr', value: 22000 },
-  { name: 'Mai', value: 19500 },
-  { name: 'Jun', value: 28000 },
-  { name: 'Jul', value: 32500 },
-];
-
-const pipelineData = [
-  { name: 'Prospecção', value: 25, color: '#a70202' },
-  { name: 'Qualificação', value: 18, color: '#3b82f6' },
-  { name: 'Proposta', value: 12, color: '#f59e0b' },
-  { name: 'Negociação', value: 8, color: '#8b5cf6' },
-  { name: 'Fechado', value: 15, color: '#22c55e' },
-];
-
-const recentActivities = [
-  { type: 'lead', message: 'Novo lead: João Silva', time: '5 min atrás', icon: Users },
-  { type: 'deal', message: 'Deal movido para Proposta: Empresa ABC', time: '15 min atrás', icon: DollarSign },
-  { type: 'email', message: 'Email enviado para Maria Santos', time: '30 min atrás', icon: Mail },
-  { type: 'task', message: 'Tarefa concluída: Follow-up cliente', time: '1h atrás', icon: CheckCircle2 },
-  { type: 'whatsapp', message: 'Mensagem recebida de Carlos Lima', time: '2h atrás', icon: MessageSquare },
-];
-
-const topLeads = [
-  { name: 'João Silva', score: 92, company: 'Tech Corp', status: 'hot' },
-  { name: 'Maria Santos', score: 85, company: 'Digital Solutions', status: 'hot' },
-  { name: 'Carlos Lima', score: 78, company: 'Inovação SA', status: 'warm' },
-  { name: 'Ana Oliveira', score: 72, company: 'StartUp XYZ', status: 'warm' },
-  { name: 'Pedro Costa', score: 65, company: 'Empresa ABC', status: 'cold' },
-];
+const activityIcons: Record<string, React.ElementType> = {
+  email_sent: Mail,
+  email_received: Mail,
+  call: Phone,
+  whatsapp: MessageSquare,
+  meeting: Calendar,
+  note: FileText,
+  deal_created: DollarSign,
+  deal_won: CheckCircle2,
+  contact_created: UserPlus,
+  automation: Zap,
+};
 
 export default function Dashboard() {
+  const { data: stats, isLoading: loadingStats } = useDashboardStats();
+  const { data: leadsData, isLoading: loadingLeads } = useLeadsByMonth();
+  const { data: pipelineData, isLoading: loadingPipeline } = useDealsByStage();
+  const { data: activities, isLoading: loadingActivities } = useRecentActivities();
+  const { data: topLeads, isLoading: loadingTopLeads } = useTopLeads();
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 0,
+    }).format(value);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
@@ -99,11 +94,21 @@ export default function Dashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1.247</div>
-            <div className="flex items-center text-xs text-success">
-              <ArrowUpRight className="mr-1 h-3 w-3" />
-              +12% em relação ao mês passado
-            </div>
+            {loadingStats ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{stats?.totalContacts.toLocaleString('pt-BR') || 0}</div>
+                <div className={`flex items-center text-xs ${(stats?.contactsGrowth || 0) >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                  {(stats?.contactsGrowth || 0) >= 0 ? (
+                    <ArrowUpRight className="mr-1 h-3 w-3" />
+                  ) : (
+                    <ArrowDownRight className="mr-1 h-3 w-3" />
+                  )}
+                  {stats?.contactsGrowth || 0}% em relação ao mês passado
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -115,11 +120,21 @@ export default function Dashboard() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R$ 248.500</div>
-            <div className="flex items-center text-xs text-success">
-              <ArrowUpRight className="mr-1 h-3 w-3" />
-              +8% em relação ao mês passado
-            </div>
+            {loadingStats ? (
+              <Skeleton className="h-8 w-28" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{formatCurrency(stats?.totalDealsValue || 0)}</div>
+                <div className={`flex items-center text-xs ${(stats?.dealsGrowth || 0) >= 0 ? 'text-green-600' : 'text-destructive'}`}>
+                  {(stats?.dealsGrowth || 0) >= 0 ? (
+                    <ArrowUpRight className="mr-1 h-3 w-3" />
+                  ) : (
+                    <ArrowDownRight className="mr-1 h-3 w-3" />
+                  )}
+                  {stats?.dealsGrowth || 0}% em relação ao mês passado
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -131,26 +146,44 @@ export default function Dashboard() {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">24.5%</div>
-            <div className="flex items-center text-xs text-destructive">
-              <ArrowDownRight className="mr-1 h-3 w-3" />
-              -2% em relação ao mês passado
-            </div>
+            {loadingStats ? (
+              <Skeleton className="h-8 w-16" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{stats?.conversionRate || 0}%</div>
+                <div className="text-xs text-muted-foreground">
+                  Baseado em deals ganhos
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Meta Mensal
+              Tarefas
             </CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">78%</div>
-            <div className="w-full bg-secondary rounded-full h-2 mt-2">
-              <div className="bg-primary h-2 rounded-full" style={{ width: '78%' }} />
-            </div>
+            {loadingStats ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">
+                  {stats?.tasksCompleted || 0} / {(stats?.tasksCompleted || 0) + (stats?.tasksPending || 0)}
+                </div>
+                <div className="w-full bg-secondary rounded-full h-2 mt-2">
+                  <div 
+                    className="bg-primary h-2 rounded-full transition-all" 
+                    style={{ 
+                      width: `${((stats?.tasksCompleted || 0) / Math.max(1, (stats?.tasksCompleted || 0) + (stats?.tasksPending || 0))) * 100}%` 
+                    }} 
+                  />
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -164,27 +197,33 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={leadsData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="name" className="text-xs fill-muted-foreground" />
-                  <YAxis className="text-xs fill-muted-foreground" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="leads"
-                    stroke="hsl(var(--primary))"
-                    fill="hsl(var(--primary) / 0.2)"
-                    strokeWidth={2}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              {loadingLeads ? (
+                <div className="flex items-center justify-center h-full">
+                  <Skeleton className="h-full w-full" />
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={leadsData || []}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="month" className="text-xs fill-muted-foreground" />
+                    <YAxis className="text-xs fill-muted-foreground" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="leads"
+                      stroke="hsl(var(--primary))"
+                      fill="hsl(var(--primary) / 0.2)"
+                      strokeWidth={2}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -196,43 +235,56 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pipelineData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={2}
-                    dataKey="value"
-                  >
-                    {pipelineData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {pipelineData.map((item) => (
-                <div key={item.name} className="flex items-center gap-2 text-sm">
-                  <div
-                    className="h-3 w-3 rounded-full"
-                    style={{ backgroundColor: item.color }}
-                  />
-                  <span className="text-muted-foreground">{item.name}</span>
-                  <span className="font-medium ml-auto">{item.value}</span>
+              {loadingPipeline ? (
+                <div className="flex items-center justify-center h-full">
+                  <Skeleton className="h-40 w-40 rounded-full mx-auto" />
                 </div>
-              ))}
+              ) : pipelineData && pipelineData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pipelineData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {pipelineData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                  <DollarSign className="h-12 w-12 mb-2 opacity-50" />
+                  <p>Nenhum deal no pipeline</p>
+                </div>
+              )}
             </div>
+            {pipelineData && pipelineData.length > 0 && (
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {pipelineData.map((item) => (
+                  <div key={item.name} className="flex items-center gap-2 text-sm">
+                    <div
+                      className="h-3 w-3 rounded-full"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="text-muted-foreground truncate">{item.name}</span>
+                    <span className="font-medium ml-auto">{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -245,25 +297,44 @@ export default function Dashboard() {
             <CardTitle>Atividades Recentes</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity, index) => {
-                const Icon = activity.icon;
-                return (
-                  <div key={index} className="flex items-center gap-4">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-                      <Icon className="h-5 w-5 text-muted-foreground" />
-                    </div>
+            {loadingActivities ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <Skeleton className="h-10 w-10 rounded-full" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium">{activity.message}</p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {activity.time}
-                      </p>
+                      <Skeleton className="h-4 w-48 mb-1" />
+                      <Skeleton className="h-3 w-24" />
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            ) : activities && activities.length > 0 ? (
+              <div className="space-y-4">
+                {activities.map((activity) => {
+                  const Icon = activityIcons[activity.type] || FileText;
+                  return (
+                    <div key={activity.id} className="flex items-center gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+                        <Icon className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{activity.message}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {formatDistanceToNow(new Date(activity.created_at), { addSuffix: true, locale: ptBR })}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Activity className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>Nenhuma atividade registrada</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -273,25 +344,45 @@ export default function Dashboard() {
             <CardTitle>Leads Mais Quentes</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {topLeads.map((lead, index) => (
-                <div key={index} className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-bold">
-                    {lead.name.charAt(0)}
+            {loadingTopLeads ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="flex-1">
+                      <Skeleton className="h-4 w-32 mb-1" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                    <Skeleton className="h-5 w-10" />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{lead.name}</p>
-                    <p className="text-xs text-muted-foreground">{lead.company}</p>
+                ))}
+              </div>
+            ) : topLeads && topLeads.length > 0 ? (
+              <div className="space-y-4">
+                {topLeads.map((lead) => (
+                  <div key={lead.id} className="flex items-center gap-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-bold">
+                      {lead.name.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{lead.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{lead.company || 'Sem empresa'}</p>
+                    </div>
+                    <Badge
+                      variant={lead.status === 'hot' ? 'default' : lead.status === 'warm' ? 'secondary' : 'outline'}
+                      className={lead.status === 'hot' ? 'bg-primary' : ''}
+                    >
+                      {lead.score}
+                    </Badge>
                   </div>
-                  <Badge
-                    variant={lead.status === 'hot' ? 'default' : lead.status === 'warm' ? 'secondary' : 'outline'}
-                    className={lead.status === 'hot' ? 'bg-primary' : ''}
-                  >
-                    {lead.score}
-                  </Badge>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                <p>Nenhum lead com score</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -922,6 +922,7 @@ export type Database = {
           invited_by: string | null
           joined_at: string | null
           organization_id: string
+          permission_profile_id: string | null
           role: Database["public"]["Enums"]["org_role"]
           user_id: string
         }
@@ -932,6 +933,7 @@ export type Database = {
           invited_by?: string | null
           joined_at?: string | null
           organization_id: string
+          permission_profile_id?: string | null
           role?: Database["public"]["Enums"]["org_role"]
           user_id: string
         }
@@ -942,6 +944,7 @@ export type Database = {
           invited_by?: string | null
           joined_at?: string | null
           organization_id?: string
+          permission_profile_id?: string | null
           role?: Database["public"]["Enums"]["org_role"]
           user_id?: string
         }
@@ -951,6 +954,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_members_permission_profile_id_fkey"
+            columns: ["permission_profile_id"]
+            isOneToOne: false
+            referencedRelation: "permission_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1006,6 +1016,7 @@ export type Database = {
           logo_url: string | null
           name: string
           plan: string | null
+          plan_id: string | null
           settings: Json | null
           slug: string
           updated_at: string
@@ -1016,6 +1027,7 @@ export type Database = {
           logo_url?: string | null
           name: string
           plan?: string | null
+          plan_id?: string | null
           settings?: Json | null
           slug: string
           updated_at?: string
@@ -1026,11 +1038,64 @@ export type Database = {
           logo_url?: string | null
           name?: string
           plan?: string | null
+          plan_id?: string | null
           settings?: Json | null
           slug?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "organizations_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permission_profiles: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_system: boolean | null
+          name: string
+          organization_id: string | null
+          permissions: Json
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system?: boolean | null
+          name: string
+          organization_id?: string | null
+          permissions?: Json
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_system?: boolean | null
+          name?: string
+          organization_id?: string | null
+          permissions?: Json
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permission_profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pipeline_stages: {
         Row: {
@@ -1070,6 +1135,66 @@ export type Database = {
           },
         ]
       }
+      plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          features: Json | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          max_automations: number | null
+          max_contacts: number | null
+          max_emails_per_month: number | null
+          max_forms: number | null
+          max_users: number | null
+          max_whatsapp_messages: number | null
+          name: string
+          price_monthly: number | null
+          price_yearly: number | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          max_automations?: number | null
+          max_contacts?: number | null
+          max_emails_per_month?: number | null
+          max_forms?: number | null
+          max_users?: number | null
+          max_whatsapp_messages?: number | null
+          name: string
+          price_monthly?: number | null
+          price_yearly?: number | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          features?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          max_automations?: number | null
+          max_contacts?: number | null
+          max_emails_per_month?: number | null
+          max_forms?: number | null
+          max_users?: number | null
+          max_whatsapp_messages?: number | null
+          name?: string
+          price_monthly?: number | null
+          price_yearly?: number | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1099,6 +1224,66 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          billing_cycle: string | null
+          cancel_at_period_end: boolean | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          organization_id: string
+          plan_id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          billing_cycle?: string | null
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          organization_id: string
+          plan_id: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          billing_cycle?: string | null
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          organization_id?: string
+          plan_id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tags: {
         Row: {
@@ -1387,6 +1572,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      check_plan_limit: {
+        Args: { _current_count?: number; _org_id: string; _resource: string }
+        Returns: Json
+      }
       create_organization_with_owner: {
         Args: { org_name: string; org_slug: string }
         Returns: string
@@ -1398,6 +1587,15 @@ export type Database = {
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_permission: {
+        Args: {
+          _action: string
+          _module: string
+          _org_id: string
+          _user_id: string
+        }
+        Returns: boolean
       }
       has_role: {
         Args: {
@@ -1420,6 +1618,30 @@ export type Database = {
       }
     }
     Enums: {
+      app_action:
+        | "view"
+        | "create"
+        | "edit"
+        | "delete"
+        | "export"
+        | "import"
+        | "manage"
+      app_module:
+        | "contacts"
+        | "companies"
+        | "pipeline"
+        | "tasks"
+        | "inbox"
+        | "email"
+        | "whatsapp"
+        | "automations"
+        | "lead_scoring"
+        | "forms"
+        | "analytics"
+        | "integrations"
+        | "settings"
+        | "organization"
+        | "admin"
       app_role: "admin" | "moderator" | "user"
       org_role: "owner" | "admin" | "member" | "viewer"
     }
@@ -1549,6 +1771,32 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_action: [
+        "view",
+        "create",
+        "edit",
+        "delete",
+        "export",
+        "import",
+        "manage",
+      ],
+      app_module: [
+        "contacts",
+        "companies",
+        "pipeline",
+        "tasks",
+        "inbox",
+        "email",
+        "whatsapp",
+        "automations",
+        "lead_scoring",
+        "forms",
+        "analytics",
+        "integrations",
+        "settings",
+        "organization",
+        "admin",
+      ],
       app_role: ["admin", "moderator", "user"],
       org_role: ["owner", "admin", "member", "viewer"],
     },

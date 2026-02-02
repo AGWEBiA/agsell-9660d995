@@ -28,8 +28,8 @@ import {
   MoreHorizontal,
   Users,
   CheckCircle2,
-  ArrowRight,
   Trash2,
+  Settings,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -38,6 +38,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAutomations } from '@/hooks/useAutomations';
+import { AutomationActionsEditor, Action } from '@/components/automations/AutomationActionsEditor';
+import type { Json } from '@/integrations/supabase/types';
 
 const triggerTypes = [
   { value: 'form_submitted', label: 'Formulário Submetido' },
@@ -45,15 +47,21 @@ const triggerTypes = [
   { value: 'deal_stage_changed', label: 'Deal Mudou de Estágio' },
   { value: 'contact_created', label: 'Contato Criado' },
   { value: 'score_threshold', label: 'Score Atingiu Limite' },
+  { value: 'email_opened', label: 'Email Aberto' },
+  { value: 'email_clicked', label: 'Link Clicado no Email' },
+  { value: 'whatsapp_received', label: 'WhatsApp Recebido' },
 ];
 
 export default function Automations() {
-  const { automations, isLoading, createAutomation, toggleAutomation, deleteAutomation } = useAutomations();
+  const { automations, isLoading, createAutomation, updateAutomation, toggleAutomation, deleteAutomation } = useAutomations();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingAutomation, setEditingAutomation] = useState<typeof automations[0] | null>(null);
   const [newAutomation, setNewAutomation] = useState({
     name: '',
     trigger_type: '',
   });
+  const [editActions, setEditActions] = useState<Action[]>([]);
 
   const handleCreate = () => {
     if (!newAutomation.name || !newAutomation.trigger_type) return;
@@ -66,6 +74,30 @@ export default function Automations() {
     });
     setNewAutomation({ name: '', trigger_type: '' });
     setIsDialogOpen(false);
+  };
+
+  const handleEdit = (automation: typeof automations[0]) => {
+    setEditingAutomation(automation);
+    setEditActions((automation.actions as Action[]) || []);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingAutomation) return;
+    // Convert to Json-compatible format
+    const actionsJson = editActions.map(action => ({
+      id: action.id,
+      type: action.type,
+      config: action.config as Record<string, Json>,
+    })) as Json;
+    
+    updateAutomation.mutate({
+      id: editingAutomation.id,
+      actions: actionsJson,
+    });
+    setIsEditDialogOpen(false);
+    setEditingAutomation(null);
+    setEditActions([]);
   };
 
   const activeCount = automations.filter(a => a.is_active).length;
@@ -214,6 +246,7 @@ export default function Automations() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {automations.map((automation) => {
             const triggerLabel = triggerTypes.find(t => t.value === automation.trigger_type)?.label || automation.trigger_type;
+            const actionsCount = Array.isArray(automation.actions) ? automation.actions.length : 0;
 
             return (
               <Card key={automation.id} className="hover:shadow-md transition-shadow">
@@ -243,6 +276,10 @@ export default function Automations() {
                         <CheckCircle2 className="h-4 w-4" />
                         {automation.executions_count ?? 0} execuções
                       </div>
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <Settings className="h-4 w-4" />
+                        {actionsCount} ações
+                      </div>
                     </div>
                     <Badge variant={automation.is_active ? 'default' : 'secondary'}>
                       {automation.is_active ? 'Ativo' : 'Inativo'}
@@ -250,8 +287,14 @@ export default function Automations() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="flex-1">
-                      Editar
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1"
+                      onClick={() => handleEdit(automation)}
+                    >
+                      <Settings className="h-4 w-4 mr-1" />
+                      Configurar
                     </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -279,6 +322,32 @@ export default function Automations() {
           })}
         </div>
       )}
+
+      {/* Edit Automation Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Configurar Automação: {editingAutomation?.name}</DialogTitle>
+            <DialogDescription>
+              Configure as ações que serão executadas quando o gatilho for acionado.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <AutomationActionsEditor
+              actions={editActions}
+              onChange={setEditActions}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={updateAutomation.isPending}>
+              {updateAutomation.isPending ? 'Salvando...' : 'Salvar Alterações'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -28,9 +27,9 @@ import {
   Send,
   Eye,
   MousePointerClick,
-  AlertTriangle,
   MoreHorizontal,
   Trash2,
+  Edit,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -39,6 +38,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useEmailCampaigns } from '@/hooks/useEmailCampaigns';
+import { EmailTemplateEditor } from '@/components/email/EmailTemplateEditor';
 
 const statusColors: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
@@ -57,24 +57,42 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function Email() {
-  const { campaigns, isLoading, createCampaign, deleteCampaign } = useEmailCampaigns();
+  const { campaigns, isLoading, createCampaign, updateCampaign, deleteCampaign } = useEmailCampaigns();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editingCampaign, setEditingCampaign] = useState<typeof campaigns[0] | null>(null);
   const [newCampaign, setNewCampaign] = useState({
     name: '',
     subject: '',
-    content: '',
   });
+  const [editorContent, setEditorContent] = useState('[]');
 
   const handleCreate = () => {
     if (!newCampaign.name || !newCampaign.subject) return;
     createCampaign.mutate({
       name: newCampaign.name,
       subject: newCampaign.subject,
-      content: newCampaign.content || null,
+      content: null,
       status: 'draft',
     });
-    setNewCampaign({ name: '', subject: '', content: '' });
+    setNewCampaign({ name: '', subject: '' });
     setIsDialogOpen(false);
+  };
+
+  const handleOpenEditor = (campaign: typeof campaigns[0]) => {
+    setEditingCampaign(campaign);
+    setEditorContent(campaign.content || '[]');
+    setIsEditorOpen(true);
+  };
+
+  const handleSaveTemplate = () => {
+    if (!editingCampaign) return;
+    updateCampaign.mutate({
+      id: editingCampaign.id,
+      content: editorContent,
+    });
+    setIsEditorOpen(false);
+    setEditingCampaign(null);
   };
 
   const totalSent = campaigns.reduce((acc, c) => acc + (c.sent_count ?? 0), 0);
@@ -103,6 +121,33 @@ export default function Email() {
             </Card>
           ))}
         </div>
+      </div>
+    );
+  }
+
+  // Show editor if editing
+  if (isEditorOpen && editingCampaign) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Editor de Template</h1>
+            <p className="text-muted-foreground">Campanha: {editingCampaign.name}</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setIsEditorOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveTemplate} disabled={updateCampaign.isPending}>
+              {updateCampaign.isPending ? 'Salvando...' : 'Salvar Template'}
+            </Button>
+          </div>
+        </div>
+        
+        <EmailTemplateEditor
+          content={editorContent}
+          onChange={setEditorContent}
+        />
       </div>
     );
   }
@@ -146,16 +191,6 @@ export default function Email() {
                   placeholder="Ex: Ofertas Imperdíveis!"
                   value={newCampaign.subject}
                   onChange={(e) => setNewCampaign(prev => ({ ...prev, subject: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="content">Conteúdo (opcional)</Label>
-                <Textarea
-                  id="content"
-                  placeholder="Conteúdo do email..."
-                  rows={4}
-                  value={newCampaign.content}
-                  onChange={(e) => setNewCampaign(prev => ({ ...prev, content: e.target.value }))}
                 />
               </div>
             </div>
@@ -252,7 +287,7 @@ export default function Email() {
                   <TableHead>Abertos</TableHead>
                   <TableHead>Cliques</TableHead>
                   <TableHead>Data</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
+                  <TableHead className="w-[100px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -301,25 +336,37 @@ export default function Email() {
                         {new Date(campaign.created_at).toLocaleDateString('pt-BR')}
                       </TableCell>
                       <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
-                            <DropdownMenuItem>Editar</DropdownMenuItem>
-                            <DropdownMenuItem>Duplicar</DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => deleteCampaign.mutate(campaign.id)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleOpenEditor(campaign)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleOpenEditor(campaign)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Editar Template
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>Duplicar</DropdownMenuItem>
+                              <DropdownMenuItem>Agendar Envio</DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => deleteCampaign.mutate(campaign.id)}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Excluir
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );

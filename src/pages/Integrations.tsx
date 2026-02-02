@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Link as LinkIcon, Check, Settings, ExternalLink, Trash2 } from 'lucide-react';
+import { Check, Settings, Trash2, TestTube, AlertCircle, RefreshCw } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -13,111 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { toast } from 'sonner';
-
-type Integration = {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  category: 'email' | 'payment' | 'infoproduct' | 'analytics' | 'crm';
-  status: 'connected' | 'disconnected';
-  configFields?: { key: string; label: string; type: string; placeholder: string }[];
-};
-
-const availableIntegrations: Integration[] = [
-  {
-    id: 'sendgrid',
-    name: 'SendGrid',
-    description: 'Envio de emails transacionais e marketing',
-    icon: '📧',
-    category: 'email',
-    status: 'disconnected',
-    configFields: [
-      { key: 'api_key', label: 'API Key', type: 'password', placeholder: 'SG.xxxx...' },
-    ],
-  },
-  {
-    id: 'resend',
-    name: 'Resend',
-    description: 'Email API moderna para desenvolvedores',
-    icon: '✉️',
-    category: 'email',
-    status: 'disconnected',
-    configFields: [
-      { key: 'api_key', label: 'API Key', type: 'password', placeholder: 're_xxxx...' },
-    ],
-  },
-  {
-    id: 'stripe',
-    name: 'Stripe',
-    description: 'Pagamentos e assinaturas recorrentes',
-    icon: '💳',
-    category: 'payment',
-    status: 'disconnected',
-    configFields: [
-      { key: 'secret_key', label: 'Secret Key', type: 'password', placeholder: 'sk_live_xxxx...' },
-      { key: 'webhook_secret', label: 'Webhook Secret', type: 'password', placeholder: 'whsec_xxxx...' },
-    ],
-  },
-  {
-    id: 'hotmart',
-    name: 'Hotmart',
-    description: 'Plataforma de infoprodutos',
-    icon: '🔥',
-    category: 'infoproduct',
-    status: 'disconnected',
-    configFields: [
-      { key: 'client_id', label: 'Client ID', type: 'text', placeholder: 'Seu Client ID' },
-      { key: 'client_secret', label: 'Client Secret', type: 'password', placeholder: 'Seu Client Secret' },
-    ],
-  },
-  {
-    id: 'kiwify',
-    name: 'Kiwify',
-    description: 'Vendas de produtos digitais',
-    icon: '🥝',
-    category: 'infoproduct',
-    status: 'disconnected',
-    configFields: [
-      { key: 'api_key', label: 'API Key', type: 'password', placeholder: 'Sua API Key' },
-    ],
-  },
-  {
-    id: 'eduzz',
-    name: 'Eduzz',
-    description: 'Plataforma de cursos e produtos digitais',
-    icon: '📚',
-    category: 'infoproduct',
-    status: 'disconnected',
-    configFields: [
-      { key: 'api_key', label: 'API Key', type: 'password', placeholder: 'Sua API Key' },
-      { key: 'public_key', label: 'Public Key', type: 'text', placeholder: 'Sua Public Key' },
-    ],
-  },
-  {
-    id: 'google_analytics',
-    name: 'Google Analytics',
-    description: 'Análise de tráfego e comportamento',
-    icon: '📊',
-    category: 'analytics',
-    status: 'disconnected',
-    configFields: [
-      { key: 'measurement_id', label: 'Measurement ID', type: 'text', placeholder: 'G-XXXXXXXXXX' },
-    ],
-  },
-  {
-    id: 'meta_pixel',
-    name: 'Meta Pixel',
-    description: 'Rastreamento de conversões Facebook/Instagram',
-    icon: '📈',
-    category: 'analytics',
-    status: 'disconnected',
-    configFields: [
-      { key: 'pixel_id', label: 'Pixel ID', type: 'text', placeholder: 'Seu Pixel ID' },
-    ],
-  },
-];
+import { useIntegrations, Integration } from '@/hooks/useIntegrations';
 
 const categoryLabels: Record<string, string> = {
   email: 'Email',
@@ -125,49 +21,51 @@ const categoryLabels: Record<string, string> = {
   infoproduct: 'Infoprodutos',
   analytics: 'Analytics',
   crm: 'CRM',
+  messaging: 'Mensageria',
 };
 
 export default function Integrations() {
-  const [integrations, setIntegrations] = useState(availableIntegrations);
+  const { 
+    integrations, 
+    connectIntegration, 
+    disconnectIntegration, 
+    testIntegration,
+    getConnectedIntegrations 
+  } = useIntegrations();
+  
   const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
   const [configValues, setConfigValues] = useState<Record<string, string>>({});
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isTesting, setIsTesting] = useState<string | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
 
-  const handleConnect = () => {
+  const handleConnect = async () => {
     if (!selectedIntegration) return;
+    
+    setIsConnecting(true);
+    const success = await connectIntegration(selectedIntegration.id, configValues);
+    setIsConnecting(false);
 
-    // Validate all fields are filled
-    const allFieldsFilled = selectedIntegration.configFields?.every(f => configValues[f.key]?.trim());
-    if (!allFieldsFilled) {
-      toast.error('Preencha todos os campos obrigatórios');
-      return;
+    if (success) {
+      setIsDialogOpen(false);
+      setConfigValues({});
+      setSelectedIntegration(null);
     }
-
-    // Update integration status
-    setIntegrations(prev => prev.map(i => 
-      i.id === selectedIntegration.id ? { ...i, status: 'connected' as const } : i
-    ));
-
-    toast.success(`${selectedIntegration.name} conectado com sucesso!`);
-    setIsDialogOpen(false);
-    setConfigValues({});
-    setSelectedIntegration(null);
   };
 
-  const handleDisconnect = (integration: Integration) => {
-    setIntegrations(prev => prev.map(i => 
-      i.id === integration.id ? { ...i, status: 'disconnected' as const } : i
-    ));
-    toast.success(`${integration.name} desconectado`);
+  const handleTest = async (integration: Integration) => {
+    setIsTesting(integration.id);
+    await testIntegration(integration.id);
+    setIsTesting(null);
   };
 
   const openConfigDialog = (integration: Integration) => {
     setSelectedIntegration(integration);
-    setConfigValues({});
+    setConfigValues(integration.config || {});
     setIsDialogOpen(true);
   };
 
-  const connectedCount = integrations.filter(i => i.status === 'connected').length;
+  const connectedCount = getConnectedIntegrations().length;
 
   // Group by category
   const groupedIntegrations = integrations.reduce((acc, int) => {
@@ -188,6 +86,24 @@ export default function Integrations() {
         </Badge>
       </div>
 
+      {/* Info Card */}
+      <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+        <CardContent className="pt-6">
+          <div className="flex gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900">
+              <Settings className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-blue-900 dark:text-blue-100">Configuração Segura</h3>
+              <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                Suas credenciais são armazenadas de forma segura e criptografada. 
+                Você pode testar a conexão a qualquer momento para garantir que tudo está funcionando corretamente.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {Object.entries(groupedIntegrations).map(([category, ints]) => (
         <div key={category} className="space-y-4">
           <h2 className="text-xl font-semibold">{categoryLabels[category]}</h2>
@@ -203,15 +119,31 @@ export default function Integrations() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <Badge variant={integration.status === 'connected' ? 'default' : 'secondary'}>
+                    <Badge 
+                      variant={integration.status === 'connected' ? 'default' : integration.status === 'error' ? 'destructive' : 'secondary'}
+                    >
                       {integration.status === 'connected' ? (
                         <><Check className="h-3 w-3 mr-1" /> Conectado</>
+                      ) : integration.status === 'error' ? (
+                        <><AlertCircle className="h-3 w-3 mr-1" /> Erro</>
                       ) : (
                         'Desconectado'
                       )}
                     </Badge>
                     {integration.status === 'connected' ? (
                       <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleTest(integration)}
+                          disabled={isTesting === integration.id}
+                        >
+                          {isTesting === integration.id ? (
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <TestTube className="h-4 w-4" />
+                          )}
+                        </Button>
                         <Button variant="outline" size="sm" onClick={() => openConfigDialog(integration)}>
                           <Settings className="h-4 w-4" />
                         </Button>
@@ -219,7 +151,7 @@ export default function Integrations() {
                           variant="outline"
                           size="sm"
                           className="text-destructive"
-                          onClick={() => handleDisconnect(integration)}
+                          onClick={() => disconnectIntegration(integration.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -252,7 +184,10 @@ export default function Integrations() {
           <div className="space-y-4 py-4">
             {selectedIntegration?.configFields?.map((field) => (
               <div key={field.key} className="space-y-2">
-                <Label htmlFor={field.key}>{field.label}</Label>
+                <Label htmlFor={field.key}>
+                  {field.label}
+                  {field.required && <span className="text-destructive ml-1">*</span>}
+                </Label>
                 <Input
                   id={field.key}
                   type={field.type}
@@ -267,8 +202,15 @@ export default function Integrations() {
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleConnect}>
-              {selectedIntegration?.status === 'connected' ? 'Salvar' : 'Conectar'}
+            <Button onClick={handleConnect} disabled={isConnecting}>
+              {isConnecting ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Conectando...
+                </>
+              ) : (
+                selectedIntegration?.status === 'connected' ? 'Salvar' : 'Conectar'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

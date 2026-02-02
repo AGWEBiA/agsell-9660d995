@@ -1,26 +1,17 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, Plus, Settings, Smartphone, CheckCircle2, AlertCircle } from 'lucide-react';
+import { MessageSquare, Smartphone, CheckCircle2 } from 'lucide-react';
+import { WhatsAppQRConnect } from '@/components/whatsapp/WhatsAppQRConnect';
 
 export default function WhatsApp() {
-  // This would integrate with a WhatsApp Business API provider
-  const connections = [
-    // Empty for now - user needs to configure WhatsApp integration
-  ];
-
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">WhatsApp</h1>
-          <p className="text-muted-foreground">Gerencie suas conexões WhatsApp Business</p>
+          <p className="text-muted-foreground">Gerencie suas conexões WhatsApp</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Nova Conexão
-        </Button>
       </div>
 
       {/* Info Card */}
@@ -84,26 +75,8 @@ export default function WhatsApp() {
         </Card>
       </div>
 
-      {/* Connections */}
-      {connections.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6 text-center py-12">
-            <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="font-semibold mb-2">Nenhuma conexão configurada</h3>
-            <p className="text-muted-foreground mb-4 max-w-md mx-auto">
-              Configure uma conexão WhatsApp Business API para começar a enviar e receber mensagens automaticamente.
-            </p>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Configurar WhatsApp
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {/* Connection cards would go here */}
-        </div>
-      )}
+      {/* WhatsApp Connect Component */}
+      <WhatsAppQRConnect />
 
       {/* Setup Steps */}
       <Card>

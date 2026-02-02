@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { GlobalSearch } from "@/components/search/GlobalSearch";
 
 // Auth Pages
 import Login from "./pages/Login";
@@ -44,6 +45,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <GlobalSearch />
               <Routes>
                 {/* Public Routes */}
                 <Route path="/login" element={<Login />} />

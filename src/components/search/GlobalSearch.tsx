@@ -26,7 +26,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useContacts } from '@/hooks/useContacts';
-import { usePipeline } from '@/hooks/usePipeline';
+import { useDeals } from '@/hooks/usePipeline';
 import { useTasks } from '@/hooks/useTasks';
 
 const navigationItems = [
@@ -49,7 +49,7 @@ export function GlobalSearch() {
   const navigate = useNavigate();
 
   const { data: contacts = [], isLoading: loadingContacts } = useContacts();
-  const { deals = [], isLoading: loadingDeals } = usePipeline();
+  const { data: deals = [], isLoading: loadingDeals } = useDeals();
   const { data: tasks = [], isLoading: loadingTasks } = useTasks();
 
   // Keyboard shortcut

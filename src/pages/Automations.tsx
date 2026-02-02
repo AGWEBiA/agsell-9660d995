@@ -1,18 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Plus,
   Zap,
-  Play,
-  Pause,
   MoreHorizontal,
   Users,
   CheckCircle2,
-  Clock,
   ArrowRight,
+  Trash2,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -20,17 +37,63 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAutomations } from '@/hooks/useAutomations';
 
-// Mock data
-const automations = [
-  { id: 1, name: 'Boas-vindas', description: 'Sequência de emails para novos leads', trigger: 'Formulário submetido', isActive: true, entered: 456, completed: 389 },
-  { id: 2, name: 'Recuperação de Carrinho', description: 'Follow-up para carrinhos abandonados', trigger: 'Carrinho abandonado', isActive: true, entered: 123, completed: 45 },
-  { id: 3, name: 'Follow-up Pós-Venda', description: 'Sequência de nutrição pós-compra', trigger: 'Compra aprovada', isActive: false, entered: 234, completed: 198 },
-  { id: 4, name: 'Reengajamento', description: 'Reativar leads inativos', trigger: 'Score < 30', isActive: true, entered: 89, completed: 34 },
-  { id: 5, name: 'Lead Qualificado', description: 'Notificar equipe comercial', trigger: 'Score >= 80', isActive: true, entered: 67, completed: 67 },
+const triggerTypes = [
+  { value: 'form_submitted', label: 'Formulário Submetido' },
+  { value: 'tag_added', label: 'Tag Adicionada' },
+  { value: 'deal_stage_changed', label: 'Deal Mudou de Estágio' },
+  { value: 'contact_created', label: 'Contato Criado' },
+  { value: 'score_threshold', label: 'Score Atingiu Limite' },
 ];
 
 export default function Automations() {
+  const { automations, isLoading, createAutomation, toggleAutomation, deleteAutomation } = useAutomations();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newAutomation, setNewAutomation] = useState({
+    name: '',
+    trigger_type: '',
+  });
+
+  const handleCreate = () => {
+    if (!newAutomation.name || !newAutomation.trigger_type) return;
+    createAutomation.mutate({
+      name: newAutomation.name,
+      trigger_type: newAutomation.trigger_type,
+      is_active: false,
+      actions: [],
+      trigger_config: {},
+    });
+    setNewAutomation({ name: '', trigger_type: '' });
+    setIsDialogOpen(false);
+  };
+
+  const activeCount = automations.filter(a => a.is_active).length;
+  const totalExecutions = automations.reduce((acc, a) => acc + (a.executions_count ?? 0), 0);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-9 w-48" />
+            <Skeleton className="h-5 w-64 mt-2" />
+          </div>
+          <Skeleton className="h-10 w-40" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {[1, 2, 3].map(i => (
+            <Card key={i}>
+              <CardContent className="pt-6">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Page Header */}
@@ -39,10 +102,57 @@ export default function Automations() {
           <h1 className="text-3xl font-bold text-foreground">Automações</h1>
           <p className="text-muted-foreground">Construa fluxos automatizados para seus leads</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Nova Automação
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Automação
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Nova Automação</DialogTitle>
+              <DialogDescription>
+                Crie uma nova automação para processar seus leads automaticamente.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome</Label>
+                <Input
+                  id="name"
+                  placeholder="Ex: Boas-vindas"
+                  value={newAutomation.name}
+                  onChange={(e) => setNewAutomation(prev => ({ ...prev, name: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="trigger">Gatilho</Label>
+                <Select
+                  value={newAutomation.trigger_type}
+                  onValueChange={(value) => setNewAutomation(prev => ({ ...prev, trigger_type: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o gatilho" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {triggerTypes.map(t => (
+                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleCreate} disabled={createAutomation.isPending}>
+                {createAutomation.isPending ? 'Criando...' : 'Criar Automação'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Stats */}
@@ -54,7 +164,7 @@ export default function Automations() {
                 <Zap className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{automations.filter(a => a.isActive).length}</p>
+                <p className="text-2xl font-bold">{activeCount}</p>
                 <p className="text-sm text-muted-foreground">Automações Ativas</p>
               </div>
             </div>
@@ -67,8 +177,8 @@ export default function Automations() {
                 <Users className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{automations.reduce((acc, a) => acc + a.entered, 0)}</p>
-                <p className="text-sm text-muted-foreground">Total de Entradas</p>
+                <p className="text-2xl font-bold">{automations.length}</p>
+                <p className="text-sm text-muted-foreground">Total de Automações</p>
               </div>
             </div>
           </CardContent>
@@ -80,8 +190,8 @@ export default function Automations() {
                 <CheckCircle2 className="h-6 w-6 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{automations.reduce((acc, a) => acc + a.completed, 0)}</p>
-                <p className="text-sm text-muted-foreground">Completadas</p>
+                <p className="text-2xl font-bold">{totalExecutions}</p>
+                <p className="text-sm text-muted-foreground">Execuções Totais</p>
               </div>
             </div>
           </CardContent>
@@ -89,71 +199,86 @@ export default function Automations() {
       </div>
 
       {/* Automations Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {automations.map((automation) => {
-          const completionRate = automation.entered > 0
-            ? ((automation.completed / automation.entered) * 100).toFixed(0)
-            : 0;
+      {automations.length === 0 ? (
+        <Card>
+          <CardContent className="pt-6 text-center py-12">
+            <Zap className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">Nenhuma automação criada ainda</p>
+            <Button className="mt-4" onClick={() => setIsDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Criar Primeira Automação
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {automations.map((automation) => {
+            const triggerLabel = triggerTypes.find(t => t.value === automation.trigger_type)?.label || automation.trigger_type;
 
-          return (
-            <Card key={automation.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
+            return (
+              <Card key={automation.id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                        automation.is_active ? 'bg-primary/10' : 'bg-muted'
+                      }`}>
+                        <Zap className={`h-5 w-5 ${automation.is_active ? 'text-primary' : 'text-muted-foreground'}`} />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base">{automation.name}</CardTitle>
+                        <p className="text-xs text-muted-foreground">{triggerLabel}</p>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={automation.is_active ?? false}
+                      onCheckedChange={(checked) => toggleAutomation.mutate({ id: automation.id, isActive: checked })}
+                    />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between text-sm mb-4">
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1 text-muted-foreground">
+                        <CheckCircle2 className="h-4 w-4" />
+                        {automation.executions_count ?? 0} execuções
+                      </div>
+                    </div>
+                    <Badge variant={automation.is_active ? 'default' : 'secondary'}>
+                      {automation.is_active ? 'Ativo' : 'Inativo'}
+                    </Badge>
+                  </div>
+
                   <div className="flex items-center gap-2">
-                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${
-                      automation.isActive ? 'bg-primary/10' : 'bg-muted'
-                    }`}>
-                      <Zap className={`h-5 w-5 ${automation.isActive ? 'text-primary' : 'text-muted-foreground'}`} />
-                    </div>
-                    <div>
-                      <CardTitle className="text-base">{automation.name}</CardTitle>
-                      <p className="text-xs text-muted-foreground">{automation.trigger}</p>
-                    </div>
+                    <Button variant="outline" size="sm" className="flex-1">
+                      Editar
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon" className="h-9 w-9">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>Ver estatísticas</DropdownMenuItem>
+                        <DropdownMenuItem>Duplicar</DropdownMenuItem>
+                        <DropdownMenuItem>Testar</DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => deleteAutomation.mutate(automation.id)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
-                  <Switch checked={automation.isActive} />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">{automation.description}</p>
-                
-                <div className="flex items-center justify-between text-sm mb-4">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Users className="h-4 w-4" />
-                      {automation.entered}
-                    </div>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <CheckCircle2 className="h-4 w-4" />
-                      {automation.completed}
-                    </div>
-                  </div>
-                  <Badge variant="secondary">{completionRate}%</Badge>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    Editar
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="icon" className="h-9 w-9">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>Ver estatísticas</DropdownMenuItem>
-                      <DropdownMenuItem>Duplicar</DropdownMenuItem>
-                      <DropdownMenuItem>Testar</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">Excluir</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

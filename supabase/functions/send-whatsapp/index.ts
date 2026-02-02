@@ -1,0 +1,262 @@
+// WhatsApp Message Sender via Evolution API or WhatsApp Business API
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+interface WhatsAppRequest {
+  organization_id: string;
+  to: string; // Phone number with country code
+  message: string;
+  media_url?: string;
+  media_type?: "image" | "video" | "audio" | "document";
+  template_name?: string;
+  template_params?: string[];
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Validate auth
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: claims, error: authError } = await supabase.auth.getClaims(token);
+    if (authError || !claims?.claims) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const whatsappReq = (await req.json()) as WhatsAppRequest;
+
+    // Format phone number
+    const phoneNumber = whatsappReq.to.replace(/\D/g, "");
+
+    // Try Evolution API first
+    const { data: evolutionInt } = await supabase
+      .from("organization_integrations")
+      .select("config")
+      .eq("organization_id", whatsappReq.organization_id)
+      .eq("integration_type", "evolution_api")
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (evolutionInt) {
+      return await sendWithEvolutionAPI(evolutionInt.config as Record<string, string>, phoneNumber, whatsappReq);
+    }
+
+    // Try WhatsApp Business API
+    const { data: businessInt } = await supabase
+      .from("organization_integrations")
+      .select("config")
+      .eq("organization_id", whatsappReq.organization_id)
+      .eq("integration_type", "whatsapp_business")
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (businessInt) {
+      return await sendWithBusinessAPI(businessInt.config as Record<string, string>, phoneNumber, whatsappReq);
+    }
+
+    return new Response(
+      JSON.stringify({ error: "No WhatsApp integration configured" }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (error: unknown) {
+    console.error("Error sending WhatsApp:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
+
+async function sendWithEvolutionAPI(
+  config: Record<string, string>,
+  phoneNumber: string,
+  whatsappReq: WhatsAppRequest
+) {
+  const baseUrl = config.api_url;
+  const apiKey = config.api_key;
+  const instanceName = config.instance_name;
+
+  if (!baseUrl || !apiKey || !instanceName) {
+    return new Response(
+      JSON.stringify({ error: "Evolution API not fully configured" }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  // Send text message
+  if (!whatsappReq.media_url) {
+    const response = await fetch(`${baseUrl}/message/sendText/${instanceName}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": apiKey,
+      },
+      body: JSON.stringify({
+        number: phoneNumber,
+        text: whatsappReq.message,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("Evolution API error:", data);
+      return new Response(
+        JSON.stringify({ error: `Evolution API error: ${data.message || response.status}` }),
+        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ success: true, provider: "evolution_api", data }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  // Send media message
+  const mediaEndpoint = whatsappReq.media_type === "image" ? "sendMedia" : "sendMedia";
+  const response = await fetch(`${baseUrl}/message/${mediaEndpoint}/${instanceName}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": apiKey,
+    },
+    body: JSON.stringify({
+      number: phoneNumber,
+      mediatype: whatsappReq.media_type || "image",
+      media: whatsappReq.media_url,
+      caption: whatsappReq.message,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    console.error("Evolution API error:", data);
+    return new Response(
+      JSON.stringify({ error: `Evolution API error: ${data.message || response.status}` }),
+      { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  return new Response(
+    JSON.stringify({ success: true, provider: "evolution_api", data }),
+    { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}
+
+async function sendWithBusinessAPI(
+  config: Record<string, string>,
+  phoneNumber: string,
+  whatsappReq: WhatsAppRequest
+) {
+  const accessToken = config.access_token;
+  const phoneNumberId = config.phone_number_id;
+
+  if (!accessToken || !phoneNumberId) {
+    return new Response(
+      JSON.stringify({ error: "WhatsApp Business API not fully configured" }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  const apiUrl = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
+
+  let messageBody: Record<string, unknown>;
+
+  if (whatsappReq.template_name) {
+    // Send template message
+    messageBody = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "template",
+      template: {
+        name: whatsappReq.template_name,
+        language: { code: "pt_BR" },
+        components: whatsappReq.template_params
+          ? [
+              {
+                type: "body",
+                parameters: whatsappReq.template_params.map((p) => ({
+                  type: "text",
+                  text: p,
+                })),
+              },
+            ]
+          : [],
+      },
+    };
+  } else if (whatsappReq.media_url) {
+    // Send media message
+    const mediaType = whatsappReq.media_type || "image";
+    messageBody = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: mediaType,
+      [mediaType]: {
+        link: whatsappReq.media_url,
+        caption: whatsappReq.message,
+      },
+    };
+  } else {
+    // Send text message
+    messageBody = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "text",
+      text: {
+        preview_url: true,
+        body: whatsappReq.message,
+      },
+    };
+  }
+
+  const response = await fetch(apiUrl, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(messageBody),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    console.error("WhatsApp Business API error:", data);
+    return new Response(
+      JSON.stringify({ error: `WhatsApp API error: ${data.error?.message || response.status}` }),
+      { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  return new Response(
+    JSON.stringify({ success: true, provider: "whatsapp_business", message_id: data.messages?.[0]?.id }),
+    { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}

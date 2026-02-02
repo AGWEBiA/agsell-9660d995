@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
@@ -29,6 +30,7 @@ import Analytics from "./pages/Analytics";
 import Integrations from "./pages/Integrations";
 import AIAssistant from "./pages/AIAssistant";
 import Settings from "./pages/Settings";
+import Organization from "./pages/Organization";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,40 +39,43 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              
-              {/* Protected Routes */}
-              <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-                <Route index element={<Navigate to="/dashboard" replace />} />
-                <Route path="dashboard" element={<Dashboard />} />
-                <Route path="contacts" element={<Contacts />} />
-                <Route path="companies" element={<Companies />} />
-                <Route path="pipeline" element={<Pipeline />} />
-                <Route path="tags" element={<Tags />} />
-                <Route path="tasks" element={<Tasks />} />
-                <Route path="inbox" element={<Inbox />} />
-                <Route path="email" element={<Email />} />
-                <Route path="whatsapp" element={<WhatsApp />} />
-                <Route path="automations" element={<Automations />} />
-                <Route path="lead-scoring" element={<LeadScoring />} />
-                <Route path="forms" element={<Forms />} />
-                <Route path="analytics" element={<Analytics />} />
-                <Route path="integrations" element={<Integrations />} />
-                <Route path="ai-assistant" element={<AIAssistant />} />
-                <Route path="settings" element={<Settings />} />
-              </Route>
-              
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <OrganizationProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                
+                {/* Protected Routes */}
+                <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route path="dashboard" element={<Dashboard />} />
+                  <Route path="contacts" element={<Contacts />} />
+                  <Route path="companies" element={<Companies />} />
+                  <Route path="pipeline" element={<Pipeline />} />
+                  <Route path="tags" element={<Tags />} />
+                  <Route path="tasks" element={<Tasks />} />
+                  <Route path="inbox" element={<Inbox />} />
+                  <Route path="email" element={<Email />} />
+                  <Route path="whatsapp" element={<WhatsApp />} />
+                  <Route path="automations" element={<Automations />} />
+                  <Route path="lead-scoring" element={<LeadScoring />} />
+                  <Route path="forms" element={<Forms />} />
+                  <Route path="analytics" element={<Analytics />} />
+                  <Route path="integrations" element={<Integrations />} />
+                  <Route path="ai-assistant" element={<AIAssistant />} />
+                  <Route path="settings" element={<Settings />} />
+                  <Route path="organization" element={<Organization />} />
+                </Route>
+                
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </OrganizationProvider>
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>

@@ -49,6 +49,8 @@ const menuItems = [
   { label: 'Analytics', icon: BarChart3, path: '/analytics' },
   { label: 'Integrações', icon: LinkIcon, path: '/integrations' },
   { label: 'Assistente IA', icon: Bot, path: '/ai-assistant' },
+  { divider: true },
+  { label: 'Organização', icon: Building2, path: '/organization' },
   { label: 'Configurações', icon: Settings, path: '/settings' },
 ];
 

@@ -85,6 +85,66 @@ export type Database = {
           },
         ]
       }
+      automation_executions: {
+        Row: {
+          automation_id: string
+          completed_at: string | null
+          contact_id: string | null
+          created_at: string
+          current_step: number | null
+          error_message: string | null
+          id: string
+          results: Json | null
+          started_at: string | null
+          status: string
+          total_steps: number | null
+          trigger_event: string
+        }
+        Insert: {
+          automation_id: string
+          completed_at?: string | null
+          contact_id?: string | null
+          created_at?: string
+          current_step?: number | null
+          error_message?: string | null
+          id?: string
+          results?: Json | null
+          started_at?: string | null
+          status?: string
+          total_steps?: number | null
+          trigger_event: string
+        }
+        Update: {
+          automation_id?: string
+          completed_at?: string | null
+          contact_id?: string | null
+          created_at?: string
+          current_step?: number | null
+          error_message?: string | null
+          id?: string
+          results?: Json | null
+          started_at?: string | null
+          status?: string
+          total_steps?: number | null
+          trigger_event?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_executions_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "automations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_executions_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       automations: {
         Row: {
           actions: Json | null

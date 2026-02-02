@@ -52,6 +52,7 @@ import {
 } from 'lucide-react';
 import { useContacts, useCreateContact, useDeleteContact, type CreateContactData } from '@/hooks/useContacts';
 import { useCompanies } from '@/hooks/useCompanies';
+import { ImportContactsDialog } from '@/components/contacts/ImportContactsDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -82,6 +83,7 @@ const statusLabels: Record<string, string> = {
 export default function Contacts() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [newContact, setNewContact] = useState<CreateContactData>({
     first_name: '',
@@ -134,7 +136,7 @@ export default function Contacts() {
           <p className="text-muted-foreground">Gerencie seus leads e clientes</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={() => setIsImportOpen(true)}>
             <Upload className="h-4 w-4 mr-2" />
             Importar
           </Button>
@@ -387,6 +389,9 @@ export default function Contacts() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Import Dialog */}
+      <ImportContactsDialog open={isImportOpen} onOpenChange={setIsImportOpen} />
     </div>
   );
 }

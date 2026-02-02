@@ -12,10 +12,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import {
   Search,
-  Bell,
   Sun,
   Moon,
   User,
@@ -23,6 +21,7 @@ import {
   LogOut,
   HelpCircle,
 } from 'lucide-react';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 
 interface HeaderProps {
   sidebarCollapsed: boolean;
@@ -65,39 +64,7 @@ export function AppHeader({ sidebarCollapsed }: HeaderProps) {
         </Button>
 
         {/* Notifications */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <Badge
-                variant="destructive"
-                className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center"
-              >
-                3
-              </Badge>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80">
-            <DropdownMenuLabel>Notificações</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-              <span className="font-medium">Novo lead qualificado</span>
-              <span className="text-xs text-muted-foreground">João Silva atingiu score 80</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-              <span className="font-medium">Venda aprovada</span>
-              <span className="text-xs text-muted-foreground">Empresa XYZ - R$ 5.000,00</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-              <span className="font-medium">Tarefa vencida</span>
-              <span className="text-xs text-muted-foreground">Follow-up com Maria Santos</span>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="justify-center text-primary">
-              Ver todas as notificações
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <NotificationCenter />
 
         {/* Help */}
         <Button variant="ghost" size="icon">

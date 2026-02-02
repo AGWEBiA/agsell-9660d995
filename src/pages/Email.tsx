@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -12,15 +15,22 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
   Plus,
-  Mail,
   Send,
   Eye,
   MousePointerClick,
   AlertTriangle,
-  Play,
-  Pause,
   MoreHorizontal,
+  Trash2,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -28,15 +38,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
-// Mock data
-const campaigns = [
-  { id: 1, name: 'Black Friday 2026', subject: 'Ofertas Imperdíveis!', status: 'sent', sent: 1250, opened: 456, clicked: 128, bounced: 12, date: '2026-01-25' },
-  { id: 2, name: 'Newsletter Janeiro', subject: 'Novidades do Mês', status: 'sending', sent: 580, opened: 0, clicked: 0, bounced: 0, date: '2026-02-01' },
-  { id: 3, name: 'Lançamento Produto', subject: 'Chegou o que você esperava!', status: 'scheduled', sent: 0, opened: 0, clicked: 0, bounced: 0, date: '2026-02-10' },
-  { id: 4, name: 'Recuperação de Carrinho', subject: 'Você esqueceu algo!', status: 'draft', sent: 0, opened: 0, clicked: 0, bounced: 0, date: '2026-02-05' },
-  { id: 5, name: 'Boas-vindas', subject: 'Bem-vindo à nossa família!', status: 'sent', sent: 856, opened: 623, clicked: 245, bounced: 8, date: '2026-01-15' },
-];
+import { useEmailCampaigns } from '@/hooks/useEmailCampaigns';
 
 const statusColors: Record<string, string> = {
   draft: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
@@ -55,14 +57,55 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function Email() {
-  const totalSent = campaigns.reduce((acc, c) => acc + c.sent, 0);
-  const totalOpened = campaigns.reduce((acc, c) => acc + c.opened, 0);
-  const totalClicked = campaigns.reduce((acc, c) => acc + c.clicked, 0);
-  const totalBounced = campaigns.reduce((acc, c) => acc + c.bounced, 0);
+  const { campaigns, isLoading, createCampaign, deleteCampaign } = useEmailCampaigns();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newCampaign, setNewCampaign] = useState({
+    name: '',
+    subject: '',
+    content: '',
+  });
+
+  const handleCreate = () => {
+    if (!newCampaign.name || !newCampaign.subject) return;
+    createCampaign.mutate({
+      name: newCampaign.name,
+      subject: newCampaign.subject,
+      content: newCampaign.content || null,
+      status: 'draft',
+    });
+    setNewCampaign({ name: '', subject: '', content: '' });
+    setIsDialogOpen(false);
+  };
+
+  const totalSent = campaigns.reduce((acc, c) => acc + (c.sent_count ?? 0), 0);
+  const totalOpened = campaigns.reduce((acc, c) => acc + (c.open_count ?? 0), 0);
+  const totalClicked = campaigns.reduce((acc, c) => acc + (c.click_count ?? 0), 0);
 
   const openRate = totalSent > 0 ? ((totalOpened / totalSent) * 100).toFixed(1) : '0';
   const clickRate = totalOpened > 0 ? ((totalClicked / totalOpened) * 100).toFixed(1) : '0';
-  const bounceRate = totalSent > 0 ? ((totalBounced / totalSent) * 100).toFixed(1) : '0';
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-9 w-48" />
+            <Skeleton className="h-5 w-64 mt-2" />
+          </div>
+          <Skeleton className="h-10 w-40" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-4">
+          {[1, 2, 3, 4].map(i => (
+            <Card key={i}>
+              <CardContent className="pt-6">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -72,10 +115,60 @@ export default function Email() {
           <h1 className="text-3xl font-bold text-foreground">E-mail Marketing</h1>
           <p className="text-muted-foreground">Gerencie suas campanhas de e-mail</p>
         </div>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Nova Campanha
-        </Button>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Campanha
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Nova Campanha</DialogTitle>
+              <DialogDescription>
+                Crie uma nova campanha de e-mail marketing.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome da Campanha</Label>
+                <Input
+                  id="name"
+                  placeholder="Ex: Black Friday 2026"
+                  value={newCampaign.name}
+                  onChange={(e) => setNewCampaign(prev => ({ ...prev, name: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="subject">Assunto do Email</Label>
+                <Input
+                  id="subject"
+                  placeholder="Ex: Ofertas Imperdíveis!"
+                  value={newCampaign.subject}
+                  onChange={(e) => setNewCampaign(prev => ({ ...prev, subject: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="content">Conteúdo (opcional)</Label>
+                <Textarea
+                  id="content"
+                  placeholder="Conteúdo do email..."
+                  rows={4}
+                  value={newCampaign.content}
+                  onChange={(e) => setNewCampaign(prev => ({ ...prev, content: e.target.value }))}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleCreate} disabled={createCampaign.isPending}>
+                {createCampaign.isPending ? 'Criando...' : 'Criar Campanha'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Stats Cards */}
@@ -122,12 +215,12 @@ export default function Email() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900">
-                <AlertTriangle className="h-6 w-6 text-red-600" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900">
+                <Send className="h-6 w-6 text-purple-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{bounceRate}%</p>
-                <p className="text-sm text-muted-foreground">Taxa de Bounce</p>
+                <p className="text-2xl font-bold">{campaigns.length}</p>
+                <p className="text-sm text-muted-foreground">Campanhas</p>
               </div>
             </div>
           </CardContent>
@@ -140,89 +233,100 @@ export default function Email() {
           <CardTitle>Campanhas</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Campanha</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Enviados</TableHead>
-                <TableHead>Abertos</TableHead>
-                <TableHead>Cliques</TableHead>
-                <TableHead>Bounce</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {campaigns.map((campaign) => {
-                const campaignOpenRate = campaign.sent > 0
-                  ? ((campaign.opened / campaign.sent) * 100).toFixed(1)
-                  : '0';
-                const campaignClickRate = campaign.opened > 0
-                  ? ((campaign.clicked / campaign.opened) * 100).toFixed(1)
-                  : '0';
+          {campaigns.length === 0 ? (
+            <div className="text-center py-12">
+              <Send className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">Nenhuma campanha criada ainda</p>
+              <Button className="mt-4" onClick={() => setIsDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Criar Primeira Campanha
+              </Button>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Campanha</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Enviados</TableHead>
+                  <TableHead>Abertos</TableHead>
+                  <TableHead>Cliques</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {campaigns.map((campaign) => {
+                  const campaignOpenRate = (campaign.sent_count ?? 0) > 0
+                    ? (((campaign.open_count ?? 0) / (campaign.sent_count ?? 1)) * 100).toFixed(1)
+                    : '0';
+                  const campaignClickRate = (campaign.open_count ?? 0) > 0
+                    ? (((campaign.click_count ?? 0) / (campaign.open_count ?? 1)) * 100).toFixed(1)
+                    : '0';
 
-                return (
-                  <TableRow key={campaign.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{campaign.name}</p>
-                        <p className="text-sm text-muted-foreground">{campaign.subject}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[campaign.status]} variant="secondary">
-                        {statusLabels[campaign.status]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Send className="h-4 w-4 text-muted-foreground" />
-                        {campaign.sent.toLocaleString()}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                        <span>{campaign.opened.toLocaleString()}</span>
-                        <span className="text-xs text-muted-foreground">({campaignOpenRate}%)</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <MousePointerClick className="h-4 w-4 text-muted-foreground" />
-                        <span>{campaign.clicked.toLocaleString()}</span>
-                        <span className="text-xs text-muted-foreground">({campaignClickRate}%)</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className={campaign.bounced > 10 ? 'text-destructive' : ''}>
-                        {campaign.bounced}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(campaign.date).toLocaleDateString('pt-BR')}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
-                          <DropdownMenuItem>Editar</DropdownMenuItem>
-                          <DropdownMenuItem>Duplicar</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">Excluir</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                  return (
+                    <TableRow key={campaign.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{campaign.name}</p>
+                          <p className="text-sm text-muted-foreground">{campaign.subject}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={statusColors[campaign.status ?? 'draft']} variant="secondary">
+                          {statusLabels[campaign.status ?? 'draft']}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Send className="h-4 w-4 text-muted-foreground" />
+                          {(campaign.sent_count ?? 0).toLocaleString()}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Eye className="h-4 w-4 text-muted-foreground" />
+                          <span>{(campaign.open_count ?? 0).toLocaleString()}</span>
+                          <span className="text-xs text-muted-foreground">({campaignOpenRate}%)</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <MousePointerClick className="h-4 w-4 text-muted-foreground" />
+                          <span>{(campaign.click_count ?? 0).toLocaleString()}</span>
+                          <span className="text-xs text-muted-foreground">({campaignClickRate}%)</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {new Date(campaign.created_at).toLocaleDateString('pt-BR')}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem>Ver detalhes</DropdownMenuItem>
+                            <DropdownMenuItem>Editar</DropdownMenuItem>
+                            <DropdownMenuItem>Duplicar</DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => deleteCampaign.mutate(campaign.id)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

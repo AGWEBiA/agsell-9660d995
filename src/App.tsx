@@ -14,6 +14,7 @@ import { GlobalSearch } from "@/components/search/GlobalSearch";
 // Auth Pages
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Pricing from "./pages/Pricing";
 
 // Dashboard Pages
 import Dashboard from "./pages/Dashboard";
@@ -55,9 +56,10 @@ const App = () => (
               <BrowserRouter>
                 <GlobalSearch />
                 <Routes>
-                  {/* Public Routes */}
+                {/* Public Routes */}
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
+                  <Route path="/pricing" element={<Pricing />} />
                   
                   {/* Protected Routes */}
                   <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>

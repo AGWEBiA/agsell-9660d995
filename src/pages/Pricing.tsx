@@ -6,11 +6,78 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Check, Crown, Zap, Users, Mail, MessageSquare, Bot, FileText, Loader2, ArrowRight, Shield, CreditCard } from 'lucide-react';
+import { 
+  Check, Crown, Zap, Users, Mail, MessageSquare, Bot, FileText, Loader2, ArrowRight, Shield, CreditCard,
+  BarChart3, Target, Workflow, Globe, Clock, Sparkles, Phone, Calendar, Inbox, PieChart
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Link, useSearchParams } from 'react-router-dom';
+
+// Features do sistema
+const SYSTEM_FEATURES = [
+  {
+    icon: Users,
+    title: 'CRM Completo',
+    description: 'Gerencie contatos, empresas e negociações em um só lugar com visão 360° do cliente.'
+  },
+  {
+    icon: Target,
+    title: 'Pipeline de Vendas',
+    description: 'Visualize e gerencie todo seu funil de vendas com drag & drop intuitivo.'
+  },
+  {
+    icon: Bot,
+    title: 'Automações Inteligentes',
+    description: 'Automatize tarefas repetitivas, follow-ups e nutrição de leads automaticamente.'
+  },
+  {
+    icon: MessageSquare,
+    title: 'WhatsApp Integrado',
+    description: 'Envie mensagens, receba notificações e gerencie conversas diretamente no CRM.'
+  },
+  {
+    icon: Mail,
+    title: 'E-mail Marketing',
+    description: 'Crie campanhas, templates personalizados e acompanhe métricas de engajamento.'
+  },
+  {
+    icon: BarChart3,
+    title: 'Analytics Avançado',
+    description: 'Dashboards em tempo real com métricas de vendas, conversão e performance.'
+  },
+  {
+    icon: Sparkles,
+    title: 'Lead Scoring',
+    description: 'Pontue leads automaticamente e foque nos contatos com maior potencial.'
+  },
+  {
+    icon: FileText,
+    title: 'Formulários Web',
+    description: 'Capture leads com formulários personalizados integrados ao seu site.'
+  },
+  {
+    icon: Calendar,
+    title: 'Gestão de Tarefas',
+    description: 'Organize atividades, defina prioridades e nunca perca um follow-up.'
+  },
+  {
+    icon: Inbox,
+    title: 'Inbox Unificada',
+    description: 'Todas as conversas de e-mail e WhatsApp centralizadas em uma só tela.'
+  },
+  {
+    icon: Globe,
+    title: 'API & Integrações',
+    description: 'Conecte com outras ferramentas via API REST ou webhooks customizados.'
+  },
+  {
+    icon: Clock,
+    title: 'Histórico Completo',
+    description: 'Timeline de atividades com todo o histórico de interações com cada contato.'
+  },
+];
 
 interface Plan {
   id: string;
@@ -395,18 +462,76 @@ export default function Pricing() {
       <section className="container mx-auto px-4 py-16 text-center">
         <Badge variant="secondary" className="mb-4">
           <Zap className="h-3 w-3 mr-1" />
-          Planos flexíveis para cada necessidade
+          CRM & Automação de Vendas
         </Badge>
         <h1 className="text-4xl md:text-5xl font-bold mb-4">
-          Escolha o plano ideal para <span className="text-primary">seu negócio</span>
+          Transforme leads em <span className="text-primary">clientes fiéis</span>
         </h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-          CRM completo com automações, WhatsApp integrado e muito mais. 
-          Comece grátis e faça upgrade quando precisar.
+        <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
+          Plataforma completa de CRM com automações inteligentes, WhatsApp integrado, 
+          e-mail marketing e analytics para acelerar suas vendas.
+        </p>
+        <div className="flex flex-wrap justify-center gap-4 mb-8">
+          <div className="flex items-center gap-2 text-sm">
+            <Check className="h-4 w-4 text-green-500" />
+            <span>Sem cartão de crédito</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Check className="h-4 w-4 text-green-500" />
+            <span>Setup em 2 minutos</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Check className="h-4 w-4 text-green-500" />
+            <span>Suporte humanizado</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="container mx-auto px-4 pb-20">
+        <div className="text-center mb-12">
+          <Badge variant="outline" className="mb-4">
+            <Sparkles className="h-3 w-3 mr-1" />
+            Recursos Poderosos
+          </Badge>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            Tudo que você precisa para <span className="text-primary">vender mais</span>
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Uma plataforma completa de CRM e automação de vendas para impulsionar seus resultados
+          </p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 max-w-7xl mx-auto">
+          {SYSTEM_FEATURES.map((feature, index) => (
+            <Card key={index} className="border bg-card/50 hover:bg-card hover:shadow-md transition-all">
+              <CardContent className="pt-6">
+                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <feature.icon className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
+                <p className="text-sm text-muted-foreground">{feature.description}</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* Pricing Section Header */}
+      <section className="container mx-auto px-4 pb-8 text-center">
+        <Badge variant="secondary" className="mb-4">
+          <PieChart className="h-3 w-3 mr-1" />
+          Planos & Preços
+        </Badge>
+        <h2 className="text-3xl md:text-4xl font-bold mb-4">
+          Escolha o plano ideal para seu <span className="text-primary">negócio</span>
+        </h2>
+        <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
+          Comece grátis e faça upgrade conforme sua equipe cresce
         </p>
 
         {/* Billing Toggle */}
-        <div className="inline-flex items-center gap-4 bg-muted p-1 rounded-full mb-12">
+        <div className="inline-flex items-center gap-4 bg-muted p-1 rounded-full">
           <button
             className={cn(
               "px-6 py-2 rounded-full transition-all",

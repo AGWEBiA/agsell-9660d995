@@ -23,6 +23,7 @@ import {
   Trophy,
   Shield,
   Key,
+  Webhook,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -58,6 +59,7 @@ const menuItems = [
   { label: 'Planos', icon: Target, path: '/plans' },
   { label: 'Permissões', icon: Settings, path: '/permissions' },
   { label: 'API Keys', icon: Key, path: '/api-keys' },
+  { label: 'Webhooks', icon: Webhook, path: '/webhooks' },
   { label: 'Admin', icon: Shield, path: '/admin' },
   { label: 'Configurações', icon: Settings, path: '/settings' },
 ];

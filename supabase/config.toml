@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.transcribe-audio]
 verify_jwt = false
+
+[functions.webhook-inbound]
+verify_jwt = false

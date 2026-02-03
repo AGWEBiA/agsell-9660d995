@@ -774,6 +774,68 @@ export type Database = {
           },
         ]
       }
+      inbound_webhooks: {
+        Row: {
+          created_at: string
+          description: string | null
+          endpoint_id: string
+          field_mapping: Json | null
+          headers_to_capture: string[] | null
+          id: string
+          is_active: boolean | null
+          last_request_at: string | null
+          name: string
+          organization_id: string
+          payload_format: string | null
+          requests_count: number | null
+          secret_token: string
+          target_action: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          endpoint_id?: string
+          field_mapping?: Json | null
+          headers_to_capture?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          last_request_at?: string | null
+          name: string
+          organization_id: string
+          payload_format?: string | null
+          requests_count?: number | null
+          secret_token?: string
+          target_action?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          endpoint_id?: string
+          field_mapping?: Json | null
+          headers_to_capture?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          last_request_at?: string | null
+          name?: string
+          organization_id?: string
+          payload_format?: string | null
+          requests_count?: number | null
+          secret_token?: string
+          target_action?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inbound_webhooks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_scoring_rules: {
         Row: {
           created_at: string
@@ -1622,6 +1684,53 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webhook_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          processed_at: string | null
+          request_body: Json | null
+          request_headers: Json | null
+          response_body: Json | null
+          status: string
+          status_code: number | null
+          webhook_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          processed_at?: string | null
+          request_body?: Json | null
+          request_headers?: Json | null
+          response_body?: Json | null
+          status?: string
+          status_code?: number | null
+          webhook_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          processed_at?: string | null
+          request_body?: Json | null
+          request_headers?: Json | null
+          response_body?: Json | null
+          status?: string
+          status_code?: number | null
+          webhook_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_logs_webhook_id_fkey"
+            columns: ["webhook_id"]
+            isOneToOne: false
+            referencedRelation: "inbound_webhooks"
             referencedColumns: ["id"]
           },
         ]

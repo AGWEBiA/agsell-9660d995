@@ -35,3 +35,9 @@ verify_jwt = false
 
 [functions.webhook-inbound]
 verify_jwt = false
+
+[functions.guest-checkout]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false

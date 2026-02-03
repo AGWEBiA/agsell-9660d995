@@ -1,0 +1,486 @@
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Check, Crown, Zap, Users, Mail, MessageSquare, Bot, FileText, Loader2, ArrowRight, Shield, CreditCard } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { Link, useSearchParams } from 'react-router-dom';
+
+interface Plan {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  price_monthly: number;
+  price_yearly: number;
+  max_users: number;
+  max_contacts: number;
+  max_emails_per_month: number;
+  max_whatsapp_messages: number;
+  max_automations: number;
+  max_forms: number;
+  features: string[];
+}
+
+const FEATURE_LABELS: Record<string, string> = {
+  crm_basico: 'CRM Básico',
+  pipeline: 'Pipeline de Vendas',
+  tarefas: 'Gestão de Tarefas',
+  automacoes: 'Automações',
+  email_marketing: 'E-mail Marketing',
+  analytics: 'Analytics Avançado',
+  lead_scoring: 'Lead Scoring',
+  whatsapp: 'WhatsApp Business',
+  integrações: 'Integrações',
+  api: 'API Pública',
+  white_label: 'White Label',
+  suporte_prioritario: 'Suporte Prioritário',
+};
+
+function PricingCard({ 
+  plan, 
+  billingCycle, 
+  onSelect 
+}: { 
+  plan: Plan; 
+  billingCycle: 'monthly' | 'yearly';
+  onSelect: () => void;
+}) {
+  const isPro = plan.slug === 'professional';
+  const isEnterprise = plan.slug === 'enterprise';
+  const isFree = plan.price_monthly === 0;
+  
+  const price = billingCycle === 'monthly' ? plan.price_monthly : Math.round(plan.price_yearly / 12);
+  const totalPrice = billingCycle === 'yearly' ? plan.price_yearly : plan.price_monthly;
+
+  return (
+    <Card className={cn(
+      'relative transition-all hover:shadow-xl hover:-translate-y-1 duration-300',
+      isPro && 'border-primary border-2 shadow-lg scale-105',
+    )}>
+      {isPro && (
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+          <Badge className="bg-primary text-primary-foreground px-4 py-1">
+            <Zap className="h-3 w-3 mr-1" />
+            Mais Popular
+          </Badge>
+        </div>
+      )}
+
+      <CardHeader className="text-center pb-2 pt-8">
+        {isEnterprise && <Crown className="h-10 w-10 mx-auto mb-3 text-yellow-500" />}
+        <CardTitle className="text-2xl">{plan.name}</CardTitle>
+        <CardDescription className="text-base">{plan.description}</CardDescription>
+      </CardHeader>
+
+      <CardContent className="text-center">
+        <div className="mb-6">
+          {isFree ? (
+            <span className="text-5xl font-bold">Grátis</span>
+          ) : (
+            <>
+              <span className="text-5xl font-bold">R$ {price}</span>
+              <span className="text-muted-foreground text-lg">/mês</span>
+            </>
+          )}
+        </div>
+
+        {!isFree && billingCycle === 'yearly' && (
+          <p className="text-sm text-green-600 dark:text-green-400 mb-4 font-medium">
+            Cobrado R$ {totalPrice}/ano (economize 17%)
+          </p>
+        )}
+
+        <div className="space-y-3 text-left mb-6">
+          <div className="flex items-center gap-3 text-sm">
+            <Users className="h-5 w-5 text-primary" />
+            <span>{plan.max_users === -1 ? 'Usuários ilimitados' : `${plan.max_users} usuário${plan.max_users > 1 ? 's' : ''}`}</span>
+          </div>
+          <div className="flex items-center gap-3 text-sm">
+            <Users className="h-5 w-5 text-primary" />
+            <span>{plan.max_contacts === -1 ? 'Contatos ilimitados' : `${plan.max_contacts.toLocaleString()} contatos`}</span>
+          </div>
+          <div className="flex items-center gap-3 text-sm">
+            <Mail className="h-5 w-5 text-primary" />
+            <span>{plan.max_emails_per_month === -1 ? 'E-mails ilimitados' : `${plan.max_emails_per_month.toLocaleString()} e-mails/mês`}</span>
+          </div>
+          <div className="flex items-center gap-3 text-sm">
+            <MessageSquare className="h-5 w-5 text-primary" />
+            <span>{plan.max_whatsapp_messages === -1 ? 'WhatsApp ilimitado' : `${plan.max_whatsapp_messages.toLocaleString()} mensagens`}</span>
+          </div>
+          <div className="flex items-center gap-3 text-sm">
+            <Bot className="h-5 w-5 text-primary" />
+            <span>{plan.max_automations === -1 ? 'Automações ilimitadas' : `${plan.max_automations} automações`}</span>
+          </div>
+          <div className="flex items-center gap-3 text-sm">
+            <FileText className="h-5 w-5 text-primary" />
+            <span>{plan.max_forms === -1 ? 'Formulários ilimitados' : `${plan.max_forms} formulários`}</span>
+          </div>
+        </div>
+
+        <div className="pt-4 border-t space-y-2">
+          {(plan.features || []).map((feature) => (
+            <div key={feature} className="flex items-center gap-2 text-sm">
+              <Check className="h-4 w-4 text-green-500 flex-shrink-0" />
+              <span>{FEATURE_LABELS[feature] || feature}</span>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+
+      <CardFooter className="pb-8">
+        <Button 
+          className={cn(
+            "w-full h-12 text-base",
+            isPro && "bg-primary hover:bg-primary/90"
+          )}
+          variant={isPro ? 'default' : 'outline'}
+          onClick={onSelect}
+        >
+          {isFree ? 'Começar Grátis' : 'Assinar Agora'}
+          <ArrowRight className="ml-2 h-5 w-5" />
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
+interface CheckoutFormData {
+  name: string;
+  email: string;
+  organizationName: string;
+}
+
+function GuestCheckoutDialog({ 
+  plan, 
+  billingCycle,
+  open, 
+  onOpenChange 
+}: { 
+  plan: Plan | null; 
+  billingCycle: 'monthly' | 'yearly';
+  open: boolean; 
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [formData, setFormData] = useState<CheckoutFormData>({
+    name: '',
+    email: '',
+    organizationName: '',
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
+  if (!plan) return null;
+
+  const price = billingCycle === 'monthly' ? plan.price_monthly : plan.price_yearly;
+  const isFree = plan.price_monthly === 0;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.name || !formData.email || !formData.organizationName) {
+      toast.error('Preencha todos os campos');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('guest-checkout', {
+        body: {
+          planId: plan.id,
+          billingCycle,
+          name: formData.name,
+          email: formData.email,
+          organizationName: formData.organizationName,
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = data.url;
+      } else if (data?.success) {
+        // Free plan - account created
+        toast.success('Conta criada! Verifique seu e-mail para as credenciais de acesso.');
+        onOpenChange(false);
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast.error('Erro ao processar. Tente novamente.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5 text-primary" />
+            {isFree ? 'Criar Conta Gratuita' : `Assinar ${plan.name}`}
+          </DialogTitle>
+          <DialogDescription>
+            {isFree 
+              ? 'Preencha seus dados para criar sua conta gratuita' 
+              : 'Preencha seus dados para continuar com o pagamento'
+            }
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Seu Nome</Label>
+            <Input
+              id="name"
+              placeholder="João Silva"
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">E-mail</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="joao@empresa.com"
+              value={formData.email}
+              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="organizationName">Nome da Empresa/Organização</Label>
+            <Input
+              id="organizationName"
+              placeholder="Minha Empresa LTDA"
+              value={formData.organizationName}
+              onChange={(e) => setFormData(prev => ({ ...prev, organizationName: e.target.value }))}
+              required
+            />
+          </div>
+
+          {!isFree && (
+            <div className="bg-muted/50 rounded-lg p-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-medium">{plan.name}</span>
+                <span className="font-bold">
+                  R$ {price}/{billingCycle === 'monthly' ? 'mês' : 'ano'}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {billingCycle === 'yearly' 
+                  ? 'Cobrança anual com 17% de desconto' 
+                  : 'Cobrança mensal recorrente'
+                }
+              </p>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Shield className="h-4 w-4" />
+            {isFree 
+              ? 'Seus dados estão protegidos' 
+              : 'Pagamento seguro processado pelo Stripe'
+            }
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isFree ? 'Criar Conta' : 'Continuar para Pagamento'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export default function Pricing() {
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      const { data, error } = await supabase
+        .from('plans')
+        .select('*')
+        .eq('is_active', true)
+        .order('price_monthly', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching plans:', error);
+        toast.error('Erro ao carregar planos');
+      } else {
+        setPlans((data || []).map(p => ({
+          ...p,
+          features: Array.isArray(p.features) ? p.features as string[] : [],
+          price_monthly: p.price_monthly || 0,
+          price_yearly: p.price_yearly || 0,
+          max_users: p.max_users || 1,
+          max_contacts: p.max_contacts || 100,
+          max_emails_per_month: p.max_emails_per_month || 500,
+          max_whatsapp_messages: p.max_whatsapp_messages || 100,
+          max_automations: p.max_automations || 5,
+          max_forms: p.max_forms || 3,
+        })));
+      }
+      setIsLoading(false);
+    };
+
+    fetchPlans();
+  }, []);
+
+  useEffect(() => {
+    if (searchParams.get('success') === 'true') {
+      toast.success('Pagamento confirmado! Verifique seu e-mail para as credenciais de acesso.');
+    } else if (searchParams.get('canceled') === 'true') {
+      toast.info('Pagamento cancelado.');
+    }
+  }, [searchParams]);
+
+  const handleSelectPlan = (plan: Plan) => {
+    setSelectedPlan(plan);
+    setShowCheckout(true);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+      {/* Header */}
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-sm">AG</span>
+            </div>
+            <span className="font-bold text-xl">AG Sell</span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <Link to="/login">
+              <Button variant="ghost">Entrar</Button>
+            </Link>
+            <Link to="/register">
+              <Button>Criar Conta</Button>
+            </Link>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="container mx-auto px-4 py-16 text-center">
+        <Badge variant="secondary" className="mb-4">
+          <Zap className="h-3 w-3 mr-1" />
+          Planos flexíveis para cada necessidade
+        </Badge>
+        <h1 className="text-4xl md:text-5xl font-bold mb-4">
+          Escolha o plano ideal para <span className="text-primary">seu negócio</span>
+        </h1>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
+          CRM completo com automações, WhatsApp integrado e muito mais. 
+          Comece grátis e faça upgrade quando precisar.
+        </p>
+
+        {/* Billing Toggle */}
+        <div className="inline-flex items-center gap-4 bg-muted p-1 rounded-full mb-12">
+          <button
+            className={cn(
+              "px-6 py-2 rounded-full transition-all",
+              billingCycle === 'monthly' 
+                ? "bg-background shadow-sm font-medium" 
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            onClick={() => setBillingCycle('monthly')}
+          >
+            Mensal
+          </button>
+          <button
+            className={cn(
+              "px-6 py-2 rounded-full transition-all flex items-center gap-2",
+              billingCycle === 'yearly' 
+                ? "bg-background shadow-sm font-medium" 
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            onClick={() => setBillingCycle('yearly')}
+          >
+            Anual
+            <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
+              -17%
+            </Badge>
+          </button>
+        </div>
+      </section>
+
+      {/* Pricing Cards */}
+      <section className="container mx-auto px-4 pb-20">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4 max-w-7xl mx-auto">
+          {plans.map((plan) => (
+            <PricingCard
+              key={plan.id}
+              plan={plan}
+              billingCycle={billingCycle}
+              onSelect={() => handleSelectPlan(plan)}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Trust Badges */}
+      <section className="container mx-auto px-4 pb-20">
+        <div className="flex flex-wrap justify-center gap-8 text-center">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Shield className="h-5 w-5" />
+            <span>Pagamento 100% seguro</span>
+          </div>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Check className="h-5 w-5" />
+            <span>Cancele quando quiser</span>
+          </div>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Mail className="h-5 w-5" />
+            <span>Suporte por e-mail</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t py-8">
+        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
+          <p>© {new Date().getFullYear()} AG Sell. Todos os direitos reservados.</p>
+        </div>
+      </footer>
+
+      {/* Checkout Dialog */}
+      <GuestCheckoutDialog
+        plan={selectedPlan}
+        billingCycle={billingCycle}
+        open={showCheckout}
+        onOpenChange={setShowCheckout}
+      />
+    </div>
+  );
+}

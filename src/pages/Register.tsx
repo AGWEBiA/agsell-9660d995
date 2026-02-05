@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { Logo } from '@/components/ui/Logo';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -65,15 +66,7 @@ export default function Register() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-              <span className="text-xl font-bold text-primary-foreground">AG</span>
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">AG Sell</h1>
-              <p className="text-xs text-muted-foreground">CRM & Automação</p>
-            </div>
-          </div>
+          <Logo variant="alternativo" size="xl" showText />
         </div>
 
         <Card>

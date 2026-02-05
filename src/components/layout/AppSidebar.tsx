@@ -31,6 +31,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { Logo, LogoIcon } from '@/components/ui/Logo';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -116,16 +117,13 @@ export function AppSidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Logo */}
       <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
         {!collapsed && (
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <span className="text-sm font-bold text-primary-foreground">AG</span>
-            </div>
-            <span className="text-lg font-bold text-sidebar-foreground">AG Sell</span>
+          <Link to="/dashboard">
+            <Logo variant="alternativo" size="md" showText />
           </Link>
         )}
         {collapsed && (
-          <Link to="/dashboard" className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <span className="text-sm font-bold text-primary-foreground">AG</span>
+          <Link to="/dashboard" className="mx-auto">
+            <LogoIcon variant="alternativo" size="md" />
           </Link>
         )}
       </div>

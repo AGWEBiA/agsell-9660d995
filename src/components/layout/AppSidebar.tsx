@@ -118,12 +118,12 @@ export function AppSidebar({ collapsed, onToggle }: SidebarProps) {
       <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
         {!collapsed && (
           <Link to="/dashboard">
-            <Logo variant="alternativo" size="md" showText />
+            <Logo variant="red" size="md" showText />
           </Link>
         )}
         {collapsed && (
           <Link to="/dashboard" className="mx-auto">
-            <LogoIcon variant="alternativo" size="md" />
+            <LogoIcon variant="red" size="md" />
           </Link>
         )}
       </div>

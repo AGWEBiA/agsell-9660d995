@@ -44,8 +44,8 @@ export function Logo({
         return logoAlternativo;
       case 'auto':
       default:
-        // Auto mode: use alternativo (red+black) for light, white for dark
-        return logoAlternativo;
+        // Auto mode: use red logo for better contrast on light backgrounds
+        return logoRed;
     }
   };
 

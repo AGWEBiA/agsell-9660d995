@@ -47,7 +47,7 @@ export default function Login() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <Logo variant="alternativo" size="xl" showText />
+          <Logo variant="red" size="xl" showText />
         </div>
 
         <Card>

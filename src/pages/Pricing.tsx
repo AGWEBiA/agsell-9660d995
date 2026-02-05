@@ -474,7 +474,7 @@ export default function Pricing() {
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/">
-            <Logo variant="alternativo" size="md" showText />
+            <Logo variant="red" size="md" showText />
           </Link>
           <div className="flex items-center gap-4">
             <Link to="/login">

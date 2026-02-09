@@ -31,6 +31,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { PlansManagement } from '@/components/admin/PlansManagement';
+import { EmailCostProjection } from '@/components/admin/EmailCostProjection';
 
 export default function Admin() {
   const { user } = useAuth();
@@ -170,6 +171,10 @@ export default function Admin() {
           <TabsTrigger value="plans" className="flex items-center gap-2">
             <CreditCard className="h-4 w-4" />
             Planos
+          </TabsTrigger>
+          <TabsTrigger value="email-costs" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Custos E-mail
           </TabsTrigger>
         </TabsList>
 
@@ -362,6 +367,10 @@ export default function Admin() {
 
         <TabsContent value="plans">
           <PlansManagement />
+        </TabsContent>
+
+        <TabsContent value="email-costs">
+          <EmailCostProjection />
         </TabsContent>
       </Tabs>
     </div>

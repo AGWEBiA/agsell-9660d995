@@ -629,6 +629,74 @@ export type Database = {
           },
         ]
       }
+      email_domains: {
+        Row: {
+          created_at: string
+          dkim_verified: boolean | null
+          dmarc_verified: boolean | null
+          dns_records: Json | null
+          domain: string
+          from_email: string | null
+          from_name: string | null
+          id: string
+          is_active: boolean | null
+          last_verified_at: string | null
+          mx_verified: boolean | null
+          organization_id: string
+          spf_verified: boolean | null
+          status: string
+          updated_at: string
+          verification_error: string | null
+          verified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          dkim_verified?: boolean | null
+          dmarc_verified?: boolean | null
+          dns_records?: Json | null
+          domain: string
+          from_email?: string | null
+          from_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_verified_at?: string | null
+          mx_verified?: boolean | null
+          organization_id: string
+          spf_verified?: boolean | null
+          status?: string
+          updated_at?: string
+          verification_error?: string | null
+          verified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          dkim_verified?: boolean | null
+          dmarc_verified?: boolean | null
+          dns_records?: Json | null
+          domain?: string
+          from_email?: string | null
+          from_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_verified_at?: string | null
+          mx_verified?: boolean | null
+          organization_id?: string
+          spf_verified?: boolean | null
+          status?: string
+          updated_at?: string
+          verification_error?: string | null
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_domains_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       form_submissions: {
         Row: {
           contact_id: string | null

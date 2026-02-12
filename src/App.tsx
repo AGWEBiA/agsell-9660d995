@@ -41,6 +41,7 @@ import Permissions from "./pages/Permissions";
 import Admin from "./pages/Admin";
 import ApiKeys from "./pages/ApiKeys";
 import Webhooks from "./pages/Webhooks";
+import EmailDomain from "./pages/EmailDomain";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -89,6 +90,7 @@ const App = () => (
                     <Route path="admin" element={<Admin />} />
                     <Route path="api-keys" element={<ApiKeys />} />
                     <Route path="webhooks" element={<Webhooks />} />
+                    <Route path="email-domain" element={<EmailDomain />} />
                   </Route>
                   
                   <Route path="*" element={<NotFound />} />

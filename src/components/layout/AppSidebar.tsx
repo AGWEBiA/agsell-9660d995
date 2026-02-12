@@ -77,6 +77,7 @@ const menuItems: MenuItemType[] = [
   { label: 'Permissões', icon: Settings, path: '/permissions' },
   { label: 'API Keys', icon: Key, path: '/api-keys' },
   { label: 'Webhooks', icon: Webhook, path: '/webhooks' },
+  { label: 'Domínio E-mail', icon: Mail, path: '/email-domain' },
   { label: 'Admin', icon: Shield, path: '/admin', adminOnly: true },
   { label: 'Configurações', icon: Settings, path: '/settings' },
 ];

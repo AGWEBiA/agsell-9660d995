@@ -17,6 +17,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Pricing from "./pages/Pricing";
 import PurchaseSuccess from "./pages/PurchaseSuccess";
+import SubscriptionExpired from "./pages/SubscriptionExpired";
 
 // Dashboard Pages
 import Dashboard from "./pages/Dashboard";
@@ -65,6 +66,7 @@ const App = () => (
                   <Route path="/register" element={<Register />} />
                   <Route path="/pricing" element={<Pricing />} />
                   <Route path="/purchase-success" element={<PurchaseSuccess />} />
+                  <Route path="/subscription-expired" element={<ProtectedRoute allowExpired><SubscriptionExpired /></ProtectedRoute>} />
                   
                   {/* Protected Routes */}
                   <Route path="/" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
@@ -88,6 +90,11 @@ const App = () => (
                     <Route path="settings" element={<Settings />} />
                     <Route path="organization" element={<Organization />} />
                     <Route path="plans" element={<Plans />} />
+                  </Route>
+                  
+                  {/* Plans accessible even with expired subscription */}
+                  <Route path="/renew-plans" element={<ProtectedRoute allowExpired><DashboardLayout /></ProtectedRoute>}>
+                    <Route index element={<Plans />} />
                     <Route path="permissions" element={<Permissions />} />
                     <Route path="admin" element={<Admin />} />
                     <Route path="api-keys" element={<ApiKeys />} />

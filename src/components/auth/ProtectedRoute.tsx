@@ -1,16 +1,19 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSubscriptionStatus } from '@/hooks/useSubscriptionStatus';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  allowExpired?: boolean;
 }
 
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, allowExpired = false }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
+  const { isBlocked, isLoading: subLoading } = useSubscriptionStatus();
 
-  if (loading) {
+  if (loading || subLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -23,6 +26,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (isBlocked && !allowExpired) {
+    return <Navigate to="/subscription-expired" replace />;
   }
 
   return <>{children}</>;

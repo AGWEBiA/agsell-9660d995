@@ -77,7 +77,7 @@ export default function TermsOfService() {
           <p>O usuário pode encerrar sua conta a qualquer momento. A AG Sell reserva-se o direito de suspender ou encerrar contas que violem estes termos.</p>
 
           <h2 className="text-xl font-semibold mt-8 mb-4">9. Foro</h2>
-          <p>Fica eleito o foro da comarca de [cidade/estado], com exclusão de qualquer outro, para dirimir questões relacionadas a estes Termos de Uso.</p>
+          <p>Fica eleito o foro da comarca de Florianópolis, Capital do Estado de Santa Catarina, com exclusão de qualquer outro, por mais privilegiado que seja, para dirimir questões relacionadas a estes Termos de Uso.</p>
         </div>
       </div>
     </div>

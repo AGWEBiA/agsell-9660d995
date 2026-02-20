@@ -102,6 +102,11 @@ const App = () => (
                     <Route path="settings" element={<Settings />} />
                     <Route path="organization" element={<Organization />} />
                     <Route path="plans" element={<Plans />} />
+                    <Route path="permissions" element={<Permissions />} />
+                    <Route path="admin" element={<Admin />} />
+                    <Route path="api-keys" element={<ApiKeys />} />
+                    <Route path="webhooks" element={<Webhooks />} />
+                    <Route path="email-domain" element={<EmailDomain />} />
                   </Route>
                   
                   {/* Plans accessible even with expired subscription */}

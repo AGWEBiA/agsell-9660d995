@@ -169,8 +169,8 @@ export default function Integrations() {
             <CardContent>
               <div className="text-center py-8 text-muted-foreground">
                 <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Configuração de e-mail via Resend</p>
-                <p className="text-sm mt-2">Acesse Configurações do Sistema para gerenciar</p>
+                <p>O provedor de e-mail é configurado pelo administrador da plataforma</p>
+                <p className="text-sm mt-2">Para configurar seu domínio de envio, acesse a página de Domínios de E-mail</p>
               </div>
             </CardContent>
           </Card>

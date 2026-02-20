@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Check, Settings, Trash2, TestTube, AlertCircle, RefreshCw, MessageSquare, Mail, CreditCard } from 'lucide-react';
+import { Check, Settings, Trash2, TestTube, AlertCircle, RefreshCw, MessageSquare, Mail, CreditCard, Send } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -16,6 +16,9 @@ import {
 } from '@/components/ui/dialog';
 import { useIntegrations, Integration } from '@/hooks/useIntegrations';
 import { WhatsAppProviderSetup } from '@/components/integrations/WhatsAppProviderSetup';
+import { useOrganization } from '@/contexts/OrganizationContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const categoryLabels: Record<string, string> = {
   email: 'Email',
@@ -40,6 +43,54 @@ export default function Integrations() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isTesting, setIsTesting] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isTestEmailOpen, setIsTestEmailOpen] = useState(false);
+  const [testEmailAddress, setTestEmailAddress] = useState('');
+  const [isSendingTest, setIsSendingTest] = useState(false);
+  const [testEmailIntegration, setTestEmailIntegration] = useState<Integration | null>(null);
+  const { currentOrganization } = useOrganization();
+
+  const handleSendTestEmail = async () => {
+    if (!testEmailAddress || !testEmailIntegration) return;
+    
+    setIsSendingTest(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-email', {
+        body: {
+          organization_id: currentOrganization?.id,
+          to: testEmailAddress,
+          subject: `[Teste] E-mail de teste - ${testEmailIntegration.name}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h2 style="color: #333;">✅ E-mail de teste enviado com sucesso!</h2>
+              <p>Este é um e-mail de teste enviado pela integração <strong>${testEmailIntegration.name}</strong>.</p>
+              <p style="color: #666; font-size: 14px;">Se você recebeu este e-mail, a integração está funcionando corretamente.</p>
+              <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+              <p style="color: #999; font-size: 12px;">Enviado via AG Sell</p>
+            </div>
+          `,
+          text: `E-mail de teste enviado com sucesso via ${testEmailIntegration.name}. Se você recebeu este e-mail, a integração está funcionando corretamente.`,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success(`E-mail de teste enviado para ${testEmailAddress}!`);
+      setIsTestEmailOpen(false);
+      setTestEmailAddress('');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro desconhecido';
+      toast.error(`Falha ao enviar e-mail de teste: ${msg}`);
+    } finally {
+      setIsSendingTest(false);
+    }
+  };
+
+  const openTestEmailDialog = (integration: Integration) => {
+    setTestEmailIntegration(integration);
+    setTestEmailAddress('');
+    setIsTestEmailOpen(true);
+  };
 
   const handleConnect = async () => {
     if (!selectedIntegration) return;
@@ -179,6 +230,16 @@ export default function Integrations() {
                       </Badge>
                       {integration.status === 'connected' ? (
                         <div className="flex gap-2">
+                          {integration.category === 'email' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openTestEmailDialog(integration)}
+                              title="Enviar e-mail de teste"
+                            >
+                              <Send className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button 
                             variant="outline" 
                             size="sm"
@@ -258,6 +319,51 @@ export default function Integrations() {
                 </>
               ) : (
                 selectedIntegration?.status === 'connected' ? 'Salvar' : 'Conectar'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Test Email Dialog */}
+      <Dialog open={isTestEmailOpen} onOpenChange={setIsTestEmailOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5" />
+              Enviar E-mail de Teste
+            </DialogTitle>
+            <DialogDescription>
+              Envie um e-mail de teste via {testEmailIntegration?.name} para verificar se a integração está funcionando.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="test-email">E-mail de destino</Label>
+              <Input
+                id="test-email"
+                type="email"
+                placeholder="seu@email.com"
+                value={testEmailAddress}
+                onChange={(e) => setTestEmailAddress(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsTestEmailOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSendTestEmail} disabled={isSendingTest || !testEmailAddress}>
+              {isSendingTest ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Enviar Teste
+                </>
               )}
             </Button>
           </DialogFooter>

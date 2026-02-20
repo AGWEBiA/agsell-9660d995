@@ -36,6 +36,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { RefreshCw, Send } from 'lucide-react';
 
 type ProviderType = 'resend' | 'amazon_ses' | 'sendgrid';
 
@@ -55,6 +56,7 @@ export function EmailProviderConfig() {
   const [showSecrets, setShowSecrets] = useState(false);
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [testEmail, setTestEmail] = useState('');
+  const [isSendingTest, setIsSendingTest] = useState(false);
 
   // Fetch global email config from platform settings
   // We store this as a special organization_integration with a known org-less pattern
@@ -449,12 +451,51 @@ export function EmailProviderConfig() {
               Cancelar
             </Button>
             <Button
-              onClick={() => {
-                toast.info('Funcionalidade de teste será implementada na integração completa.');
-                setTestDialogOpen(false);
+              disabled={isSendingTest || !testEmail}
+              onClick={async () => {
+                setIsSendingTest(true);
+                try {
+                  const { data, error } = await supabase.functions.invoke('send-email', {
+                    body: {
+                      organization_id: config?.organization_id,
+                      to: testEmail,
+                      subject: `[Teste] E-mail de teste - ${providerInfo[formState.provider].label}`,
+                      html: `
+                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                          <h2 style="color: #333;">✅ E-mail de teste enviado com sucesso!</h2>
+                          <p>Este é um e-mail de teste enviado via <strong>${providerInfo[formState.provider].label}</strong>.</p>
+                          <p style="color: #666; font-size: 14px;">Se você recebeu este e-mail, a integração está funcionando corretamente.</p>
+                          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+                          <p style="color: #999; font-size: 12px;">Enviado via AG Sell</p>
+                        </div>
+                      `,
+                      text: `E-mail de teste enviado com sucesso via ${providerInfo[formState.provider].label}.`,
+                    },
+                  });
+                  if (error) throw error;
+                  if (data?.error) throw new Error(data.error);
+                  toast.success(`E-mail de teste enviado para ${testEmail}!`);
+                  setTestDialogOpen(false);
+                  setTestEmail('');
+                } catch (err: unknown) {
+                  const msg = err instanceof Error ? err.message : 'Erro desconhecido';
+                  toast.error(`Falha ao enviar e-mail de teste: ${msg}`);
+                } finally {
+                  setIsSendingTest(false);
+                }
               }}
             >
-              Enviar Teste
+              {isSendingTest ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Enviar Teste
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

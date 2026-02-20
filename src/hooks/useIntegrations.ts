@@ -16,45 +16,6 @@ export type Integration = {
 
 const defaultIntegrations: Integration[] = [
   {
-    id: 'sendgrid',
-    name: 'SendGrid',
-    description: 'Envio de emails transacionais e marketing',
-    icon: '📧',
-    category: 'email',
-    status: 'disconnected',
-    configFields: [
-      { key: 'api_key', label: 'API Key', type: 'password', placeholder: 'SG.xxxx...', required: true },
-      { key: 'from_email', label: 'Email de Envio', type: 'email', placeholder: 'noreply@seudominio.com', required: true },
-      { key: 'from_name', label: 'Nome do Remetente', type: 'text', placeholder: 'Sua Empresa' },
-    ],
-  },
-  {
-    id: 'resend',
-    name: 'Resend',
-    description: 'Email API moderna para desenvolvedores',
-    icon: '✉️',
-    category: 'email',
-    status: 'disconnected',
-    configFields: [
-      { key: 'api_key', label: 'API Key', type: 'password', placeholder: 're_xxxx...', required: true },
-      { key: 'from_email', label: 'Email de Envio', type: 'email', placeholder: 'noreply@seudominio.com', required: true },
-    ],
-  },
-  {
-    id: 'amazon_ses',
-    name: 'Amazon SES',
-    description: 'Serviço de e-mail escalável da AWS',
-    icon: '📨',
-    category: 'email',
-    status: 'disconnected',
-    configFields: [
-      { key: 'access_key_id', label: 'Access Key ID', type: 'password', placeholder: 'AKIAXXXXXXXX...', required: true },
-      { key: 'secret_access_key', label: 'Secret Access Key', type: 'password', placeholder: 'Sua Secret Key', required: true },
-      { key: 'region', label: 'Região AWS', type: 'text', placeholder: 'us-east-1', required: true },
-      { key: 'from_email', label: 'Email de Envio (verificado)', type: 'email', placeholder: 'noreply@seudominio.com', required: true },
-    ],
-  },
-  {
     id: 'stripe',
     name: 'Stripe',
     description: 'Pagamentos e assinaturas recorrentes',

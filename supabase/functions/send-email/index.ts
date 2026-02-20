@@ -234,14 +234,16 @@ async function sendWithAmazonSES(config: Record<string, string>, emailReq: Email
   const body = params.toString();
 
   try {
-    const { AwsClient } = await import("https://esm.sh/aws4fetch@1.0.20");
+    const { AwsClient } = await import("npm:aws4fetch@1.0.20");
+    console.log("SES config - region:", region, "keyId:", access_key_id.substring(0, 4) + "...", "secretLen:", secret_access_key.length);
     const aws = new AwsClient({
       accessKeyId: access_key_id,
       secretAccessKey: secret_access_key,
-      region: region,
       service: "ses",
+      region: region,
     });
 
+    console.log("Sending SES request to:", endpoint, "body length:", body.length);
     const response = await aws.fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },

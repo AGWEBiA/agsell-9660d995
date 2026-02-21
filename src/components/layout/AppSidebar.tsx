@@ -33,6 +33,7 @@ import {
   Megaphone,
   Lightbulb,
   Wrench,
+  HelpCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -129,6 +130,7 @@ const menuSections: MenuSection[] = [
       { label: 'Domínio E-mail', icon: Mail, path: '/email-domain' },
       { label: 'API Keys', icon: Key, path: '/api-keys' },
       { label: 'Webhooks', icon: Webhook, path: '/webhooks' },
+      { label: 'Guia do Sistema', icon: HelpCircle, path: '/system-guide' },
       { label: 'Configurações', icon: Settings, path: '/settings' },
       { label: 'Admin', icon: Shield, path: '/admin', adminOnly: true },
     ],

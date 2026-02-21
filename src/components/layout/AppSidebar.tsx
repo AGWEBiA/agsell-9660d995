@@ -43,6 +43,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useAuth } from '@/contexts/AuthContext';
 import { Logo, LogoIcon } from '@/components/ui/Logo';
 import { useAdminView } from '@/contexts/AdminViewContext';
+// Force cache invalidation
 
 interface SidebarProps {
   collapsed: boolean;

@@ -36,35 +36,20 @@ import {
   Crown,
 } from 'lucide-react';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+
+
 
 interface HeaderProps {
   sidebarCollapsed: boolean;
 }
 
 export function AppHeader({ sidebarCollapsed }: HeaderProps) {
-  const { user, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { isUserMode, toggleViewMode, simulatedPlan, setSimulatedPlan } = useAdminView();
   const { plans } = usePlans();
   const navigate = useNavigate();
   const [showPlanPicker, setShowPlanPicker] = useState(false);
-
-  // Check if user is super admin
-  const { data: isAdmin } = useQuery({
-    queryKey: ['is_super_admin_header', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return false;
-      const { data, error } = await supabase.rpc('has_role', {
-        _user_id: user.id,
-        _role: 'admin',
-      });
-      if (error) return false;
-      return data as boolean;
-    },
-    enabled: !!user?.id,
-  });
 
   const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Usuário';
   const userInitials = userName.slice(0, 2).toUpperCase();

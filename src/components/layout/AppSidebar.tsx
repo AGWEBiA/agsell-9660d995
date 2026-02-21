@@ -38,8 +38,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+
+
 import { useAuth } from '@/contexts/AuthContext';
 import { Logo, LogoIcon } from '@/components/ui/Logo';
 import { useAdminView } from '@/contexts/AdminViewContext';
@@ -246,7 +246,7 @@ function MenuItemLink({
 
 export function AppSidebar({ collapsed, onToggle }: SidebarProps) {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { isUserMode } = useAdminView();
 
   // Initialize open sections based on active route
@@ -259,32 +259,6 @@ export function AppSidebar({ collapsed, onToggle }: SidebarProps) {
     return initial;
   });
 
-  const { data: isAdmin, isFetched: isAdminFetched } = useQuery({
-    queryKey: ['is_super_admin_sidebar', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return false;
-      // Try RPC first, fallback to direct query
-      const { data, error } = await supabase.rpc('has_role', {
-        _user_id: user.id,
-        _role: 'admin',
-      });
-      if (error) {
-        // Fallback: query user_roles table directly
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-          .eq('role', 'admin')
-          .maybeSingle();
-        return !!roleData;
-      }
-      return !!data;
-    },
-    enabled: !!user?.id,
-    staleTime: 1000 * 60 * 5,
-    retry: 2,
-  });
-
   const toggleSection = (id: string) => {
     setOpenSections((prev) => ({ ...prev, [id]: !prev[id] }));
   };
@@ -292,7 +266,7 @@ export function AppSidebar({ collapsed, onToggle }: SidebarProps) {
   const filteredSections = menuSections.map((section) => ({
     ...section,
     items: section.items.filter((item) => {
-      if (item.adminOnly && ((isAdminFetched && !isAdmin) || isUserMode)) return false;
+      if (item.adminOnly && (!isAdmin || isUserMode)) return false;
       if (item.orgAdminOnly && isUserMode) return false;
       return true;
     }),

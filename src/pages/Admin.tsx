@@ -36,22 +36,7 @@ import { EmailCostProjection } from '@/components/admin/EmailCostProjection';
 import { EmailProviderConfig } from '@/components/admin/EmailProviderConfig';
 
 export default function Admin() {
-  const { user } = useAuth();
-
-  // Check if user is super admin
-  const { data: isAdmin, isLoading: isCheckingAdmin } = useQuery({
-    queryKey: ['is_super_admin', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return false;
-      const { data, error } = await supabase.rpc('has_role', {
-        _user_id: user.id,
-        _role: 'admin',
-      });
-      if (error) return false;
-      return data as boolean;
-    },
-    enabled: !!user?.id,
-  });
+  const { user, isAdmin, loading: isCheckingAdmin } = useAuth();
 
   // Fetch all organizations
   const { data: organizations = [], isLoading: isLoadingOrgs } = useQuery({

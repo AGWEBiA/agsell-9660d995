@@ -1,0 +1,441 @@
+import React, { useState } from 'react';
+import {
+  LayoutDashboard, Users, Building2, Kanban, Tags, CheckSquare,
+  Inbox, Mail, MessageSquare, Zap, BarChart3, Target, FileText,
+  Link as LinkIcon, Settings, Bot, Brain, Trophy, Shield, Key,
+  Webhook, SlidersHorizontal, Instagram, ListChecks, Search,
+  BookOpen, ChevronRight, Lightbulb, Bell, Globe, Lock, Database,
+  HelpCircle, Megaphone, Wrench
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Separator } from '@/components/ui/separator';
+
+interface GuideSection {
+  id: string;
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: string;
+  description: string;
+  features: {
+    title: string;
+    description: string;
+  }[];
+}
+
+const guideSections: GuideSection[] = [
+  {
+    id: 'dashboard',
+    title: 'Dashboard',
+    icon: LayoutDashboard,
+    description: 'Painel central com visão consolidada de todas as métricas do seu negócio.',
+    features: [
+      { title: 'Métricas em tempo real', description: 'Acompanhe contatos, negócios, receita e taxas de conversão atualizados automaticamente.' },
+      { title: 'Gráficos interativos', description: 'Visualize tendências de vendas, pipeline e atividades com gráficos dinâmicos.' },
+      { title: 'Atividades recentes', description: 'Feed de todas as ações realizadas na plataforma, incluindo criação de contatos, movimentações no pipeline e mensagens.' },
+      { title: 'Tarefas pendentes', description: 'Lista rápida de tarefas que precisam de atenção imediata.' },
+    ],
+  },
+  {
+    id: 'tasks',
+    title: 'Tarefas',
+    icon: CheckSquare,
+    description: 'Gerencie todas as suas tarefas com visualização em lista e calendário.',
+    features: [
+      { title: 'Criação de tarefas', description: 'Crie tarefas com título, descrição, prioridade, data de vencimento e responsável.' },
+      { title: 'Visualização em calendário', description: 'Veja suas tarefas organizadas por data em um calendário interativo.' },
+      { title: 'Filtros e busca', description: 'Filtre tarefas por status (pendente, em andamento, concluída), prioridade e responsável.' },
+      { title: 'Vinculação com contatos', description: 'Associe tarefas a contatos e negócios do CRM para melhor rastreamento.' },
+    ],
+  },
+  {
+    id: 'contacts',
+    title: 'Contatos',
+    icon: Users,
+    description: 'Base centralizada de todos os seus contatos com informações completas.',
+    features: [
+      { title: 'Cadastro completo', description: 'Registre nome, e-mail, telefone, WhatsApp, empresa, cargo e notas para cada contato.' },
+      { title: 'Importação em massa', description: 'Importe contatos via arquivo CSV com mapeamento automático de campos.' },
+      { title: 'Lead Score', description: 'Pontuação automática de qualificação baseada em regras configuráveis.' },
+      { title: 'Tags e segmentação', description: 'Organize contatos com tags coloridas para segmentação e campanhas.' },
+      { title: 'Timeline de atividades', description: 'Histórico completo de interações, e-mails, mensagens e tarefas vinculadas ao contato.' },
+    ],
+  },
+  {
+    id: 'companies',
+    title: 'Empresas',
+    icon: Building2,
+    description: 'Gestão de empresas e organizações vinculadas aos seus contatos.',
+    features: [
+      { title: 'Perfil da empresa', description: 'Cadastre nome, domínio, setor, porte, telefone e endereço completo.' },
+      { title: 'Contatos vinculados', description: 'Visualize todos os contatos associados a cada empresa.' },
+      { title: 'Negócios ativos', description: 'Acompanhe todos os deals em andamento com a empresa.' },
+    ],
+  },
+  {
+    id: 'pipeline',
+    title: 'Pipeline',
+    icon: Kanban,
+    description: 'Gerencie seu funil de vendas com visualização Kanban intuitiva.',
+    features: [
+      { title: 'Quadro Kanban', description: 'Arraste e solte cards entre as etapas do funil para atualizar o status dos negócios.' },
+      { title: 'Etapas personalizáveis', description: 'Configure as etapas do pipeline de acordo com o seu processo de vendas.' },
+      { title: 'Valores e probabilidade', description: 'Defina valor, moeda e probabilidade de fechamento para cada deal.' },
+      { title: 'Filtros avançados', description: 'Filtre negócios por etapa, valor, responsável e data prevista de fechamento.' },
+    ],
+  },
+  {
+    id: 'tags',
+    title: 'Tags',
+    icon: Tags,
+    description: 'Sistema de etiquetas coloridas para organização e segmentação.',
+    features: [
+      { title: 'Cores personalizáveis', description: 'Crie tags com cores distintas para facilitar a identificação visual.' },
+      { title: 'Aplicação múltipla', description: 'Aplique várias tags a um mesmo contato para segmentação cruzada.' },
+      { title: 'Uso em automações', description: 'Utilize tags como gatilhos e ações em fluxos de automação.' },
+    ],
+  },
+  {
+    id: 'inbox',
+    title: 'SAC / Inbox',
+    icon: Inbox,
+    description: 'Central unificada de atendimento multicanal com atribuição inteligente.',
+    features: [
+      { title: 'Inbox unificado', description: 'Receba e responda mensagens de WhatsApp, e-mail e Instagram em um único painel.' },
+      { title: 'Atribuição automática', description: 'Configure regras de distribuição (round-robin, carga mínima, aleatório) para atendentes.' },
+      { title: 'Gestão de atendentes', description: 'Cadastre atendentes com departamento, status e capacidade máxima de atendimentos simultâneos.' },
+      { title: 'IA no atendimento', description: 'Use o botão "Enviar com IA" para gerar respostas inteligentes baseadas no contexto da conversa.' },
+      { title: 'Transcrição de áudio', description: 'Transcreva mensagens de áudio automaticamente para texto.' },
+      { title: 'Pesquisa CSAT', description: 'Configure pesquisas de satisfação automáticas ao encerrar atendimentos.' },
+      { title: 'Score do Lead', description: 'Visualize a qualificação do lead (qualificado, morno ou frio) diretamente na conversa.' },
+    ],
+  },
+  {
+    id: 'whatsapp',
+    title: 'WhatsApp',
+    icon: MessageSquare,
+    description: 'Integração completa com WhatsApp para comunicação e campanhas.',
+    features: [
+      { title: 'Conexão via QR Code', description: 'Conecte sua conta do WhatsApp escaneando um QR code diretamente na plataforma.' },
+      { title: 'Múltiplas instâncias', description: 'Gerencie diversas contas/números de WhatsApp simultaneamente.' },
+      { title: 'Envio em massa', description: 'Crie e gerencie campanhas de envio de mensagens para listas de contatos.' },
+      { title: 'Grupos', description: 'Gerencie grupos do WhatsApp e envie mensagens em grupo.' },
+      { title: 'Seletor de instância', description: 'Alterne facilmente entre diferentes instâncias conectadas.' },
+    ],
+  },
+  {
+    id: 'email',
+    title: 'E-mail Marketing',
+    icon: Mail,
+    description: 'Plataforma completa de e-mail marketing com editor visual.',
+    features: [
+      { title: 'Editor de templates', description: 'Crie e-mails visualmente com editor drag-and-drop e templates pré-prontos.' },
+      { title: 'Campanhas', description: 'Crie, agende e envie campanhas de e-mail com rastreamento de abertura e cliques.' },
+      { title: 'Domínio personalizado', description: 'Configure seu próprio domínio de envio com verificação SPF, DKIM e DMARC.' },
+      { title: 'Métricas', description: 'Acompanhe taxas de abertura, cliques e entregas em tempo real.' },
+    ],
+  },
+  {
+    id: 'instagram',
+    title: 'Instagram',
+    icon: Instagram,
+    description: 'Automação de interações no Instagram para engajamento e conversão.',
+    features: [
+      { title: 'Contas conectadas', description: 'Vincule múltiplas contas do Instagram à plataforma.' },
+      { title: 'Automações de DM', description: 'Configure respostas automáticas para mensagens diretas, comentários e menções.' },
+      { title: 'Histórico de execuções', description: 'Visualize logs detalhados de todas as automações executadas.' },
+    ],
+  },
+  {
+    id: 'automations',
+    title: 'Automações',
+    icon: Zap,
+    description: 'Motor de automação com gatilhos, condições e ações encadeadas.',
+    features: [
+      { title: 'Gatilhos configuráveis', description: 'Dispare automações baseadas em eventos como criação de contato, movimentação de deal, recebimento de mensagem e mais.' },
+      { title: 'Ações encadeadas', description: 'Configure sequências de ações: enviar e-mail, WhatsApp, adicionar tag, mover no pipeline, criar tarefa, etc.' },
+      { title: 'Templates prontos', description: 'Utilize templates de automação pré-configurados para cenários comuns.' },
+      { title: 'Histórico de execuções', description: 'Monitore todas as execuções com status, erros e resultados detalhados.' },
+    ],
+  },
+  {
+    id: 'whatsapp-flows',
+    title: 'WhatsApp Flows',
+    icon: ListChecks,
+    description: 'Construtor de formulários interativos para coleta de dados via WhatsApp.',
+    features: [
+      { title: 'Builder visual', description: 'Monte formulários com campos de texto, seleção, data e mais, sem código.' },
+      { title: 'Submissões', description: 'Receba e visualize as respostas dos formulários em tempo real.' },
+      { title: 'Integração com contatos', description: 'Vincule submissões automaticamente aos contatos do CRM.' },
+    ],
+  },
+  {
+    id: 'lead-scoring',
+    title: 'Lead Scoring',
+    icon: Target,
+    description: 'Sistema de pontuação automática para qualificação de leads.',
+    features: [
+      { title: 'Regras de pontuação', description: 'Configure regras baseadas em eventos (abertura de e-mail, visita, resposta, etc.) com pontos positivos ou negativos.' },
+      { title: 'Classificação automática', description: 'Leads são classificados automaticamente como qualificado (70+), morno (40-69) ou frio (<40).' },
+      { title: 'Integração com automações', description: 'Use o score como gatilho para automações e fluxos de nutrição.' },
+    ],
+  },
+  {
+    id: 'forms',
+    title: 'Formulários',
+    icon: FileText,
+    description: 'Criação de formulários web para captura de leads.',
+    features: [
+      { title: 'Builder de formulários', description: 'Crie formulários com campos personalizáveis e configurações de layout.' },
+      { title: 'Submissões', description: 'Visualize todas as respostas recebidas com dados estruturados.' },
+      { title: 'Criação automática de contatos', description: 'Novos contatos são criados automaticamente a partir das submissões.' },
+    ],
+  },
+  {
+    id: 'analytics',
+    title: 'Analytics',
+    icon: BarChart3,
+    description: 'Dashboards analíticos com métricas multidimensionais.',
+    features: [
+      { title: 'Métricas de vendas', description: 'Receita, ticket médio, taxa de conversão e evolução ao longo do tempo.' },
+      { title: 'Análise de pipeline', description: 'Distribuição por etapa, tempo médio em cada fase e gargalos.' },
+      { title: 'Performance de equipe', description: 'Compare resultados entre membros da equipe e identifique top performers.' },
+      { title: 'Relatórios de campanhas', description: 'Resultados de campanhas de e-mail e WhatsApp com métricas de engajamento.' },
+    ],
+  },
+  {
+    id: 'ai-assistant',
+    title: 'Assistente IA',
+    icon: Bot,
+    description: 'Assistente de inteligência artificial integrado ao CRM.',
+    features: [
+      { title: 'Chat contextual', description: 'Converse com a IA que tem acesso ao contexto do seu CRM para respostas relevantes.' },
+      { title: 'Sugestões inteligentes', description: 'Receba sugestões de próximos passos, abordagens e estratégias.' },
+      { title: 'Análise de dados', description: 'Peça análises e insights sobre seus dados de vendas e contatos.' },
+    ],
+  },
+  {
+    id: 'ai-agents',
+    title: 'Agentes de IA',
+    icon: Brain,
+    description: 'Agentes autônomos de IA para atendimento e automação.',
+    features: [
+      { title: 'Criação de agentes', description: 'Configure agentes com nome, modelo de IA, prompt de sistema e mensagem de boas-vindas.' },
+      { title: 'Base de conhecimento', description: 'Alimente agentes com documentos e informações específicas do seu negócio (RAG).' },
+      { title: 'Canais de atuação', description: 'Defina em quais canais (WhatsApp, e-mail, chat) o agente deve atuar.' },
+      { title: 'Métricas de conversas', description: 'Acompanhe conversas, satisfação e transferências para humanos.' },
+    ],
+  },
+  {
+    id: 'gamification',
+    title: 'Gamificação',
+    icon: Trophy,
+    description: 'Sistema de gamificação para engajamento da equipe de vendas.',
+    features: [
+      { title: 'Pontos e XP', description: 'Acumule pontos por ações como criar contatos, fechar deals e completar tarefas.' },
+      { title: 'Níveis', description: 'Progrida por níveis conforme acumula experiência.' },
+      { title: 'Ranking', description: 'Compete com colegas em um ranking de desempenho.' },
+      { title: 'Conquistas', description: 'Desbloqueie conquistas especiais por marcos alcançados.' },
+    ],
+  },
+  {
+    id: 'integrations',
+    title: 'Integrações',
+    icon: LinkIcon,
+    description: 'Conecte o AG Sell a outras ferramentas e plataformas.',
+    features: [
+      { title: 'Provedores de pagamento', description: 'Integre com Stripe, Hotmart, Eduzz e Kiwify via webhooks.' },
+      { title: 'WhatsApp providers', description: 'Configure provedores de WhatsApp (Evolution API, Z-API, etc.).' },
+      { title: 'Webhooks de entrada', description: 'Receba dados de sistemas externos via webhooks configuráveis.' },
+    ],
+  },
+  {
+    id: 'organization',
+    title: 'Organização',
+    icon: Building2,
+    description: 'Gestão da organização, equipe e configurações gerais.',
+    features: [
+      { title: 'Perfil da organização', description: 'Configure nome, logo e slug da sua organização.' },
+      { title: 'Membros da equipe', description: 'Convide e gerencie membros com diferentes papéis (owner, admin, member).' },
+      { title: 'Convites por e-mail', description: 'Envie convites para novos membros da equipe.' },
+    ],
+  },
+  {
+    id: 'plans',
+    title: 'Planos e Assinatura',
+    icon: Target,
+    description: 'Gestão de planos, assinaturas e checkout com Stripe.',
+    features: [
+      { title: 'Planos disponíveis', description: 'Visualize e compare os planos disponíveis com seus recursos.' },
+      { title: 'Checkout integrado', description: 'Assine ou faça upgrade diretamente pela plataforma com pagamento via Stripe.' },
+      { title: 'Gestão de assinatura', description: 'Acompanhe status, renovação e histórico da sua assinatura.' },
+    ],
+  },
+  {
+    id: 'permissions',
+    title: 'Permissões',
+    icon: Shield,
+    description: 'Controle granular de acesso por perfil de permissão.',
+    features: [
+      { title: 'Perfis de permissão', description: 'Crie perfis com permissões específicas para cada módulo do sistema.' },
+      { title: 'Atribuição a membros', description: 'Associe perfis de permissão aos membros da organização.' },
+      { title: 'Gate de funcionalidades', description: 'Recursos são exibidos ou ocultados conforme as permissões do usuário.' },
+    ],
+  },
+  {
+    id: 'api-keys',
+    title: 'API Keys',
+    icon: Key,
+    description: 'Geração e gestão de chaves de API para integrações externas.',
+    features: [
+      { title: 'Criação de chaves', description: 'Gere chaves de API com nome, permissões e data de expiração.' },
+      { title: 'Rate limiting', description: 'Configure limites de requisições por minuto e por dia.' },
+      { title: 'Monitoramento', description: 'Acompanhe o uso de cada chave com data do último acesso.' },
+    ],
+  },
+  {
+    id: 'webhooks',
+    title: 'Webhooks',
+    icon: Webhook,
+    description: 'Configure webhooks de entrada para receber dados externos.',
+    features: [
+      { title: 'Endpoints personalizados', description: 'Crie endpoints únicos para receber dados de sistemas externos.' },
+      { title: 'Mapeamento de campos', description: 'Configure como os dados recebidos devem ser mapeados para o CRM.' },
+      { title: 'Token de segurança', description: 'Proteja seus webhooks com tokens de autenticação.' },
+      { title: 'Histórico de requisições', description: 'Visualize todas as requisições recebidas com detalhes.' },
+    ],
+  },
+  {
+    id: 'settings',
+    title: 'Configurações Gerais',
+    icon: Settings,
+    description: 'Preferências do sistema, tema e configurações pessoais.',
+    features: [
+      { title: 'Tema claro/escuro', description: 'Alterne entre os temas claro e escuro da interface.' },
+      { title: 'Notificações', description: 'Configure preferências de notificações do sistema.' },
+      { title: 'Exportação de dados (LGPD)', description: 'Exporte seus dados pessoais em conformidade com a LGPD.' },
+      { title: 'Exclusão de conta (LGPD)', description: 'Solicite a exclusão completa dos seus dados.' },
+    ],
+  },
+];
+
+export default function SystemGuide() {
+  const [search, setSearch] = useState('');
+
+  const filtered = guideSections.filter((s) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      s.title.toLowerCase().includes(q) ||
+      s.description.toLowerCase().includes(q) ||
+      s.features.some(
+        (f) => f.title.toLowerCase().includes(q) || f.description.toLowerCase().includes(q)
+      )
+    );
+  });
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold flex items-center gap-3">
+          <BookOpen className="h-8 w-8 text-primary" />
+          Guia do Sistema
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Documentação completa de todas as funcionalidades do AG Sell
+        </p>
+      </div>
+
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Buscar funcionalidade..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-primary">{guideSections.length}</p>
+            <p className="text-xs text-muted-foreground">Módulos</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-primary">
+              {guideSections.reduce((acc, s) => acc + s.features.length, 0)}
+            </p>
+            <p className="text-xs text-muted-foreground">Funcionalidades</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-primary">5</p>
+            <p className="text-xs text-muted-foreground">Canais integrados</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-primary">100%</p>
+            <p className="text-xs text-muted-foreground">Operacional</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Guide Content */}
+      <Accordion type="multiple" className="space-y-2">
+        {filtered.map((section) => {
+          const Icon = section.icon;
+          return (
+            <AccordionItem key={section.id} value={section.id} className="border rounded-lg px-2">
+              <AccordionTrigger className="hover:no-underline py-4">
+                <div className="flex items-center gap-3 text-left">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                    <Icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">{section.title}</span>
+                      <Badge variant="secondary" className="text-[10px]">
+                        {section.features.length} recursos
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground font-normal">{section.description}</p>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid gap-3 pb-2 pl-[52px]">
+                  {section.features.map((feature, idx) => (
+                    <div key={idx} className="flex items-start gap-2">
+                      <ChevronRight className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+                      <div>
+                        <p className="text-sm font-medium">{feature.title}</p>
+                        <p className="text-sm text-muted-foreground">{feature.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
+      </Accordion>
+
+      {filtered.length === 0 && (
+        <div className="text-center py-12 text-muted-foreground">
+          <HelpCircle className="h-12 w-12 mx-auto mb-3 opacity-50" />
+          <p>Nenhuma funcionalidade encontrada para "{search}"</p>
+        </div>
+      )}
+    </div>
+  );
+}

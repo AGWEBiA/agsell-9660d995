@@ -34,6 +34,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { PlansManagement } from '@/components/admin/PlansManagement';
 import { EmailCostProjection } from '@/components/admin/EmailCostProjection';
 import { EmailProviderConfig } from '@/components/admin/EmailProviderConfig';
+import { UsersManagement } from '@/components/admin/UsersManagement';
 
 export default function Admin() {
   const { user, isAdmin, loading: isCheckingAdmin } = useAuth();
@@ -154,6 +155,10 @@ export default function Admin() {
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Visão Geral
+          </TabsTrigger>
+          <TabsTrigger value="users" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Usuários
           </TabsTrigger>
           <TabsTrigger value="plans" className="flex items-center gap-2">
             <CreditCard className="h-4 w-4" />
@@ -354,6 +359,10 @@ export default function Admin() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="users">
+          <UsersManagement />
         </TabsContent>
 
         <TabsContent value="plans">

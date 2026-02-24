@@ -193,6 +193,100 @@ Deno.serve(async (req) => {
         );
       }
 
+      case 'update_user': {
+        const { user_id, email: newEmail, name: newName } = params;
+
+        if (!user_id) {
+          return new Response(
+            JSON.stringify({ error: "user_id é obrigatório" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        const updateData: Record<string, unknown> = {};
+        if (newEmail) updateData.email = newEmail;
+        if (newName) updateData.user_metadata = { name: newName, full_name: newName };
+
+        const { error: updateError } = await supabase.auth.admin.updateUserById(user_id, updateData);
+        if (updateError) {
+          return new Response(
+            JSON.stringify({ error: updateError.message }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Also update profile name if changed
+        if (newName) {
+          await supabase.from('profiles').update({ full_name: newName }).eq('user_id', user_id);
+        }
+
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      case 'add_to_organization': {
+        const { user_id, organization_id, org_role } = params;
+
+        if (!user_id || !organization_id || !org_role) {
+          return new Response(
+            JSON.stringify({ error: "user_id, organization_id e org_role são obrigatórios" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        const { error: memberError } = await supabase
+          .from('organization_members')
+          .insert({
+            user_id,
+            organization_id,
+            role: org_role,
+            invited_by: callerUser.id,
+          });
+
+        if (memberError) {
+          return new Response(
+            JSON.stringify({ error: memberError.message }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      case 'remove_from_organization': {
+        const { user_id, organization_id } = params;
+
+        if (!user_id || !organization_id) {
+          return new Response(
+            JSON.stringify({ error: "user_id e organization_id são obrigatórios" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        const { error: removeError } = await supabase
+          .from('organization_members')
+          .delete()
+          .eq('user_id', user_id)
+          .eq('organization_id', organization_id);
+
+        if (removeError) {
+          return new Response(
+            JSON.stringify({ error: removeError.message }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       case 'delete_user': {
         const { user_id } = params;
 

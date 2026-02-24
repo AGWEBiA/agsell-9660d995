@@ -85,7 +85,7 @@ Deno.serve(async (req) => {
 
     const config = activeIntegration.config as Record<string, string>;
     // Use resolved from, or config default, or platform fallback
-    const finalFrom = resolvedFrom || config.from_email || "noreply@agsell.com";
+    const finalFrom = resolvedFrom || config.from_email || "noreply@agsell.com.br";
     const emailReqWithFrom = { ...emailReq, from: finalFrom };
 
     switch (activeIntegration.integration_type) {
@@ -131,7 +131,7 @@ async function sendWithSendGrid(config: Record<string, string>, emailReq: EmailR
     },
     body: JSON.stringify({
       personalizations: [{ to: toAddresses }],
-      from: { email: emailReq.from || config.from_email || "noreply@agsell.com" },
+      from: { email: emailReq.from || config.from_email || "noreply@agsell.com.br" },
       reply_to: emailReq.reply_to ? { email: emailReq.reply_to } : undefined,
       subject: emailReq.subject,
       content: [
@@ -172,7 +172,7 @@ async function sendWithResend(config: Record<string, string>, emailReq: EmailReq
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: emailReq.from || config.from_email || "AG Sell <noreply@agsell.com>",
+      from: emailReq.from || config.from_email || "AG Sell <noreply@agsell.com.br>",
       to: Array.isArray(emailReq.to) ? emailReq.to : [emailReq.to],
       reply_to: emailReq.reply_to,
       subject: emailReq.subject,
@@ -211,7 +211,7 @@ async function sendWithAmazonSES(config: Record<string, string>, emailReq: Email
   }
 
   const toAddresses = Array.isArray(emailReq.to) ? emailReq.to : [emailReq.to];
-  const fromAddress = emailReq.from || from_email || "noreply@agsell.com";
+  const fromAddress = emailReq.from || from_email || "noreply@agsell.com.br";
 
   const params = new URLSearchParams();
   params.append('Action', 'SendEmail');

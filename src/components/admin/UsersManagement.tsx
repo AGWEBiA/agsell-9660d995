@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { UserPlus, Shield, Trash2, Loader2, RefreshCw } from 'lucide-react';
+import { UserPlus, Shield, Trash2, Loader2, RefreshCw, Pencil, Building2, X } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -29,6 +29,10 @@ export function UsersManagement() {
   const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [newUser, setNewUser] = useState({ email: '', password: '', name: '', role: '' });
+  const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', email: '' });
+  const [orgUser, setOrgUser] = useState<AdminUser | null>(null);
+  const [orgForm, setOrgForm] = useState({ organization_id: '', org_role: 'member' });
 
   const { data: organizations = [] } = useQuery({
     queryKey: ['admin_all_organizations'],
@@ -51,61 +55,29 @@ export function UsersManagement() {
     },
   });
 
-  const createUserMutation = useMutation({
-    mutationFn: async (userData: typeof newUser & { organization_id?: string; org_role?: string }) => {
-      const { data, error } = await supabase.functions.invoke('admin-manage-users', {
-        body: { action: 'create_user', ...userData },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin_users'] });
-      toast.success('Usuário criado com sucesso!');
-      setIsCreateOpen(false);
-      setNewUser({ email: '', password: '', name: '', role: '' });
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
+  const invokeMutation = (actionName: string, successMsg: string) =>
+    useMutation({
+      mutationFn: async (body: Record<string, unknown>) => {
+        const { data, error } = await supabase.functions.invoke('admin-manage-users', {
+          body: { action: actionName, ...body },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        return data;
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['admin_users'] });
+        toast.success(successMsg);
+      },
+      onError: (error: Error) => toast.error(error.message),
+    });
 
-  const updateRoleMutation = useMutation({
-    mutationFn: async ({ user_id, role, remove }: { user_id: string; role: string; remove?: boolean }) => {
-      const { data, error } = await supabase.functions.invoke('admin-manage-users', {
-        body: { action: 'update_role', user_id, role, remove },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin_users'] });
-      toast.success('Permissão atualizada!');
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const deleteUserMutation = useMutation({
-    mutationFn: async (user_id: string) => {
-      const { data, error } = await supabase.functions.invoke('admin-manage-users', {
-        body: { action: 'delete_user', user_id },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin_users'] });
-      toast.success('Usuário excluído!');
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
+  const createUserMutation = invokeMutation('create_user', 'Usuário criado com sucesso!');
+  const updateRoleMutation = invokeMutation('update_role', 'Permissão atualizada!');
+  const deleteUserMutation = invokeMutation('delete_user', 'Usuário excluído!');
+  const updateUserMutation = invokeMutation('update_user', 'Usuário atualizado!');
+  const addToOrgMutation = invokeMutation('add_to_organization', 'Usuário adicionado à organização!');
+  const removeFromOrgMutation = invokeMutation('remove_from_organization', 'Usuário removido da organização!');
 
   const handleCreateUser = () => {
     if (!newUser.email || !newUser.password || !newUser.name) {
@@ -116,7 +88,25 @@ export function UsersManagement() {
       toast.error('A senha deve ter pelo menos 6 caracteres');
       return;
     }
-    createUserMutation.mutate(newUser);
+    createUserMutation.mutate(newUser as Record<string, unknown>);
+    setIsCreateOpen(false);
+    setNewUser({ email: '', password: '', name: '', role: '' });
+  };
+
+  const handleEditUser = () => {
+    if (!editingUser) return;
+    updateUserMutation.mutate({ user_id: editingUser.id, name: editForm.name, email: editForm.email });
+    setEditingUser(null);
+  };
+
+  const handleAddToOrg = () => {
+    if (!orgUser || !orgForm.organization_id) {
+      toast.error('Selecione uma organização');
+      return;
+    }
+    addToOrgMutation.mutate({ user_id: orgUser.id, organization_id: orgForm.organization_id, org_role: orgForm.org_role });
+    setOrgUser(null);
+    setOrgForm({ organization_id: '', org_role: 'member' });
   };
 
   return (
@@ -128,13 +118,11 @@ export function UsersManagement() {
             <CardDescription>Crie, edite permissões e gerencie todos os usuários do sistema</CardDescription>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => queryClient.invalidateQueries({ queryKey: ['admin_users'] })}
-            >
+            <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ['admin_users'] })}>
               <RefreshCw className="h-4 w-4" />
             </Button>
+
+            {/* Create User Dialog */}
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" className="flex items-center gap-2">
@@ -150,39 +138,20 @@ export function UsersManagement() {
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
                     <Label>Nome *</Label>
-                    <Input
-                      value={newUser.name}
-                      onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                      placeholder="Nome completo"
-                    />
+                    <Input value={newUser.name} onChange={(e) => setNewUser({ ...newUser, name: e.target.value })} placeholder="Nome completo" />
                   </div>
                   <div className="space-y-2">
                     <Label>Email *</Label>
-                    <Input
-                      type="email"
-                      value={newUser.email}
-                      onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                      placeholder="email@exemplo.com"
-                    />
+                    <Input type="email" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} placeholder="email@exemplo.com" />
                   </div>
                   <div className="space-y-2">
                     <Label>Senha *</Label>
-                    <Input
-                      type="password"
-                      value={newUser.password}
-                      onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                      placeholder="Mínimo 6 caracteres"
-                    />
+                    <Input type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} placeholder="Mínimo 6 caracteres" />
                   </div>
                   <div className="space-y-2">
                     <Label>Role do Sistema</Label>
-                    <Select
-                      value={newUser.role}
-                      onValueChange={(value) => setNewUser({ ...newUser, role: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione (opcional)" />
-                      </SelectTrigger>
+                    <Select value={newUser.role} onValueChange={(value) => setNewUser({ ...newUser, role: value })}>
+                      <SelectTrigger><SelectValue placeholder="Selecione (opcional)" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="user">Usuário</SelectItem>
                         <SelectItem value="moderator">Moderador</SelectItem>
@@ -204,9 +173,7 @@ export function UsersManagement() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
-            </div>
+            <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
           ) : (
             <ScrollArea className="h-[500px]">
               <Table>
@@ -228,46 +195,42 @@ export function UsersManagement() {
                       <TableCell>
                         <div className="flex gap-1 flex-wrap">
                           {u.roles.length > 0 ? u.roles.map((r) => (
-                            <Badge
-                              key={r}
-                              variant={r === 'admin' ? 'destructive' : 'secondary'}
-                              className="cursor-pointer"
-                              onClick={() => {
-                                if (confirm(`Remover role "${r}" deste usuário?`)) {
-                                  updateRoleMutation.mutate({ user_id: u.id, role: r, remove: true });
-                                }
-                              }}
-                            >
+                            <Badge key={r} variant={r === 'admin' ? 'destructive' : 'secondary'} className="cursor-pointer"
+                              onClick={() => { if (confirm(`Remover role "${r}" deste usuário?`)) updateRoleMutation.mutate({ user_id: u.id, role: r, remove: true }); }}>
                               {r} ✕
                             </Badge>
-                          )) : (
-                            <span className="text-sm text-muted-foreground">—</span>
-                          )}
+                          )) : <span className="text-sm text-muted-foreground">—</span>}
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1 flex-wrap">
                           {u.organizations.length > 0 ? u.organizations.map((o) => (
-                            <Badge key={o.id} variant="outline" className="text-xs">
-                              {o.name} ({o.role})
+                            <Badge key={o.id} variant="outline" className="text-xs cursor-pointer group"
+                              onClick={() => { if (confirm(`Remover ${u.name || u.email} da organização "${o.name}"?`)) removeFromOrgMutation.mutate({ user_id: u.id, organization_id: o.id }); }}>
+                              {o.name} ({o.role}) <X className="h-3 w-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </Badge>
-                          )) : (
-                            <span className="text-sm text-muted-foreground">—</span>
-                          )}
+                          )) : <span className="text-sm text-muted-foreground">—</span>}
                         </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
-                        {u.last_sign_in_at
-                          ? new Date(u.last_sign_in_at).toLocaleDateString('pt-BR')
-                          : 'Nunca'}
+                        {u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString('pt-BR') : 'Nunca'}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
+                          {/* Edit User */}
+                          <Button variant="ghost" size="sm" onClick={() => { setEditingUser(u); setEditForm({ name: u.name, email: u.email }); }}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+
+                          {/* Add to Org */}
+                          <Button variant="ghost" size="sm" onClick={() => { setOrgUser(u); setOrgForm({ organization_id: '', org_role: 'member' }); }}>
+                            <Building2 className="h-4 w-4" />
+                          </Button>
+
+                          {/* Roles */}
                           <Dialog>
                             <DialogTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <Shield className="h-4 w-4" />
-                              </Button>
+                              <Button variant="ghost" size="sm"><Shield className="h-4 w-4" /></Button>
                             </DialogTrigger>
                             <DialogContent>
                               <DialogHeader>
@@ -279,25 +242,15 @@ export function UsersManagement() {
                                   <Label>Roles atuais</Label>
                                   <div className="flex gap-2 flex-wrap">
                                     {u.roles.length > 0 ? u.roles.map((r) => (
-                                      <Badge key={r} variant={r === 'admin' ? 'destructive' : 'secondary'}>
-                                        {r}
-                                      </Badge>
-                                    )) : (
-                                      <span className="text-sm text-muted-foreground">Nenhuma role atribuída</span>
-                                    )}
+                                      <Badge key={r} variant={r === 'admin' ? 'destructive' : 'secondary'}>{r}</Badge>
+                                    )) : <span className="text-sm text-muted-foreground">Nenhuma role atribuída</span>}
                                   </div>
                                 </div>
                                 <div className="space-y-2">
                                   <Label>Adicionar role</Label>
                                   <div className="flex gap-2">
                                     {['admin', 'moderator', 'user'].filter((r) => !u.roles.includes(r)).map((r) => (
-                                      <Button
-                                        key={r}
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => updateRoleMutation.mutate({ user_id: u.id, role: r })}
-                                        disabled={updateRoleMutation.isPending}
-                                      >
+                                      <Button key={r} variant="outline" size="sm" onClick={() => updateRoleMutation.mutate({ user_id: u.id, role: r })} disabled={updateRoleMutation.isPending}>
                                         + {r}
                                       </Button>
                                     ))}
@@ -308,13 +261,7 @@ export function UsersManagement() {
                                     <Label>Remover role</Label>
                                     <div className="flex gap-2">
                                       {u.roles.map((r) => (
-                                        <Button
-                                          key={r}
-                                          variant="destructive"
-                                          size="sm"
-                                          onClick={() => updateRoleMutation.mutate({ user_id: u.id, role: r, remove: true })}
-                                          disabled={updateRoleMutation.isPending}
-                                        >
+                                        <Button key={r} variant="destructive" size="sm" onClick={() => updateRoleMutation.mutate({ user_id: u.id, role: r, remove: true })} disabled={updateRoleMutation.isPending}>
                                           - {r}
                                         </Button>
                                       ))}
@@ -325,25 +272,19 @@ export function UsersManagement() {
                             </DialogContent>
                           </Dialog>
 
+                          {/* Delete */}
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Excluir usuário?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Esta ação é irreversível. O usuário {u.email} será permanentemente excluído.
-                                </AlertDialogDescription>
+                                <AlertDialogDescription>Esta ação é irreversível. O usuário {u.email} será permanentemente excluído.</AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                  onClick={() => deleteUserMutation.mutate(u.id)}
-                                >
+                                <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteUserMutation.mutate({ user_id: u.id })}>
                                   Excluir
                                 </AlertDialogAction>
                               </AlertDialogFooter>
@@ -359,6 +300,77 @@ export function UsersManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit User Dialog */}
+      <Dialog open={!!editingUser} onOpenChange={(open) => { if (!open) setEditingUser(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Usuário</DialogTitle>
+            <DialogDescription>Altere o nome ou email do usuário</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Nome</Label>
+              <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingUser(null)}>Cancelar</Button>
+            <Button onClick={handleEditUser} disabled={updateUserMutation.isPending}>
+              {updateUserMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add to Organization Dialog */}
+      <Dialog open={!!orgUser} onOpenChange={(open) => { if (!open) setOrgUser(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Adicionar à Organização</DialogTitle>
+            <DialogDescription>Vincule {orgUser?.name || orgUser?.email} a uma organização</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Organização</Label>
+              <Select value={orgForm.organization_id} onValueChange={(v) => setOrgForm({ ...orgForm, organization_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione a organização" /></SelectTrigger>
+                <SelectContent>
+                  {organizations
+                    .filter((o) => !orgUser?.organizations.some((uo) => uo.id === o.id))
+                    .map((o) => (
+                      <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Papel na Organização</Label>
+              <Select value={orgForm.org_role} onValueChange={(v) => setOrgForm({ ...orgForm, org_role: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="owner">Owner</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="member">Membro</SelectItem>
+                  <SelectItem value="viewer">Visualizador</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOrgUser(null)}>Cancelar</Button>
+            <Button onClick={handleAddToOrg} disabled={addToOrgMutation.isPending}>
+              {addToOrgMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Adicionar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

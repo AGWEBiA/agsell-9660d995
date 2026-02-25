@@ -36,8 +36,8 @@ Deno.serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: authError } = await supabase.auth.getClaims(token);
-    if (authError || !claims?.claims) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -45,6 +45,20 @@ Deno.serve(async (req) => {
     }
 
     const whatsappReq = (await req.json()) as WhatsAppRequest;
+
+    // Validate organization membership
+    if (whatsappReq.organization_id) {
+      const { data: isMember } = await supabase.rpc('is_org_member', {
+        _org_id: whatsappReq.organization_id,
+        _user_id: user.id,
+      });
+      if (!isMember) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden - not a member of this organization" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     // Format phone number
     const phoneNumber = whatsappReq.to.replace(/\D/g, "");

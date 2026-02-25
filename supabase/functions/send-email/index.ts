@@ -36,8 +36,8 @@ Deno.serve(async (req) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: authError } = await supabase.auth.getClaims(token);
-    if (authError || !claims?.claims) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -45,6 +45,20 @@ Deno.serve(async (req) => {
     }
 
     const emailReq = (await req.json()) as EmailRequest;
+
+    // Validate organization membership
+    if (emailReq.organization_id) {
+      const { data: isMember } = await supabase.rpc('is_org_member', {
+        _org_id: emailReq.organization_id,
+        _user_id: user.id,
+      });
+      if (!isMember) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden - not a member of this organization" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
 
     // --- Resolve sender address from verified domain ---
     let resolvedFrom = emailReq.from;
@@ -234,7 +248,7 @@ async function sendWithAmazonSES(config: Record<string, string>, emailReq: Email
 
   try {
     const { AwsClient } = await import("npm:aws4fetch@1.0.20");
-    console.log("SES config - region:", region, "keyId:", access_key_id.substring(0, 4) + "...", "secretLen:", secret_access_key.length);
+    // SES config validated
     
     // Use SESv2 SendEmail API (JSON-based, simpler signing)
     const sesV2Endpoint = `https://email.${region}.amazonaws.com/v2/email/outbound-emails`;
@@ -275,7 +289,7 @@ async function sendWithAmazonSES(config: Record<string, string>, emailReq: Email
       region: region,
     });
 
-    console.log("Sending SES v2 request to:", sesV2Endpoint);
+    // Sending SES v2 request
     const response = await aws.fetch(sesV2Endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

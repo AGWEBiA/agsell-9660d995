@@ -173,9 +173,8 @@ Deno.serve(async (req) => {
     );
   } catch (error: unknown) {
     console.error("Checkout error:", error);
-    const message = error instanceof Error ? error.message : "Internal server error";
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: "An error occurred processing your checkout" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

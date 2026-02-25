@@ -42,8 +42,8 @@ Deno.serve(async (req) => {
     const authSupabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const token = authHeader.replace("Bearer ", "");
-    const { data: claims, error: authError } = await authSupabase.auth.getClaims(token);
-    if (authError || !claims?.claims) {
+    const { data: { user }, error: authError } = await authSupabase.auth.getUser(token);
+    if (authError || !user) {
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -82,6 +82,18 @@ Deno.serve(async (req) => {
 
       if (!agent.is_active) {
         throw new Error("Agent is not active");
+      }
+
+      // Validate user belongs to agent's organization
+      const { data: isMember } = await supabase.rpc('is_org_member', {
+        _org_id: agent.organization_id,
+        _user_id: user.id,
+      });
+      if (!isMember) {
+        return new Response(
+          JSON.stringify({ error: "Forbidden - not a member of this organization" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
 
       // Load knowledge base

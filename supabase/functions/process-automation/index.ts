@@ -46,8 +46,8 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const token = authHeader.replace('Bearer ', '');
-    const { data: claims, error: authError } = await supabase.auth.getClaims(token);
-    if (authError || !claims?.claims) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -110,14 +110,15 @@ serve(async (req) => {
 
         switch (action.type) {
           case 'send_email':
-            // Call send-email function
+            // Call send-email function using user's token for proper auth
             const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${supabaseServiceKey}`,
+                'Authorization': authHeader,
               },
               body: JSON.stringify({
+                organization_id: automation.organization_id,
                 to: action.config.to || action.config.email,
                 subject: action.config.subject,
                 html: action.config.content || action.config.body,
@@ -127,14 +128,15 @@ serve(async (req) => {
             break;
 
           case 'send_whatsapp':
-            // Call send-whatsapp function
+            // Call send-whatsapp function using user's token for proper auth
             const waResponse = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${supabaseServiceKey}`,
+                'Authorization': authHeader,
               },
               body: JSON.stringify({
+                organization_id: automation.organization_id,
                 to: action.config.to || action.config.phone,
                 message: action.config.message,
               }),

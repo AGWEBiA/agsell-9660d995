@@ -23,6 +23,7 @@ import { useForms } from '@/hooks/useForms';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import type { Json } from '@/integrations/supabase/types';
+import { FormFieldEditor, type FormField } from '@/components/forms/FormFieldEditor';
 
 export default function Forms() {
   const { forms, isLoading, createForm, updateForm, toggleForm, deleteForm, getFormSubmissions } = useForms();
@@ -30,7 +31,7 @@ export default function Forms() {
   const [newForm, setNewForm] = useState({ name: '', description: '' });
 
   // Edit state
-  const [editingForm, setEditingForm] = useState<{ id: string; name: string; description: string } | null>(null);
+  const [editingForm, setEditingForm] = useState<{ id: string; name: string; description: string; fields: FormField[] } | null>(null);
 
   // Submissions state
   const [submissionsData, setSubmissionsData] = useState<{ formName: string; items: any[] } | null>(null);
@@ -57,6 +58,7 @@ export default function Forms() {
       id: editingForm.id,
       name: editingForm.name,
       description: editingForm.description || null,
+      fields: editingForm.fields as unknown as Json,
     });
     setEditingForm(null);
   };
@@ -263,7 +265,7 @@ export default function Forms() {
                             <DropdownMenuItem onSelect={() => copyEmbedCode(form.id)}>
                               <Copy className="mr-2 h-4 w-4" />Copiar embed
                             </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setEditingForm({ id: form.id, name: form.name, description: form.description || '' }); }}>
+                            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); const formFields = Array.isArray(form.fields) ? (form.fields as unknown as FormField[]) : []; setEditingForm({ id: form.id, name: form.name, description: form.description || '', fields: formFields }); }}>
                               <Pencil className="mr-2 h-4 w-4" />Editar
                             </DropdownMenuItem>
                             <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleViewSubmissions(form.id, form.name); }}>
@@ -286,20 +288,26 @@ export default function Forms() {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingForm} onOpenChange={(open) => !open && setEditingForm(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Formulário</DialogTitle>
-            <DialogDescription>Atualize o nome e a descrição do formulário.</DialogDescription>
+            <DialogDescription>Atualize nome, descrição e campos do formulário.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Nome</Label>
-              <Input value={editingForm?.name ?? ''} onChange={(e) => setEditingForm(prev => prev ? { ...prev, name: e.target.value } : null)} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Nome</Label>
+                <Input value={editingForm?.name ?? ''} onChange={(e) => setEditingForm(prev => prev ? { ...prev, name: e.target.value } : null)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Descrição</Label>
+                <Input value={editingForm?.description ?? ''} onChange={(e) => setEditingForm(prev => prev ? { ...prev, description: e.target.value } : null)} />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Descrição</Label>
-              <Textarea value={editingForm?.description ?? ''} onChange={(e) => setEditingForm(prev => prev ? { ...prev, description: e.target.value } : null)} />
-            </div>
+            <FormFieldEditor
+              fields={editingForm?.fields ?? []}
+              onChange={(fields) => setEditingForm(prev => prev ? { ...prev, fields } : null)}
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingForm(null)}>Cancelar</Button>

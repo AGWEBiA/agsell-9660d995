@@ -17,6 +17,7 @@ export interface Plan {
   max_whatsapp_messages: number;
   max_automations: number;
   max_forms: number;
+  max_instagram_accounts: number;
   features: string[];
   is_active: boolean;
   is_default: boolean;

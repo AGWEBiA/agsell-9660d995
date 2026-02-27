@@ -64,11 +64,15 @@ export default function InstagramPage() {
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [connectForm, setConnectForm] = useState({
-    access_token: '',
-    instagram_user_id: '',
-    username: '',
-  });
+  const [isLookingUp, setIsLookingUp] = useState(false);
+  const [tokenInput, setTokenInput] = useState('');
+  const [lookedUpProfile, setLookedUpProfile] = useState<{
+    instagram_user_id: string;
+    username: string;
+    full_name: string | null;
+    profile_picture_url: string | null;
+    account_type: string | null;
+  } | null>(null);
   const [newAutomation, setNewAutomation] = useState({
     name: '',
     description: '',
@@ -80,28 +84,49 @@ export default function InstagramPage() {
   const maxInstagramAccounts = currentPlan?.max_instagram_accounts ?? 1;
   const canAddMoreAccounts = maxInstagramAccounts === -1 || (accounts?.length ?? 0) < maxInstagramAccounts;
 
-  const handleConnectAccount = async () => {
-    if (!currentOrganization || !user) return;
-    if (!canAddMoreAccounts) {
-      toast({ title: 'Limite atingido', description: `Seu plano permite no máximo ${maxInstagramAccounts} conta(s) do Instagram. Faça upgrade para o Enterprise para contas ilimitadas.`, variant: 'destructive' });
+  const handleLookupToken = async () => {
+    if (!tokenInput.trim()) {
+      toast({ title: 'Cole o Access Token', variant: 'destructive' });
       return;
     }
-    if (!connectForm.access_token || !connectForm.instagram_user_id || !connectForm.username) {
-      toast({ title: 'Preencha todos os campos', variant: 'destructive' });
+    setIsLookingUp(true);
+    setLookedUpProfile(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('instagram-lookup', {
+        body: { access_token: tokenInput.trim() },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setLookedUpProfile(data);
+      toast({ title: 'Conta encontrada!', description: `@${data.username}` });
+    } catch (err: any) {
+      toast({ title: 'Erro ao buscar conta', description: err.message, variant: 'destructive' });
+    } finally {
+      setIsLookingUp(false);
+    }
+  };
+
+  const handleConnectAccount = async () => {
+    if (!currentOrganization || !user || !lookedUpProfile) return;
+    if (!canAddMoreAccounts) {
+      toast({ title: 'Limite atingido', description: `Seu plano permite no máximo ${maxInstagramAccounts} conta(s). Faça upgrade para o Enterprise.`, variant: 'destructive' });
       return;
     }
     setIsConnecting(true);
     try {
       const { error } = await supabase.from('instagram_accounts').insert({
         organization_id: currentOrganization.id,
-        access_token: connectForm.access_token,
-        instagram_user_id: connectForm.instagram_user_id,
-        username: connectForm.username,
+        access_token: tokenInput.trim(),
+        instagram_user_id: lookedUpProfile.instagram_user_id,
+        username: lookedUpProfile.username,
+        full_name: lookedUpProfile.full_name,
+        profile_picture_url: lookedUpProfile.profile_picture_url,
         connected_by: user.id,
       } as any);
       if (error) throw error;
-      toast({ title: 'Conta conectada!', description: `@${connectForm.username} foi vinculada com sucesso.` });
-      setConnectForm({ access_token: '', instagram_user_id: '', username: '' });
+      toast({ title: 'Conta conectada!', description: `@${lookedUpProfile.username} foi vinculada com sucesso.` });
+      setTokenInput('');
+      setLookedUpProfile(null);
       queryClient.invalidateQueries({ queryKey: ['instagram_accounts'] });
     } catch (err: any) {
       toast({ title: 'Erro ao conectar', description: err.message, variant: 'destructive' });
@@ -468,56 +493,73 @@ export default function InstagramPage() {
                   <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground font-bold text-sm shrink-0">4</div>
                   <div className="flex-1 space-y-4">
                     <div>
-                      <h4 className="font-semibold">Cole suas credenciais abaixo para conectar</h4>
+                      <h4 className="font-semibold">Cole o Access Token para conectar automaticamente</h4>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Com o token e o ID do Instagram em mãos, preencha os campos abaixo para vincular sua conta.
+                        Basta colar o token — o sistema buscará automaticamente os dados da sua conta.
                       </p>
-                    </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="ig-username">@ Usuário do Instagram <span className="text-destructive">*</span></Label>
-                        <Input
-                          id="ig-username"
-                          placeholder="seu_usuario"
-                          value={connectForm.username}
-                          onChange={e => setConnectForm(prev => ({ ...prev, username: e.target.value }))}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="ig-user-id">Instagram User ID <span className="text-destructive">*</span></Label>
-                        <Input
-                          id="ig-user-id"
-                          placeholder="Ex: 17841400123456789"
-                          value={connectForm.instagram_user_id}
-                          onChange={e => setConnectForm(prev => ({ ...prev, instagram_user_id: e.target.value }))}
-                        />
-                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="ig-token">Access Token (Longa Duração) <span className="text-destructive">*</span></Label>
-                      <Input
-                        id="ig-token"
-                        type="password"
-                        placeholder="Cole aqui o token gerado no Meta Developers"
-                        value={connectForm.access_token}
-                        onChange={e => setConnectForm(prev => ({ ...prev, access_token: e.target.value }))}
-                      />
+                      <div className="flex gap-2">
+                        <Input
+                          id="ig-token"
+                          type="password"
+                          placeholder="Cole aqui o token gerado no Meta Developers"
+                          value={tokenInput}
+                          onChange={e => { setTokenInput(e.target.value); setLookedUpProfile(null); }}
+                          className="flex-1"
+                        />
+                        <Button
+                          variant="outline"
+                          onClick={handleLookupToken}
+                          disabled={isLookingUp || !tokenInput.trim()}
+                          className="gap-2 shrink-0"
+                        >
+                          {isLookingUp ? (
+                            <><RefreshCw className="h-4 w-4 animate-spin" /> Buscando...</>
+                          ) : (
+                            'Buscar Conta'
+                          )}
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <Button
-                        onClick={handleConnectAccount}
-                        disabled={isConnecting || !canAddMoreAccounts || !connectForm.access_token || !connectForm.instagram_user_id || !connectForm.username}
-                        className="gap-2"
-                      >
-                        {isConnecting ? (
-                          <><RefreshCw className="h-4 w-4 animate-spin" /> Conectando...</>
+
+                    {/* Profile preview after lookup */}
+                    {lookedUpProfile && (
+                      <div className="flex items-center gap-4 p-4 rounded-lg border bg-card">
+                        {lookedUpProfile.profile_picture_url ? (
+                          <img src={lookedUpProfile.profile_picture_url} alt={lookedUpProfile.username} className="h-14 w-14 rounded-full" />
                         ) : (
-                          <><Instagram className="h-4 w-4" /> Conectar Conta</>
+                          <div className="h-14 w-14 rounded-full bg-muted flex items-center justify-center">
+                            <Instagram className="h-7 w-7 text-pink-500" />
+                          </div>
                         )}
-                      </Button>
+                        <div className="flex-1">
+                          <p className="font-semibold text-base">@{lookedUpProfile.username}</p>
+                          {lookedUpProfile.full_name && <p className="text-sm text-muted-foreground">{lookedUpProfile.full_name}</p>}
+                          {lookedUpProfile.account_type && (
+                            <Badge variant="secondary" className="mt-1 text-xs">{lookedUpProfile.account_type}</Badge>
+                          )}
+                        </div>
+                        <Button
+                          onClick={handleConnectAccount}
+                          disabled={isConnecting || !canAddMoreAccounts}
+                          className="gap-2"
+                        >
+                          {isConnecting ? (
+                            <><RefreshCw className="h-4 w-4 animate-spin" /> Conectando...</>
+                          ) : (
+                            <><CheckCircle2 className="h-4 w-4" /> Conectar esta conta</>
+                          )}
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Limit info */}
+                    <div className="flex items-center gap-3">
                       {!canAddMoreAccounts && (
                         <p className="text-sm text-destructive">
-                          Limite de {maxInstagramAccounts} conta(s) atingido. <button onClick={() => navigate('/plans')} className="underline font-medium">Faça upgrade</button> para o plano Enterprise.
+                          Limite de {maxInstagramAccounts} conta(s) atingido. <button onClick={() => navigate('/plans')} className="underline font-medium">Faça upgrade</button> para o Enterprise.
                         </p>
                       )}
                       {canAddMoreAccounts && maxInstagramAccounts !== -1 && (

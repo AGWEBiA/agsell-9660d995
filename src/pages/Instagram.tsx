@@ -119,13 +119,31 @@ export default function InstagramPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
             <Instagram className="h-8 w-8 text-pink-500" />
-            Instagram
+            Automação do Instagram
           </h1>
           <p className="text-muted-foreground mt-1">
-            Gerencie automações de DMs, comentários e stories do Instagram
+            Conecte sua conta do Instagram e crie automações para DMs, comentários e stories
           </p>
         </div>
       </div>
+
+      {/* Banner de conexão quando não tem conta */}
+      {!loadingAccounts && !accounts?.length && (
+        <Card className="border-pink-200 dark:border-pink-800 bg-gradient-to-r from-pink-50 to-purple-50 dark:from-pink-950/20 dark:to-purple-950/20">
+          <CardContent className="flex items-center gap-6 py-6">
+            <div className="p-4 rounded-full bg-pink-100 dark:bg-pink-900/30 shrink-0">
+              <Instagram className="h-10 w-10 text-pink-500" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold mb-1">Conecte sua conta do Instagram</h3>
+              <p className="text-sm text-muted-foreground">
+                Para começar a usar automações, você precisa conectar sua conta do Instagram Business ou Creator. 
+                Vá até a aba <strong>"Minha Conta Instagram"</strong> abaixo para seguir o passo a passo.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
@@ -167,10 +185,13 @@ export default function InstagramPage() {
         </Card>
       </div>
 
-      <Tabs defaultValue="automations" className="space-y-4">
+      <Tabs defaultValue={accounts?.length ? 'automations' : 'accounts'} className="space-y-4">
         <TabsList>
+          <TabsTrigger value="accounts" className="flex items-center gap-2">
+            <Instagram className="h-4 w-4" />
+            Minha Conta Instagram
+          </TabsTrigger>
           <TabsTrigger value="automations">Automações</TabsTrigger>
-          <TabsTrigger value="accounts">Contas</TabsTrigger>
           <TabsTrigger value="logs">Histórico</TabsTrigger>
         </TabsList>
 
@@ -346,70 +367,106 @@ export default function InstagramPage() {
 
         {/* Accounts Tab */}
         <TabsContent value="accounts" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Contas do Instagram</h2>
-          </div>
-
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Instagram className="h-5 w-5 text-pink-500" />
-                Conectar Conta do Instagram
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <Instagram className="h-6 w-6 text-pink-500" />
+                Conectar sua Conta do Instagram
               </CardTitle>
-              <CardDescription>
-                Para conectar sua conta do Instagram, é necessário configurar a integração com a Meta (Facebook) API.
+              <CardDescription className="text-base">
+                Siga os passos abaixo para vincular sua conta do Instagram ao AG Sell e começar a usar automações.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-                <h4 className="font-medium flex items-center gap-2">
-                  <Settings2 className="h-4 w-4" />
-                  Pré-requisitos
+            <CardContent className="space-y-6">
+              {/* Step-by-step guide */}
+              <div className="space-y-4">
+                <div className="flex gap-4 items-start p-4 rounded-lg border bg-card">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground font-bold text-sm shrink-0">1</div>
+                  <div>
+                    <h4 className="font-semibold">Tenha uma conta Instagram Business ou Creator</h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Sua conta pessoal do Instagram precisa ser convertida para <strong>Business</strong> ou <strong>Creator</strong>. 
+                      Isso é feito nas configurações do próprio Instagram (Configurações → Conta → Mudar para conta profissional).
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 items-start p-4 rounded-lg border bg-card">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground font-bold text-sm shrink-0">2</div>
+                  <div>
+                    <h4 className="font-semibold">Vincule à uma Página do Facebook</h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      A conta Instagram Business precisa estar vinculada a uma Página do Facebook. 
+                      Faça isso em: Instagram → Configurações → Conta → Páginas vinculadas.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 items-start p-4 rounded-lg border bg-card">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground font-bold text-sm shrink-0">3</div>
+                  <div>
+                    <h4 className="font-semibold">Crie um App no Meta Developers</h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Acesse o portal de desenvolvedores da Meta, crie um App do tipo "Business" e ative a Instagram Graph API. 
+                      Gere um <strong>Token de Acesso de Longa Duração</strong>.
+                    </p>
+                    <Button variant="outline" size="sm" className="mt-2" asChild>
+                      <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Abrir Meta Developers
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 items-start p-4 rounded-lg border bg-card">
+                  <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-primary-foreground font-bold text-sm shrink-0">4</div>
+                  <div>
+                    <h4 className="font-semibold">Cole o Token de Acesso aqui no AG Sell</h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Com o token e o ID do Instagram em mãos, vá em <strong>Integrações → Instagram</strong> no menu lateral 
+                      e cadastre sua conta usando as credenciais obtidas no passo anterior.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-muted/50 rounded-lg p-4">
+                <h4 className="font-medium flex items-center gap-2 text-sm">
+                  <AlertCircle className="h-4 w-4 text-yellow-500" />
+                  Importante
                 </h4>
-                <ul className="text-sm text-muted-foreground space-y-2 list-disc list-inside">
-                  <li>Conta do Instagram Business ou Creator vinculada a uma Página do Facebook</li>
-                  <li>App registrado na Meta Developers com permissões do Instagram Graph API</li>
-                  <li>Token de acesso de longa duração configurado</li>
-                  <li>Webhooks da Meta configurados para receber eventos em tempo real</li>
-                </ul>
+                <p className="text-sm text-muted-foreground mt-1">
+                  A Meta exige que sua empresa esteja <strong>verificada no Business Manager</strong> para liberar 
+                  as permissões de mensagens automáticas (DMs). Sem essa verificação, as automações de mensagens não funcionarão.
+                </p>
               </div>
 
-              <div className="flex gap-3">
-                <Button variant="outline" asChild>
-                  <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Meta Developers
-                  </a>
-                </Button>
-                <Button variant="outline" asChild>
-                  <a href="https://developers.facebook.com/docs/instagram-api/" target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Documentação da API
-                  </a>
-                </Button>
-              </div>
-
+              {/* Connected accounts */}
               {loadingAccounts ? (
                 <Skeleton className="h-20 w-full" />
               ) : accounts?.length ? (
-                <div className="space-y-3 mt-4">
-                  <h4 className="font-medium">Contas Conectadas</h4>
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-lg flex items-center gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    Contas Conectadas
+                  </h4>
                   {accounts.map(account => (
-                    <div key={account.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div key={account.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center gap-3">
                         {account.profile_picture_url ? (
-                          <img src={account.profile_picture_url} alt={account.username} className="h-10 w-10 rounded-full" />
+                          <img src={account.profile_picture_url} alt={account.username} className="h-12 w-12 rounded-full" />
                         ) : (
-                          <div className="h-10 w-10 rounded-full bg-pink-100 dark:bg-pink-900/20 flex items-center justify-center">
-                            <Instagram className="h-5 w-5 text-pink-500" />
+                          <div className="h-12 w-12 rounded-full bg-pink-100 dark:bg-pink-900/20 flex items-center justify-center">
+                            <Instagram className="h-6 w-6 text-pink-500" />
                           </div>
                         )}
                         <div>
-                          <p className="font-medium">@{account.username}</p>
+                          <p className="font-semibold text-base">@{account.username}</p>
                           <p className="text-sm text-muted-foreground">{account.full_name}</p>
                         </div>
                       </div>
-                      <Badge variant={account.is_active ? 'default' : 'secondary'}>
+                      <Badge variant={account.is_active ? 'default' : 'secondary'} className="text-sm">
                         {account.is_active ? (
                           <><CheckCircle2 className="h-3 w-3 mr-1" /> Conectada</>
                         ) : (
@@ -420,9 +477,12 @@ export default function InstagramPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-6 text-muted-foreground">
-                  <p>Nenhuma conta conectada ainda.</p>
-                  <p className="text-sm mt-1">Configure a integração nas Configurações → Integrações para conectar sua conta.</p>
+                <div className="text-center py-8 border-2 border-dashed rounded-lg">
+                  <Instagram className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                  <p className="font-medium">Nenhuma conta do Instagram conectada</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Siga o passo a passo acima e vá em Integrações para conectar sua conta.
+                  </p>
                 </div>
               )}
             </CardContent>

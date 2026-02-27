@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { usePlanFeature } from '@/hooks/usePlans';
+import { usePlanFeature, usePlans } from '@/hooks/usePlans';
 import { useNavigate } from 'react-router-dom';
 import { Lock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -55,6 +55,7 @@ export default function InstagramPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { hasFeature: hasInstagram, isLoading: loadingFeature } = usePlanFeature('instagram');
+  const { currentPlan } = usePlans();
   const { data: accounts, isLoading: loadingAccounts } = useInstagramAccounts();
   const { data: automations, isLoading: loadingAutomations } = useInstagramAutomations();
   const createAutomation = useCreateInstagramAutomation();
@@ -76,8 +77,15 @@ export default function InstagramPage() {
     response_message: '',
   });
 
+  const maxInstagramAccounts = currentPlan?.max_instagram_accounts ?? 1;
+  const canAddMoreAccounts = maxInstagramAccounts === -1 || (accounts?.length ?? 0) < maxInstagramAccounts;
+
   const handleConnectAccount = async () => {
     if (!currentOrganization || !user) return;
+    if (!canAddMoreAccounts) {
+      toast({ title: 'Limite atingido', description: `Seu plano permite no máximo ${maxInstagramAccounts} conta(s) do Instagram. Faça upgrade para o Enterprise para contas ilimitadas.`, variant: 'destructive' });
+      return;
+    }
     if (!connectForm.access_token || !connectForm.instagram_user_id || !connectForm.username) {
       toast({ title: 'Preencha todos os campos', variant: 'destructive' });
       return;
@@ -495,17 +503,32 @@ export default function InstagramPage() {
                         onChange={e => setConnectForm(prev => ({ ...prev, access_token: e.target.value }))}
                       />
                     </div>
-                    <Button
-                      onClick={handleConnectAccount}
-                      disabled={isConnecting || !connectForm.access_token || !connectForm.instagram_user_id || !connectForm.username}
-                      className="gap-2"
-                    >
-                      {isConnecting ? (
-                        <><RefreshCw className="h-4 w-4 animate-spin" /> Conectando...</>
-                      ) : (
-                        <><Instagram className="h-4 w-4" /> Conectar Conta</>
+                    <div className="flex items-center gap-4">
+                      <Button
+                        onClick={handleConnectAccount}
+                        disabled={isConnecting || !canAddMoreAccounts || !connectForm.access_token || !connectForm.instagram_user_id || !connectForm.username}
+                        className="gap-2"
+                      >
+                        {isConnecting ? (
+                          <><RefreshCw className="h-4 w-4 animate-spin" /> Conectando...</>
+                        ) : (
+                          <><Instagram className="h-4 w-4" /> Conectar Conta</>
+                        )}
+                      </Button>
+                      {!canAddMoreAccounts && (
+                        <p className="text-sm text-destructive">
+                          Limite de {maxInstagramAccounts} conta(s) atingido. <button onClick={() => navigate('/plans')} className="underline font-medium">Faça upgrade</button> para o plano Enterprise.
+                        </p>
                       )}
-                    </Button>
+                      {canAddMoreAccounts && maxInstagramAccounts !== -1 && (
+                        <p className="text-xs text-muted-foreground">
+                          {accounts?.length ?? 0}/{maxInstagramAccounts} conta(s) utilizada(s)
+                        </p>
+                      )}
+                      {maxInstagramAccounts === -1 && (
+                        <p className="text-xs text-muted-foreground">Contas ilimitadas (Enterprise)</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

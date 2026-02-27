@@ -19,13 +19,15 @@ interface OrganizationContextType {
 const OrganizationContext = createContext<OrganizationContextType | undefined>(undefined);
 
 export function OrganizationProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [currentOrganization, setCurrentOrganization] = useState<Organization | null>(null);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const fetchOrganizations = async () => {
+    if (authLoading) return; // Wait for auth to finish
+    
     if (!user?.id) {
       setOrganizations([]);
       setCurrentOrganization(null);
@@ -81,7 +83,7 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     fetchOrganizations();
-  }, [user?.id]);
+  }, [user?.id, authLoading]);
 
   useEffect(() => {
     if (currentOrganization) {

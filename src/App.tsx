@@ -36,6 +36,7 @@ import WhatsAppFlowsPage from "./pages/WhatsAppFlows";
 import Automations from "./pages/Automations";
 import LeadScoring from "./pages/LeadScoring";
 import Forms from "./pages/Forms";
+import FormView from "./pages/FormView";
 import Analytics from "./pages/Analytics";
 import Gamification from "./pages/Gamification";
 import Integrations from "./pages/Integrations";
@@ -75,6 +76,7 @@ const App = () => (
                   <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                   <Route path="/terms-of-service" element={<TermsOfService />} />
                   <Route path="/purchase-success" element={<PurchaseSuccess />} />
+                  <Route path="/forms/:formId" element={<FormView />} />
                   <Route path="/subscription-expired" element={<ProtectedRoute allowExpired><SubscriptionExpired /></ProtectedRoute>} />
                   
                   {/* Protected Routes */}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ import {
   BarChart3,
   CreditCard,
   Mail,
+  Crown,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,9 +36,11 @@ import { PlansManagement } from '@/components/admin/PlansManagement';
 import { EmailCostProjection } from '@/components/admin/EmailCostProjection';
 import { EmailProviderConfig } from '@/components/admin/EmailProviderConfig';
 import { UsersManagement } from '@/components/admin/UsersManagement';
+import { AssignPlanDialog } from '@/components/admin/AssignPlanDialog';
 
 export default function Admin() {
   const { user, isAdmin, loading: isCheckingAdmin } = useAuth();
+  const [assignPlanOrg, setAssignPlanOrg] = useState<{ id: string; name: string } | null>(null);
 
   // Fetch all organizations
   const { data: organizations = [], isLoading: isLoadingOrgs } = useQuery({
@@ -317,6 +320,7 @@ export default function Admin() {
                         <TableHead>Status</TableHead>
                         <TableHead>Membros</TableHead>
                         <TableHead>Criado em</TableHead>
+                        <TableHead className="text-right">Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -350,6 +354,11 @@ export default function Admin() {
                             <TableCell className="text-muted-foreground">
                               {new Date(org.created_at).toLocaleDateString('pt-BR')}
                             </TableCell>
+                            <TableCell className="text-right">
+                              <Button variant="ghost" size="sm" onClick={() => setAssignPlanOrg({ id: org.id, name: org.name })} title="Atribuir plano">
+                                <Crown className="h-4 w-4 text-yellow-500" />
+                              </Button>
+                            </TableCell>
                           </TableRow>
                         );
                       })}
@@ -377,6 +386,12 @@ export default function Admin() {
           <EmailProviderConfig />
         </TabsContent>
       </Tabs>
+
+      <AssignPlanDialog
+        organization={assignPlanOrg}
+        open={!!assignPlanOrg}
+        onOpenChange={(open) => { if (!open) setAssignPlanOrg(null); }}
+      />
     </div>
   );
 }

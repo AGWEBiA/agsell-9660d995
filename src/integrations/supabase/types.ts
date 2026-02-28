@@ -1477,6 +1477,7 @@ export type Database = {
           created_at: string
           error_message: string | null
           id: string
+          instagram_user_id: string | null
           sent_at: string | null
           status: string
           username: string
@@ -1486,6 +1487,7 @@ export type Database = {
           created_at?: string
           error_message?: string | null
           id?: string
+          instagram_user_id?: string | null
           sent_at?: string | null
           status?: string
           username: string
@@ -1495,6 +1497,7 @@ export type Database = {
           created_at?: string
           error_message?: string | null
           id?: string
+          instagram_user_id?: string | null
           sent_at?: string | null
           status?: string
           username?: string

@@ -123,9 +123,20 @@ serve(async (req) => {
     // Process each recipient with delay
     for (const recipient of recipients) {
       try {
-        // Step 1: Get user ID from username using Instagram API
-        // Note: The Instagram API requires the recipient's Instagram-scoped ID
-        // For Business Login, we need to use the messaging endpoint
+        // The Instagram Messaging API requires the recipient's IGSID (Instagram-scoped user ID)
+        // Username-based sending is NOT supported by the API
+        const recipientIgId = recipient.instagram_user_id;
+
+        if (!recipientIgId) {
+          console.error(`No IGSID for @${recipient.username} — cannot send DM`);
+          await supabaseAdmin.from("instagram_dm_broadcast_recipients").update({
+            status: "failed",
+            error_message: "IGSID não disponível. Só é possível enviar DM para usuários que já interagiram com sua conta.",
+          }).eq("id", recipient.id);
+          failedCount++;
+          continue;
+        }
+
         const sendRes = await fetch(
           `https://graph.instagram.com/v21.0/${igAccount.instagram_user_id}/messages`,
           {
@@ -135,7 +146,7 @@ serve(async (req) => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              recipient: { username: recipient.username },
+              recipient: { id: recipientIgId },
               message: { text: broadcast.message },
             }),
           }

@@ -341,6 +341,11 @@ function BroadcastHistory({ organizationId }: { organizationId?: string }) {
 }
 
 /* ─── Seletor de Seguidores com Autocomplete ─── */
+export interface FollowerEntry {
+  username: string;
+  instagram_user_id?: string;
+}
+
 function FollowerSelector({
   selectedFollowers,
   setSelectedFollowers,
@@ -348,8 +353,8 @@ function FollowerSelector({
   setFollowerSearch,
   organizationId,
 }: {
-  selectedFollowers: string[];
-  setSelectedFollowers: React.Dispatch<React.SetStateAction<string[]>>;
+  selectedFollowers: FollowerEntry[];
+  setSelectedFollowers: React.Dispatch<React.SetStateAction<FollowerEntry[]>>;
   followerSearch: string;
   setFollowerSearch: React.Dispatch<React.SetStateAction<string>>;
   organizationId?: string;
@@ -372,7 +377,7 @@ function FollowerSelector({
     enabled: !!organizationId,
   });
 
-  // Fetch contacts from instagram automation logs (interaction history)
+  // Fetch contacts from instagram automation logs (interaction history) — these have IGSIDs
   const { data: interactionContacts } = useQuery({
     queryKey: ['ig_interaction_contacts', organizationId],
     queryFn: async () => {
@@ -382,32 +387,34 @@ function FollowerSelector({
         .order('created_at', { ascending: false })
         .limit(200);
       if (error) throw error;
-      // Extract unique usernames from event_data
-      const usernames = new Set<string>();
+      // Extract unique usernames + IGSIDs from event_data
+      const map = new Map<string, string | undefined>();
       data?.forEach(log => {
         const ed = log.event_data as Record<string, unknown>;
-        if (ed?.username && typeof ed.username === 'string') {
-          usernames.add(ed.username);
-        }
-        if (ed?.from_username && typeof ed.from_username === 'string') {
-          usernames.add(ed.from_username);
+        const username = (ed?.username || ed?.from_username) as string | undefined;
+        const igId = (ed?.from_id || ed?.sender_id || ed?.user_id) as string | undefined;
+        if (username && typeof username === 'string') {
+          // Prefer entries with IGSID
+          if (!map.has(username.toLowerCase()) || (igId && !map.get(username.toLowerCase()))) {
+            map.set(username.toLowerCase(), igId);
+          }
         }
       });
-      return Array.from(usernames);
+      return Array.from(map.entries()).map(([username, igId]) => ({ username, instagram_user_id: igId }));
     },
     enabled: !!organizationId,
   });
 
   // Build suggestion list
   const suggestions = React.useMemo(() => {
-    const items: { username: string; label: string; source: 'crm' | 'interaction' | 'manual' }[] = [];
+    const items: { username: string; instagram_user_id?: string; label: string; source: 'crm' | 'interaction' | 'manual'; hasIgId: boolean }[] = [];
     const seen = new Set<string>();
 
-    // From interaction history
-    interactionContacts?.forEach(username => {
+    // From interaction history (prioritize — these may have IGSIDs)
+    interactionContacts?.forEach(({ username, instagram_user_id }) => {
       if (!seen.has(username.toLowerCase())) {
         seen.add(username.toLowerCase());
-        items.push({ username, label: `@${username}`, source: 'interaction' });
+        items.push({ username, instagram_user_id, label: `@${username}`, source: 'interaction', hasIgId: !!instagram_user_id });
       }
     });
 
@@ -416,7 +423,7 @@ function FollowerSelector({
       const name = `${contact.first_name}${contact.last_name ? ' ' + contact.last_name : ''}`;
       if (contact.source === 'instagram' && !seen.has(contact.first_name.toLowerCase())) {
         seen.add(contact.first_name.toLowerCase());
-        items.push({ username: contact.first_name, label: `@${contact.first_name} (${name})`, source: 'crm' });
+        items.push({ username: contact.first_name, label: `@${contact.first_name} (${name})`, source: 'crm', hasIgId: false });
       }
     });
 
@@ -427,18 +434,20 @@ function FollowerSelector({
   const filteredSuggestions = searchTerm
     ? suggestions.filter(s => 
         s.username.toLowerCase().includes(searchTerm) && 
-        !selectedFollowers.includes(s.username)
+        !selectedFollowers.some(f => f.username === s.username)
       )
     : [];
 
-  const addFollower = (username: string) => {
+  const addFollower = (username: string, instagram_user_id?: string) => {
     const clean = username.trim().replace(/^@/, '');
-    if (clean && !selectedFollowers.includes(clean)) {
-      setSelectedFollowers(prev => [...prev, clean]);
+    if (clean && !selectedFollowers.some(f => f.username === clean)) {
+      setSelectedFollowers(prev => [...prev, { username: clean, instagram_user_id }]);
     }
     setFollowerSearch('');
     setShowSuggestions(false);
   };
+
+  const hasNoIgId = selectedFollowers.some(f => !f.instagram_user_id);
 
   return (
     <div className="space-y-3">
@@ -482,47 +491,62 @@ function FollowerSelector({
                   className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent text-left"
                   onMouseDown={e => {
                     e.preventDefault();
-                    addFollower(suggestion.username);
+                    addFollower(suggestion.username, suggestion.instagram_user_id);
                   }}
                 >
                   <Instagram className="h-3.5 w-3.5 text-muted-foreground" />
                   <span className="font-medium">{suggestion.label}</span>
-                  <Badge variant="outline" className="ml-auto text-[10px] h-5">
-                    {suggestion.source === 'interaction' ? 'Interação' : 'CRM'}
-                  </Badge>
+                  <div className="ml-auto flex items-center gap-1">
+                    {suggestion.hasIgId && (
+                      <Badge variant="default" className="text-[10px] h-5 bg-green-600">
+                        <CheckCircle2 className="h-3 w-3 mr-0.5" /> IGSID
+                      </Badge>
+                    )}
+                    <Badge variant="outline" className="text-[10px] h-5">
+                      {suggestion.source === 'interaction' ? 'Interação' : 'CRM'}
+                    </Badge>
+                  </div>
                 </button>
               ))}
             </div>
           )}
         </div>
         <p className="text-xs text-muted-foreground">
-          Digite @ para buscar em contatos do CRM e histórico de interações, ou adicione manualmente.
+          💡 Priorize contatos com badge <strong>IGSID</strong> — são usuários que já interagiram com sua conta e podem receber DMs.
         </p>
       </div>
 
       {selectedFollowers.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {selectedFollowers.map(username => (
-            <Badge key={username} variant="secondary" className="gap-1 pr-1">
-              @{username}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-4 w-4 p-0 hover:bg-transparent"
-                onClick={() => setSelectedFollowers(prev => prev.filter(u => u !== username))}
-              >
-                <XCircle className="h-3 w-3" />
-              </Button>
-            </Badge>
-          ))}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 text-xs text-destructive"
-            onClick={() => setSelectedFollowers([])}
-          >
-            Limpar todos
-          </Button>
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
+            {selectedFollowers.map(({ username, instagram_user_id }) => (
+              <Badge key={username} variant={instagram_user_id ? 'secondary' : 'outline'} className={`gap-1 pr-1 ${!instagram_user_id ? 'border-yellow-400 dark:border-yellow-600' : ''}`}>
+                @{username}
+                {!instagram_user_id && <span className="text-yellow-600 dark:text-yellow-400 text-[10px]">⚠</span>}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-4 w-4 p-0 hover:bg-transparent"
+                  onClick={() => setSelectedFollowers(prev => prev.filter(u => u.username !== username))}
+                >
+                  <XCircle className="h-3 w-3" />
+                </Button>
+              </Badge>
+            ))}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 text-xs text-destructive"
+              onClick={() => setSelectedFollowers([])}
+            >
+              Limpar todos
+            </Button>
+          </div>
+          {hasNoIgId && (
+            <p className="text-xs text-yellow-600 dark:text-yellow-400">
+              ⚠️ Destinatários sem IGSID podem falhar. A API do Instagram só permite enviar DMs para usuários que já interagiram com sua conta.
+            </p>
+          )}
         </div>
       )}
     </div>
@@ -560,7 +584,7 @@ export default function InstagramPage() {
   const [typeFilter, setTypeFilter] = useState<AutomationCategory>('all');
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [broadcastTarget, setBroadcastTarget] = useState<'all' | 'selected'>('all');
-  const [selectedFollowers, setSelectedFollowers] = useState<string[]>([]);
+  const [selectedFollowers, setSelectedFollowers] = useState<FollowerEntry[]>([]);
   const [followerSearch, setFollowerSearch] = useState('');
   const [isSendingBroadcast, setIsSendingBroadcast] = useState(false);
 
@@ -1024,9 +1048,10 @@ export default function InstagramPage() {
                     if (insertError) throw insertError;
 
                     if (broadcastTarget === 'selected' && selectedFollowers.length > 0) {
-                      const recipients = selectedFollowers.map(username => ({
+                      const recipients = selectedFollowers.map(entry => ({
                         broadcast_id: (broadcast as any).id,
-                        username,
+                        username: entry.username,
+                        instagram_user_id: entry.instagram_user_id || null,
                       }));
                       const { error: recipError } = await supabase
                         .from('instagram_dm_broadcast_recipients' as any)

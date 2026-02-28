@@ -696,6 +696,7 @@ export type Database = {
           created_at: string
           id: string
           last_message_at: string | null
+          metadata: Json | null
           organization_id: string | null
           status: string | null
           updated_at: string
@@ -708,6 +709,7 @@ export type Database = {
           created_at?: string
           id?: string
           last_message_at?: string | null
+          metadata?: Json | null
           organization_id?: string | null
           status?: string | null
           updated_at?: string
@@ -720,6 +722,7 @@ export type Database = {
           created_at?: string
           id?: string
           last_message_at?: string | null
+          metadata?: Json | null
           organization_id?: string | null
           status?: string | null
           updated_at?: string

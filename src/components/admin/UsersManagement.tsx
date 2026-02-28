@@ -59,7 +59,7 @@ export function UsersManagement() {
       }
       return mapping;
     },
-    refetchInterval: 10000, // Re-check every 10s for real-time updates
+    refetchInterval: 15 * 60 * 1000, // Re-check every 15 minutes
   });
 
   const { data: users = [], isLoading } = useQuery({

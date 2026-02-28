@@ -61,8 +61,8 @@ const automationCategories: { value: AutomationCategory; label: string }[] = [
   { value: 'story', label: 'Stories' },
 ];
 
-const FACEBOOK_APP_ID = "912565888176650";
-const FACEBOOK_PERMISSIONS = "pages_show_list,pages_read_engagement,instagram_basic,instagram_manage_insights";
+const INSTAGRAM_APP_ID = "912565888176650";
+const INSTAGRAM_SCOPES = "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments";
 
 /* ─── Wizard de Conexão via Facebook Login ─── */
 function ConnectWizard({ 
@@ -137,12 +137,12 @@ function ConnectWizard({
     handleOAuthCallback();
   }, []);
 
-  const handleFacebookLogin = () => {
+  const handleInstagramLogin = () => {
     const state = crypto.randomUUID();
     sessionStorage.setItem('ig_oauth_state', state);
     const redirectUri = `${window.location.origin}/instagram`;
-    const fbUrl = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${FACEBOOK_PERMISSIONS}&state=${state}&response_type=code`;
-    window.location.href = fbUrl;
+    const igUrl = `https://www.instagram.com/oauth/authorize?client_id=${INSTAGRAM_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(INSTAGRAM_SCOPES)}&state=${state}`;
+    window.location.href = igUrl;
   };
 
   if (!canAddMore) {
@@ -183,8 +183,8 @@ function ConnectWizard({
           <Instagram className="h-8 w-8 text-white" />
         </div>
         <h2 className="text-2xl font-bold mb-2">Conectar Instagram</h2>
-        <p className="text-muted-foreground max-w-md mx-auto">
-          Conecte via Facebook para automatizar respostas de DM, comentários e stories.
+         <p className="text-muted-foreground max-w-md mx-auto">
+          Conecte sua conta Instagram Business ou Creator para automatizar respostas de DM, comentários e stories.
         </p>
       </div>
       <CardContent className="p-6 space-y-4">
@@ -204,18 +204,16 @@ function ConnectWizard({
         </div>
 
         <Button 
-          className="w-full gap-2 bg-[#1877F2] hover:bg-[#166FE5] text-white" 
+          className="w-full gap-2 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 hover:from-purple-700 hover:via-pink-600 hover:to-orange-500 text-white" 
           size="lg"
-          onClick={handleFacebookLogin}
+          onClick={handleInstagramLogin}
         >
-          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-          </svg>
-          Conectar com Facebook
+          <Instagram className="h-5 w-5" />
+          Conectar com Instagram
         </Button>
 
         <p className="text-xs text-center text-muted-foreground">
-          Ao conectar, você autoriza o acesso à sua conta Instagram Business vinculada ao Facebook.
+          Ao conectar, você autoriza o acesso à sua conta Instagram Business ou Creator.
         </p>
       </CardContent>
     </Card>

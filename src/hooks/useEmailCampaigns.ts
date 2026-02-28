@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
@@ -10,6 +11,7 @@ type EmailCampaignUpdate = TablesUpdate<'email_campaigns'>;
 
 export function useEmailCampaigns() {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const queryClient = useQueryClient();
 
   const campaignsQuery = useQuery({
@@ -33,7 +35,7 @@ export function useEmailCampaigns() {
       if (!user?.id) throw new Error('User not authenticated');
       const { data, error } = await supabase
         .from('email_campaigns')
-        .insert({ ...campaign, user_id: user.id })
+        .insert({ ...campaign, user_id: user.id, organization_id: currentOrganization?.id || null })
         .select()
         .single();
       

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import { useEffect } from 'react';
 import type { Tables, TablesInsert } from '@/integrations/supabase/types';
@@ -24,6 +25,7 @@ type ConversationWithContact = Conversation & {
 
 export function useInbox() {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const queryClient = useQueryClient();
 
   const conversationsQuery = useQuery({
@@ -88,7 +90,7 @@ export function useInbox() {
       if (!user?.id) throw new Error('User not authenticated');
       const { data, error } = await supabase
         .from('conversations')
-        .insert({ ...conversation, user_id: user.id })
+        .insert({ ...conversation, user_id: user.id, organization_id: currentOrganization?.id || null })
         .select()
         .single();
       

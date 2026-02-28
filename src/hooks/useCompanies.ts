@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 
 export interface Company {
@@ -58,6 +59,7 @@ export function useCompanies() {
 export function useCreateCompany() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
 
   return useMutation({
     mutationFn: async (data: CreateCompanyData) => {
@@ -66,6 +68,7 @@ export function useCreateCompany() {
         .insert({
           ...data,
           user_id: user!.id,
+          organization_id: currentOrganization?.id || null,
         })
         .select()
         .single();

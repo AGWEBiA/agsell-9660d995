@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AgencySettingsPanel } from '@/components/agency/AgencySettingsPanel';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -541,6 +542,9 @@ export default function Organization() {
           </TabsContent>
         </Tabs>
       )}
+
+      {/* Agency Settings */}
+      <AgencySettingsPanel />
     </div>
   );
 }

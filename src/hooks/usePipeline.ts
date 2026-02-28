@@ -179,6 +179,7 @@ export function useCreateDeal() {
 
 export function useUpdateDeal() {
   const queryClient = useQueryClient();
+  const { currentOrganization } = useOrganization();
 
   return useMutation({
     mutationFn: async ({ id, ...data }: Partial<Deal> & { id: string }) => {
@@ -192,8 +193,28 @@ export function useUpdateDeal() {
       if (error) throw error;
       return result;
     },
-    onSuccess: () => {
+    onSuccess: async (result, variables) => {
       queryClient.invalidateQueries({ queryKey: ['deals'] });
+      // Fire deal_stage_changed automation if stage_id was updated
+      if (variables.stage_id) {
+        try {
+          const { data: automations } = await supabase
+            .from('automations')
+            .select('id')
+            .eq('organization_id', currentOrganization?.id ?? '')
+            .eq('trigger_type', 'deal_stage_changed')
+            .eq('is_active', true);
+          if (automations?.length) {
+            await Promise.allSettled(
+              automations.map((a) =>
+                supabase.functions.invoke('process-automation', {
+                  body: { automation_id: a.id, contact_id: result.contact_id, trigger_event: 'deal_stage_changed' },
+                })
+              )
+            );
+          }
+        } catch {}
+      }
     },
     onError: (error) => {
       toast.error('Erro ao atualizar deal: ' + error.message);

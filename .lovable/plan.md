@@ -24,8 +24,8 @@
 - [x] Gráfico de conversas por agente
 - [x] Breakdown individual por agente
 
-### 🔲 Etapa 5: Melhorias Pendentes
-- [ ] Trigger de automação para `deal_stage_changed`
-- [ ] Trigger de automação para `form_submitted`
-- [ ] Workers de Instagram para triggers em tempo real
-- [ ] Sistema de filas para ações de `wait` em automações
+### ✅ Etapa 5: Triggers e Workers
+- [x] Trigger de automação para `deal_stage_changed`
+- [x] Trigger de automação para `form_submitted`
+- [x] Worker de Instagram para triggers em tempo real (webhook com auto-reply DM/comment)
+- [ ] Sistema de filas para ações de `wait` em automações (requer infra de cron)

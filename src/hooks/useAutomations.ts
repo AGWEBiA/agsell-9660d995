@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
@@ -10,18 +11,24 @@ type AutomationUpdate = TablesUpdate<'automations'>;
 
 export function useAutomations() {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const queryClient = useQueryClient();
 
   const automationsQuery = useQuery({
-    queryKey: ['automations', user?.id],
+    queryKey: ['automations', user?.id, currentOrganization?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data, error } = await supabase
+      const query = supabase
         .from('automations')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       
+      if (currentOrganization?.id) {
+        query.eq('organization_id', currentOrganization.id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as Automation[];
     },
@@ -33,7 +40,11 @@ export function useAutomations() {
       if (!user?.id) throw new Error('User not authenticated');
       const { data, error } = await supabase
         .from('automations')
-        .insert({ ...automation, user_id: user.id })
+        .insert({ 
+          ...automation, 
+          user_id: user.id,
+          organization_id: currentOrganization?.id || null,
+        })
         .select()
         .single();
       

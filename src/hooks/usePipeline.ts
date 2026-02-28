@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 
 export interface PipelineStage {
@@ -91,6 +92,7 @@ export function useDeals() {
 export function useCreateStage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
 
   return useMutation({
     mutationFn: async (data: CreateStageData) => {
@@ -109,6 +111,7 @@ export function useCreateStage() {
           ...data,
           position,
           user_id: user!.id,
+          organization_id: currentOrganization?.id || null,
         })
         .select()
         .single();
@@ -129,6 +132,7 @@ export function useCreateStage() {
 export function useCreateDeal() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
 
   return useMutation({
     mutationFn: async (data: CreateDealData) => {
@@ -137,6 +141,7 @@ export function useCreateDeal() {
         .insert({
           ...data,
           user_id: user!.id,
+          organization_id: currentOrganization?.id || null,
         })
         .select()
         .single();

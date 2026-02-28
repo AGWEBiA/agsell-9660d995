@@ -11,9 +11,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bot, Plus, Trash2, Edit, Brain, MessageSquare, Zap, BookOpen, Loader2 } from 'lucide-react';
+import { Bot, Plus, Trash2, Edit, Brain, MessageSquare, Zap, BookOpen, Loader2, BarChart3, LayoutTemplate } from 'lucide-react';
 import { useAIAgents, useCreateAIAgent, useUpdateAIAgent, useDeleteAIAgent, useAIAgentKnowledge, useAddKnowledge, useDeleteKnowledge } from '@/hooks/useAIAgents';
 import type { AIAgent } from '@/hooks/useAIAgents';
+import { AgentTemplates } from '@/components/ai-agents/AgentTemplates';
+import type { AgentTemplate } from '@/components/ai-agents/AgentTemplates';
+import { AgentPerformanceDashboard } from '@/components/ai-agents/AgentPerformanceDashboard';
 
 const AVAILABLE_MODELS = [
   { value: 'google/gemini-3-flash-preview', label: 'Gemini 3 Flash (Rápido)' },
@@ -80,18 +83,19 @@ function AgentKnowledgePanel({ agent }: { agent: AIAgent }) {
   );
 }
 
-function AgentFormDialog({ agent, onClose }: { agent?: AIAgent; onClose: () => void }) {
+function AgentFormDialog({ agent, onClose, initialTemplate }: { agent?: AIAgent; onClose: () => void; initialTemplate?: AgentTemplate }) {
   const createAgent = useCreateAIAgent();
   const updateAgent = useUpdateAIAgent();
+  const addKnowledge = useAddKnowledge();
   const [form, setForm] = useState({
-    name: agent?.name || '',
-    description: agent?.description || '',
-    system_prompt: agent?.system_prompt || 'Você é um assistente útil e profissional. Responda de forma clara e objetiva.',
+    name: agent?.name || initialTemplate?.name || '',
+    description: agent?.description || initialTemplate?.description || '',
+    system_prompt: agent?.system_prompt || initialTemplate?.system_prompt || 'Você é um assistente útil e profissional. Responda de forma clara e objetiva.',
     model: agent?.model || 'google/gemini-3-flash-preview',
     temperature: agent?.temperature || 0.7,
-    channels: agent?.channels || [],
-    welcome_message: agent?.welcome_message || '',
-    fallback_message: agent?.fallback_message || 'Desculpe, não consegui entender. Posso te transferir para um atendente humano?',
+    channels: agent?.channels || initialTemplate?.channels || [],
+    welcome_message: agent?.welcome_message || initialTemplate?.welcome_message || '',
+    fallback_message: agent?.fallback_message || initialTemplate?.fallback_message || 'Desculpe, não consegui entender. Posso te transferir para um atendente humano?',
     max_tokens: agent?.max_tokens || 2048,
   });
 
@@ -107,7 +111,17 @@ function AgentFormDialog({ agent, onClose }: { agent?: AIAgent; onClose: () => v
     if (agent) {
       updateAgent.mutate({ id: agent.id, ...form }, { onSuccess: onClose });
     } else {
-      createAgent.mutate(form, { onSuccess: onClose });
+      createAgent.mutate(form, {
+        onSuccess: (newAgent) => {
+          // Auto-add knowledge snippets from template
+          if (initialTemplate?.knowledge_snippets?.length) {
+            initialTemplate.knowledge_snippets.forEach(snippet => {
+              addKnowledge.mutate({ agent_id: newAgent.id, title: snippet.title, content: snippet.content });
+            });
+          }
+          onClose();
+        }
+      });
     }
   };
 
@@ -115,6 +129,12 @@ function AgentFormDialog({ agent, onClose }: { agent?: AIAgent; onClose: () => v
 
   return (
     <div className="space-y-4">
+      {initialTemplate && (
+        <Badge variant="secondary" className="mb-2">
+          <LayoutTemplate className="h-3 w-3 mr-1" />
+          Template: {initialTemplate.sector}
+        </Badge>
+      )}
       <div className="grid gap-4">
         <div>
           <Label>Nome do Agente *</Label>
@@ -183,6 +203,12 @@ export default function AIAgents() {
   const [showCreate, setShowCreate] = useState(false);
   const [editAgent, setEditAgent] = useState<AIAgent | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<AIAgent | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<AgentTemplate | undefined>(undefined);
+
+  const handleTemplateSelect = (template: AgentTemplate) => {
+    setSelectedTemplate(template);
+    setShowCreate(true);
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -194,76 +220,102 @@ export default function AIAgents() {
           </h1>
           <p className="text-muted-foreground">Crie e treine agentes inteligentes para atender seus clientes 24h</p>
         </div>
-        <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <Dialog open={showCreate} onOpenChange={(open) => { setShowCreate(open); if (!open) setSelectedTemplate(undefined); }}>
           <DialogTrigger asChild>
             <Button><Plus className="h-4 w-4 mr-2" /> Novo Agente</Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>Criar Novo Agente de IA</DialogTitle></DialogHeader>
-            <AgentFormDialog onClose={() => setShowCreate(false)} />
+            <DialogHeader>
+              <DialogTitle>{selectedTemplate ? `Criar: ${selectedTemplate.name}` : 'Criar Novo Agente de IA'}</DialogTitle>
+            </DialogHeader>
+            <AgentFormDialog onClose={() => { setShowCreate(false); setSelectedTemplate(undefined); }} initialTemplate={selectedTemplate} />
           </DialogContent>
         </Dialog>
       </div>
 
-      {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>
-      ) : agents.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Bot className="h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhum agente criado</h3>
-            <p className="text-muted-foreground text-center max-w-md mb-4">
-              Crie seu primeiro agente de IA para atender clientes automaticamente no WhatsApp, Instagram e outros canais.
-            </p>
-            <Button onClick={() => setShowCreate(true)}><Plus className="h-4 w-4 mr-2" /> Criar Primeiro Agente</Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {agents.map((agent) => (
-            <Card key={agent.id} className="relative">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Bot className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-base">{agent.name}</CardTitle>
-                      {agent.description && <CardDescription className="text-xs">{agent.description}</CardDescription>}
-                    </div>
-                  </div>
-                  <Switch checked={agent.is_active} onCheckedChange={(checked) => updateAgent.mutate({ id: agent.id, is_active: checked })} />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex gap-1 flex-wrap">
-                  {agent.channels.map(ch => (
-                    <Badge key={ch} variant="secondary" className="text-xs">{ch}</Badge>
-                  ))}
-                  {agent.channels.length === 0 && <Badge variant="outline" className="text-xs">Sem canais</Badge>}
-                </div>
-                <p className="text-xs text-muted-foreground line-clamp-2">{agent.system_prompt}</p>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Zap className="h-3 w-3" />
-                  {AVAILABLE_MODELS.find(m => m.value === agent.model)?.label || agent.model}
-                </div>
-                <div className="flex gap-2 pt-2">
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => setSelectedAgent(agent)}>
-                    <BookOpen className="h-3 w-3 mr-1" /> Conhecimento
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setEditAgent(agent)}>
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => deleteAgent.mutate(agent.id)}>
-                    <Trash2 className="h-3 w-3 text-destructive" />
-                  </Button>
-                </div>
+      <Tabs defaultValue="agents" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="agents" className="flex items-center gap-2">
+            <Bot className="h-4 w-4" /> Meus Agentes
+          </TabsTrigger>
+          <TabsTrigger value="templates" className="flex items-center gap-2">
+            <LayoutTemplate className="h-4 w-4" /> Templates
+          </TabsTrigger>
+          <TabsTrigger value="performance" className="flex items-center gap-2">
+            <BarChart3 className="h-4 w-4" /> Performance
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="agents">
+          {isLoading ? (
+            <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>
+          ) : agents.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Bot className="h-16 w-16 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Nenhum agente criado</h3>
+                <p className="text-muted-foreground text-center max-w-md mb-4">
+                  Crie seu primeiro agente de IA para atender clientes automaticamente no WhatsApp, Instagram e outros canais.
+                </p>
+                <Button onClick={() => setShowCreate(true)}><Plus className="h-4 w-4 mr-2" /> Criar Primeiro Agente</Button>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {agents.map((agent) => (
+                <Card key={agent.id} className="relative">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Bot className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-base">{agent.name}</CardTitle>
+                          {agent.description && <CardDescription className="text-xs">{agent.description}</CardDescription>}
+                        </div>
+                      </div>
+                      <Switch checked={agent.is_active} onCheckedChange={(checked) => updateAgent.mutate({ id: agent.id, is_active: checked })} />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex gap-1 flex-wrap">
+                      {agent.channels.map(ch => (
+                        <Badge key={ch} variant="secondary" className="text-xs">{ch}</Badge>
+                      ))}
+                      {agent.channels.length === 0 && <Badge variant="outline" className="text-xs">Sem canais</Badge>}
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{agent.system_prompt}</p>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Zap className="h-3 w-3" />
+                      {AVAILABLE_MODELS.find(m => m.value === agent.model)?.label || agent.model}
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <Button variant="outline" size="sm" className="flex-1" onClick={() => setSelectedAgent(agent)}>
+                        <BookOpen className="h-3 w-3 mr-1" /> Conhecimento
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => setEditAgent(agent)}>
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => deleteAgent.mutate(agent.id)}>
+                        <Trash2 className="h-3 w-3 text-destructive" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="templates">
+          <AgentTemplates onSelectTemplate={handleTemplateSelect} />
+        </TabsContent>
+
+        <TabsContent value="performance">
+          <AgentPerformanceDashboard />
+        </TabsContent>
+      </Tabs>
 
       {/* Edit Dialog */}
       <Dialog open={!!editAgent} onOpenChange={() => setEditAgent(null)}>

@@ -1,0 +1,1 @@
+ALTER TABLE public.instagram_dm_broadcast_recipients ADD COLUMN instagram_user_id TEXT;

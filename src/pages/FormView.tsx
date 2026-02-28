@@ -60,10 +60,35 @@ export default function FormView() {
 
     setSubmitting(true);
     try {
-      const { error } = await supabase
+      const { error, data: submission } = await supabase
         .from('form_submissions')
-        .insert({ form_id: formId, data: formData });
+        .insert({ form_id: formId, data: formData })
+        .select()
+        .single();
       if (error) throw error;
+
+      // Fire form_submitted automations
+      try {
+        const orgId = form?.organization_id;
+        if (orgId) {
+          const { data: automations } = await supabase
+            .from('automations')
+            .select('id')
+            .eq('organization_id', orgId)
+            .eq('trigger_type', 'form_submitted')
+            .eq('is_active', true);
+          if (automations?.length) {
+            await Promise.allSettled(
+              automations.map((a) =>
+                supabase.functions.invoke('process-automation', {
+                  body: { automation_id: a.id, contact_id: submission?.contact_id ?? null, trigger_event: 'form_submitted' },
+                })
+              )
+            );
+          }
+        }
+      } catch {}
+
       setSubmitted(true);
     } catch (err: any) {
       toast.error('Erro ao enviar: ' + err.message);

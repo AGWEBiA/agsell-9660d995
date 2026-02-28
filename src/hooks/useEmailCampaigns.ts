@@ -90,6 +90,80 @@ export function useEmailCampaigns() {
     },
   });
 
+  const sendCampaign = useMutation({
+    mutationFn: async (campaignId: string) => {
+      if (!user?.id) throw new Error('User not authenticated');
+      
+      // Get campaign details
+      const { data: campaign, error: fetchError } = await supabase
+        .from('email_campaigns')
+        .select('*')
+        .eq('id', campaignId)
+        .single();
+      if (fetchError || !campaign) throw new Error('Campanha não encontrada');
+
+      // Get contacts with email
+      const query = supabase
+        .from('contacts')
+        .select('email, first_name')
+        .eq('user_id', user.id)
+        .not('email', 'is', null);
+      if (currentOrganization?.id) {
+        query.eq('organization_id', currentOrganization.id);
+      }
+      const { data: contacts, error: contactsError } = await query;
+      if (contactsError) throw contactsError;
+      if (!contacts || contacts.length === 0) throw new Error('Nenhum contato com email encontrado');
+
+      // Update status to sending
+      await supabase.from('email_campaigns').update({ status: 'sending' }).eq('id', campaignId);
+
+      let sentCount = 0;
+      let failCount = 0;
+      const htmlContent = campaign.content || `<p>${campaign.subject}</p>`;
+
+      for (const contact of contacts) {
+        try {
+          const { data, error } = await supabase.functions.invoke('send-email', {
+            body: {
+              organization_id: currentOrganization?.id || null,
+              to: contact.email,
+              subject: campaign.subject || campaign.name,
+              html: htmlContent.replace(/\{\{nome\}\}/g, contact.first_name || ''),
+            },
+          });
+          if (error || data?.error) {
+            failCount++;
+          } else {
+            sentCount++;
+          }
+        } catch {
+          failCount++;
+        }
+      }
+
+      // Update campaign stats
+      await supabase
+        .from('email_campaigns')
+        .update({
+          status: 'sent',
+          sent_count: sentCount,
+          sent_at: new Date().toISOString(),
+        })
+        .eq('id', campaignId);
+
+      return { sentCount, failCount };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['email_campaigns'] });
+      toast.success(`Campanha enviada! ${data.sentCount} emails enviados, ${data.failCount} falhas.`);
+    },
+    onError: (error) => {
+      queryClient.invalidateQueries({ queryKey: ['email_campaigns'] });
+      toast.error('Erro ao enviar campanha: ' + error.message);
+    },
+  });
+
   return {
     campaigns: campaignsQuery.data ?? [],
     isLoading: campaignsQuery.isLoading,
@@ -97,5 +171,6 @@ export function useEmailCampaigns() {
     createCampaign,
     updateCampaign,
     deleteCampaign,
+    sendCampaign,
   };
 }

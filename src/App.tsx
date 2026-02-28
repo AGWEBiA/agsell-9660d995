@@ -52,6 +52,8 @@ import Webhooks from "./pages/Webhooks";
 import EmailDomain from "./pages/EmailDomain";
 import InboxSettings from "./pages/InboxSettings";
 import SystemGuide from "./pages/SystemGuide";
+import AgencyClients from "./pages/AgencyClients";
+import AgencyInvite from "./pages/AgencyInvite";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -77,6 +79,7 @@ const App = () => (
                   <Route path="/terms-of-service" element={<TermsOfService />} />
                   <Route path="/purchase-success" element={<PurchaseSuccess />} />
                   <Route path="/forms/:formId" element={<FormView />} />
+                  <Route path="/agency-invite/:token" element={<AgencyInvite />} />
                   <Route path="/subscription-expired" element={<ProtectedRoute allowExpired><SubscriptionExpired /></ProtectedRoute>} />
                   
                   {/* Protected Routes */}
@@ -111,6 +114,7 @@ const App = () => (
                     <Route path="webhooks" element={<Webhooks />} />
                     <Route path="email-domain" element={<EmailDomain />} />
                     <Route path="system-guide" element={<SystemGuide />} />
+                    <Route path="agency-clients" element={<AgencyClients />} />
                   </Route>
                   
                   {/* Plans accessible even with expired subscription */}

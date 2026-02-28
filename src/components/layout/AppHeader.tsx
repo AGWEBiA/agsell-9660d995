@@ -36,7 +36,7 @@ import {
   Crown,
 } from 'lucide-react';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
-
+import { AgencyAccountSelector } from '@/components/agency/AgencyAccountSelector';
 
 
 interface HeaderProps {
@@ -83,6 +83,9 @@ export function AppHeader({ sidebarCollapsed }: HeaderProps) {
 
         {/* Actions */}
         <div className="flex items-center gap-2">
+          {/* Agency Account Selector */}
+          <AgencyAccountSelector />
+
           {/* Admin: Simulate Plan */}
           {isAdmin && (
             <Button

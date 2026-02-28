@@ -85,6 +85,63 @@ export type Database = {
           },
         ]
       }
+      agency_clients: {
+        Row: {
+          accepted_at: string | null
+          access_level: string
+          agency_org_id: string
+          client_org_id: string
+          created_at: string
+          id: string
+          invite_email: string | null
+          invite_token: string | null
+          invited_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          access_level?: string
+          agency_org_id: string
+          client_org_id: string
+          created_at?: string
+          id?: string
+          invite_email?: string | null
+          invite_token?: string | null
+          invited_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          access_level?: string
+          agency_org_id?: string
+          client_org_id?: string
+          created_at?: string
+          id?: string
+          invite_email?: string | null
+          invite_token?: string | null
+          invited_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_clients_agency_org_id_fkey"
+            columns: ["agency_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agency_clients_client_org_id_fkey"
+            columns: ["client_org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_agent_conversations: {
         Row: {
           agent_id: string
@@ -3140,6 +3197,10 @@ export type Database = {
         Args: { org_name: string; org_slug: string }
         Returns: string
       }
+      get_agency_access_level: {
+        Args: { _client_org_id: string; _user_id: string }
+        Returns: string
+      }
       get_org_role: {
         Args: { _org_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["org_role"]
@@ -3167,6 +3228,10 @@ export type Database = {
       increment_automation_executions: {
         Args: { automation_id: string }
         Returns: undefined
+      }
+      is_agency_of: {
+        Args: { _client_org_id: string; _user_id: string }
+        Returns: boolean
       }
       is_org_admin: {
         Args: { _org_id: string; _user_id: string }

@@ -34,6 +34,7 @@ import {
   Lightbulb,
   Wrench,
   HelpCircle,
+  Briefcase,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -43,6 +44,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useAuth } from '@/contexts/AuthContext';
 import { Logo, LogoIcon } from '@/components/ui/Logo';
 import { useAdminView } from '@/contexts/AdminViewContext';
+import { usePlanFeature } from '@/hooks/usePlans';
 // Force cache invalidation
 
 interface SidebarProps {
@@ -55,7 +57,8 @@ interface MenuItem {
   icon: React.ComponentType<{ className?: string }>;
   path: string;
   adminOnly?: boolean;
-  orgAdminOnly?: boolean; // items only visible to org admins (hidden in user mode)
+  orgAdminOnly?: boolean;
+  featureRequired?: string;
 }
 
 interface MenuSection {
@@ -124,6 +127,7 @@ const menuSections: MenuSection[] = [
     label: 'Configurações',
     icon: Wrench,
     items: [
+      { label: 'Clientes (Agência)', icon: Briefcase, path: '/agency-clients', featureRequired: 'agency_management' },
       { label: 'Integrações', icon: LinkIcon, path: '/integrations' },
       { label: 'Organização', icon: Building2, path: '/organization', orgAdminOnly: true },
       { label: 'Planos', icon: Target, path: '/plans' },
@@ -249,6 +253,7 @@ export function AppSidebar({ collapsed, onToggle }: SidebarProps) {
   const location = useLocation();
   const { user, isAdmin } = useAuth();
   const { isUserMode } = useAdminView();
+  const { hasFeature: hasAgency } = usePlanFeature('agency_management');
 
   // Initialize open sections based on active route
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
@@ -264,11 +269,16 @@ export function AppSidebar({ collapsed, onToggle }: SidebarProps) {
     setOpenSections((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const featureMap: Record<string, boolean> = {
+    agency_management: hasAgency,
+  };
+
   const filteredSections = menuSections.map((section) => ({
     ...section,
     items: section.items.filter((item) => {
       if (item.adminOnly && (!isAdmin || isUserMode)) return false;
       if (item.orgAdminOnly && isUserMode) return false;
+      if (item.featureRequired && !featureMap[item.featureRequired]) return false;
       return true;
     }),
   }));

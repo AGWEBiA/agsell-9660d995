@@ -37,6 +37,7 @@ import { EmailCostProjection } from '@/components/admin/EmailCostProjection';
 import { EmailProviderConfig } from '@/components/admin/EmailProviderConfig';
 import { UsersManagement } from '@/components/admin/UsersManagement';
 import { AssignPlanDialog } from '@/components/admin/AssignPlanDialog';
+import { FinancialDashboard } from '@/components/admin/FinancialDashboard';
 
 export default function Admin() {
   const { user, isAdmin, loading: isCheckingAdmin } = useAuth();
@@ -187,6 +188,10 @@ export default function Admin() {
           <TabsTrigger value="plans" className="flex items-center gap-2">
             <CreditCard className="h-4 w-4" />
             Planos
+          </TabsTrigger>
+          <TabsTrigger value="financial" className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Financeiro
           </TabsTrigger>
           <TabsTrigger value="email-costs" className="flex items-center gap-2">
             <DollarSign className="h-4 w-4" />
@@ -400,6 +405,10 @@ export default function Admin() {
 
         <TabsContent value="plans">
           <PlansManagement />
+        </TabsContent>
+
+        <TabsContent value="financial">
+          <FinancialDashboard />
         </TabsContent>
 
         <TabsContent value="email-costs">

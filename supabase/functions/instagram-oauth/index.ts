@@ -7,7 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const FACEBOOK_APP_ID = "912565888176650";
+const INSTAGRAM_APP_ID = "912565888176650";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -15,10 +15,10 @@ serve(async (req) => {
   }
 
   try {
-    const FACEBOOK_APP_SECRET = Deno.env.get("FACEBOOK_APP_SECRET");
-    if (!FACEBOOK_APP_SECRET) {
+    const INSTAGRAM_APP_SECRET = Deno.env.get("FACEBOOK_APP_SECRET");
+    if (!INSTAGRAM_APP_SECRET) {
       return new Response(
-        JSON.stringify({ error: "Facebook App Secret não configurado" }),
+        JSON.stringify({ error: "Instagram App Secret não configurado" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -71,24 +71,33 @@ serve(async (req) => {
       );
     }
 
-    // Step 1: Exchange code for short-lived token
-    const tokenUrl = `https://graph.facebook.com/v21.0/oauth/access_token?client_id=${FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirect_uri)}&client_secret=${FACEBOOK_APP_SECRET}&code=${encodeURIComponent(code)}`;
-    
-    const tokenRes = await fetch(tokenUrl);
+    // Step 1: Exchange code for short-lived Instagram token
+    const tokenForm = new URLSearchParams();
+    tokenForm.append("client_id", INSTAGRAM_APP_ID);
+    tokenForm.append("client_secret", INSTAGRAM_APP_SECRET);
+    tokenForm.append("grant_type", "authorization_code");
+    tokenForm.append("redirect_uri", redirect_uri);
+    tokenForm.append("code", code);
+
+    const tokenRes = await fetch("https://api.instagram.com/oauth/access_token", {
+      method: "POST",
+      body: tokenForm,
+    });
     const tokenData = await tokenRes.json();
 
-    if (tokenData.error) {
-      console.error("Facebook token exchange error:", tokenData.error);
+    if (tokenData.error_type || tokenData.error_message) {
+      console.error("Instagram token exchange error:", tokenData);
       return new Response(
-        JSON.stringify({ error: tokenData.error.message || "Erro ao trocar código por token" }),
+        JSON.stringify({ error: tokenData.error_message || "Erro ao trocar código por token" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const shortLivedToken = tokenData.access_token;
+    const igUserId = tokenData.user_id;
 
     // Step 2: Exchange for long-lived token
-    const longLivedUrl = `https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${FACEBOOK_APP_ID}&client_secret=${FACEBOOK_APP_SECRET}&fb_exchange_token=${encodeURIComponent(shortLivedToken)}`;
+    const longLivedUrl = `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(INSTAGRAM_APP_SECRET)}&access_token=${encodeURIComponent(shortLivedToken)}`;
     
     const longLivedRes = await fetch(longLivedUrl);
     const longLivedData = await longLivedRes.json();
@@ -104,60 +113,30 @@ serve(async (req) => {
     const longLivedToken = longLivedData.access_token;
     const expiresIn = longLivedData.expires_in; // ~60 days
 
-    // Step 3: Get Facebook Pages
-    const pagesRes = await fetch(
-      `https://graph.facebook.com/v21.0/me/accounts?access_token=${encodeURIComponent(longLivedToken)}`
+    // Step 3: Get Instagram profile info
+    const profileRes = await fetch(
+      `https://graph.instagram.com/v21.0/me?fields=user_id,username,name,profile_picture_url,account_type&access_token=${encodeURIComponent(longLivedToken)}`
     );
-    const pagesData = await pagesRes.json();
+    const profileData = await profileRes.json();
 
-    if (!pagesData.data?.length) {
+    if (profileData.error) {
+      console.error("Profile fetch error:", profileData.error);
       return new Response(
-        JSON.stringify({ error: "Nenhuma página do Facebook encontrada. Verifique se você tem uma página vinculada à sua conta." }),
+        JSON.stringify({ error: "Erro ao buscar perfil do Instagram" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Step 4: Get Instagram Business Account from first page with IG
-    let instagramAccount = null;
-    let pageAccessToken = null;
-    let pageId = null;
+    const instagramAccount = {
+      instagram_user_id: String(profileData.user_id || igUserId),
+      username: profileData.username,
+      full_name: profileData.name || null,
+      profile_picture_url: profileData.profile_picture_url || null,
+    };
 
-    for (const page of pagesData.data) {
-      const igRes = await fetch(
-        `https://graph.facebook.com/v21.0/${page.id}?fields=instagram_business_account&access_token=${encodeURIComponent(page.access_token)}`
-      );
-      const igData = await igRes.json();
-
-      if (igData.instagram_business_account) {
-        // Get IG profile info
-        const profileRes = await fetch(
-          `https://graph.facebook.com/v21.0/${igData.instagram_business_account.id}?fields=id,username,name,profile_picture_url&access_token=${encodeURIComponent(page.access_token)}`
-        );
-        const profileData = await profileRes.json();
-
-        instagramAccount = {
-          instagram_user_id: profileData.id,
-          username: profileData.username,
-          full_name: profileData.name || null,
-          profile_picture_url: profileData.profile_picture_url || null,
-        };
-        pageAccessToken = page.access_token;
-        pageId = page.id;
-        break;
-      }
-    }
-
-    if (!instagramAccount) {
-      return new Response(
-        JSON.stringify({ error: "Nenhuma conta Instagram Business encontrada vinculada às suas páginas do Facebook." }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Step 5: Save to DB using service role (to bypass RLS for token storage)
+    // Step 4: Save to DB using service role
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check if account already exists
     const { data: existing } = await supabaseAdmin
       .from("instagram_accounts")
       .select("id")
@@ -166,13 +145,12 @@ serve(async (req) => {
       .maybeSingle();
 
     if (existing) {
-      // Update existing
       await supabaseAdmin
         .from("instagram_accounts")
         .update({
           access_token: longLivedToken,
-          page_access_token: pageAccessToken,
-          page_id: pageId,
+          page_access_token: null,
+          page_id: null,
           username: instagramAccount.username,
           full_name: instagramAccount.full_name,
           profile_picture_url: instagramAccount.profile_picture_url,
@@ -185,11 +163,7 @@ serve(async (req) => {
         .eq("id", existing.id);
 
       return new Response(
-        JSON.stringify({
-          success: true,
-          updated: true,
-          account: instagramAccount,
-        }),
+        JSON.stringify({ success: true, updated: true, account: instagramAccount }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -200,8 +174,6 @@ serve(async (req) => {
       .insert({
         organization_id,
         access_token: longLivedToken,
-        page_access_token: pageAccessToken,
-        page_id: pageId,
         instagram_user_id: instagramAccount.instagram_user_id,
         username: instagramAccount.username,
         full_name: instagramAccount.full_name,
@@ -221,11 +193,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        updated: false,
-        account: instagramAccount,
-      }),
+      JSON.stringify({ success: true, updated: false, account: instagramAccount }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {

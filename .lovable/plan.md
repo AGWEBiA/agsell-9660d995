@@ -13,12 +13,19 @@
 - [x] Hook `useWhatsAppFlows.ts`
 - [x] Rota e item no sidebar
 
-### 🔲 Etapa 3: Agentes de IA por Setor (Pendente)
-- Templates de conhecimento por nicho (imobiliário, e-commerce, saúde, etc.)
-- Prompts pré-configurados por setor
-- Base de conhecimento inicial por template
+### ✅ Etapa 3: Agentes de IA por Setor
+- [x] Templates pré-configurados por nicho (imobiliário, e-commerce, saúde, educação, serviços, alimentação, automotivo)
+- [x] Prompts e knowledge base iniciais por template
+- [x] Auto-inserção de knowledge snippets ao criar via template
 
-### 🔲 Etapa 4: Melhorias nos Agentes de IA (Pendente)
-- Dashboard de performance por agente
-- Métricas de satisfação consolidadas
-- Relatórios de atendimento
+### ✅ Etapa 4: Performance dos Agentes de IA
+- [x] Dashboard de performance por agente (conversas, satisfação, transferências)
+- [x] Métricas consolidadas (total conversas, satisfação média, taxa de resolução)
+- [x] Gráfico de conversas por agente
+- [x] Breakdown individual por agente
+
+### 🔲 Etapa 5: Melhorias Pendentes
+- [ ] Trigger de automação para `deal_stage_changed`
+- [ ] Trigger de automação para `form_submitted`
+- [ ] Workers de Instagram para triggers em tempo real
+- [ ] Sistema de filas para ações de `wait` em automações

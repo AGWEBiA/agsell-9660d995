@@ -56,3 +56,9 @@ verify_jwt = false
 
 [functions.delete-user-data]
 verify_jwt = false
+
+[functions.instagram-oauth]
+verify_jwt = false
+
+[functions.instagram-lookup]
+verify_jwt = false

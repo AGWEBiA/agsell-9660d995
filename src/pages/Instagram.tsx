@@ -61,7 +61,10 @@ const automationCategories: { value: AutomationCategory; label: string }[] = [
   { value: 'story', label: 'Stories' },
 ];
 
-/* ─── Wizard de Conexão Simplificado ─── */
+const FACEBOOK_APP_ID = "912565888176650";
+const FACEBOOK_PERMISSIONS = "instagram_basic,instagram_manage_messages,pages_show_list,pages_messaging";
+
+/* ─── Wizard de Conexão via Facebook Login ─── */
 function ConnectWizard({ 
   onConnected, 
   canAddMore, 
@@ -74,53 +77,72 @@ function ConnectWizard({
   accountsCount: number; 
 }) {
   const { currentOrganization } = useOrganization();
-  const { user } = useAuth();
   const { toast } = useToast();
-  const [step, setStep] = useState<'intro' | 'token' | 'preview'>('intro');
-  const [token, setToken] = useState('');
   const [loading, setLoading] = useState(false);
-  const [connecting, setConnecting] = useState(false);
-  const [profile, setProfile] = useState<any>(null);
 
-  const handleLookup = async () => {
-    if (!token.trim()) return;
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('instagram-lookup', {
-        body: { access_token: token.trim() },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      setProfile(data);
-      setStep('preview');
-    } catch (err: any) {
-      toast({ title: 'Token inválido', description: 'Verifique se o token está correto e tente novamente.', variant: 'destructive' });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Listen for OAuth callback
+  React.useEffect(() => {
+    const handleOAuthCallback = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      const state = params.get('state');
+      const error = params.get('error');
 
-  const handleConnect = async () => {
-    if (!currentOrganization || !user || !profile) return;
-    setConnecting(true);
-    try {
-      const { error } = await supabase.from('instagram_accounts').insert({
-        organization_id: currentOrganization.id,
-        access_token: token.trim(),
-        instagram_user_id: profile.instagram_user_id,
-        username: profile.username,
-        full_name: profile.full_name,
-        profile_picture_url: profile.profile_picture_url,
-        connected_by: user.id,
-      } as any);
-      if (error) throw error;
-      toast({ title: '✅ Conta conectada!', description: `@${profile.username} vinculada com sucesso.` });
-      onConnected();
-    } catch (err: any) {
-      toast({ title: 'Erro ao conectar', description: err.message, variant: 'destructive' });
-    } finally {
-      setConnecting(false);
-    }
+      if (!code && !error) return;
+
+      // Clean URL
+      window.history.replaceState({}, '', window.location.pathname);
+
+      if (error) {
+        toast({ title: 'Conexão cancelada', description: 'Você cancelou a conexão com o Facebook.', variant: 'destructive' });
+        return;
+      }
+
+      if (!code || !state) return;
+
+      // Validate state
+      const savedState = sessionStorage.getItem('ig_oauth_state');
+      if (state !== savedState) {
+        toast({ title: 'Erro de segurança', description: 'Estado OAuth inválido. Tente novamente.', variant: 'destructive' });
+        return;
+      }
+      sessionStorage.removeItem('ig_oauth_state');
+
+      setLoading(true);
+      try {
+        const redirectUri = `${window.location.origin}/instagram`;
+        const { data, error: fnError } = await supabase.functions.invoke('instagram-oauth', {
+          body: {
+            code,
+            redirect_uri: redirectUri,
+            organization_id: currentOrganization?.id,
+          },
+        });
+
+        if (fnError) throw fnError;
+        if (data?.error) throw new Error(data.error);
+
+        toast({
+          title: data.updated ? '🔄 Conta reconectada!' : '✅ Conta conectada!',
+          description: `@${data.account.username} vinculada com sucesso.`,
+        });
+        onConnected();
+      } catch (err: any) {
+        toast({ title: 'Erro ao conectar', description: err.message, variant: 'destructive' });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    handleOAuthCallback();
+  }, []);
+
+  const handleFacebookLogin = () => {
+    const state = crypto.randomUUID();
+    sessionStorage.setItem('ig_oauth_state', state);
+    const redirectUri = `${window.location.origin}/instagram`;
+    const fbUrl = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${FACEBOOK_APP_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${FACEBOOK_PERMISSIONS}&state=${state}&response_type=code`;
+    window.location.href = fbUrl;
   };
 
   if (!canAddMore) {
@@ -140,137 +162,61 @@ function ConnectWizard({
     );
   }
 
-  /* Etapa 1 — Introdução */
-  if (step === 'intro') {
-    return (
-      <Card className="overflow-hidden">
-        <div className="bg-gradient-to-br from-pink-500/10 via-purple-500/10 to-orange-500/10 p-8 text-center">
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 mb-4">
-            <Instagram className="h-8 w-8 text-white" />
-          </div>
-          <h2 className="text-2xl font-bold mb-2">Conectar Instagram</h2>
-          <p className="text-muted-foreground max-w-md mx-auto">
-            Em 2 minutos você conecta sua conta e começa a automatizar respostas.
-          </p>
-        </div>
-        <CardContent className="p-6 space-y-4">
-          <div className="space-y-3">
-            <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">O que você precisa</h4>
-            <div className="grid gap-3">
-              {[
-                { emoji: '📱', text: 'Conta Instagram Business ou Creator' },
-                { emoji: '📄', text: 'Página do Facebook vinculada ao Instagram' },
-                { emoji: '🔑', text: 'Access Token do Meta Developers' },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-                  <span className="text-xl">{item.emoji}</span>
-                  <span className="text-sm font-medium">{item.text}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 pt-2">
-            <Button className="flex-1 gap-2" onClick={() => setStep('token')}>
-              Já tenho o token <ArrowRight className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" asChild>
-              <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer" className="gap-2">
-                <ExternalLink className="h-4 w-4" /> Criar token
-              </a>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  /* Etapa 2 — Colar Token */
-  if (step === 'token') {
+  if (loading) {
     return (
       <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setStep('intro')}>← Voltar</Button>
-          </div>
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-pink-500" />
-            Cole seu Access Token
-          </CardTitle>
-          <CardDescription>
-            O sistema encontrará sua conta automaticamente.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="ig-token-input">Access Token</Label>
-            <Input
-              id="ig-token-input"
-              type="password"
-              placeholder="Cole aqui o token do Meta Developers..."
-              value={token}
-              onChange={e => setToken(e.target.value)}
-              autoFocus
-            />
-            <p className="text-xs text-muted-foreground">
-              Encontre em: Meta Developers → Seu App → Instagram → Token de Acesso
-            </p>
-          </div>
-          <Button 
-            className="w-full gap-2" 
-            onClick={handleLookup} 
-            disabled={loading || !token.trim()}
-          >
-            {loading ? (
-              <><RefreshCw className="h-4 w-4 animate-spin" /> Buscando conta...</>
-            ) : (
-              <>Buscar minha conta <ArrowRight className="h-4 w-4" /></>
-            )}
-          </Button>
+        <CardContent className="flex flex-col items-center py-16 text-center">
+          <RefreshCw className="h-10 w-10 text-pink-500 animate-spin mb-4" />
+          <h3 className="font-semibold text-lg">Conectando sua conta...</h3>
+          <p className="text-sm text-muted-foreground mt-1">
+            Estamos vinculando sua conta do Instagram. Aguarde um momento.
+          </p>
         </CardContent>
       </Card>
     );
   }
 
-  /* Etapa 3 — Preview + Confirmar */
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => { setStep('token'); setProfile(null); }}>← Voltar</Button>
+    <Card className="overflow-hidden">
+      <div className="bg-gradient-to-br from-pink-500/10 via-purple-500/10 to-orange-500/10 p-8 text-center">
+        <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 mb-4">
+          <Instagram className="h-8 w-8 text-white" />
         </div>
-        <CardTitle>Confirmar conexão</CardTitle>
-        <CardDescription>Verifique se esta é a conta correta.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center gap-4 p-5 rounded-xl border-2 border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-950/20">
-          {profile?.profile_picture_url ? (
-            <img src={profile.profile_picture_url} alt={profile.username} className="h-16 w-16 rounded-full ring-2 ring-green-300" />
-          ) : (
-            <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
-              <Instagram className="h-8 w-8 text-pink-500" />
-            </div>
-          )}
-          <div>
-            <p className="font-bold text-lg">@{profile?.username}</p>
-            {profile?.full_name && <p className="text-muted-foreground">{profile.full_name}</p>}
-            {profile?.account_type && (
-              <Badge variant="secondary" className="mt-1">{profile.account_type}</Badge>
-            )}
+        <h2 className="text-2xl font-bold mb-2">Conectar Instagram</h2>
+        <p className="text-muted-foreground max-w-md mx-auto">
+          Conecte via Facebook para automatizar respostas de DM, comentários e stories.
+        </p>
+      </div>
+      <CardContent className="p-6 space-y-4">
+        <div className="space-y-3">
+          <h4 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">Requisitos</h4>
+          <div className="grid gap-3">
+            {[
+              { emoji: '📱', text: 'Conta Instagram Business ou Creator' },
+              { emoji: '📄', text: 'Página do Facebook vinculada ao Instagram' },
+            ].map((item, i) => (
+              <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                <span className="text-xl">{item.emoji}</span>
+                <span className="text-sm font-medium">{item.text}</span>
+              </div>
+            ))}
           </div>
         </div>
+
         <Button 
-          className="w-full gap-2" 
+          className="w-full gap-2 bg-[#1877F2] hover:bg-[#166FE5] text-white" 
           size="lg"
-          onClick={handleConnect} 
-          disabled={connecting}
+          onClick={handleFacebookLogin}
         >
-          {connecting ? (
-            <><RefreshCw className="h-4 w-4 animate-spin" /> Conectando...</>
-          ) : (
-            <><CheckCircle2 className="h-4 w-4" /> Conectar esta conta</>
-          )}
+          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+          </svg>
+          Conectar com Facebook
         </Button>
+
+        <p className="text-xs text-center text-muted-foreground">
+          Ao conectar, você autoriza o acesso à sua conta Instagram Business vinculada ao Facebook.
+        </p>
       </CardContent>
     </Card>
   );

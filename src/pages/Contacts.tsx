@@ -49,8 +49,10 @@ import {
   Download,
   Upload,
   Loader2,
+  MessageSquare,
 } from 'lucide-react';
-import { useContacts, useCreateContact, useDeleteContact, type CreateContactData } from '@/hooks/useContacts';
+import { Textarea } from '@/components/ui/textarea';
+import { useContacts, useCreateContact, useUpdateContact, useDeleteContact, type Contact, type CreateContactData } from '@/hooks/useContacts';
 import { PageHeader, EmptyState, FormField } from '@/components/ui/help-tooltip';
 import { useCompanies } from '@/hooks/useCompanies';
 import { ImportContactsDialog } from '@/components/contacts/ImportContactsDialog';
@@ -91,6 +93,8 @@ export default function Contacts() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [viewContact, setViewContact] = useState<Contact | null>(null);
+  const [editContact, setEditContact] = useState<Contact | null>(null);
   const [newContact, setNewContact] = useState<CreateContactData>({
     first_name: '',
     last_name: '',
@@ -103,6 +107,7 @@ export default function Contacts() {
   const { data: contacts = [], isLoading } = useContacts();
   const { data: companies = [] } = useCompanies();
   const createContact = useCreateContact();
+  const updateContact = useUpdateContact();
   const deleteContact = useDeleteContact();
   const { enforceLimit } = useFeatureCheck();
 
@@ -151,6 +156,13 @@ export default function Contacts() {
       await deleteContact.mutateAsync(deleteId);
       setDeleteId(null);
     }
+  };
+
+  const handleEditContact = async () => {
+    if (!editContact) return;
+    const { id, first_name, last_name, email, phone, whatsapp, position, status, notes, company_id } = editContact;
+    await updateContact.mutateAsync({ id, first_name, last_name, email, phone, whatsapp, position, status, notes, company_id });
+    setEditContact(null);
   };
 
   const getInitials = (firstName: string, lastName?: string | null) => {
@@ -403,12 +415,12 @@ export default function Contacts() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setViewContact(contact)}>
                             <Eye className="mr-2 h-4 w-4" />
                             Ver detalhes
                           </DropdownMenuItem>
                           <PermissionGate module="contacts" action="edit">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setEditContact({ ...contact })}>
                               <Edit className="mr-2 h-4 w-4" />
                               Editar
                             </DropdownMenuItem>
@@ -462,6 +474,155 @@ export default function Contacts() {
 
       {/* Import Dialog */}
       <ImportContactsDialog open={isImportOpen} onOpenChange={setIsImportOpen} />
+
+      {/* View Contact Detail Dialog */}
+      <Dialog open={!!viewContact} onOpenChange={() => setViewContact(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Contato</DialogTitle>
+          </DialogHeader>
+          {viewContact && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-14 w-14">
+                  <AvatarFallback className="bg-primary/10 text-primary text-lg">
+                    {getInitials(viewContact.first_name, viewContact.last_name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h3 className="text-lg font-semibold">{viewContact.first_name} {viewContact.last_name}</h3>
+                  <Badge className={statusColors[viewContact.status || 'lead']} variant="secondary">
+                    {statusLabels[viewContact.status || 'lead']}
+                  </Badge>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                {viewContact.email && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Mail className="h-4 w-4" /> {viewContact.email}
+                  </div>
+                )}
+                {viewContact.phone && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Phone className="h-4 w-4" /> {viewContact.phone}
+                  </div>
+                )}
+                {viewContact.whatsapp && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <MessageSquare className="h-4 w-4" /> {viewContact.whatsapp}
+                  </div>
+                )}
+                {viewContact.company && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Building2 className="h-4 w-4" /> {viewContact.company.name}
+                  </div>
+                )}
+              </div>
+              {viewContact.position && (
+                <div className="text-sm"><span className="font-medium">Cargo:</span> {viewContact.position}</div>
+              )}
+              {viewContact.source && (
+                <div className="text-sm"><span className="font-medium">Origem:</span> {viewContact.source}</div>
+              )}
+              <div className="text-sm"><span className="font-medium">Lead Score:</span> {viewContact.lead_score || 0}</div>
+              {viewContact.notes && (
+                <div className="text-sm">
+                  <span className="font-medium">Notas:</span>
+                  <p className="mt-1 text-muted-foreground whitespace-pre-wrap">{viewContact.notes}</p>
+                </div>
+              )}
+              <div className="text-xs text-muted-foreground">
+                Criado em: {new Date(viewContact.created_at).toLocaleDateString('pt-BR')}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewContact(null)}>Fechar</Button>
+            <PermissionGate module="contacts" action="edit">
+              <Button onClick={() => { setEditContact({ ...viewContact! }); setViewContact(null); }}>
+                <Edit className="h-4 w-4 mr-2" /> Editar
+              </Button>
+            </PermissionGate>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Contact Dialog */}
+      <Dialog open={!!editContact} onOpenChange={() => setEditContact(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Contato</DialogTitle>
+            <DialogDescription>Atualize as informações do contato</DialogDescription>
+          </DialogHeader>
+          {editContact && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Nome *</Label>
+                  <Input value={editContact.first_name} onChange={(e) => setEditContact({ ...editContact, first_name: e.target.value })} />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Sobrenome</Label>
+                  <Input value={editContact.last_name || ''} onChange={(e) => setEditContact({ ...editContact, last_name: e.target.value })} />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label>Email</Label>
+                <Input type="email" value={editContact.email || ''} onChange={(e) => setEditContact({ ...editContact, email: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Telefone</Label>
+                  <Input value={editContact.phone || ''} onChange={(e) => setEditContact({ ...editContact, phone: e.target.value })} />
+                </div>
+                <div className="grid gap-2">
+                  <Label>WhatsApp</Label>
+                  <Input value={editContact.whatsapp || ''} onChange={(e) => setEditContact({ ...editContact, whatsapp: e.target.value })} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Cargo</Label>
+                  <Input value={editContact.position || ''} onChange={(e) => setEditContact({ ...editContact, position: e.target.value })} />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Empresa</Label>
+                  <Select value={editContact.company_id || ''} onValueChange={(v) => setEditContact({ ...editContact, company_id: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label>Status</Label>
+                <Select value={editContact.status || 'lead'} onValueChange={(v) => setEditContact({ ...editContact, status: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lead">Lead</SelectItem>
+                    <SelectItem value="qualified">Qualificado</SelectItem>
+                    <SelectItem value="customer">Cliente</SelectItem>
+                    <SelectItem value="active">Ativo</SelectItem>
+                    <SelectItem value="churned">Inativo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label>Notas</Label>
+                <Textarea value={editContact.notes || ''} onChange={(e) => setEditContact({ ...editContact, notes: e.target.value })} rows={3} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditContact(null)}>Cancelar</Button>
+            <Button onClick={handleEditContact} disabled={updateContact.isPending || !editContact?.first_name}>
+              {updateContact.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -105,18 +105,6 @@ export default function Admin() {
     enabled: isAdmin === true,
   });
 
-  if (isCheckingAdmin) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Skeleton className="h-8 w-48" />
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
   const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
 
   // Calculate MRR from subscriptions
@@ -128,15 +116,39 @@ export default function Admin() {
     return total;
   }, 0);
 
-  // Mock data for MRR chart
-  const mrrData = [
-    { month: 'Jan', mrr: mrr * 0.6 },
-    { month: 'Fev', mrr: mrr * 0.7 },
-    { month: 'Mar', mrr: mrr * 0.75 },
-    { month: 'Abr', mrr: mrr * 0.8 },
-    { month: 'Mai', mrr: mrr * 0.9 },
-    { month: 'Jun', mrr: mrr },
-  ];
+  // Build MRR chart from real subscription created_at dates
+  const mrrData = React.useMemo(() => {
+    const now = new Date();
+    const months: { month: string; mrr: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const label = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+      let accMrr = 0;
+      organizations.forEach((org: any) => {
+        const sub = org.subscriptions?.[0];
+        if (sub?.status === 'active' && sub.plans?.price_monthly) {
+          const subDate = new Date(sub.created_at);
+          if (subDate <= new Date(d.getFullYear(), d.getMonth() + 1, 0)) {
+            accMrr += Number(sub.plans.price_monthly);
+          }
+        }
+      });
+      months.push({ month: label.charAt(0).toUpperCase() + label.slice(1), mrr: accMrr });
+    }
+    return months;
+  }, [organizations]);
+
+  if (isCheckingAdmin) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <Skeleton className="h-8 w-48" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">

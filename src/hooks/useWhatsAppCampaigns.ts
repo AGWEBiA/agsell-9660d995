@@ -197,20 +197,14 @@ export function useWhatsAppCampaigns() {
     },
   });
 
-  // Start campaign
+  // Start campaign via edge function
   const startCampaignMutation = useMutation({
     mutationFn: async (campaignId: string) => {
-      const { data, error } = await supabase
-        .from('whatsapp_campaigns')
-        .update({
-          status: 'running',
-          started_at: new Date().toISOString(),
-        })
-        .eq('id', campaignId)
-        .select()
-        .single();
-      
+      const { data, error } = await supabase.functions.invoke('process-whatsapp-campaign', {
+        body: { campaign_id: campaignId, action: 'start' },
+      });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       return data;
     },
     onSuccess: () => {
@@ -222,20 +216,14 @@ export function useWhatsAppCampaigns() {
     },
   });
 
-  // Pause campaign
+  // Pause campaign via edge function
   const pauseCampaignMutation = useMutation({
     mutationFn: async (campaignId: string) => {
-      const { data, error } = await supabase
-        .from('whatsapp_campaigns')
-        .update({
-          status: 'paused',
-          paused_at: new Date().toISOString(),
-        })
-        .eq('id', campaignId)
-        .select()
-        .single();
-      
+      const { data, error } = await supabase.functions.invoke('process-whatsapp-campaign', {
+        body: { campaign_id: campaignId, action: 'pause' },
+      });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       return data;
     },
     onSuccess: () => {

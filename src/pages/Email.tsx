@@ -58,7 +58,7 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function Email() {
-  const { campaigns, isLoading, createCampaign, updateCampaign, deleteCampaign } = useEmailCampaigns();
+  const { campaigns, isLoading, createCampaign, updateCampaign, deleteCampaign, sendCampaign } = useEmailCampaigns();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState<typeof campaigns[0] | null>(null);
@@ -364,8 +364,13 @@ export default function Email() {
                                 <Edit className="mr-2 h-4 w-4" />
                                 Editar Template
                               </DropdownMenuItem>
+                              {campaign.status === 'draft' && (
+                                <DropdownMenuItem onClick={() => sendCampaign.mutate(campaign.id)}>
+                                  <Send className="mr-2 h-4 w-4" />
+                                  Enviar Agora
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem>Duplicar</DropdownMenuItem>
-                              <DropdownMenuItem>Agendar Envio</DropdownMenuItem>
                               <DropdownMenuItem
                                 className="text-destructive"
                                 onClick={() => deleteCampaign.mutate(campaign.id)}

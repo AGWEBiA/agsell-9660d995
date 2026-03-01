@@ -43,6 +43,8 @@ import {
   HeadphonesIcon,
   GitBranch,
   Pencil,
+  Vote,
+  SplitSquareVertical,
 } from 'lucide-react';
 import { ActionConfigFields } from './ActionConfigFields';
 
@@ -65,7 +67,9 @@ export type ActionType =
   | 'send_sms'
   | 'ab_split'
   | 'transfer_human'
-  | 'goto_flow';
+  | 'goto_flow'
+  | 'send_poll'
+  | 'condition';
 
 export type Action = {
   id: string;
@@ -86,7 +90,9 @@ export const actionTypes = [
   { value: 'subscribe_sequence', label: 'Inscrever em Sequência', icon: ListPlus, color: 'bg-teal-100 text-teal-600 dark:bg-teal-900 dark:text-teal-400', category: 'flow' },
   { value: 'unsubscribe_sequence', label: 'Remover de Sequência', icon: ListMinus, color: 'bg-orange-100 text-orange-600 dark:bg-orange-900 dark:text-orange-400', category: 'flow' },
   { value: 'goto_flow', label: 'Ir para outro Flow', icon: GitBranch, color: 'bg-violet-100 text-violet-600 dark:bg-violet-900 dark:text-violet-400', category: 'flow' },
+  { value: 'send_poll', label: 'Enviar Enquete', icon: Vote, color: 'bg-fuchsia-100 text-fuchsia-600 dark:bg-fuchsia-900 dark:text-fuchsia-400', category: 'messaging' },
   { value: 'ab_split', label: 'Teste A/B (Split)', icon: Shuffle, color: 'bg-amber-100 text-amber-600 dark:bg-amber-900 dark:text-amber-400', category: 'flow' },
+  { value: 'condition', label: 'Condição (Se/Senão)', icon: SplitSquareVertical, color: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900 dark:text-emerald-400', category: 'flow' },
   { value: 'wait', label: 'Aguardar', icon: Clock, color: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400', category: 'flow' },
   { value: 'assign_agent', label: 'Atribuir a Agente', icon: UserCheck, color: 'bg-sky-100 text-sky-600 dark:bg-sky-900 dark:text-sky-400', category: 'team' },
   { value: 'transfer_human', label: 'Transferir p/ Humano', icon: HeadphonesIcon, color: 'bg-rose-100 text-rose-600 dark:bg-rose-900 dark:text-rose-400', category: 'team' },
@@ -188,6 +194,16 @@ export function AutomationActionsEditor({ actions, onChange }: AutomationActions
         return action.config.department ? `Dept: ${String(action.config.department)}` : 'Live chat';
       case 'goto_flow':
         return action.config.flow_name ? `→ ${String(action.config.flow_name)}` : 'Outro flow';
+      case 'send_poll': {
+        const question = action.config.question ? String(action.config.question) : 'Enquete';
+        const optCount = [action.config.option_1, action.config.option_2, action.config.option_3, action.config.option_4].filter(Boolean).length;
+        return `${question.slice(0, 30)}${question.length > 30 ? '…' : ''} (${optCount} opções)`;
+      }
+      case 'condition': {
+        const field = action.config.condition_field ? String(action.config.condition_field) : '';
+        const op = action.config.condition_operator ? String(action.config.condition_operator) : '';
+        return field ? `Se ${field} ${op} ${String(action.config.condition_value || '')}` : 'Condição';
+      }
       default:
         return '';
     }

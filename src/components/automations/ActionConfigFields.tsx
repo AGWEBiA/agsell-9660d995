@@ -393,6 +393,214 @@ export function ActionConfigFields({ actionType, config, onConfigChange }: Actio
         </div>
       );
 
+    case 'send_poll':
+      return (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Canal da Enquete</Label>
+            <Select value={(config.poll_channel as string) || 'whatsapp'} onValueChange={(v) => set('poll_channel', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                <SelectItem value="instagram">Instagram DM</SelectItem>
+                <SelectItem value="email">Email</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Pergunta</Label>
+            <Input placeholder="Qual produto te interessa mais?" value={(config.question as string) || ''} onChange={(e) => set('question', e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label>Opções de Resposta</Label>
+            <Input placeholder="Opção 1 (obrigatória)" value={(config.option_1 as string) || ''} onChange={(e) => set('option_1', e.target.value)} />
+            <Input placeholder="Opção 2 (obrigatória)" value={(config.option_2 as string) || ''} onChange={(e) => set('option_2', e.target.value)} />
+            <Input placeholder="Opção 3 (opcional)" value={(config.option_3 as string) || ''} onChange={(e) => set('option_3', e.target.value)} />
+            <Input placeholder="Opção 4 (opcional)" value={(config.option_4 as string) || ''} onChange={(e) => set('option_4', e.target.value)} />
+          </div>
+          <div className="rounded-lg border p-3 bg-accent/30 space-y-3">
+            <p className="text-xs font-semibold text-muted-foreground">📌 Ações por Resposta (opcional)</p>
+            <p className="text-xs text-muted-foreground">Defina o que acontece quando o contato escolhe cada opção:</p>
+            {[1, 2, 3, 4].map((i) => {
+              const optVal = config[`option_${i}`] as string;
+              if (!optVal) return null;
+              return (
+                <div key={i} className="space-y-1">
+                  <Label className="text-xs">Se responder "{optVal}":</Label>
+                  <Select value={(config[`action_on_${i}`] as string) || 'none'} onValueChange={(v) => set(`action_on_${i}`, v)}>
+                    <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhuma ação extra</SelectItem>
+                      <SelectItem value="add_tag">Adicionar Tag</SelectItem>
+                      <SelectItem value="set_field">Definir Campo</SelectItem>
+                      <SelectItem value="goto_flow">Ir para Flow</SelectItem>
+                      <SelectItem value="subscribe_sequence">Inscrever em Sequência</SelectItem>
+                      <SelectItem value="send_message">Enviar Mensagem</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {config[`action_on_${i}`] && config[`action_on_${i}`] !== 'none' && (
+                    <Input
+                      className="h-8 text-xs"
+                      placeholder={
+                        config[`action_on_${i}`] === 'add_tag' ? 'Nome da tag' :
+                        config[`action_on_${i}`] === 'set_field' ? 'campo=valor' :
+                        config[`action_on_${i}`] === 'goto_flow' ? 'ID do flow' :
+                        config[`action_on_${i}`] === 'subscribe_sequence' ? 'ID da sequência' :
+                        'Mensagem de resposta'
+                      }
+                      value={(config[`action_value_${i}`] as string) || ''}
+                      onChange={(e) => set(`action_value_${i}`, e.target.value)}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="space-y-2">
+            <Label>Salvar resposta no campo</Label>
+            <Input placeholder="Ex: interesse_produto" value={(config.save_to_field as string) || ''} onChange={(e) => set('save_to_field', e.target.value)} />
+            <p className="text-xs text-muted-foreground">A resposta será salva neste campo do contato</p>
+          </div>
+        </div>
+      );
+
+    case 'condition':
+      return (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label>Tipo de Condição</Label>
+            <Select value={(config.condition_type as string) || 'field'} onValueChange={(v) => set('condition_type', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="field">Campo do Contato</SelectItem>
+                <SelectItem value="tag">Possui Tag</SelectItem>
+                <SelectItem value="score">Lead Score</SelectItem>
+                <SelectItem value="poll_response">Resposta de Enquete</SelectItem>
+                <SelectItem value="last_interaction">Última Interação</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {(config.condition_type === 'field' || !config.condition_type) && (
+            <>
+              <div className="space-y-2">
+                <Label>Campo</Label>
+                <Select value={(config.condition_field as string) || ''} onValueChange={(v) => set('condition_field', v)}>
+                  <SelectTrigger><SelectValue placeholder="Selecione o campo" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="status">Status</SelectItem>
+                    <SelectItem value="source">Fonte</SelectItem>
+                    <SelectItem value="email">Email</SelectItem>
+                    <SelectItem value="phone">Telefone</SelectItem>
+                    <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                    <SelectItem value="position">Cargo</SelectItem>
+                    <SelectItem value="custom">Campo Personalizado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {config.condition_field === 'custom' && (
+                <div className="space-y-2">
+                  <Label>Nome do Campo</Label>
+                  <Input placeholder="nome_do_campo" value={(config.custom_field_key as string) || ''} onChange={(e) => set('custom_field_key', e.target.value)} />
+                </div>
+              )}
+            </>
+          )}
+
+          {config.condition_type === 'tag' && (
+            <div className="space-y-2">
+              <Label>Nome da Tag</Label>
+              <Input placeholder="Ex: Lead Quente" value={(config.condition_field as string) || ''} onChange={(e) => set('condition_field', e.target.value)} />
+            </div>
+          )}
+
+          {config.condition_type === 'score' && (
+            <div className="space-y-2">
+              <Label>Campo de Score</Label>
+              <Input value="lead_score" disabled />
+              {(() => { if (!config.condition_field) set('condition_field', 'lead_score'); return null; })()}
+            </div>
+          )}
+
+          {config.condition_type === 'poll_response' && (
+            <div className="space-y-2">
+              <Label>Campo da Enquete</Label>
+              <Input placeholder="Ex: interesse_produto (campo salvo na enquete)" value={(config.condition_field as string) || ''} onChange={(e) => set('condition_field', e.target.value)} />
+            </div>
+          )}
+
+          {config.condition_type === 'last_interaction' && (
+            <div className="space-y-2">
+              <Label>Campo</Label>
+              <Input value="days_since_last_interaction" disabled />
+              {(() => { if (!config.condition_field) set('condition_field', 'days_since_last_interaction'); return null; })()}
+            </div>
+          )}
+
+          <div className="space-y-2">
+            <Label>Operador</Label>
+            <Select value={(config.condition_operator as string) || 'equals'} onValueChange={(v) => set('condition_operator', v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="equals">Igual a</SelectItem>
+                <SelectItem value="not_equals">Diferente de</SelectItem>
+                <SelectItem value="contains">Contém</SelectItem>
+                <SelectItem value="not_contains">Não contém</SelectItem>
+                <SelectItem value="greater_than">Maior que</SelectItem>
+                <SelectItem value="less_than">Menor que</SelectItem>
+                <SelectItem value="exists">Existe (preenchido)</SelectItem>
+                <SelectItem value="not_exists">Não existe (vazio)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {!['exists', 'not_exists'].includes((config.condition_operator as string) || '') && (
+            <div className="space-y-2">
+              <Label>Valor</Label>
+              <Input placeholder="Valor para comparação" value={(config.condition_value as string) || ''} onChange={(e) => set('condition_value', e.target.value)} />
+            </div>
+          )}
+
+          <div className="rounded-lg border p-3 bg-accent/30 space-y-3">
+            <p className="text-xs font-semibold text-muted-foreground">📌 Ramificação</p>
+            <div className="space-y-2">
+              <Label className="text-xs text-green-600">✅ Se VERDADEIRO → Ação:</Label>
+              <Select value={(config.true_action as string) || 'continue'} onValueChange={(v) => set('true_action', v)}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="continue">Continuar para próxima ação</SelectItem>
+                  <SelectItem value="add_tag">Adicionar Tag</SelectItem>
+                  <SelectItem value="goto_flow">Ir para Flow</SelectItem>
+                  <SelectItem value="subscribe_sequence">Inscrever em Sequência</SelectItem>
+                  <SelectItem value="send_message">Enviar Mensagem</SelectItem>
+                  <SelectItem value="stop">Parar automação</SelectItem>
+                </SelectContent>
+              </Select>
+              {config.true_action && !['continue', 'stop'].includes(config.true_action as string) && (
+                <Input className="h-8 text-xs" placeholder="Valor (tag, flow ID, mensagem...)" value={(config.true_action_value as string) || ''} onChange={(e) => set('true_action_value', e.target.value)} />
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs text-red-600">❌ Se FALSO → Ação:</Label>
+              <Select value={(config.false_action as string) || 'continue'} onValueChange={(v) => set('false_action', v)}>
+                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="continue">Continuar para próxima ação</SelectItem>
+                  <SelectItem value="add_tag">Adicionar Tag</SelectItem>
+                  <SelectItem value="goto_flow">Ir para Flow</SelectItem>
+                  <SelectItem value="subscribe_sequence">Inscrever em Sequência</SelectItem>
+                  <SelectItem value="send_message">Enviar Mensagem</SelectItem>
+                  <SelectItem value="stop">Parar automação</SelectItem>
+                </SelectContent>
+              </Select>
+              {config.false_action && !['continue', 'stop'].includes(config.false_action as string) && (
+                <Input className="h-8 text-xs" placeholder="Valor (tag, flow ID, mensagem...)" value={(config.false_action_value as string) || ''} onChange={(e) => set('false_action_value', e.target.value)} />
+              )}
+            </div>
+          </div>
+        </div>
+      );
+
     default:
       return null;
   }

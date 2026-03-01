@@ -2089,6 +2089,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_default: boolean | null
+          max_ai_requests_per_month: number
           max_automations: number | null
           max_contacts: number | null
           max_emails_per_month: number | null
@@ -2109,6 +2110,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
+          max_ai_requests_per_month?: number
           max_automations?: number | null
           max_contacts?: number | null
           max_emails_per_month?: number | null
@@ -2129,6 +2131,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
+          max_ai_requests_per_month?: number
           max_automations?: number | null
           max_contacts?: number | null
           max_emails_per_month?: number | null

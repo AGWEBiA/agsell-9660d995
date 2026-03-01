@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-export type PlanResource = 'users' | 'contacts' | 'emails' | 'whatsapp' | 'automations' | 'forms';
+export type PlanResource = 'users' | 'contacts' | 'emails' | 'whatsapp' | 'automations' | 'forms' | 'ai_requests';
 
 interface FeatureGateProps {
   resource: PlanResource;
@@ -30,6 +30,7 @@ export function FeatureGate({ resource, currentCount = 0, children, showUpgrade 
       case 'whatsapp': return currentPlan.max_whatsapp_messages ?? -1;
       case 'automations': return currentPlan.max_automations ?? -1;
       case 'forms': return currentPlan.max_forms ?? -1;
+      case 'ai_requests': return currentPlan.max_ai_requests_per_month ?? -1;
       default: return -1;
     }
   };
@@ -93,6 +94,7 @@ export function useFeatureCheck() {
       case 'whatsapp': return currentPlan.max_whatsapp_messages ?? -1;
       case 'automations': return currentPlan.max_automations ?? -1;
       case 'forms': return currentPlan.max_forms ?? -1;
+      case 'ai_requests': return currentPlan.max_ai_requests_per_month ?? -1;
       default: return -1;
     }
   };

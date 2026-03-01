@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useAutomations } from '@/hooks/useAutomations';
+import { useForms } from '@/hooks/useForms';
 import { cn } from '@/lib/utils';
 import type { Json } from '@/integrations/supabase/types';
 import {
@@ -47,11 +48,15 @@ const triggerOptions = [
   { id: 'instagram_specific_post', label: 'Post Específico', icon: Instagram, channel: 'instagram', color: 'from-purple-500 to-pink-500', description: 'Quando alguém comenta em um post específico' },
   { id: 'instagram_dm', label: 'DM Recebida', icon: MessageCircle, channel: 'instagram', color: 'from-purple-500 to-orange-400', description: 'Quando alguém envia uma DM' },
   { id: 'instagram_story_reply', label: 'Resposta ao Story', icon: Eye, channel: 'instagram', color: 'from-pink-400 to-orange-400', description: 'Quando alguém responde ou reage ao seu story' },
+  { id: 'instagram_story_specific', label: 'Story Específico', icon: Eye, channel: 'instagram', color: 'from-orange-400 to-pink-500', description: 'Gatilho para um story específico (por URL ou ID)' },
   { id: 'instagram_new_follower', label: 'Novo Seguidor', icon: UserPlus, channel: 'instagram', color: 'from-purple-400 to-pink-400', description: 'Quando alguém começa a seguir você' },
   { id: 'whatsapp_received', label: 'Mensagem WhatsApp', icon: MessageSquare, channel: 'whatsapp', color: 'from-green-500 to-emerald-500', description: 'Quando receber uma mensagem no WhatsApp' },
   { id: 'whatsapp_keyword', label: 'Palavra-chave WhatsApp', icon: Sparkles, channel: 'whatsapp', color: 'from-emerald-500 to-teal-500', description: 'Quando mensagem contém palavra-chave' },
+  { id: 'whatsapp_automation', label: 'Automação WhatsApp', icon: Zap, channel: 'whatsapp', color: 'from-teal-500 to-green-500', description: 'Quando uma automação WhatsApp específica é acionada' },
+  { id: 'whatsapp_message_source', label: 'Mensagem de Origem', icon: MessageSquare, channel: 'whatsapp', color: 'from-green-400 to-teal-400', description: 'Quando mensagem vem de uma origem específica' },
   { id: 'contact_created', label: 'Contato Criado', icon: UserPlus, channel: 'crm', color: 'from-blue-500 to-indigo-500', description: 'Quando um novo contato é adicionado' },
-  { id: 'form_submitted', label: 'Formulário Enviado', icon: CheckSquare, channel: 'crm', color: 'from-indigo-500 to-blue-500', description: 'Quando um formulário é preenchido' },
+  { id: 'contact_source', label: 'Fonte do Contato', icon: UserPlus, channel: 'crm', color: 'from-indigo-400 to-blue-400', description: 'Quando contato vem de uma fonte específica' },
+  { id: 'form_submitted', label: 'Formulário Enviado', icon: CheckSquare, channel: 'crm', color: 'from-indigo-500 to-blue-500', description: 'Quando um formulário específico é preenchido' },
 ];
 
 // ─── Action definitions ───
@@ -82,10 +87,14 @@ const triggerTypeMap: Record<string, string> = {
   instagram_specific_post: 'instagram_comment',
   instagram_dm: 'instagram_dm',
   instagram_story_reply: 'instagram_comment',
+  instagram_story_specific: 'instagram_comment',
   instagram_new_follower: 'contact_created',
   whatsapp_received: 'whatsapp_received',
   whatsapp_keyword: 'whatsapp_received',
+  whatsapp_automation: 'whatsapp_received',
+  whatsapp_message_source: 'whatsapp_received',
   contact_created: 'contact_created',
+  contact_source: 'contact_created',
   form_submitted: 'form_submitted',
 };
 
@@ -122,6 +131,10 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter }: {
                 <p className="font-semibold text-sm mt-0.5">{info.label}</p>
                 {node.config.keyword && <p className="text-xs text-muted-foreground mt-0.5">Palavra: "{String(node.config.keyword)}"</p>}
                 {node.config.post_url && <p className="text-xs text-muted-foreground mt-0.5 truncate">Post: {String(node.config.post_url)}</p>}
+                {node.config.story_url && <p className="text-xs text-muted-foreground mt-0.5 truncate">Story: {String(node.config.story_url)}</p>}
+                {node.config.form_name && <p className="text-xs text-muted-foreground mt-0.5">Formulário: {String(node.config.form_name)}</p>}
+                {node.config.contact_source && node.config.contact_source !== 'any' && <p className="text-xs text-muted-foreground mt-0.5">Fonte: {String(node.config.contact_source)}</p>}
+                {node.config.message_source_type && node.config.message_source_type !== 'any' && <p className="text-xs text-muted-foreground mt-0.5">Origem: {String(node.config.message_source_type)}</p>}
               </div>
               <Settings className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
@@ -239,15 +252,200 @@ function NodeConfigDialog({ node, open, onClose, onSave }: {
   onSave: (config: Record<string, unknown>) => void;
 }) {
   const [config, setConfig] = useState<Record<string, unknown>>(node?.config || {});
+  const { forms } = useForms();
+  const { automations } = useAutomations();
+
   useEffect(() => { if (node) setConfig(node.config); }, [node]);
   if (!node) return null;
 
+  const contactSources = ['website', 'landing_page', 'formulario', 'whatsapp', 'instagram', 'indicacao', 'evento', 'ads', 'importacao', 'outro'];
+
   const renderFields = () => {
     switch (node.subtype) {
-      case 'instagram_comment': case 'instagram_dm': case 'whatsapp_keyword':
-        return (<div className="space-y-4"><div><Label>Palavra-chave (opcional)</Label><Input placeholder="Ex: INFO, QUERO, PROMO" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Deixe vazio para ativar com qualquer mensagem</p></div></div>);
+      // ── Instagram triggers ──
+      case 'instagram_comment':
+        return (
+          <div className="space-y-4">
+            <div><Label>Palavra-chave (opcional)</Label><Input placeholder="Ex: INFO, QUERO, PROMO" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Deixe vazio para ativar com qualquer comentário</p></div>
+          </div>
+        );
+      case 'instagram_dm':
+        return (
+          <div className="space-y-4">
+            <div><Label>Palavra-chave (opcional)</Label><Input placeholder="Ex: INFO, QUERO, PROMO" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Deixe vazio para ativar com qualquer DM</p></div>
+          </div>
+        );
       case 'instagram_specific_post':
-        return (<div className="space-y-4"><div><Label>URL do Post</Label><Input placeholder="https://www.instagram.com/p/..." value={String(config.post_url || '')} onChange={e => setConfig({ ...config, post_url: e.target.value })} /></div><div><Label>Palavra-chave (opcional)</Label><Input placeholder="Ex: QUERO" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /></div></div>);
+        return (
+          <div className="space-y-4">
+            <div><Label>URL do Post *</Label><Input placeholder="https://www.instagram.com/p/..." value={String(config.post_url || '')} onChange={e => setConfig({ ...config, post_url: e.target.value })} /></div>
+            <div><Label>Palavra-chave (opcional)</Label><Input placeholder="Ex: QUERO" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /></div>
+          </div>
+        );
+      case 'instagram_story_reply':
+        return (
+          <div className="space-y-4">
+            <div><Label>URL do Story (opcional)</Label><Input placeholder="https://www.instagram.com/stories/..." value={String(config.story_url || '')} onChange={e => setConfig({ ...config, story_url: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Deixe vazio para reagir a qualquer story</p></div>
+            <div><Label>Tipo de resposta</Label>
+              <Select value={String(config.reply_type || 'any')} onValueChange={v => setConfig({ ...config, reply_type: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Qualquer resposta</SelectItem>
+                  <SelectItem value="text">Texto</SelectItem>
+                  <SelectItem value="reaction">Reação (emoji)</SelectItem>
+                  <SelectItem value="quick_reply">Resposta rápida</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Palavra-chave (opcional)</Label><Input placeholder="Ex: QUERO" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /></div>
+          </div>
+        );
+      case 'instagram_story_specific':
+        return (
+          <div className="space-y-4">
+            <div><Label>URL ou ID do Story *</Label><Input placeholder="https://www.instagram.com/stories/usuario/123..." value={String(config.story_url || '')} onChange={e => setConfig({ ...config, story_url: e.target.value })} /></div>
+            <div><Label>ID do Story (opcional)</Label><Input placeholder="Ex: 3210987654321" value={String(config.story_id || '')} onChange={e => setConfig({ ...config, story_id: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Se disponível, use o ID numérico do story para maior precisão</p></div>
+            <div><Label>Tipo de interação</Label>
+              <Select value={String(config.interaction_type || 'any')} onValueChange={v => setConfig({ ...config, interaction_type: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Qualquer interação</SelectItem>
+                  <SelectItem value="reply">Resposta</SelectItem>
+                  <SelectItem value="reaction">Reação</SelectItem>
+                  <SelectItem value="mention">Menção</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+      case 'instagram_new_follower':
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">Este gatilho é acionado automaticamente quando alguém começa a seguir seu perfil. Não há configurações adicionais necessárias.</p>
+            <div><Label>Tag automática (opcional)</Label><Input placeholder="Ex: novo_seguidor" value={String(config.auto_tag || '')} onChange={e => setConfig({ ...config, auto_tag: e.target.value })} /></div>
+          </div>
+        );
+
+      // ── WhatsApp triggers ──
+      case 'whatsapp_received':
+        return (
+          <div className="space-y-4">
+            <div><Label>Palavra-chave (opcional)</Label><Input placeholder="Ex: OLÁ, AJUDA" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Deixe vazio para ativar com qualquer mensagem</p></div>
+          </div>
+        );
+      case 'whatsapp_keyword':
+        return (
+          <div className="space-y-4">
+            <div><Label>Palavra-chave *</Label><Input placeholder="Ex: INFO, QUERO, PROMO" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /></div>
+            <div><Label>Correspondência</Label>
+              <Select value={String(config.match_type || 'contains')} onValueChange={v => setConfig({ ...config, match_type: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="contains">Contém</SelectItem>
+                  <SelectItem value="exact">Exata</SelectItem>
+                  <SelectItem value="starts_with">Começa com</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+      case 'whatsapp_automation':
+        return (
+          <div className="space-y-4">
+            <div><Label>Automação de origem *</Label>
+              <Select value={String(config.source_automation_id || '')} onValueChange={v => setConfig({ ...config, source_automation_id: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione uma automação" /></SelectTrigger>
+                <SelectContent>
+                  {automations.filter(a => a.trigger_type?.includes('whatsapp')).map(a => (
+                    <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                  ))}
+                  {automations.filter(a => a.trigger_type?.includes('whatsapp')).length === 0 && (
+                    <SelectItem value="_none" disabled>Nenhuma automação WhatsApp encontrada</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">Acionar quando o contato passar por esta automação</p>
+            </div>
+          </div>
+        );
+      case 'whatsapp_message_source':
+        return (
+          <div className="space-y-4">
+            <div><Label>Tipo de mensagem de origem</Label>
+              <Select value={String(config.message_source_type || 'any')} onValueChange={v => setConfig({ ...config, message_source_type: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Qualquer origem</SelectItem>
+                  <SelectItem value="campaign">Campanha</SelectItem>
+                  <SelectItem value="group">Grupo</SelectItem>
+                  <SelectItem value="broadcast">Lista de transmissão</SelectItem>
+                  <SelectItem value="direct">Mensagem direta</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Palavra-chave (opcional)</Label><Input placeholder="Ex: COMPRAR" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /></div>
+          </div>
+        );
+
+      // ── CRM triggers ──
+      case 'contact_created':
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">Acionado quando um novo contato é criado no CRM.</p>
+            <div><Label>Fonte do contato (opcional)</Label>
+              <Select value={String(config.contact_source || 'any')} onValueChange={v => setConfig({ ...config, contact_source: v })}>
+                <SelectTrigger><SelectValue placeholder="Qualquer fonte" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Qualquer fonte</SelectItem>
+                  {contactSources.map(s => (
+                    <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1).replace('_', ' ')}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">Filtrar por origem do contato</p>
+            </div>
+          </div>
+        );
+      case 'contact_source':
+        return (
+          <div className="space-y-4">
+            <div><Label>Fonte do contato *</Label>
+              <Select value={String(config.contact_source || '')} onValueChange={v => setConfig({ ...config, contact_source: v })}>
+                <SelectTrigger><SelectValue placeholder="Selecione a fonte" /></SelectTrigger>
+                <SelectContent>
+                  {contactSources.map(s => (
+                    <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1).replace('_', ' ')}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div><Label>Tag automática (opcional)</Label><Input placeholder="Ex: lead_ads" value={String(config.auto_tag || '')} onChange={e => setConfig({ ...config, auto_tag: e.target.value })} /></div>
+          </div>
+        );
+      case 'form_submitted':
+        return (
+          <div className="space-y-4">
+            <div><Label>Formulário *</Label>
+              <Select value={String(config.form_id || '')} onValueChange={v => {
+                const form = forms.find(f => f.id === v);
+                setConfig({ ...config, form_id: v, form_name: form?.name || '' });
+              }}>
+                <SelectTrigger><SelectValue placeholder="Selecione um formulário" /></SelectTrigger>
+                <SelectContent>
+                  {forms.map(f => (
+                    <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                  ))}
+                  {forms.length === 0 && (
+                    <SelectItem value="_none" disabled>Nenhum formulário criado</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">Selecione o formulário que vai acionar este fluxo</p>
+            </div>
+          </div>
+        );
+
+      // ── Actions ──
       case 'send_dm': case 'reply_comment': case 'send_whatsapp':
         return (<div className="space-y-4"><div><Label>Mensagem</Label><Textarea placeholder="Olá! Obrigado pelo seu interesse..." rows={4} value={String(config.message || '')} onChange={e => setConfig({ ...config, message: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Use {'{{nome}}'} para personalizar</p></div></div>);
       case 'send_email':
@@ -269,7 +467,7 @@ function NodeConfigDialog({ node, open, onClose, onSave }: {
       case 'if_score':
         return (<div><Label>Score mínimo</Label><Input type="number" placeholder="50" value={String(config.min_score || '')} onChange={e => setConfig({ ...config, min_score: parseInt(e.target.value) || 0 })} /></div>);
       default:
-        return null;
+        return <p className="text-sm text-muted-foreground">Nenhuma configuração adicional necessária.</p>;
     }
   };
 
@@ -492,7 +690,7 @@ export default function FlowBuilder() {
           type: 'trigger',
           subtype: originalTrigger,
           label: trigger?.label || originalTrigger,
-          config: { keyword: tc?.keyword, post_url: tc?.post_url } as Record<string, unknown>,
+          config: { keyword: tc?.keyword, post_url: tc?.post_url, story_url: tc?.story_url, story_id: tc?.story_id, form_id: tc?.form_id, form_name: tc?.form_name, contact_source: tc?.contact_source, source_automation_id: tc?.source_automation_id, message_source_type: tc?.message_source_type, reply_type: tc?.reply_type, interaction_type: tc?.interaction_type, match_type: tc?.match_type, auto_tag: tc?.auto_tag } as Record<string, unknown>,
         };
         const actionData = (existing.actions as Array<{ id: string; type: string; config: Record<string, unknown> }>) || [];
         const actionNodes: FlowNode[] = actionData.map(a => {

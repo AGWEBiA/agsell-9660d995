@@ -62,6 +62,7 @@ import GrowthTools from "./pages/GrowthTools";
 import Sequences from "./pages/Sequences";
 import Channels from "./pages/Channels";
 import FlowBuilder from "./pages/FlowBuilder";
+import TechnicalManual from "./pages/TechnicalManual";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -89,6 +90,7 @@ const App = () => (
                   <Route path="/purchase-success" element={<PurchaseSuccess />} />
                   <Route path="/forms/:formId" element={<FormView />} />
                   <Route path="/agency-invite/:token" element={<AgencyInvite />} />
+                  <Route path="/manual-tecnico" element={<TechnicalManual />} />
                   <Route path="/subscription-expired" element={<ProtectedRoute allowExpired><SubscriptionExpired /></ProtectedRoute>} />
                   
                   {/* Protected Routes */}

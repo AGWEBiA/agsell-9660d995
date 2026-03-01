@@ -453,6 +453,14 @@ function PlansSection() {
           })}
         </div>
       )}
+
+      {/* WhatsApp Meta notice */}
+      <div className="max-w-2xl mx-auto mt-8 text-center">
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          <MessageSquare className="inline h-3 w-3 mr-1 align-middle" />
+          <strong>WhatsApp via API Oficial (Meta):</strong> as mensagens são cobradas diretamente pela Meta conforme o uso. Via Evolution API (QR Code), não há custos adicionais por mensagem.
+        </p>
+      </div>
     </section>
   );
 }

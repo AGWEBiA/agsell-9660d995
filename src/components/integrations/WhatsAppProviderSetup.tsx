@@ -360,7 +360,23 @@ export function WhatsAppProviderSetup() {
         </Button>
       </div>
 
-      {/* Instances List */}
+      {/* Meta Billing Notice */}
+      <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
+        <CardContent className="pt-5 pb-5">
+          <div className="flex gap-3">
+            <Shield className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+            <div className="text-sm">
+              <p className="text-amber-800 dark:text-amber-200">
+                <strong>API Oficial (Meta):</strong> mensagens cobradas diretamente pela Meta ao titular da conta conforme o volume de conversas.
+              </p>
+              <p className="text-amber-700 dark:text-amber-300 mt-1">
+                <strong>Evolution API (QR Code):</strong> sem custos por mensagem — apenas hospedagem da sua instância.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {instances.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="py-12 text-center">

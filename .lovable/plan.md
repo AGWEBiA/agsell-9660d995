@@ -32,5 +32,16 @@
 - [x] Realtime habilitado para conversations, messages, notifications
 - [ ] Sistema de filas para ações de `wait` em automações (requer infra de cron)
 
+### ✅ Etapa 6: Paridade ManyChat
+- [x] Testes A/B de mensagens (tabela `ab_tests`, página `/ab-tests`)
+- [x] Growth Tools - links, QR codes, widgets (tabela `growth_tools`, página `/growth-tools`)
+- [x] Sequências / Drip Campaigns (tabelas `sequences`, `sequence_steps`, `sequence_enrollments`, página `/sequences`)
+- [x] Condições avançadas (if/else) nos steps de sequências
+- [x] Canais: Telegram (tabela `telegram_bots`), SMS (tabela `sms_configs`), Shopify (tabela `shopify_integrations`)
+- [x] Página unificada de canais `/channels`
+- [ ] Flow Builder visual drag & drop (futuro)
+- [ ] Edge functions para processamento de sequências via cron
+- [ ] Edge functions para Telegram webhook e SMS dispatch
+
 ### 🏁 Status: Plataforma Completa
 Todas as funcionalidades planejadas foram implementadas. O sistema está pronto para produção.

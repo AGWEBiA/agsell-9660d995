@@ -12,57 +12,68 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
-import heroDashboard from '@/assets/hero-dashboard.png';
+
 
 // ─── Hero ───────────────────────────────────────────────────
 function HeroSection() {
   return (
     <section className="relative py-16 md:py-24 lg:py-32 overflow-hidden">
+      {/* Creative background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Large gradient orbs */}
+        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 w-[400px] h-[400px] rounded-full bg-primary/3 blur-3xl" />
+        
+        {/* Floating geometric shapes */}
+        <div className="absolute top-20 right-[10%] w-20 h-20 rounded-2xl border border-primary/10 rotate-12 animate-pulse" />
+        <div className="absolute top-40 right-[25%] w-12 h-12 rounded-full border border-primary/15 animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute bottom-32 right-[15%] w-16 h-16 rounded-xl bg-primary/5 rotate-45 animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 right-[8%] w-8 h-8 rounded-full bg-primary/8 animate-pulse" style={{ animationDelay: '0.5s' }} />
+        <div className="absolute bottom-20 right-[30%] w-24 h-24 rounded-2xl border border-primary/8 -rotate-12" />
+        
+        {/* Subtle grid pattern on the right */}
+        <div className="absolute top-0 right-0 w-1/2 h-full opacity-[0.03]"
+          style={{
+            backgroundImage: 'radial-gradient(circle, hsl(var(--primary)) 1px, transparent 1px)',
+            backgroundSize: '40px 40px',
+          }}
+        />
+      </div>
+
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-medium text-primary mb-6">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
-              </span>
-              CRM + WhatsApp + IA em uma única plataforma
-            </div>
-
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[0.95] mb-6">
-              Venda mais.
-              <br />
-              <span className="text-primary">Pense menos.</span>
-            </h1>
-
-            <p className="text-base sm:text-lg text-muted-foreground max-w-xl mb-8 leading-relaxed">
-              O CRM que une WhatsApp nativo, automações e agentes de IA para sua equipe
-              fechar mais negócios — com menos esforço.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-start gap-3">
-              <Link to="/pricing">
-                <Button size="lg" className="h-12 sm:h-14 px-8 sm:px-10 text-sm sm:text-base font-semibold rounded-full shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all w-full sm:w-auto">
-                  Começar agora
-                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-                </Button>
-              </Link>
-              <Link to="/pricing">
-                <Button size="lg" variant="ghost" className="h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base rounded-full text-muted-foreground hover:text-foreground w-full sm:w-auto">
-                  Ver planos
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
+        <div className="max-w-3xl mx-auto text-center lg:text-left lg:mx-0">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-medium text-primary mb-6">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+            </span>
+            CRM + WhatsApp + IA em uma única plataforma
           </div>
 
-          <div className="relative flex items-center justify-center">
-            <img
-              src={heroDashboard}
-              alt="Painel do AG Sell CRM mostrando pipeline de vendas, analytics e integrações"
-              className="w-4/5 lg:w-full max-w-md lg:max-w-lg h-auto block"
-              loading="eager"
-            />
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[0.95] mb-6">
+            Venda mais.
+            <br />
+            <span className="text-primary">Pense menos.</span>
+          </h1>
+
+          <p className="text-base sm:text-lg text-muted-foreground max-w-xl mb-8 leading-relaxed mx-auto lg:mx-0">
+            O CRM que une WhatsApp nativo, automações e agentes de IA para sua equipe
+            fechar mais negócios — com menos esforço.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center lg:items-start gap-3 justify-center lg:justify-start">
+            <Link to="/pricing">
+              <Button size="lg" className="h-12 sm:h-14 px-8 sm:px-10 text-sm sm:text-base font-semibold rounded-full shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all w-full sm:w-auto">
+                Começar agora
+                <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+              </Button>
+            </Link>
+            <Link to="/pricing">
+              <Button size="lg" variant="ghost" className="h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base rounded-full text-muted-foreground hover:text-foreground w-full sm:w-auto">
+                Ver planos
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

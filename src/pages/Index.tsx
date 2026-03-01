@@ -41,7 +41,7 @@ function HeroSection() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
             <Link to="/pricing">
               <Button size="lg" className="h-14 px-8 text-base font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all">
-                Começar Grátis
+                Assinar Agora
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
@@ -54,9 +54,9 @@ function HeroSection() {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-green-500" /> Sem cartão de crédito</span>
             <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-green-500" /> Setup em 2 minutos</span>
             <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-green-500" /> Suporte humanizado</span>
+            <span className="flex items-center gap-1.5"><Check className="h-4 w-4 text-green-500" /> Cancele quando quiser</span>
           </div>
         </div>
       </div>
@@ -286,16 +286,16 @@ function CTASection() {
         <h2 className="text-3xl md:text-5xl font-bold text-primary-foreground mb-4">
           Pronto para vender mais?
         </h2>
-        <p className="text-lg text-primary-foreground/80 max-w-xl mx-auto mb-8">
-          Comece grátis hoje mesmo. Sem cartão de crédito, sem compromisso.
-        </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link to="/pricing">
-            <Button size="lg" variant="secondary" className="h-14 px-8 text-base font-semibold shadow-lg">
-              Começar Grátis Agora
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
+          <p className="text-lg text-primary-foreground/80 max-w-xl mx-auto mb-8">
+            Escolha o plano ideal e comece a transformar seus resultados hoje mesmo.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link to="/pricing">
+              <Button size="lg" variant="secondary" className="h-14 px-8 text-base font-semibold shadow-lg">
+                Ver Planos e Assinar
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
           <Link to="/login">
             <Button size="lg" variant="ghost" className="h-14 px-8 text-base text-primary-foreground border border-primary-foreground/20 hover:bg-primary-foreground/10">
               Já tenho conta

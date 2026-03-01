@@ -35,6 +35,26 @@ export default function WhatsApp() {
         </CardContent>
       </Card>
 
+      {/* Meta Billing Notice */}
+      <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
+        <CardContent className="pt-6">
+          <div className="flex gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900">
+              <Settings className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-amber-900 dark:text-amber-100">Aviso sobre cobrança de mensagens</h3>
+              <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                <strong>API Oficial (Meta Cloud API):</strong> as mensagens são cobradas diretamente pela Meta ao titular da conta, conforme o volume de conversas. O AG Sell não cobra taxas adicionais por mensagem.
+              </p>
+              <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                <strong>Evolution API (QR Code):</strong> não há custos por mensagem. Você precisa apenas hospedar sua própria instância da Evolution API.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>

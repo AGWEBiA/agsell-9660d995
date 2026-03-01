@@ -2,13 +2,25 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageSquare, Smartphone, CheckCircle2, Users, Send, Settings } from 'lucide-react';
+import { MessageSquare, Smartphone, CheckCircle2, XCircle, Users, Send, Settings, Star, Server, Trash2, Power, Loader2 } from 'lucide-react';
 import { WhatsAppQRConnect } from '@/components/whatsapp/WhatsAppQRConnect';
 import { WhatsAppGroupsManager } from '@/components/whatsapp/WhatsAppGroupsManager';
 import { WhatsAppCampaignsManager } from '@/components/whatsapp/WhatsAppCampaignsManager';
 import { WhatsAppGroupMessages } from '@/components/whatsapp/WhatsAppGroupMessages';
+import { useWhatsAppInstances } from '@/hooks/useWhatsAppInstances';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export default function WhatsApp() {
+  const {
+    instances,
+    activeInstances,
+    defaultInstance,
+    isLoading,
+    deleteInstance,
+    toggleInstance,
+    setDefaultInstance,
+  } = useWhatsAppInstances();
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -64,8 +76,21 @@ export default function WhatsApp() {
                 <Smartphone className="h-6 w-6 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">0</p>
+                <p className="text-2xl font-bold">{isLoading ? '...' : activeInstances.length}</p>
                 <p className="text-sm text-muted-foreground">Conexões Ativas</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-muted">
+                <Smartphone className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{isLoading ? '...' : instances.length}</p>
+                <p className="text-sm text-muted-foreground">Total de Instâncias</p>
               </div>
             </div>
           </CardContent>
@@ -96,20 +121,92 @@ export default function WhatsApp() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Connected Instances Status */}
+      {instances.length > 0 && (
         <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100 dark:bg-orange-900">
-                <CheckCircle2 className="h-6 w-6 text-orange-600" />
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Smartphone className="h-5 w-5" />
+              Instâncias Conectadas ({instances.length})
+            </CardTitle>
+            <CardDescription>
+              Gerencie seus números e provedores WhatsApp. Você pode ter múltiplos números conectados simultaneamente.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
-              <div>
-                <p className="text-2xl font-bold">0</p>
-                <p className="text-sm text-muted-foreground">Mensagens Hoje</p>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {instances.map((instance) => (
+                  <Card key={instance.id} className={instance.is_active ? 'border-green-200 dark:border-green-800' : ''}>
+                    <CardContent className="pt-6">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+                          instance.is_active ? 'bg-green-100 dark:bg-green-900' : 'bg-muted'
+                        }`}>
+                          {instance.integration_type === 'evolution_api' ? (
+                            <Server className={`h-5 w-5 ${instance.is_active ? 'text-green-600' : 'text-muted-foreground'}`} />
+                          ) : (
+                            <Smartphone className={`h-5 w-5 ${instance.is_active ? 'text-green-600' : 'text-muted-foreground'}`} />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{instance.name}</p>
+                          {instance.phone_number && (
+                            <p className="text-xs text-muted-foreground truncate">{instance.phone_number}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                        <Badge variant={instance.is_active ? 'default' : 'destructive'} className="text-xs">
+                          {instance.is_active ? (
+                            <><CheckCircle2 className="h-3 w-3 mr-1" /> Ativo</>
+                          ) : (
+                            <><XCircle className="h-3 w-3 mr-1" /> Inativo</>
+                          )}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs">
+                          {instance.integration_type === 'evolution_api' ? 'Evolution API' : 'Business API'}
+                        </Badge>
+                        {instance.is_default && (
+                          <Badge variant="secondary" className="text-xs">
+                            <Star className="h-3 w-3 mr-1 fill-yellow-400 text-yellow-400" /> Padrão
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {!instance.is_default && instance.is_active && (
+                          <Button variant="outline" size="sm" className="text-xs h-7"
+                            onClick={() => setDefaultInstance.mutate(instance.id)}
+                            disabled={setDefaultInstance.isPending}>
+                            <Star className="h-3 w-3 mr-1" /> Padrão
+                          </Button>
+                        )}
+                        <Button variant="outline" size="sm" className="text-xs h-7"
+                          onClick={() => toggleInstance.mutate({ id: instance.id, isActive: !instance.is_active })}
+                          disabled={toggleInstance.isPending}>
+                          <Power className="h-3 w-3 mr-1" />
+                          {instance.is_active ? 'Desativar' : 'Ativar'}
+                        </Button>
+                        <Button variant="outline" size="sm" className="text-xs h-7 text-destructive hover:text-destructive"
+                          onClick={() => { if (confirm('Remover esta instância?')) deleteInstance.mutate(instance.id); }}
+                          disabled={deleteInstance.isPending}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
-      </div>
+      )}
 
       {/* Main Tabs */}
       <Tabs defaultValue="connection" className="space-y-6">

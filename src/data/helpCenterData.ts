@@ -85,7 +85,7 @@ export const helpArticles: HelpArticle[] = [
 - Analisar métricas e resultados com dashboards completos
 - Usar Inteligência Artificial para respostas e análises
 
-[screenshot:Dashboard principal do AG Sell]
+[screenshot:Dashboard principal do AG Sell|/dashboard]
 
 > O AG Sell foi projetado para ser tão simples que qualquer pessoa consegue usar. Explore os módulos no menu lateral e comece pela criação dos seus primeiros contatos.
 
@@ -108,7 +108,7 @@ export const helpArticles: HelpArticle[] = [
 3. Configure o slug (endereço) da organização
 4. Convide membros da sua equipe por e-mail
 
-[screenshot:Página de configuração da organização]
+[screenshot:Página de configuração da organização|/organization]
 
 ## Convidando membros da equipe
 
@@ -148,7 +148,7 @@ O menu lateral é dividido em categorias:
 - **Inteligência** — Analytics, Assistente IA, Agentes IA, Gamificação
 - **Configurações** — Organização, Planos, Permissões e mais
 
-[screenshot:Menu lateral do AG Sell]
+[screenshot:Menu lateral do AG Sell|/dashboard]
 
 ## Busca global
 
@@ -186,7 +186,7 @@ O ícone de sino no cabeçalho mostra suas notificações. Clique para ver alert
 4. Opcionalmente, vincule a uma empresa e adicione tags
 5. Clique em "Salvar"
 
-[screenshot:Formulário de criação de contato]
+[screenshot:Página de Contatos do CRM|/contacts]
 
 ## Importação em massa (CSV)
 
@@ -207,7 +207,7 @@ Ao clicar em um contato, você verá a timeline completa com:
 - Movimentações no pipeline
 - Notas e observações
 
-[screenshot:Timeline de atividades do contato]
+[screenshot:Lista de contatos com detalhes|/contacts]
 
 💡 Dica: Use tags coloridas para segmentar seus contatos. Isso facilita a criação de campanhas e automações.`,
   },
@@ -227,7 +227,7 @@ Ao clicar em um contato, você verá a timeline completa com:
 3. Preencha: nome, domínio, setor, porte
 4. Adicione telefone, endereço e notas
 
-[screenshot:Formulário de cadastro de empresa]
+[screenshot:Página de Empresas|/companies]
 
 ## Vinculando contatos
 
@@ -257,7 +257,7 @@ O pipeline exibe seus negócios (deals) organizados em colunas que representam a
 - **Negociação** → Em negociação ativa
 - **Fechado** → Negócio concluído
 
-[screenshot:Pipeline Kanban com deals em diferentes etapas]
+[screenshot:Pipeline Kanban com etapas do funil|/pipeline]
 
 ## Criando um deal
 
@@ -313,7 +313,7 @@ Tags podem ser usadas como:
 - **Ação** — Adicione ou remova tags automaticamente
 - **Filtro** — Segmente contatos por tags em campanhas
 
-[screenshot:Página de gerenciamento de tags]
+[screenshot:Página de gerenciamento de Tags|/tags]
 
 > As tags com cores distintas facilitam a identificação visual rápida dos segmentos no CRM.`,
   },
@@ -337,7 +337,7 @@ O Inbox exibe todas as conversas em um painel dividido em:
 - **Chat da conversa selecionada** ao centro
 - **Detalhes do contato** à direita
 
-[screenshot:Inbox unificado mostrando lista de conversas e chat]
+[screenshot:Inbox unificado - Central de Atendimento|/inbox]
 
 ## Respondendo mensagens
 
@@ -367,7 +367,7 @@ Configure regras de atribuição automática:
 - **Carga mínima** — Prioriza quem tem menos atendimentos
 - **Aleatório** — Distribui aleatoriamente
 
-[screenshot:Configuração de regras de atribuição]
+[screenshot:Configuração do SAC|/inbox-settings]
 
 ## Pesquisa CSAT
 
@@ -397,7 +397,7 @@ Configure pesquisas de satisfação automáticas:
 3. Escaneie o QR Code com seu celular
 4. Aguarde a conexão ser estabelecida
 
-[screenshot:Tela de conexão do WhatsApp via QR Code]
+[screenshot:Tela de conexão do WhatsApp|/whatsapp]
 
 ## Múltiplas instâncias
 
@@ -441,7 +441,7 @@ Você pode conectar vários números de WhatsApp:
 5. Selecione os destinatários
 6. Envie ou agende
 
-[screenshot:Editor de template de e-mail]
+[screenshot:Módulo de E-mail Marketing|/email]
 
 ## Templates
 
@@ -466,7 +466,7 @@ Acompanhe em tempo real:
 - **Taxa de cliques** — Quantos clicaram nos links
 - **Entregas** — Quantidade de e-mails entregues
 
-[screenshot:Dashboard de métricas de campanha de e-mail]`,
+[screenshot:Configuração de Domínio de E-mail|/email-domain]`,
   },
   {
     id: 'instagram-integration',
@@ -484,7 +484,7 @@ Acompanhe em tempo real:
 3. Autorize o acesso via Facebook/Instagram
 4. Sua conta aparecerá na lista
 
-[screenshot:Contas do Instagram conectadas]
+[screenshot:Página de automações do Instagram|/instagram]
 
 ## Automações de DM
 
@@ -552,7 +552,7 @@ Uma automação é composta por:
 - Aguardar (delay)
 - Webhook de saída
 
-[screenshot:Editor de automação com gatilho e ações]
+[screenshot:Módulo de Automações|/automations]
 
 ## Criando uma automação
 
@@ -604,7 +604,7 @@ São formulários que o contato preenche dentro do próprio WhatsApp, sem precis
 4. Adicione campos: texto, seleção, data, etc.
 5. Salve e publique
 
-[screenshot:Builder visual de WhatsApp Flow]
+[screenshot:Builder de WhatsApp Flows|/whatsapp-flows]
 
 ## Tipos de campos
 
@@ -646,7 +646,7 @@ Os leads são classificados automaticamente:
 - 🟡 **Morno** — Entre 40 e 69 pontos
 - 🔴 **Frio** — Menos de 40 pontos
 
-[screenshot:Configuração de regras de Lead Scoring]
+[screenshot:Configuração de regras de Lead Scoring|/lead-scoring]
 
 ## Configurando regras
 
@@ -683,7 +683,7 @@ O score aparece automaticamente:
 4. Adicione campos com o editor visual
 5. Salve e copie o link
 
-[screenshot:Editor de formulário com campos personalizados]
+[screenshot:Página de Formulários|/forms]
 
 ## Campos disponíveis
 
@@ -737,7 +737,7 @@ Cada formulário tem um link público único que pode ser:
 - Deals por membro
 - Tempo de resposta
 
-[screenshot:Dashboard de Analytics com gráficos]
+[screenshot:Dashboard de Analytics|/analytics]
 
 ## Filtros
 
@@ -767,7 +767,7 @@ Filtre os dados por:
 - Gerar textos para e-mails e mensagens
 - Dar insights sobre performance
 
-[screenshot:Chat com o Assistente IA]
+[screenshot:Chat com o Assistente IA|/ai-assistant]
 
 ## Como usar
 
@@ -802,7 +802,7 @@ Filtre os dados por:
 5. Escreva o prompt de sistema (personalidade e regras)
 6. Configure a mensagem de boas-vindas
 
-[screenshot:Formulário de criação de agente IA]
+[screenshot:Página de Agentes de IA|/ai-agents]
 
 ## Base de conhecimento (RAG)
 
@@ -866,7 +866,7 @@ Compare seu desempenho com os colegas:
 - Top performers destacados
 - Prêmios para os primeiros colocados
 
-[screenshot:Widget de gamificação com XP e ranking]
+[screenshot:Módulo de Gamificação|/gamification]
 
 ## Conquistas
 
@@ -893,7 +893,7 @@ Desbloqueie conquistas especiais:
 2. Configure nome, logo e slug
 3. As alterações são refletidas em toda a plataforma
 
-[screenshot:Configurações da organização]
+[screenshot:Configurações da Organização|/organization]
 
 ## Membros da equipe
 
@@ -927,7 +927,7 @@ Acesse "Planos" no menu para ver todos os planos com:
 - Limites de envio (e-mail, WhatsApp, IA)
 - Preços mensais
 
-[screenshot:Página de planos com comparativo]
+[screenshot:Página de Planos e Assinatura|/plans]
 
 ## Assinando ou fazendo upgrade
 
@@ -960,7 +960,7 @@ Acesse "Planos" no menu para ver todos os planos com:
 3. Selecione os módulos permitidos
 4. Atribua o perfil aos membros
 
-[screenshot:Configuração de perfil de permissão]
+[screenshot:Configuração de Permissões|/permissions]
 
 ## Módulos configuráveis
 
@@ -996,7 +996,7 @@ Recursos que o membro não tem permissão são:
 4. Configure limites de requisição
 5. Copie a chave gerada (ela não será exibida novamente)
 
-[screenshot:Gerenciamento de API Keys]
+[screenshot:Gerenciamento de API Keys|/api-keys]
 
 ### Rate limiting
 
@@ -1022,7 +1022,7 @@ Configure limites por chave:
 - Kiwify (vendas)
 - Sistemas customizados
 
-[screenshot:Configuração de webhook de entrada]
+[screenshot:Configuração de Webhooks|/webhooks]
 
 💡 Dica: Combine webhooks com automações para criar fluxos como: "Quando receber pagamento no Stripe, criar contato e mover para pipeline de clientes".`,
   },
@@ -1050,7 +1050,7 @@ Configure limites por chave:
 ### E-mail
 - Domínio personalizado (SPF, DKIM, DMARC)
 
-[screenshot:Página de integrações disponíveis]
+[screenshot:Página de Integrações|/integrations]
 
 ## Configurando uma integração
 
@@ -1091,7 +1091,7 @@ Em conformidade com a LGPD, você pode:
 - **Exportar seus dados** — Baixe todos os seus dados pessoais
 - **Excluir sua conta** — Solicite a exclusão completa dos dados
 
-[screenshot:Configurações gerais com opções de tema e LGPD]
+[screenshot:Configurações Gerais|/settings]
 
 ⚠️ A exclusão de conta é irreversível. Todos os dados serão apagados permanentemente.`,
   },

@@ -8,7 +8,8 @@ import { CompetitorComparison } from '@/components/pricing/CompetitorComparison'
 import {
   ArrowRight, Check, Users, Target, Bot, MessageSquare, Mail, BarChart3,
   Sparkles, FileText, Calendar, Inbox, Globe, Clock, Zap, Shield,
-  Phone, Star, Layers, Award, ChevronRight, Brain, Loader2
+  Phone, Star, Layers, Award, ChevronRight, Brain, Loader2,
+  Workflow, Vote, SplitSquareVertical
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
@@ -127,6 +128,12 @@ const DIFFERENTIALS = [
     span: '',
   },
   {
+    icon: Workflow,
+    title: 'Flow Builder Visual',
+    description: 'Construtor de funis drag-and-drop estilo ManyChat. Crie múltiplos fluxos com enquetes, condições e ramificações.',
+    span: 'md:col-span-2',
+  },
+  {
     icon: Award,
     title: 'Gamificação de Vendas',
     description: 'Rankings, conquistas e pontuação para motivar sua equipe.',
@@ -197,11 +204,11 @@ const FEATURES_LEFT = [
 
 const FEATURES_RIGHT = [
   { icon: Globe, title: 'API & Webhooks' },
-  { icon: Clock, title: 'Histórico Completo' },
+  { icon: Vote, title: 'Enquetes & Pesquisas' },
+  { icon: SplitSquareVertical, title: 'Lógica Condicional (If/Else)' },
   { icon: Phone, title: 'Instagram DM' },
   { icon: Shield, title: 'Permissões Granulares' },
   { icon: Sparkles, title: 'Assistente IA' },
-  { icon: Star, title: 'CSAT Integrado' },
 ];
 
 function FeaturesSection() {

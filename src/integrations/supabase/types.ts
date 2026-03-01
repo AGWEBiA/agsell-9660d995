@@ -14,6 +14,74 @@ export type Database = {
   }
   public: {
     Tables: {
+      ab_tests: {
+        Row: {
+          channel: string
+          conversion_a: number | null
+          conversion_b: number | null
+          created_at: string | null
+          created_by: string
+          id: string
+          name: string
+          organization_id: string
+          responses_a: number | null
+          responses_b: number | null
+          sent_a: number | null
+          sent_b: number | null
+          status: string
+          updated_at: string | null
+          variant_a: Json
+          variant_b: Json
+          winner: string | null
+        }
+        Insert: {
+          channel?: string
+          conversion_a?: number | null
+          conversion_b?: number | null
+          created_at?: string | null
+          created_by: string
+          id?: string
+          name: string
+          organization_id: string
+          responses_a?: number | null
+          responses_b?: number | null
+          sent_a?: number | null
+          sent_b?: number | null
+          status?: string
+          updated_at?: string | null
+          variant_a?: Json
+          variant_b?: Json
+          winner?: string | null
+        }
+        Update: {
+          channel?: string
+          conversion_a?: number | null
+          conversion_b?: number | null
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          name?: string
+          organization_id?: string
+          responses_a?: number | null
+          responses_b?: number | null
+          sent_a?: number | null
+          sent_b?: number | null
+          status?: string
+          updated_at?: string | null
+          variant_a?: Json
+          variant_b?: Json
+          winner?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ab_tests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       activities: {
         Row: {
           activity_type: string
@@ -1210,6 +1278,65 @@ export type Database = {
           },
         ]
       }
+      growth_tools: {
+        Row: {
+          channel: string
+          clicks_count: number | null
+          config: Json
+          conversions_count: number | null
+          created_at: string | null
+          created_by: string
+          id: string
+          is_active: boolean | null
+          name: string
+          organization_id: string
+          phone_number: string | null
+          prefilled_message: string | null
+          tool_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          channel?: string
+          clicks_count?: number | null
+          config?: Json
+          conversions_count?: number | null
+          created_at?: string | null
+          created_by: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          organization_id: string
+          phone_number?: string | null
+          prefilled_message?: string | null
+          tool_type?: string
+          updated_at?: string | null
+        }
+        Update: {
+          channel?: string
+          clicks_count?: number | null
+          config?: Json
+          conversions_count?: number | null
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          organization_id?: string
+          phone_number?: string | null
+          prefilled_message?: string | null
+          tool_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_tools_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       import_jobs: {
         Row: {
           completed_at: string | null
@@ -2224,6 +2351,245 @@ export type Database = {
           },
         ]
       }
+      sequence_enrollments: {
+        Row: {
+          completed_at: string | null
+          contact_id: string
+          created_at: string | null
+          current_step: number | null
+          id: string
+          next_step_at: string | null
+          sequence_id: string
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          contact_id: string
+          created_at?: string | null
+          current_step?: number | null
+          id?: string
+          next_step_at?: string | null
+          sequence_id: string
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          contact_id?: string
+          created_at?: string | null
+          current_step?: number | null
+          id?: string
+          next_step_at?: string | null
+          sequence_id?: string
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sequence_enrollments_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sequence_enrollments_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "sequences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sequence_steps: {
+        Row: {
+          action_type: string
+          condition_config: Json | null
+          content: Json
+          created_at: string | null
+          delay_minutes: number | null
+          id: string
+          is_active: boolean | null
+          sequence_id: string
+          step_order: number
+        }
+        Insert: {
+          action_type?: string
+          condition_config?: Json | null
+          content?: Json
+          created_at?: string | null
+          delay_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          sequence_id: string
+          step_order?: number
+        }
+        Update: {
+          action_type?: string
+          condition_config?: Json | null
+          content?: Json
+          created_at?: string | null
+          delay_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          sequence_id?: string
+          step_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sequence_steps_sequence_id_fkey"
+            columns: ["sequence_id"]
+            isOneToOne: false
+            referencedRelation: "sequences"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sequences: {
+        Row: {
+          channel: string
+          completed_count: number | null
+          created_at: string | null
+          created_by: string
+          description: string | null
+          enrolled_count: number | null
+          id: string
+          name: string
+          organization_id: string
+          status: string
+          trigger_config: Json | null
+          trigger_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          channel?: string
+          completed_count?: number | null
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          enrolled_count?: number | null
+          id?: string
+          name: string
+          organization_id: string
+          status?: string
+          trigger_config?: Json | null
+          trigger_type?: string
+          updated_at?: string | null
+        }
+        Update: {
+          channel?: string
+          completed_count?: number | null
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          enrolled_count?: number | null
+          id?: string
+          name?: string
+          organization_id?: string
+          status?: string
+          trigger_config?: Json | null
+          trigger_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sequences_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shopify_integrations: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          id: string
+          is_active: boolean | null
+          orders_synced: number | null
+          organization_id: string
+          shop_domain: string
+          updated_at: string | null
+          webhook_events: string[] | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          id?: string
+          is_active?: boolean | null
+          orders_synced?: number | null
+          organization_id: string
+          shop_domain: string
+          updated_at?: string | null
+          webhook_events?: string[] | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          is_active?: boolean | null
+          orders_synced?: number | null
+          organization_id?: string
+          shop_domain?: string
+          updated_at?: string | null
+          webhook_events?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shopify_integrations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_configs: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          from_number: string | null
+          id: string
+          is_active: boolean | null
+          messages_sent: number | null
+          organization_id: string
+          provider: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          from_number?: string | null
+          id?: string
+          is_active?: boolean | null
+          messages_sent?: number | null
+          organization_id: string
+          provider?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          from_number?: string | null
+          id?: string
+          is_active?: boolean | null
+          messages_sent?: number | null
+          organization_id?: string
+          provider?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_configs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subscriptions: {
         Row: {
           billing_cycle: string | null
@@ -2382,6 +2748,47 @@ export type Database = {
           },
           {
             foreignKeyName: "tasks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_bots: {
+        Row: {
+          bot_username: string | null
+          created_at: string | null
+          created_by: string
+          id: string
+          is_active: boolean | null
+          organization_id: string
+          updated_at: string | null
+          webhook_configured: boolean | null
+        }
+        Insert: {
+          bot_username?: string | null
+          created_at?: string | null
+          created_by: string
+          id?: string
+          is_active?: boolean | null
+          organization_id: string
+          updated_at?: string | null
+          webhook_configured?: boolean | null
+        }
+        Update: {
+          bot_username?: string | null
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string
+          updated_at?: string | null
+          webhook_configured?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_bots_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"

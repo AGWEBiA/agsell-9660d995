@@ -7,7 +7,7 @@ import {
   Link as LinkIcon, Settings, Bot, Brain, ChevronLeft, ChevronRight,
   ChevronDown, Trophy, Shield, Key, Webhook, SlidersHorizontal,
   Instagram, ListChecks, Home, Megaphone, Lightbulb, Wrench,
-  HelpCircle, Briefcase, X,
+  HelpCircle, Briefcase, X, FlaskConical, Rocket, GitBranch, Send,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -81,6 +81,9 @@ const menuSections: MenuSection[] = [
       { label: 'Automações', icon: Zap, path: '/automations', featureRequired: 'automacoes' },
       { label: 'WhatsApp Flows', icon: ListChecks, path: '/whatsapp-flows', featureRequired: 'whatsapp' },
       { label: 'Lead Scoring', icon: Target, path: '/lead-scoring', featureRequired: 'lead_scoring' },
+      { label: 'Sequências', icon: GitBranch, path: '/sequences' },
+      { label: 'Testes A/B', icon: FlaskConical, path: '/ab-tests' },
+      { label: 'Growth Tools', icon: Rocket, path: '/growth-tools' },
       { label: 'Formulários', icon: FileText, path: '/forms' },
     ],
   },
@@ -108,6 +111,7 @@ const menuSections: MenuSection[] = [
     label: 'Configurações',
     icon: Wrench,
     items: [
+      { label: 'Canais', icon: Send, path: '/channels' },
       { label: 'Clientes (Agência)', icon: Briefcase, path: '/agency-clients', featureRequired: 'agency_management' },
       { label: 'Integrações', icon: LinkIcon, path: '/integrations', featureRequired: 'integrações' },
       { label: 'Organização', icon: Building2, path: '/organization', orgAdminOnly: true },

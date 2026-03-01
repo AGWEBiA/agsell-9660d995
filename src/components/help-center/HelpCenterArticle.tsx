@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, ChevronRight, Clock, BookOpen } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Clock, BookOpen, ExternalLink, Eye, Maximize2, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import type { HelpCategory, HelpArticle } from '@/data/helpCenterData';
 
 interface Props {
@@ -11,6 +12,99 @@ interface Props {
   onBack: () => void;
   allArticles: HelpArticle[];
   onNavigate: (articleId?: string, categoryId?: string) => void;
+}
+
+function ScreenshotPreview({ label, route }: { label: string; route: string }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <>
+      <div className="my-6 rounded-xl border overflow-hidden bg-muted/20 group">
+        <div className="flex items-center justify-between px-4 py-2 bg-muted/40 border-b">
+          <div className="flex items-center gap-2">
+            <div className="flex gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-destructive/60" />
+              <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
+              <div className="w-3 h-3 rounded-full bg-green-500/60" />
+            </div>
+            <span className="text-xs text-muted-foreground ml-2 font-mono">{route}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 px-2 text-xs"
+              onClick={() => setExpanded(true)}
+            >
+              <Maximize2 className="h-3 w-3 mr-1" />
+              Ampliar
+            </Button>
+            <Link to={route}>
+              <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
+                <ExternalLink className="h-3 w-3 mr-1" />
+                Abrir
+              </Button>
+            </Link>
+          </div>
+        </div>
+        <div className="relative h-[320px] overflow-hidden">
+          <iframe
+            src={route}
+            className="w-[1366px] h-[768px] border-0 pointer-events-none"
+            style={{
+              transform: 'scale(0.5)',
+              transformOrigin: 'top left',
+              width: '1366px',
+              height: '768px',
+            }}
+            title={label}
+            loading="lazy"
+          />
+        </div>
+        <div className="px-4 py-2 bg-muted/20 border-t">
+          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <Eye className="h-3 w-3" />
+            {label}
+          </p>
+        </div>
+      </div>
+
+      {/* Expanded modal */}
+      {expanded && (
+        <div className="fixed inset-0 z-[100] bg-background/90 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-6xl h-[85vh] rounded-xl border overflow-hidden bg-background shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between px-4 py-2 bg-muted/40 border-b shrink-0">
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-destructive/60" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
+                  <div className="w-3 h-3 rounded-full bg-green-500/60" />
+                </div>
+                <span className="text-sm text-muted-foreground ml-2">{label}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Link to={route}>
+                  <Button variant="ghost" size="sm" className="h-7 text-xs">
+                    <ExternalLink className="h-3 w-3 mr-1" /> Ir para a página
+                  </Button>
+                </Link>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setExpanded(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <iframe
+                src={route}
+                className="w-full h-full border-0 pointer-events-none"
+                title={label}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
 
 export function HelpCenterArticle({ article, category, onBack, allArticles, onNavigate }: Props) {
@@ -72,7 +166,7 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
                 {items.map((item, i) => (
                   <li key={i} className="flex items-start gap-2">
                     <ChevronRight className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
-                    <span className="text-sm">{item.replace(/^[-*]\s/, '')}</span>
+                    <span className="text-sm" dangerouslySetInnerHTML={{ __html: item.replace(/^[-*]\s/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
                   </li>
                 ))}
               </ul>
@@ -87,14 +181,23 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
                       {i + 1}
                     </span>
-                    <span className="text-sm pt-0.5">{item.replace(/^\d+\.\s/, '')}</span>
+                    <span className="text-sm pt-0.5" dangerouslySetInnerHTML={{ __html: item.replace(/^\d+\.\s/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
                   </li>
                 ))}
               </ol>
             );
           }
+          // Screenshot with route
           if (block.startsWith('[screenshot:')) {
-            const label = block.match(/\[screenshot:(.*?)\]/)?.[1] || 'Tela do sistema';
+            const match = block.match(/\[screenshot:(.*?)(?:\|(.*?))?\]/);
+            const label = match?.[1] || 'Tela do sistema';
+            const route = match?.[2];
+
+            if (route) {
+              return <ScreenshotPreview key={idx} label={label} route={route} />;
+            }
+
+            // Fallback for screenshots without route
             return (
               <div key={idx} className="my-6 rounded-xl border bg-muted/30 p-6 text-center">
                 <div className="flex items-center justify-center gap-2 text-muted-foreground mb-2">
@@ -102,9 +205,6 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
                   <span className="text-sm font-medium">Captura de tela</span>
                 </div>
                 <p className="text-sm text-muted-foreground">{label}</p>
-                <div className="mt-3 h-48 rounded-lg bg-gradient-to-br from-primary/5 to-primary/10 flex items-center justify-center">
-                  <span className="text-xs text-muted-foreground/60">📸 {label}</span>
-                </div>
               </div>
             );
           }
@@ -121,7 +221,7 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
               </div>
             );
           }
-          return <p key={idx} className="text-sm leading-relaxed my-3 text-foreground/80">{block}</p>;
+          return <p key={idx} className="text-sm leading-relaxed my-3 text-foreground/80" dangerouslySetInnerHTML={{ __html: block.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />;
         })}
       </article>
 

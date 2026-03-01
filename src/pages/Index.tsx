@@ -142,36 +142,44 @@ const DIFFERENTIALS = [
 
 function DifferentialsSection() {
   return (
-    <section className="container mx-auto px-4 sm:px-6 py-16 md:py-24">
-      <div className="max-w-xl mx-auto text-center mb-12">
-        <p className="text-sm font-medium text-primary mb-3 tracking-wide uppercase">Diferenciais</p>
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4">
-          Por que escolher a AG Sell?
-        </h2>
-        <p className="text-muted-foreground text-base sm:text-lg">
-          Recursos exclusivos que nenhum outro CRM oferece.
-        </p>
-      </div>
+    <section className="relative container mx-auto px-4 sm:px-6 py-16 md:py-24 overflow-hidden">
+      {/* Background accent */}
+      <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-primary/[0.03] blur-3xl pointer-events-none" />
 
-      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-        {DIFFERENTIALS.map((d, i) => (
-          <div
-            key={i}
-            className={cn(
-              'group relative rounded-2xl border border-border/50 bg-card p-6 sm:p-8 hover:border-primary/30 transition-all duration-300',
-              d.span
-            )}
-          >
-            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
-              <d.icon className="h-5 w-5 text-primary group-hover:text-primary-foreground transition-colors duration-300" />
-            </div>
-            <h3 className="font-semibold text-base sm:text-lg mb-2">{d.title}</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">{d.description}</p>
-            <Badge variant="outline" className="mt-4 text-[10px] text-primary border-primary/20">
-              Exclusivo
-            </Badge>
+      <div className="relative z-10">
+        <div className="max-w-xl mx-auto text-center mb-12">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-medium text-primary mb-4">
+            <Sparkles className="h-3 w-3" />
+            Exclusivo AG Sell
           </div>
-        ))}
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4">
+            Por que escolher a AG Sell?
+          </h2>
+          <p className="text-muted-foreground text-base sm:text-lg">
+            Recursos exclusivos que nenhum outro CRM oferece.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+          {DIFFERENTIALS.map((d, i) => (
+            <div
+              key={i}
+              className={cn(
+                'group relative rounded-2xl border border-border/50 bg-card p-6 sm:p-8 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300',
+                d.span
+              )}
+            >
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-primary-foreground transition-colors duration-300">
+                <d.icon className="h-5 w-5 text-primary group-hover:text-primary-foreground transition-colors duration-300" />
+              </div>
+              <h3 className="font-semibold text-base sm:text-lg mb-2">{d.title}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{d.description}</p>
+              <Badge variant="outline" className="mt-4 text-[10px] text-primary border-primary/20">
+                Exclusivo
+              </Badge>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -198,10 +206,17 @@ const FEATURES_RIGHT = [
 
 function FeaturesSection() {
   return (
-    <section className="bg-muted/20 border-y border-border/40">
-      <div className="container mx-auto px-4 sm:px-6 py-16 md:py-24">
+    <section className="relative bg-muted/20 border-y border-border/40 overflow-hidden">
+      {/* Decorative side accents */}
+      <div className="absolute top-10 -left-10 w-40 h-40 rounded-full bg-primary/[0.04] blur-2xl pointer-events-none" />
+      <div className="absolute bottom-10 -right-10 w-40 h-40 rounded-full bg-primary/[0.04] blur-2xl pointer-events-none" />
+
+      <div className="container mx-auto px-4 sm:px-6 py-16 md:py-24 relative z-10">
         <div className="text-center mb-12">
-          <p className="text-sm font-medium text-primary mb-3 tracking-wide uppercase">Plataforma Completa</p>
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-medium text-primary mb-4">
+            <Layers className="h-3 w-3" />
+            Tudo integrado
+          </div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4">
             Tudo em um só lugar
           </h2>
@@ -210,10 +225,10 @@ function FeaturesSection() {
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-0 max-w-3xl mx-auto divide-y sm:divide-y-0 sm:divide-x divide-border/40">
+        <div className="grid sm:grid-cols-2 gap-0 max-w-3xl mx-auto divide-y sm:divide-y-0 sm:divide-x divide-border/40 rounded-2xl border border-border/50 bg-card overflow-hidden">
           <div className="space-y-0">
             {FEATURES_LEFT.map((f, i) => (
-              <div key={i} className="flex items-center gap-4 py-3 sm:py-4 px-4 sm:px-6 group hover:bg-card/60 transition-colors">
+              <div key={i} className="flex items-center gap-4 py-3 sm:py-4 px-4 sm:px-6 group hover:bg-primary/5 transition-colors">
                 <f.icon className="h-5 w-5 text-primary shrink-0" />
                 <span className="font-medium text-sm">{f.title}</span>
               </div>
@@ -221,7 +236,7 @@ function FeaturesSection() {
           </div>
           <div className="space-y-0">
             {FEATURES_RIGHT.map((f, i) => (
-              <div key={i} className="flex items-center gap-4 py-3 sm:py-4 px-4 sm:px-6 group hover:bg-card/60 transition-colors">
+              <div key={i} className="flex items-center gap-4 py-3 sm:py-4 px-4 sm:px-6 group hover:bg-primary/5 transition-colors">
                 <f.icon className="h-5 w-5 text-primary shrink-0" />
                 <span className="font-medium text-sm">{f.title}</span>
               </div>
@@ -439,10 +454,15 @@ const TESTIMONIALS = [
 
 function TestimonialsSection() {
   return (
-    <section className="bg-muted/20 border-y border-border/40">
-      <div className="container mx-auto px-4 sm:px-6 py-16 md:py-24">
-        <div className="max-w-xl mb-12">
-          <p className="text-sm font-medium text-primary mb-3 tracking-wide uppercase">Depoimentos</p>
+    <section className="relative bg-muted/20 border-y border-border/40 overflow-hidden">
+      <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full bg-primary/[0.03] blur-3xl pointer-events-none" />
+
+      <div className="container mx-auto px-4 sm:px-6 py-16 md:py-24 relative z-10">
+        <div className="max-w-xl mx-auto text-center mb-12">
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-medium text-primary mb-4">
+            <Star className="h-3 w-3" />
+            Aprovado por líderes
+          </div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">
             Quem usa, recomenda
           </h2>
@@ -450,7 +470,7 @@ function TestimonialsSection() {
 
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
           {TESTIMONIALS.map((t, i) => (
-            <div key={i} className="relative rounded-2xl border border-border/50 bg-card p-6 sm:p-8">
+            <div key={i} className="relative rounded-2xl border border-border/50 bg-card p-6 sm:p-8 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
               <div className="text-3xl font-serif text-primary/20 leading-none mb-3">"</div>
               <p className="text-sm text-muted-foreground leading-relaxed mb-5">{t.text}</p>
               <div className="flex items-center gap-3">

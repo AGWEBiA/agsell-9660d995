@@ -96,6 +96,14 @@ const menuSections: MenuSection[] = [
     ],
   },
   {
+    id: 'help',
+    label: 'Ajuda',
+    icon: HelpCircle,
+    items: [
+      { label: 'Central de Ajuda', icon: HelpCircle, path: '/help-center' },
+    ],
+  },
+  {
     id: 'settings',
     label: 'Configurações',
     icon: Wrench,
@@ -109,7 +117,6 @@ const menuSections: MenuSection[] = [
       { label: 'Domínio E-mail', icon: Mail, path: '/email-domain', featureRequired: 'email_marketing' },
       { label: 'API Keys', icon: Key, path: '/api-keys', orgAdminOnly: true, featureRequired: 'api' },
       { label: 'Webhooks', icon: Webhook, path: '/webhooks', featureRequired: 'api' },
-      { label: 'Central de Ajuda', icon: HelpCircle, path: '/help-center' },
       { label: 'Configurações', icon: Settings, path: '/settings' },
       { label: 'Admin', icon: Shield, path: '/admin', adminOnly: true },
     ],

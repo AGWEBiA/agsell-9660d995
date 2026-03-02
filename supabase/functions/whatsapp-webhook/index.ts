@@ -238,48 +238,80 @@ async function routeToInbox(
       if (newContact) contactId = newContact.id;
     }
 
-    // Find or create conversation (prioritize existing conversation for the same contact)
+    // Find or create conversation (prioritize canonical conversation for this lead)
     const metadataKey = `${channel}_sender_id`;
 
-    let existingConv: { id: string; contact_id: string | null } | null = null;
+    const normalizedSender = senderIdentifier.replace(/\D/g, "");
+    const senderCandidates = Array.from(
+      new Set(
+        [
+          senderIdentifier,
+          normalizedSender,
+          normalizedSender.startsWith("55") ? normalizedSender.slice(2) : normalizedSender ? `55${normalizedSender}` : "",
+        ].filter(Boolean)
+      )
+    );
 
-    if (contactId) {
-      const { data: contactConv } = await supabase
-        .from("conversations")
-        .select("id, contact_id")
-        .eq("organization_id", organizationId)
-        .eq("channel", channel)
-        .eq("contact_id", contactId)
-        .order("last_message_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+    const normalizePhone = (value: string | null | undefined) => (value || "").replace(/\D/g, "");
+
+    const { data: orgConversations } = await supabase
+      .from("conversations")
+      .select("id, contact_id, metadata, last_message_at")
+      .eq("organization_id", organizationId)
+      .eq("channel", channel)
+      .order("last_message_at", { ascending: false })
+      .limit(1000);
+
+    const conversations = orgConversations || [];
+
+    const contactConv = contactId
+      ? conversations.find((conv) => conv.contact_id === contactId) || null
+      : null;
+
+    const metadataConv =
+      conversations.find((conv) => {
+        const metadataValue = (conv.metadata as Record<string, unknown> | null)?.[metadataKey];
+        const normalizedMetadata = normalizePhone(typeof metadataValue === "string" ? metadataValue : "");
+        return senderCandidates.includes(String(metadataValue || "")) || senderCandidates.includes(normalizedMetadata);
+      }) || null;
+
+    let existingConv: { id: string; contact_id: string | null; metadata?: unknown } | null = null;
+
+    // If both exist and are different, merge into the contact conversation to avoid split threads
+    if (contactConv && metadataConv && contactConv.id !== metadataConv.id) {
+      const { error: reassignError } = await supabase
+        .from("messages")
+        .update({ conversation_id: contactConv.id })
+        .eq("conversation_id", metadataConv.id);
+
+      if (reassignError) {
+        console.error("Error merging duplicate conversations:", reassignError);
+      } else {
+        await supabase
+          .from("conversations")
+          .delete()
+          .eq("id", metadataConv.id);
+      }
 
       existingConv = contactConv;
-    }
-
-    if (!existingConv) {
-      const { data: metadataConv } = await supabase
-        .from("conversations")
-        .select("id, contact_id")
-        .eq("organization_id", organizationId)
-        .eq("channel", channel)
-        .filter(`metadata->>${metadataKey}`, "eq", senderIdentifier)
-        .maybeSingle();
-
-      existingConv = metadataConv;
+    } else {
+      existingConv = contactConv || metadataConv;
     }
 
     let conversationId: string;
 
     if (existingConv) {
       conversationId = existingConv.id;
+
+      const existingMetadata = (existingConv.metadata as Record<string, unknown> | null) || {};
+
       await supabase
         .from("conversations")
         .update({
           last_message_at: new Date().toISOString(),
           status: "open",
           contact_id: contactId || existingConv.contact_id,
-          metadata: { [metadataKey]: senderIdentifier },
+          metadata: { ...existingMetadata, [metadataKey]: normalizedSender || senderIdentifier },
         })
         .eq("id", conversationId);
     } else {
@@ -292,7 +324,7 @@ async function routeToInbox(
           status: "open",
           contact_id: contactId,
           last_message_at: new Date().toISOString(),
-          metadata: { [metadataKey]: senderIdentifier },
+          metadata: { [metadataKey]: normalizedSender || senderIdentifier },
         })
         .select("id")
         .single();

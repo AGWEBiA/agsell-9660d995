@@ -78,6 +78,9 @@ export const TEMPLATE_VARIABLES = [
   { key: '{{email}}', label: 'E-mail' },
   { key: '{{telefone}}', label: 'Telefone' },
   { key: '{{whatsapp}}', label: 'WhatsApp' },
+  { key: '{{rastreamento}}', label: 'Rastreamento' },
+  { key: '{{boleto}}', label: 'Boleto' },
+  { key: '{{pix}}', label: 'PIX' },
 ];
 
 export const WEEKDAYS = [

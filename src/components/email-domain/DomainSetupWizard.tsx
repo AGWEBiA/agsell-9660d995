@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-type Step = 'domain' | 'sender' | 'dns' | 'verify';
+type Step = 'domain' | 'sender' | 'dns_txt' | 'dns_cname' | 'dns_mx';
 
 interface DomainSetupWizardProps {
   onComplete: (data: { domain: string; from_email?: string; from_name?: string }) => void;
@@ -27,7 +27,9 @@ function StepIndicator({ currentStep }: { currentStep: Step }) {
   const steps: { key: Step; label: string; number: number }[] = [
     { key: 'domain', label: 'Domínio', number: 1 },
     { key: 'sender', label: 'Remetente', number: 2 },
-    { key: 'dns', label: 'Registros DNS', number: 3 },
+    { key: 'dns_txt', label: 'TXT', number: 3 },
+    { key: 'dns_cname', label: 'CNAME', number: 4 },
+    { key: 'dns_mx', label: 'MX', number: 5 },
   ];
 
   const currentIndex = steps.findIndex(s => s.key === currentStep);
@@ -111,7 +113,7 @@ export default function DomainSetupWizard({ onComplete, onCancel, isPending }: D
   const cleanDomain = domain.trim().toLowerCase().replace(/^(https?:\/\/)?(www\.)?/, '').replace(/\/.*$/, '');
   const isValidDomain = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(cleanDomain);
 
-  const dnsRecords = [
+  const txtRecords = [
     {
       type: 'TXT',
       name: cleanDomain,
@@ -119,18 +121,44 @@ export default function DomainSetupWizard({ onComplete, onCancel, isPending }: D
       purpose: 'SPF',
     },
     {
-      type: 'CNAME',
-      name: `default._domainkey.${cleanDomain}`,
-      value: `default._domainkey.${cleanDomain}.d.{provider}`,
+      type: 'TXT',
+      name: `sfx._domainkey.${cleanDomain}`,
+      value: `v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCZ...`,
       purpose: 'DKIM',
     },
     {
       type: 'TXT',
       name: `_dmarc.${cleanDomain}`,
-      value: `v=DMARC1; p=quarantine; rua=mailto:dmarc@${cleanDomain}; pct=100`,
+      value: `v=DMARC1; p=none; sp=none; rua=mailto:suporte@${cleanDomain}; ruf=mailto:ruf@${cleanDomain}`,
       purpose: 'DMARC',
     },
   ];
+
+  const cnameRecords = [
+    {
+      type: 'CNAME',
+      name: `email.${cleanDomain}`,
+      value: 'email2.api-mail.com',
+      purpose: 'Email Routing',
+    },
+  ];
+
+  const mxRecords = [
+    {
+      type: 'MX',
+      name: cleanDomain,
+      value: 'mxa.api-mail.com (prioridade 10)',
+      purpose: 'MX Primário',
+    },
+    {
+      type: 'MX',
+      name: cleanDomain,
+      value: 'mxb.api-mail.com (prioridade 10)',
+      purpose: 'MX Secundário',
+    },
+  ];
+
+  const allDnsRecords = [...txtRecords, ...cnameRecords, ...mxRecords];
 
   const handleSubmit = () => {
     onComplete({
@@ -242,7 +270,7 @@ export default function DomainSetupWizard({ onComplete, onCancel, isPending }: D
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Voltar
               </Button>
-              <Button onClick={() => setStep('dns')}>
+              <Button onClick={() => setStep('dns_txt')}>
                 Continuar
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
@@ -251,76 +279,99 @@ export default function DomainSetupWizard({ onComplete, onCancel, isPending }: D
         </Card>
       )}
 
-      {step === 'dns' && (
+      {/* DNS TXT Step */}
+      {step === 'dns_txt' && (
         <Card>
           <CardContent className="pt-6 space-y-6">
             <div className="text-center space-y-2">
               <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                 <Shield className="h-6 w-6 text-primary" />
               </div>
-              <h2 className="text-xl font-semibold">Configure os registros DNS</h2>
+              <h2 className="text-xl font-semibold">Configuração do tipo: <Badge>TXT</Badge></h2>
               <p className="text-sm text-muted-foreground">
-                Adicione os registros abaixo no painel DNS do seu provedor de domínio (Cloudflare, GoDaddy, Registro.br, etc.)
+                O registro TXT é um tipo de configuração no DNS que permite armazenar informações textuais, como verificações de propriedade, políticas de email (SPF, DKIM).
               </p>
             </div>
-
             <div className="space-y-3">
-              {dnsRecords.map((record, i) => (
+              {txtRecords.map((record, i) => (
+                <DnsRecordRow key={i} {...record} />
+              ))}
+            </div>
+            <div className="flex justify-between pt-2">
+              <Button variant="ghost" onClick={() => setStep('sender')}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Voltar
+              </Button>
+              <Button onClick={() => setStep('dns_cname')}>
+                Próximo
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* DNS CNAME Step */}
+      {step === 'dns_cname' && (
+        <Card>
+          <CardContent className="pt-6 space-y-6">
+            <div className="text-center space-y-2">
+              <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Shield className="h-6 w-6 text-primary" />
+              </div>
+              <h2 className="text-xl font-semibold">Configuração do tipo: <Badge className="bg-green-600">CNAME</Badge></h2>
+              <p className="text-sm text-muted-foreground">
+                O registro CNAME no DNS permite que um domínio ou subdomínio aponte para outro domínio. Isso simplifica a gestão de subdomínios.
+              </p>
+            </div>
+            <div className="space-y-3">
+              {cnameRecords.map((record, i) => (
+                <DnsRecordRow key={i} {...record} />
+              ))}
+            </div>
+            <div className="flex justify-between pt-2">
+              <Button variant="ghost" onClick={() => setStep('dns_txt')}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Voltar
+              </Button>
+              <Button onClick={() => setStep('dns_mx')}>
+                Próximo
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* DNS MX Step */}
+      {step === 'dns_mx' && (
+        <Card>
+          <CardContent className="pt-6 space-y-6">
+            <div className="text-center space-y-2">
+              <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Shield className="h-6 w-6 text-primary" />
+              </div>
+              <h2 className="text-xl font-semibold">Configuração do tipo: <Badge className="bg-orange-600">MX</Badge></h2>
+              <p className="text-sm text-muted-foreground">
+                O registro MX no DNS especifica servidores de email responsáveis por receber mensagens para um domínio, garantindo a entrega eficiente dos emails.
+              </p>
+            </div>
+            <div className="space-y-3">
+              {mxRecords.map((record, i) => (
                 <DnsRecordRow key={i} {...record} />
               ))}
             </div>
 
-            {/* Inbound email section */}
-            <div className="border rounded-lg p-4 space-y-3 bg-muted/20">
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-semibold">Receber e-mails no SAC (Opcional)</h3>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Para que e-mails enviados para o seu domínio apareçam automaticamente no Inbox/SAC, configure o <strong>Inbound Parse</strong> no seu provedor de e-mail:
-              </p>
-              <div className="space-y-2">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">1. Configure o registro MX no DNS (se ainda não existir)</p>
-                  <DnsRecordRow
-                    type="MX"
-                    name={cleanDomain}
-                    value="mx.sendgrid.net (prioridade 10) ou conforme seu provedor"
-                    purpose="MX"
-                  />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">2. No painel do seu provedor (SendGrid, Resend, etc.), configure o Inbound Webhook para:</p>
-                  <div className="flex items-center gap-2 bg-muted/50 rounded-md px-3 py-2">
-                    <code className="text-xs flex-1 break-all">
-                      {`https://gmemxbfibakfpsjbsvyt.supabase.co/functions/v1/email-inbound`}
-                    </code>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 shrink-0"
-                      onClick={() => copyToClipboard(`https://gmemxbfibakfpsjbsvyt.supabase.co/functions/v1/email-inbound`)}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Quando configurado, qualquer e-mail recebido neste domínio será automaticamente roteado para o SAC da sua organização.
-              </p>
-            </div>
-
-            <div className="flex items-start gap-3 p-4 rounded-lg bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-900">
-              <Info className="h-5 w-5 text-yellow-600 dark:text-yellow-500 mt-0.5 shrink-0" />
-              <div className="text-sm text-yellow-800 dark:text-yellow-400 space-y-1">
-                <p className="font-medium">Importante</p>
-                <p>A propagação DNS pode levar até 48 horas, mas normalmente acontece em menos de 1 hora. Você pode verificar o status a qualquer momento após adicionar os registros.</p>
+            <div className="flex items-start gap-3 p-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10">
+              <Info className="h-5 w-5 text-amber-600 mt-0.5 shrink-0" />
+              <div className="text-sm space-y-1">
+                <p className="font-medium text-amber-800 dark:text-amber-400">Importante</p>
+                <p className="text-muted-foreground">A propagação DNS pode levar até 48 horas, mas normalmente acontece em menos de 1 hora.</p>
               </div>
             </div>
 
             <div className="flex justify-between pt-2">
-              <Button variant="ghost" onClick={() => setStep('sender')}>
+              <Button variant="ghost" onClick={() => setStep('dns_cname')}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Voltar
               </Button>
@@ -332,7 +383,7 @@ export default function DomainSetupWizard({ onComplete, onCancel, isPending }: D
                   </>
                 ) : (
                   <>
-                    Adicionar Domínio
+                    Concluir
                     <CheckCircle className="h-4 w-4 ml-2" />
                   </>
                 )}

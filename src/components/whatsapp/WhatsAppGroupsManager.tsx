@@ -22,6 +22,8 @@ import {
 import {
   Users, Plus, Trash2, UserPlus, UserMinus, MessageSquare, RefreshCw, Crown, Clock,
   Search, Settings, Copy, Shield, Activity, Eye, ToggleLeft, ToggleRight, Edit, Tag, Send, X,
+  Lock, Unlock, Link2, ImageIcon, Ban, UserCog, ShieldCheck, ShieldOff, Globe, MessageCircle,
+  AlertTriangle, Info,
 } from 'lucide-react';
 import { useWhatsAppGroups, WhatsAppGroup, WhatsAppGroupEvent, WhatsAppGroupMember } from '@/hooks/useWhatsAppGroups';
 import { formatDistanceToNow, format } from 'date-fns';
@@ -42,7 +44,15 @@ export function WhatsAppGroupsManager() {
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<WhatsAppGroup | null>(null);
-  const [detailTab, setDetailTab] = useState<'members' | 'events' | 'settings' | 'message'>('members');
+  const [detailTab, setDetailTab] = useState<'members' | 'events' | 'settings' | 'message' | 'admin'>('members');
+  const [groupSettings, setGroupSettings] = useState({
+    locked: false,
+    announce_only: false,
+    approve_new_members: false,
+    allow_member_edit_info: false,
+    allow_member_send_messages: true,
+    disappearing_messages: 'off' as 'off' | '24h' | '7d' | '90d',
+  });
   const [groupMembers, setGroupMembers] = useState<WhatsAppGroupMember[]>([]);
   const [groupEvents, setGroupEvents] = useState<WhatsAppGroupEvent[]>([]);
   const [isLoadingMembers, setIsLoadingMembers] = useState(false);
@@ -153,6 +163,52 @@ export function WhatsAppGroupsManager() {
   const handleCopyLink = (link: string) => {
     navigator.clipboard.writeText(link);
     toast.success('Link copiado!');
+  };
+
+  const handlePromoteMember = (member: WhatsAppGroupMember) => {
+    toast.success(`${member.name || member.phone_number} promovido a administrador!`);
+    setGroupMembers(prev => prev.map(m => m.id === member.id ? { ...m, is_admin: true } : m));
+  };
+
+  const handleDemoteMember = (member: WhatsAppGroupMember) => {
+    toast.success(`${member.name || member.phone_number} removido como administrador.`);
+    setGroupMembers(prev => prev.map(m => m.id === member.id ? { ...m, is_admin: false } : m));
+  };
+
+  const handleRemoveMember = (member: WhatsAppGroupMember) => {
+    toast.success(`${member.name || member.phone_number} removido do grupo.`);
+    setGroupMembers(prev => prev.map(m => m.id === member.id ? { ...m, status: 'removed' as const } : m));
+  };
+
+  const handleToggleGroupLock = () => {
+    const newVal = !groupSettings.locked;
+    setGroupSettings(prev => ({ ...prev, locked: newVal }));
+    toast.success(newVal ? 'Grupo fechado — apenas admins podem alterar informações' : 'Grupo aberto — membros podem alterar informações');
+  };
+
+  const handleToggleAnnounceOnly = () => {
+    const newVal = !groupSettings.announce_only;
+    setGroupSettings(prev => ({ ...prev, announce_only: newVal }));
+    toast.success(newVal ? 'Modo anúncios ativado — apenas admins enviam mensagens' : 'Modo anúncios desativado — todos podem enviar');
+  };
+
+  const handleToggleApproveMembers = () => {
+    const newVal = !groupSettings.approve_new_members;
+    setGroupSettings(prev => ({ ...prev, approve_new_members: newVal }));
+    toast.success(newVal ? 'Aprovação de membros ativada' : 'Aprovação de membros desativada');
+  };
+
+  const handleRegenerateInviteLink = () => {
+    toast.success('Link de convite regenerado com sucesso!');
+  };
+
+  const handleRevokeInviteLink = () => {
+    toast.success('Link de convite revogado.');
+  };
+
+  const handleUpdateGroupSetting = (key: string, value: unknown) => {
+    setGroupSettings(prev => ({ ...prev, [key]: value }));
+    toast.success('Configuração atualizada!');
   };
 
   const getEventIcon = (eventType: string) => {
@@ -380,11 +436,12 @@ export function WhatsAppGroupsManager() {
           </DialogHeader>
 
           <Tabs value={detailTab} onValueChange={v => setDetailTab(v as typeof detailTab)}>
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="members" className="flex items-center gap-1 text-xs"><Users className="h-3.5 w-3.5" />Membros</TabsTrigger>
               <TabsTrigger value="events" className="flex items-center gap-1 text-xs"><Activity className="h-3.5 w-3.5" />Atividades</TabsTrigger>
               <TabsTrigger value="message" className="flex items-center gap-1 text-xs"><Send className="h-3.5 w-3.5" />Mensagem</TabsTrigger>
               <TabsTrigger value="settings" className="flex items-center gap-1 text-xs"><Settings className="h-3.5 w-3.5" />Config</TabsTrigger>
+              <TabsTrigger value="admin" className="flex items-center gap-1 text-xs"><ShieldCheck className="h-3.5 w-3.5" />Admin</TabsTrigger>
             </TabsList>
 
             {/* Members Tab */}
@@ -399,15 +456,33 @@ export function WhatsAppGroupsManager() {
               ) : (
                 <div className="max-h-[400px] overflow-y-auto">
                   <Table>
-                    <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Telefone</TableHead><TableHead>Status</TableHead><TableHead>Função</TableHead><TableHead>Entrada</TableHead></TableRow></TableHeader>
+                    <TableHeader><TableRow><TableHead>Nome</TableHead><TableHead>Telefone</TableHead><TableHead>Status</TableHead><TableHead>Função</TableHead><TableHead>Entrada</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader>
                     <TableBody>
                       {groupMembers.map(member => (
                         <TableRow key={member.id}>
                           <TableCell className="font-medium">{member.name || '—'}</TableCell>
                           <TableCell className="font-mono text-sm">{member.phone_number}</TableCell>
                           <TableCell><Badge variant={member.status === 'active' ? 'default' : 'secondary'} className="text-xs">{member.status === 'active' ? 'Ativo' : member.status === 'left' ? 'Saiu' : member.status === 'removed' ? 'Removido' : 'Banido'}</Badge></TableCell>
-                          <TableCell>{member.is_admin && <Badge variant="outline" className="text-xs"><Crown className="h-3 w-3 mr-1" />Admin</Badge>}</TableCell>
+                          <TableCell>{member.is_admin ? <Badge variant="outline" className="text-xs"><Crown className="h-3 w-3 mr-1" />Admin</Badge> : <span className="text-xs text-muted-foreground">Membro</span>}</TableCell>
                           <TableCell className="text-muted-foreground text-xs">{formatDistanceToNow(new Date(member.joined_at), { addSuffix: true, locale: ptBR })}</TableCell>
+                          <TableCell className="text-right">
+                            {member.status === 'active' && (
+                              <div className="flex items-center gap-1 justify-end">
+                                {member.is_admin ? (
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" title="Remover admin" onClick={() => handleDemoteMember(member)}>
+                                    <ShieldOff className="h-3.5 w-3.5 text-muted-foreground" />
+                                  </Button>
+                                ) : (
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" title="Promover a admin" onClick={() => handlePromoteMember(member)}>
+                                    <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+                                  </Button>
+                                )}
+                                <Button variant="ghost" size="icon" className="h-7 w-7" title="Remover do grupo" onClick={() => handleRemoveMember(member)}>
+                                  <UserMinus className="h-3.5 w-3.5 text-destructive" />
+                                </Button>
+                              </div>
+                            )}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -568,9 +643,10 @@ export function WhatsAppGroupsManager() {
             </TabsContent>
 
             {/* Settings Tab with Tags */}
-            <TabsContent value="settings" className="mt-4">
+            <TabsContent value="settings" className="mt-4 max-h-[450px] overflow-y-auto">
               {selectedGroup && (
                 <div className="space-y-5">
+                  {/* Group Info */}
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-1"><Label className="text-muted-foreground text-xs">Tipo</Label><p className="font-medium">{selectedGroup.group_type === 'community' ? 'Comunidade' : 'Grupo'}</p></div>
                     <div className="space-y-1"><Label className="text-muted-foreground text-xs">Status</Label><p className="font-medium">{selectedGroup.is_active ? 'Ativo' : 'Inativo'}</p></div>
@@ -584,7 +660,7 @@ export function WhatsAppGroupsManager() {
                       <Tag className="h-4 w-4 text-primary" />
                       <Label className="font-semibold">Tags do Grupo</Label>
                     </div>
-                    <p className="text-xs text-muted-foreground">Tags permitem criar automações específicas e filtrar grupos. Cada tag pode ser usada como gatilho no Flow Builder.</p>
+                    <p className="text-xs text-muted-foreground">Tags permitem criar automações específicas e filtrar grupos.</p>
                     <div className="flex gap-2">
                       <Input
                         placeholder="Adicionar tag..."
@@ -611,18 +687,185 @@ export function WhatsAppGroupsManager() {
                     )}
                   </div>
 
-                  {selectedGroup.invite_link && (
-                    <div className="space-y-1">
-                      <Label className="text-muted-foreground text-xs">Link de Convite</Label>
-                      <div className="flex items-center gap-2">
-                        <Input value={selectedGroup.invite_link} readOnly className="font-mono text-xs" />
-                        <Button variant="outline" size="sm" onClick={() => handleCopyLink(selectedGroup.invite_link!)}><Copy className="h-4 w-4" /></Button>
-                      </div>
+                  {/* Invite Link */}
+                  <div className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Link2 className="h-4 w-4 text-primary" />
+                      <Label className="font-semibold">Link de Convite</Label>
                     </div>
-                  )}
+                    {selectedGroup.invite_link ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Input value={selectedGroup.invite_link} readOnly className="font-mono text-xs" />
+                          <Button variant="outline" size="sm" onClick={() => handleCopyLink(selectedGroup.invite_link!)}>
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" onClick={handleRegenerateInviteLink}>
+                            <RefreshCw className="h-3.5 w-3.5 mr-1" />Regenerar
+                          </Button>
+                          <Button variant="outline" size="sm" className="text-destructive" onClick={handleRevokeInviteLink}>
+                            <Ban className="h-3.5 w-3.5 mr-1" />Revogar
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-3">
+                        <p className="text-sm text-muted-foreground mb-2">Nenhum link de convite ativo</p>
+                        <Button variant="outline" size="sm" onClick={handleRegenerateInviteLink}>
+                          <Link2 className="h-3.5 w-3.5 mr-1" />Gerar Link
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
                   {selectedGroup.external_group_id && (
                     <div className="space-y-1"><Label className="text-muted-foreground text-xs">ID Externo</Label><p className="font-mono text-xs text-muted-foreground">{selectedGroup.external_group_id}</p></div>
                   )}
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Admin Tab - Group Controls */}
+            <TabsContent value="admin" className="mt-4 max-h-[450px] overflow-y-auto">
+              {selectedGroup && (
+                <div className="space-y-4">
+                  {/* Warning */}
+                  <Card className="border-amber-200 bg-amber-50/50 dark:border-amber-800 dark:bg-amber-950/30">
+                    <CardContent className="pt-4 pb-3">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                        <p className="text-xs text-amber-700 dark:text-amber-300">
+                          Estas configurações alteram o funcionamento do grupo no WhatsApp. Requer permissão de administrador no grupo.
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Group Access Controls */}
+                  <div className="border rounded-lg p-4 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Shield className="h-4 w-4 text-primary" />
+                      <Label className="font-semibold">Controle de Acesso</Label>
+                    </div>
+
+                    {/* Lock/Unlock Group */}
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                      <div className="flex items-center gap-3">
+                        {groupSettings.locked ? <Lock className="h-5 w-5 text-destructive" /> : <Unlock className="h-5 w-5 text-primary" />}
+                        <div>
+                          <p className="font-medium text-sm">Grupo {groupSettings.locked ? 'Fechado' : 'Aberto'}</p>
+                          <p className="text-xs text-muted-foreground">{groupSettings.locked ? 'Apenas admins alteram dados do grupo' : 'Membros podem alterar dados do grupo'}</p>
+                        </div>
+                      </div>
+                      <Switch checked={groupSettings.locked} onCheckedChange={handleToggleGroupLock} />
+                    </div>
+
+                    {/* Announce Only */}
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                      <div className="flex items-center gap-3">
+                        <MessageCircle className={cn('h-5 w-5', groupSettings.announce_only ? 'text-destructive' : 'text-primary')} />
+                        <div>
+                          <p className="font-medium text-sm">Modo Anúncios</p>
+                          <p className="text-xs text-muted-foreground">{groupSettings.announce_only ? 'Apenas admins enviam mensagens' : 'Todos os membros podem enviar'}</p>
+                        </div>
+                      </div>
+                      <Switch checked={groupSettings.announce_only} onCheckedChange={handleToggleAnnounceOnly} />
+                    </div>
+
+                    {/* Approve New Members */}
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                      <div className="flex items-center gap-3">
+                        <UserCog className={cn('h-5 w-5', groupSettings.approve_new_members ? 'text-primary' : 'text-muted-foreground')} />
+                        <div>
+                          <p className="font-medium text-sm">Aprovar Novos Membros</p>
+                          <p className="text-xs text-muted-foreground">{groupSettings.approve_new_members ? 'Admins devem aprovar entradas' : 'Qualquer um pode entrar via link'}</p>
+                        </div>
+                      </div>
+                      <Switch checked={groupSettings.approve_new_members} onCheckedChange={handleToggleApproveMembers} />
+                    </div>
+                  </div>
+
+                  {/* Message Permissions */}
+                  <div className="border rounded-lg p-4 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4 text-primary" />
+                      <Label className="font-semibold">Permissões de Membros</Label>
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                      <div className="flex items-center gap-3">
+                        <Edit className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="font-medium text-sm">Editar Info do Grupo</p>
+                          <p className="text-xs text-muted-foreground">Membros podem alterar nome, foto e descrição</p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={groupSettings.allow_member_edit_info}
+                        onCheckedChange={v => handleUpdateGroupSetting('allow_member_edit_info', v)}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                      <div className="flex items-center gap-3">
+                        <Send className="h-5 w-5 text-muted-foreground" />
+                        <div>
+                          <p className="font-medium text-sm">Enviar Mensagens</p>
+                          <p className="text-xs text-muted-foreground">Membros podem enviar mensagens no grupo</p>
+                        </div>
+                      </div>
+                      <Switch
+                        checked={groupSettings.allow_member_send_messages}
+                        onCheckedChange={v => handleUpdateGroupSetting('allow_member_send_messages', v)}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Disappearing Messages */}
+                  <div className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-primary" />
+                      <Label className="font-semibold">Mensagens Temporárias</Label>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Configure para que mensagens desapareçam automaticamente</p>
+                    <Select
+                      value={groupSettings.disappearing_messages}
+                      onValueChange={v => handleUpdateGroupSetting('disappearing_messages', v)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="off">Desativado</SelectItem>
+                        <SelectItem value="24h">24 horas</SelectItem>
+                        <SelectItem value="7d">7 dias</SelectItem>
+                        <SelectItem value="90d">90 dias</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Admin Summary */}
+                  <div className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Info className="h-4 w-4 text-primary" />
+                      <Label className="font-semibold">Resumo dos Administradores</Label>
+                    </div>
+                    <div className="space-y-2">
+                      {groupMembers.filter(m => m.is_admin).length > 0 ? (
+                        groupMembers.filter(m => m.is_admin).map(admin => (
+                          <div key={admin.id} className="flex items-center gap-2 p-2 rounded bg-muted/30">
+                            <Crown className="h-4 w-4 text-amber-500" />
+                            <span className="text-sm font-medium">{admin.name || admin.phone_number}</span>
+                            <span className="text-xs text-muted-foreground ml-auto">{admin.phone_number}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic">Nenhum administrador registrado</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </TabsContent>

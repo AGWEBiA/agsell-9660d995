@@ -205,84 +205,65 @@ export function WhatsAppQRConnect({ onConnect }: WhatsAppQRConnectProps) {
               Escolha como você deseja conectar seu WhatsApp ao AG Sell
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              {/* QR Code Option */}
-              <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => {
-                setConnectionType('qr');
-                setIsDialogOpen(true);
-              }}>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900">
-                      <QrCode className="h-6 w-6 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium">QR Code (WhatsApp Web)</p>
-                      <p className="text-sm text-muted-foreground">
-                        Conecte escaneando um QR Code
-                      </p>
-                    </div>
-                  </div>
-                  <div className="space-y-2 text-sm text-muted-foreground">
-                    <p className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      Sem necessidade de conta Business
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      Configuração rápida e simples
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                      Requer telefone conectado à internet
-                    </p>
-                  </div>
-                  <Button className="w-full mt-4">
-                    <QrCode className="h-4 w-4 mr-2" />
-                    Conectar via QR Code
-                  </Button>
-                </CardContent>
-              </Card>
+          <CardContent className="space-y-1 p-0 pb-4">
+            {/* WhatsApp Oficial */}
+            <button
+              className="w-full flex items-center gap-4 px-6 py-4 hover:bg-muted/50 transition-colors text-left"
+              onClick={() => { setConnectionType('api'); setIsDialogOpen(true); }}
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900 shrink-0">
+                <Smartphone className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">WhatsApp Oficial</p>
+                <p className="text-xs text-muted-foreground">Use a API oficial do WhatsApp para oferecer um atendimento rápido e eficiente para seus clientes.</p>
+              </div>
+            </button>
 
-              {/* API Option */}
-              <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => {
-                setConnectionType('api');
-                setIsDialogOpen(true);
-              }}>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900">
-                      <Link2 className="h-6 w-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium">WhatsApp Business API</p>
-                      <p className="text-sm text-muted-foreground">
-                        Conecte via API oficial da Meta
-                      </p>
-                    </div>
-                  </div>
-                  <div className="space-y-2 text-sm text-muted-foreground">
-                    <p className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      Templates de mensagem aprovados
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      Maior limite de mensagens
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      Webhook para automações
-                    </p>
-                  </div>
-                  <Button variant="outline" className="w-full mt-4">
-                    <Link2 className="h-4 w-4 mr-2" />
-                    Conectar via API
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
+            {/* WhatsApp com Coexistência */}
+            <button
+              className="w-full flex items-center gap-4 px-6 py-4 hover:bg-muted/50 transition-colors text-left"
+              onClick={() => { setConnectionType('api'); setIsDialogOpen(true); }}
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900 shrink-0">
+                <Smartphone className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="font-medium text-sm flex items-center gap-2">
+                  WhatsApp com Coexistência
+                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Beta</Badge>
+                </p>
+                <p className="text-xs text-muted-foreground">Mantenha seu WhatsApp Business App ativo no seu celular e utilize simultaneamente o mesmo número na API oficial.</p>
+              </div>
+            </button>
+
+            {/* Conexão com Z-Api */}
+            <button
+              className="w-full flex items-center gap-4 px-6 py-4 hover:bg-muted/50 transition-colors text-left"
+              onClick={() => { setConnectionType('qr'); setIsDialogOpen(true); }}
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900 shrink-0">
+                <Link2 className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">Conexão com Z-Api</p>
+                <p className="text-xs text-muted-foreground">Integre o WhatsApp às suas automações e atendimentos com a Z-API.</p>
+              </div>
+            </button>
+
+            {/* WhatsApp QR Code */}
+            <button
+              className="w-full flex items-center gap-4 px-6 py-4 hover:bg-muted/50 transition-colors text-left"
+              onClick={() => { setConnectionType('qr'); setIsDialogOpen(true); }}
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900 shrink-0">
+                <QrCode className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="font-medium text-sm">WhatsApp</p>
+                <p className="text-xs text-muted-foreground">Conecte o AG Sell escaneando o QR Code de conexão diretamente no seu WhatsApp.</p>
+              </div>
+            </button>
           </CardContent>
         </Card>
       </div>

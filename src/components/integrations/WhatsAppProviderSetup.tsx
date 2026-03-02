@@ -581,6 +581,80 @@ export function WhatsAppProviderSetup() {
         </div>
       )}
 
+      {/* Connection Types Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <MessageSquare className="h-4 w-4" />
+            Conectar novo canal
+          </CardTitle>
+          <CardDescription>Escolha o tipo de conexão WhatsApp</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-1 p-0 pb-4">
+          {/* WhatsApp Oficial */}
+          <button
+            className="w-full flex items-center gap-4 px-6 py-4 hover:bg-muted/50 transition-colors text-left"
+            onClick={() => { setActiveTab('business'); setIsDialogOpen(true); }}
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900 shrink-0">
+              <Smartphone className="h-5 w-5 text-green-600" />
+            </div>
+            <div>
+              <p className="font-medium text-sm">WhatsApp Oficial</p>
+              <p className="text-xs text-muted-foreground">Use a API oficial do WhatsApp para oferecer um atendimento rápido e eficiente para seus clientes.</p>
+            </div>
+          </button>
+
+          {/* WhatsApp com Coexistência */}
+          <button
+            className="w-full flex items-center gap-4 px-6 py-4 hover:bg-muted/50 transition-colors text-left"
+            onClick={() => { setActiveTab('business'); setIsDialogOpen(true); }}
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900 shrink-0">
+              <Smartphone className="h-5 w-5 text-green-600" />
+            </div>
+            <div className="flex items-center gap-2">
+              <div>
+                <p className="font-medium text-sm flex items-center gap-2">
+                  WhatsApp com Coexistência
+                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Beta</Badge>
+                </p>
+                <p className="text-xs text-muted-foreground">Mantenha seu WhatsApp Business App ativo no seu celular e utilize simultaneamente o mesmo número na API oficial.</p>
+              </div>
+            </div>
+          </button>
+
+          {/* Conexão com Z-Api */}
+          <button
+            className="w-full flex items-center gap-4 px-6 py-4 hover:bg-muted/50 transition-colors text-left"
+            onClick={() => { setActiveTab('evolution'); setIsDialogOpen(true); }}
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900 shrink-0">
+              <Server className="h-5 w-5 text-purple-600" />
+            </div>
+            <div>
+              <p className="font-medium text-sm">Conexão com Z-Api</p>
+              <p className="text-xs text-muted-foreground">Integre o WhatsApp às suas automações e atendimentos com a Z-API.</p>
+            </div>
+          </button>
+
+          {/* WhatsApp QR Code */}
+          <button
+            className="w-full flex items-center gap-4 px-6 py-4 hover:bg-muted/50 transition-colors text-left"
+            onClick={() => { setActiveTab('evolution'); setIsDialogOpen(true); }}
+            disabled={!isEvolutionGlobalConfigured}
+          >
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900 shrink-0">
+              <QrCode className="h-5 w-5 text-emerald-600" />
+            </div>
+            <div>
+              <p className="font-medium text-sm">WhatsApp</p>
+              <p className="text-xs text-muted-foreground">Conecte o AG Sell escaneando o QR Code de conexão diretamente no seu WhatsApp.</p>
+            </div>
+          </button>
+        </CardContent>
+      </Card>
+
       {/* Help Section */}
       <Card>
         <CardHeader>
@@ -592,23 +666,23 @@ export function WhatsAppProviderSetup() {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <h4 className="font-medium text-purple-600">Evolution API (QR Code)</h4>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>✅ Basta informar o nome da instância</li>
-                <li>✅ Escaneie o QR Code e pronto</li>
-                <li>✅ Não precisa de conta Business</li>
-                <li>✅ Sem custos por mensagem</li>
-                <li>{isEvolutionGlobalConfigured ? '✅ Configurada pelo admin' : '⚠️ Requer configuração do admin'}</li>
-              </ul>
-            </div>
-            <div className="space-y-2">
-              <h4 className="font-medium text-blue-600">WhatsApp Business API</h4>
+              <h4 className="font-medium text-green-600">WhatsApp Oficial / Coexistência</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
                 <li>✅ API oficial e mais estável</li>
                 <li>✅ Maior limite de mensagens</li>
                 <li>✅ Templates aprovados pela Meta</li>
                 <li>⚠️ Requer aprovação da Meta</li>
                 <li>⚠️ Custo por mensagem</li>
+              </ul>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-medium text-purple-600">Z-Api / QR Code (Evolution API)</h4>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>✅ Basta informar o nome da instância</li>
+                <li>✅ Escaneie o QR Code e pronto</li>
+                <li>✅ Não precisa de conta Business</li>
+                <li>✅ Sem custos por mensagem</li>
+                <li>⚠️ Risco de banimento por uso não oficial</li>
               </ul>
             </div>
           </div>

@@ -20,8 +20,8 @@ import {
   Zap, MessageSquare, Mail, Instagram, Send,
   Heart, Eye, UserPlus, MessageCircle, Sparkles,
   Tag, Star, Bell, Clock, CheckSquare, GitBranch,
-  Settings, X, Play, Pause, Copy, MoreVertical,
-  Workflow,
+  Settings, X, Play, Pause, MoreVertical,
+  Workflow, Timer, Flame, MailCheck, Filter,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -30,72 +30,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-// ─── Types ───
-interface FlowNode {
-  id: string;
-  type: 'trigger' | 'action' | 'condition' | 'delay';
-  subtype: string;
-  label: string;
-  config: Record<string, unknown>;
-  children?: string[];
-  conditionTrue?: string;
-  conditionFalse?: string;
-}
-
-// ─── Trigger definitions ───
-const triggerOptions = [
-  { id: 'instagram_comment', label: 'Comentário no Post', icon: Heart, channel: 'instagram', color: 'from-pink-500 to-purple-500', description: 'Quando alguém comenta em qualquer post' },
-  { id: 'instagram_specific_post', label: 'Post Específico', icon: Instagram, channel: 'instagram', color: 'from-purple-500 to-pink-500', description: 'Quando alguém comenta em um post específico' },
-  { id: 'instagram_dm', label: 'DM Recebida', icon: MessageCircle, channel: 'instagram', color: 'from-purple-500 to-orange-400', description: 'Quando alguém envia uma DM' },
-  { id: 'instagram_story_reply', label: 'Resposta ao Story', icon: Eye, channel: 'instagram', color: 'from-pink-400 to-orange-400', description: 'Quando alguém responde ou reage ao seu story' },
-  { id: 'instagram_story_specific', label: 'Story Específico', icon: Eye, channel: 'instagram', color: 'from-orange-400 to-pink-500', description: 'Gatilho para um story específico (por URL ou ID)' },
-  { id: 'instagram_new_follower', label: 'Novo Seguidor', icon: UserPlus, channel: 'instagram', color: 'from-purple-400 to-pink-400', description: 'Quando alguém começa a seguir você' },
-  { id: 'whatsapp_received', label: 'Mensagem WhatsApp', icon: MessageSquare, channel: 'whatsapp', color: 'from-green-500 to-emerald-500', description: 'Quando receber uma mensagem no WhatsApp' },
-  { id: 'whatsapp_keyword', label: 'Palavra-chave WhatsApp', icon: Sparkles, channel: 'whatsapp', color: 'from-emerald-500 to-teal-500', description: 'Quando mensagem contém palavra-chave' },
-  { id: 'whatsapp_automation', label: 'Automação WhatsApp', icon: Zap, channel: 'whatsapp', color: 'from-teal-500 to-green-500', description: 'Quando uma automação WhatsApp específica é acionada' },
-  { id: 'whatsapp_message_source', label: 'Mensagem de Origem', icon: MessageSquare, channel: 'whatsapp', color: 'from-green-400 to-teal-400', description: 'Quando mensagem vem de uma origem específica' },
-  { id: 'contact_created', label: 'Contato Criado', icon: UserPlus, channel: 'crm', color: 'from-blue-500 to-indigo-500', description: 'Quando um novo contato é adicionado' },
-  { id: 'contact_source', label: 'Fonte do Contato', icon: UserPlus, channel: 'crm', color: 'from-indigo-400 to-blue-400', description: 'Quando contato vem de uma fonte específica' },
-  { id: 'form_submitted', label: 'Formulário Enviado', icon: CheckSquare, channel: 'crm', color: 'from-indigo-500 to-blue-500', description: 'Quando um formulário específico é preenchido' },
-];
-
-// ─── Action definitions ───
-const actionOptions = [
-  { id: 'send_dm', label: 'Enviar DM', icon: Send, color: 'bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300' },
-  { id: 'reply_comment', label: 'Responder Comentário', icon: Heart, color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' },
-  { id: 'send_whatsapp', label: 'Enviar WhatsApp', icon: MessageSquare, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
-  { id: 'send_email', label: 'Enviar E-mail', icon: Mail, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
-  { id: 'add_tag', label: 'Adicionar Tag', icon: Tag, color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' },
-  { id: 'remove_tag', label: 'Remover Tag', icon: Tag, color: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
-  { id: 'update_score', label: 'Atualizar Score', icon: Star, color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' },
-  { id: 'send_notification', label: 'Notificar Equipe', icon: Bell, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
-  { id: 'create_task', label: 'Criar Tarefa', icon: CheckSquare, color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' },
-  { id: 'wait', label: 'Aguardar (Intervalo)', icon: Clock, color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
-];
-
-const delayOptions: typeof actionOptions = [];
-
-const conditionOptions = [
-  { id: 'if_tag', label: 'Se tem Tag', icon: GitBranch, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
-  { id: 'if_keyword', label: 'Se contém palavra', icon: GitBranch, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
-  { id: 'if_score', label: 'Se score ≥', icon: GitBranch, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
-];
-
-const triggerTypeMap: Record<string, string> = {
-  instagram_comment: 'instagram_comment',
-  instagram_specific_post: 'instagram_comment',
-  instagram_dm: 'instagram_dm',
-  instagram_story_reply: 'instagram_comment',
-  instagram_story_specific: 'instagram_comment',
-  instagram_new_follower: 'contact_created',
-  whatsapp_received: 'whatsapp_received',
-  whatsapp_keyword: 'whatsapp_received',
-  whatsapp_automation: 'whatsapp_received',
-  whatsapp_message_source: 'whatsapp_received',
-  contact_created: 'contact_created',
-  contact_source: 'contact_created',
-  form_submitted: 'form_submitted',
-};
+import {
+  type FlowNode,
+  triggerOptions, actionOptions, conditionOptions, triggerTypeMap,
+  TEMPLATE_VARIABLES, WEEKDAYS,
+} from '@/components/flow-builder/flowNodeTypes';
+import { TimerNodeConfig } from '@/components/flow-builder/TimerNodeConfig';
+import { WarmupNodeConfig } from '@/components/flow-builder/WarmupNodeConfig';
+import { EmailNodeConfig } from '@/components/flow-builder/EmailNodeConfig';
+import { TagFilterNodeConfig } from '@/components/flow-builder/TagFilterNodeConfig';
+import { WhatsAppNodeConfig } from '@/components/flow-builder/WhatsAppNodeConfig';
 
 // ─── Node Component ───
 function FlowNodeCard({ node, onEdit, onDelete, onAddAfter }: {
@@ -106,6 +50,25 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter }: {
 }) {
   const getTriggerInfo = () => triggerOptions.find(t => t.id === node.subtype);
   const getActionInfo = () => [...actionOptions, ...conditionOptions].find(a => a.id === node.subtype);
+
+  const getNodeSummary = () => {
+    const c = node.config;
+    switch (node.subtype) {
+      case 'timer':
+        if (c.timer_mode === 'specific_date' && c.specific_date) return `Data: ${String(c.specific_date)}`;
+        return `${c.duration || 1} ${c.unit === 'hours' ? 'h' : c.unit === 'days' ? 'dias' : 'min'}`;
+      case 'warmup':
+        return `${c.leads_per_minute || 1} leads/min`;
+      case 'send_email_marketing':
+      case 'send_email_performance':
+        return c.subject ? `"${String(c.subject)}"` : c.message ? `"${String(c.message).slice(0, 40)}..."` : '';
+      case 'tag_filter':
+        const entryTags = (c.entry_tags as string[]) || [];
+        return entryTags.length > 0 ? `Tags: ${entryTags.join(', ')}` : '';
+      default:
+        return '';
+    }
+  };
 
   if (node.type === 'trigger') {
     const info = getTriggerInfo();
@@ -132,8 +95,6 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter }: {
                 {node.config.post_url && <p className="text-xs text-muted-foreground mt-0.5 truncate">Post: {String(node.config.post_url)}</p>}
                 {node.config.story_url && <p className="text-xs text-muted-foreground mt-0.5 truncate">Story: {String(node.config.story_url)}</p>}
                 {node.config.form_name && <p className="text-xs text-muted-foreground mt-0.5">Formulário: {String(node.config.form_name)}</p>}
-                {node.config.contact_source && node.config.contact_source !== 'any' && <p className="text-xs text-muted-foreground mt-0.5">Fonte: {String(node.config.contact_source)}</p>}
-                {node.config.message_source_type && node.config.message_source_type !== 'any' && <p className="text-xs text-muted-foreground mt-0.5">Origem: {String(node.config.message_source_type)}</p>}
               </div>
               <Settings className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
@@ -153,6 +114,16 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter }: {
   const info = getActionInfo();
   if (!info) return null;
   const Icon = info.icon;
+  const summary = getNodeSummary();
+
+  const getTypeLabel = () => {
+    if (['timer', 'warmup'].includes(node.subtype)) return node.subtype === 'timer' ? 'TIMER' : 'AQUECIMENTO';
+    if (['tag_filter'].includes(node.subtype)) return 'FILTRO';
+    if (['send_email_marketing', 'send_email_performance'].includes(node.subtype)) return 'EMAIL';
+    if (node.type === 'condition') return 'CONDIÇÃO';
+    if (node.type === 'delay') return 'ESPERA';
+    return 'AÇÃO';
+  };
 
   return (
     <div className="flex flex-col items-center">
@@ -165,13 +136,21 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter }: {
             <Icon className="h-4 w-4" />
           </div>
           <div className="flex-1 min-w-0">
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
-              {node.type === 'condition' ? 'CONDIÇÃO' : node.type === 'delay' ? 'ESPERA' : 'AÇÃO'}
-            </Badge>
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0">{getTypeLabel()}</Badge>
             <p className="font-medium text-sm mt-0.5">{info.label}</p>
-            {node.config.message && <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[240px]">"{String(node.config.message)}"</p>}
+            {summary && <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[240px]">{summary}</p>}
+            {!summary && node.config.message && <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[240px]">"{String(node.config.message)}"</p>}
             {node.config.tag_name && <p className="text-xs text-muted-foreground mt-0.5">Tag: {String(node.config.tag_name)}</p>}
-            {node.config.duration && <p className="text-xs text-muted-foreground mt-0.5">{String(node.config.duration)} {node.config.unit === 'minutes' ? 'min' : node.config.unit === 'hours' ? 'h' : 'dias'}</p>}
+            {node.config.duration && !['timer', 'warmup'].includes(node.subtype) && <p className="text-xs text-muted-foreground mt-0.5">{String(node.config.duration)} {node.config.unit === 'minutes' ? 'min' : node.config.unit === 'hours' ? 'h' : 'dias'}</p>}
+            {/* Timer weekday badges */}
+            {node.subtype === 'timer' && node.config.has_weekday_filter && (
+              <div className="flex gap-0.5 mt-1">
+                {WEEKDAYS.map(d => {
+                  const selected = ((node.config.selected_days as string[]) || WEEKDAYS.map(w => w.key)).includes(d.key);
+                  return <Badge key={d.key} variant={selected ? 'default' : 'outline'} className="text-[9px] px-1 py-0">{d.label}</Badge>;
+                })}
+              </div>
+            )}
           </div>
           <Settings className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
@@ -197,9 +176,13 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter }: {
 function AddStepDialog({ open, onClose, onAdd }: {
   open: boolean;
   onClose: () => void;
-  onAdd: (type: 'action' | 'condition' | 'delay', subtype: string) => void;
+  onAdd: (type: 'action' | 'condition' | 'delay' | 'timer' | 'warmup', subtype: string) => void;
 }) {
-  const [tab, setTab] = useState<'actions' | 'conditions'>('actions');
+  const [tab, setTab] = useState<'actions' | 'conditions' | 'tools'>('actions');
+
+  const mainActions = actionOptions.filter(a => !['timer', 'warmup', 'tag_filter', 'wait'].includes(a.id));
+  const toolActions = actionOptions.filter(a => ['timer', 'warmup', 'tag_filter', 'wait'].includes(a.id));
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
@@ -209,7 +192,8 @@ function AddStepDialog({ open, onClose, onAdd }: {
         </DialogHeader>
         <div className="flex gap-2 mb-4">
           {([
-            { key: 'actions' as const, label: 'Ações', icon: Zap },
+            { key: 'actions' as const, label: 'Mensagens', icon: MessageSquare },
+            { key: 'tools' as const, label: 'Ferramentas', icon: Settings },
             { key: 'conditions' as const, label: 'Condições', icon: GitBranch },
           ]).map(t => (
             <button key={t.key} onClick={() => setTab(t.key)} className={cn('flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors', tab === t.key ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80 text-muted-foreground')}>
@@ -217,10 +201,23 @@ function AddStepDialog({ open, onClose, onAdd }: {
             </button>
           ))}
         </div>
-        <p className="text-xs text-muted-foreground mb-3">💡 Use "Aguardar (Intervalo)" para definir o tempo entre ações</p>
         <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto">
-          {tab === 'actions' && actionOptions.map(opt => (
-            <button key={opt.id} onClick={() => { onAdd(opt.id === 'wait' ? 'delay' : 'action', opt.id); onClose(); }} className="flex items-center gap-3 p-3 rounded-lg border hover:border-primary/50 hover:bg-accent/50 transition-all text-left">
+          {tab === 'actions' && mainActions.map(opt => (
+            <button key={opt.id} onClick={() => {
+              const type = opt.id === 'timer' ? 'timer' : opt.id === 'warmup' ? 'warmup' : 'action';
+              onAdd(type as any, opt.id);
+              onClose();
+            }} className="flex items-center gap-3 p-3 rounded-lg border hover:border-primary/50 hover:bg-accent/50 transition-all text-left">
+              <div className={cn('flex items-center justify-center h-9 w-9 rounded-lg', opt.color)}><opt.icon className="h-4 w-4" /></div>
+              <span className="text-sm font-medium">{opt.label}</span>
+            </button>
+          ))}
+          {tab === 'tools' && toolActions.map(opt => (
+            <button key={opt.id} onClick={() => {
+              const type = opt.id === 'timer' ? 'timer' : opt.id === 'warmup' ? 'warmup' : opt.id === 'wait' ? 'delay' : 'action';
+              onAdd(type as any, opt.id);
+              onClose();
+            }} className="flex items-center gap-3 p-3 rounded-lg border hover:border-primary/50 hover:bg-accent/50 transition-all text-left">
               <div className={cn('flex items-center justify-center h-9 w-9 rounded-lg', opt.color)}><opt.icon className="h-4 w-4" /></div>
               <span className="text-sm font-medium">{opt.label}</span>
             </button>
@@ -255,192 +252,55 @@ function NodeConfigDialog({ node, open, onClose, onSave }: {
 
   const renderFields = () => {
     switch (node.subtype) {
+      // ── New enhanced nodes ──
+      case 'timer':
+        return <TimerNodeConfig config={config} onChange={setConfig} />;
+      case 'warmup':
+        return <WarmupNodeConfig config={config} onChange={setConfig} />;
+      case 'send_email_marketing':
+        return <EmailNodeConfig config={config} onChange={setConfig} mode="marketing" />;
+      case 'send_email_performance':
+        return <EmailNodeConfig config={config} onChange={setConfig} mode="performance" />;
+      case 'tag_filter':
+        return <TagFilterNodeConfig config={config} onChange={setConfig} />;
+      case 'send_whatsapp':
+      case 'send_dm':
+      case 'reply_comment':
+        return <WhatsAppNodeConfig config={config} onChange={setConfig} />;
+
       // ── Instagram triggers ──
       case 'instagram_comment':
-        return (
-          <div className="space-y-4">
-            <div><Label>Palavra-chave (opcional)</Label><Input placeholder="Ex: INFO, QUERO, PROMO" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Deixe vazio para ativar com qualquer comentário</p></div>
-          </div>
-        );
+        return (<div className="space-y-4"><div><Label>Palavra-chave (opcional)</Label><Input placeholder="Ex: INFO, QUERO, PROMO" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Deixe vazio para ativar com qualquer comentário</p></div></div>);
       case 'instagram_dm':
-        return (
-          <div className="space-y-4">
-            <div><Label>Palavra-chave (opcional)</Label><Input placeholder="Ex: INFO, QUERO, PROMO" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Deixe vazio para ativar com qualquer DM</p></div>
-          </div>
-        );
+        return (<div className="space-y-4"><div><Label>Palavra-chave (opcional)</Label><Input placeholder="Ex: INFO, QUERO, PROMO" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Deixe vazio para ativar com qualquer DM</p></div></div>);
       case 'instagram_specific_post':
-        return (
-          <div className="space-y-4">
-            <div><Label>URL do Post *</Label><Input placeholder="https://www.instagram.com/p/..." value={String(config.post_url || '')} onChange={e => setConfig({ ...config, post_url: e.target.value })} /></div>
-            <div><Label>Palavra-chave (opcional)</Label><Input placeholder="Ex: QUERO" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /></div>
-          </div>
-        );
+        return (<div className="space-y-4"><div><Label>URL do Post *</Label><Input placeholder="https://www.instagram.com/p/..." value={String(config.post_url || '')} onChange={e => setConfig({ ...config, post_url: e.target.value })} /></div><div><Label>Palavra-chave (opcional)</Label><Input placeholder="Ex: QUERO" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /></div></div>);
       case 'instagram_story_reply':
-        return (
-          <div className="space-y-4">
-            <div><Label>URL do Story (opcional)</Label><Input placeholder="https://www.instagram.com/stories/..." value={String(config.story_url || '')} onChange={e => setConfig({ ...config, story_url: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Deixe vazio para reagir a qualquer story</p></div>
-            <div><Label>Tipo de resposta</Label>
-              <Select value={String(config.reply_type || 'any')} onValueChange={v => setConfig({ ...config, reply_type: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Qualquer resposta</SelectItem>
-                  <SelectItem value="text">Texto</SelectItem>
-                  <SelectItem value="reaction">Reação (emoji)</SelectItem>
-                  <SelectItem value="quick_reply">Resposta rápida</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div><Label>Palavra-chave (opcional)</Label><Input placeholder="Ex: QUERO" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /></div>
-          </div>
-        );
+        return (<div className="space-y-4"><div><Label>URL do Story (opcional)</Label><Input placeholder="https://www.instagram.com/stories/..." value={String(config.story_url || '')} onChange={e => setConfig({ ...config, story_url: e.target.value })} /></div><div><Label>Tipo de resposta</Label><Select value={String(config.reply_type || 'any')} onValueChange={v => setConfig({ ...config, reply_type: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="any">Qualquer resposta</SelectItem><SelectItem value="text">Texto</SelectItem><SelectItem value="reaction">Reação (emoji)</SelectItem><SelectItem value="quick_reply">Resposta rápida</SelectItem></SelectContent></Select></div></div>);
       case 'instagram_story_specific':
-        return (
-          <div className="space-y-4">
-            <div><Label>URL ou ID do Story *</Label><Input placeholder="https://www.instagram.com/stories/usuario/123..." value={String(config.story_url || '')} onChange={e => setConfig({ ...config, story_url: e.target.value })} /></div>
-            <div><Label>ID do Story (opcional)</Label><Input placeholder="Ex: 3210987654321" value={String(config.story_id || '')} onChange={e => setConfig({ ...config, story_id: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Se disponível, use o ID numérico do story para maior precisão</p></div>
-            <div><Label>Tipo de interação</Label>
-              <Select value={String(config.interaction_type || 'any')} onValueChange={v => setConfig({ ...config, interaction_type: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Qualquer interação</SelectItem>
-                  <SelectItem value="reply">Resposta</SelectItem>
-                  <SelectItem value="reaction">Reação</SelectItem>
-                  <SelectItem value="mention">Menção</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        );
+        return (<div className="space-y-4"><div><Label>URL ou ID do Story *</Label><Input placeholder="https://www.instagram.com/stories/usuario/123..." value={String(config.story_url || '')} onChange={e => setConfig({ ...config, story_url: e.target.value })} /></div><div><Label>ID do Story (opcional)</Label><Input placeholder="Ex: 3210987654321" value={String(config.story_id || '')} onChange={e => setConfig({ ...config, story_id: e.target.value })} /></div><div><Label>Tipo de interação</Label><Select value={String(config.interaction_type || 'any')} onValueChange={v => setConfig({ ...config, interaction_type: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="any">Qualquer interação</SelectItem><SelectItem value="reply">Resposta</SelectItem><SelectItem value="reaction">Reação</SelectItem><SelectItem value="mention">Menção</SelectItem></SelectContent></Select></div></div>);
       case 'instagram_new_follower':
-        return (
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Este gatilho é acionado automaticamente quando alguém começa a seguir seu perfil. Não há configurações adicionais necessárias.</p>
-            <div><Label>Tag automática (opcional)</Label><Input placeholder="Ex: novo_seguidor" value={String(config.auto_tag || '')} onChange={e => setConfig({ ...config, auto_tag: e.target.value })} /></div>
-          </div>
-        );
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Este gatilho é acionado automaticamente quando alguém começa a seguir seu perfil.</p><div><Label>Tag automática (opcional)</Label><Input placeholder="Ex: novo_seguidor" value={String(config.auto_tag || '')} onChange={e => setConfig({ ...config, auto_tag: e.target.value })} /></div></div>);
 
       // ── WhatsApp triggers ──
       case 'whatsapp_received':
-        return (
-          <div className="space-y-4">
-            <div><Label>Palavra-chave (opcional)</Label><Input placeholder="Ex: OLÁ, AJUDA" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Deixe vazio para ativar com qualquer mensagem</p></div>
-          </div>
-        );
+        return (<div className="space-y-4"><div><Label>Palavra-chave (opcional)</Label><Input placeholder="Ex: OLÁ, AJUDA" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /></div></div>);
       case 'whatsapp_keyword':
-        return (
-          <div className="space-y-4">
-            <div><Label>Palavra-chave *</Label><Input placeholder="Ex: INFO, QUERO, PROMO" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /></div>
-            <div><Label>Correspondência</Label>
-              <Select value={String(config.match_type || 'contains')} onValueChange={v => setConfig({ ...config, match_type: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="contains">Contém</SelectItem>
-                  <SelectItem value="exact">Exata</SelectItem>
-                  <SelectItem value="starts_with">Começa com</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        );
+        return (<div className="space-y-4"><div><Label>Palavra-chave *</Label><Input placeholder="Ex: INFO, QUERO, PROMO" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /></div><div><Label>Correspondência</Label><Select value={String(config.match_type || 'contains')} onValueChange={v => setConfig({ ...config, match_type: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="contains">Contém</SelectItem><SelectItem value="exact">Exata</SelectItem><SelectItem value="starts_with">Começa com</SelectItem></SelectContent></Select></div></div>);
       case 'whatsapp_automation':
-        return (
-          <div className="space-y-4">
-            <div><Label>Automação de origem *</Label>
-              <Select value={String(config.source_automation_id || '')} onValueChange={v => setConfig({ ...config, source_automation_id: v })}>
-                <SelectTrigger><SelectValue placeholder="Selecione uma automação" /></SelectTrigger>
-                <SelectContent>
-                  {automations.filter(a => a.trigger_type?.includes('whatsapp')).map(a => (
-                    <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
-                  ))}
-                  {automations.filter(a => a.trigger_type?.includes('whatsapp')).length === 0 && (
-                    <SelectItem value="_none" disabled>Nenhuma automação WhatsApp encontrada</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground mt-1">Acionar quando o contato passar por esta automação</p>
-            </div>
-          </div>
-        );
+        return (<div className="space-y-4"><div><Label>Automação de origem *</Label><Select value={String(config.source_automation_id || '')} onValueChange={v => setConfig({ ...config, source_automation_id: v })}><SelectTrigger><SelectValue placeholder="Selecione uma automação" /></SelectTrigger><SelectContent>{automations.filter(a => a.trigger_type?.includes('whatsapp')).map(a => (<SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>))}{automations.filter(a => a.trigger_type?.includes('whatsapp')).length === 0 && (<SelectItem value="_none" disabled>Nenhuma automação WhatsApp encontrada</SelectItem>)}</SelectContent></Select></div></div>);
       case 'whatsapp_message_source':
-        return (
-          <div className="space-y-4">
-            <div><Label>Tipo de mensagem de origem</Label>
-              <Select value={String(config.message_source_type || 'any')} onValueChange={v => setConfig({ ...config, message_source_type: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Qualquer origem</SelectItem>
-                  <SelectItem value="campaign">Campanha</SelectItem>
-                  <SelectItem value="group">Grupo</SelectItem>
-                  <SelectItem value="broadcast">Lista de transmissão</SelectItem>
-                  <SelectItem value="direct">Mensagem direta</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div><Label>Palavra-chave (opcional)</Label><Input placeholder="Ex: COMPRAR" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /></div>
-          </div>
-        );
+        return (<div className="space-y-4"><div><Label>Tipo de mensagem de origem</Label><Select value={String(config.message_source_type || 'any')} onValueChange={v => setConfig({ ...config, message_source_type: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="any">Qualquer origem</SelectItem><SelectItem value="campaign">Campanha</SelectItem><SelectItem value="group">Grupo</SelectItem><SelectItem value="broadcast">Lista de transmissão</SelectItem><SelectItem value="direct">Mensagem direta</SelectItem></SelectContent></Select></div><div><Label>Palavra-chave (opcional)</Label><Input placeholder="Ex: COMPRAR" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /></div></div>);
 
       // ── CRM triggers ──
       case 'contact_created':
-        return (
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Acionado quando um novo contato é criado no CRM.</p>
-            <div><Label>Fonte do contato (opcional)</Label>
-              <Select value={String(config.contact_source || 'any')} onValueChange={v => setConfig({ ...config, contact_source: v })}>
-                <SelectTrigger><SelectValue placeholder="Qualquer fonte" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Qualquer fonte</SelectItem>
-                  {contactSources.map(s => (
-                    <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1).replace('_', ' ')}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground mt-1">Filtrar por origem do contato</p>
-            </div>
-          </div>
-        );
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Acionado quando um novo contato é criado no CRM.</p><div><Label>Fonte do contato (opcional)</Label><Select value={String(config.contact_source || 'any')} onValueChange={v => setConfig({ ...config, contact_source: v })}><SelectTrigger><SelectValue placeholder="Qualquer fonte" /></SelectTrigger><SelectContent><SelectItem value="any">Qualquer fonte</SelectItem>{contactSources.map(s => (<SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1).replace('_', ' ')}</SelectItem>))}</SelectContent></Select></div></div>);
       case 'contact_source':
-        return (
-          <div className="space-y-4">
-            <div><Label>Fonte do contato *</Label>
-              <Select value={String(config.contact_source || '')} onValueChange={v => setConfig({ ...config, contact_source: v })}>
-                <SelectTrigger><SelectValue placeholder="Selecione a fonte" /></SelectTrigger>
-                <SelectContent>
-                  {contactSources.map(s => (
-                    <SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1).replace('_', ' ')}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div><Label>Tag automática (opcional)</Label><Input placeholder="Ex: lead_ads" value={String(config.auto_tag || '')} onChange={e => setConfig({ ...config, auto_tag: e.target.value })} /></div>
-          </div>
-        );
+        return (<div className="space-y-4"><div><Label>Fonte do contato *</Label><Select value={String(config.contact_source || '')} onValueChange={v => setConfig({ ...config, contact_source: v })}><SelectTrigger><SelectValue placeholder="Selecione a fonte" /></SelectTrigger><SelectContent>{contactSources.map(s => (<SelectItem key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1).replace('_', ' ')}</SelectItem>))}</SelectContent></Select></div></div>);
       case 'form_submitted':
-        return (
-          <div className="space-y-4">
-            <div><Label>Formulário *</Label>
-              <Select value={String(config.form_id || '')} onValueChange={v => {
-                const form = forms.find(f => f.id === v);
-                setConfig({ ...config, form_id: v, form_name: form?.name || '' });
-              }}>
-                <SelectTrigger><SelectValue placeholder="Selecione um formulário" /></SelectTrigger>
-                <SelectContent>
-                  {forms.map(f => (
-                    <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-                  ))}
-                  {forms.length === 0 && (
-                    <SelectItem value="_none" disabled>Nenhum formulário criado</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground mt-1">Selecione o formulário que vai acionar este fluxo</p>
-            </div>
-          </div>
-        );
+        return (<div className="space-y-4"><div><Label>Formulário *</Label><Select value={String(config.form_id || '')} onValueChange={v => { const form = forms.find(f => f.id === v); setConfig({ ...config, form_id: v, form_name: form?.name || '' }); }}><SelectTrigger><SelectValue placeholder="Selecione um formulário" /></SelectTrigger><SelectContent>{forms.map(f => (<SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>))}{forms.length === 0 && (<SelectItem value="_none" disabled>Nenhum formulário criado</SelectItem>)}</SelectContent></Select></div></div>);
 
-      // ── Actions ──
-      case 'send_dm': case 'reply_comment': case 'send_whatsapp':
-        return (<div className="space-y-4"><div><Label>Mensagem</Label><Textarea placeholder="Olá! Obrigado pelo seu interesse..." rows={4} value={String(config.message || '')} onChange={e => setConfig({ ...config, message: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Use {'{{nome}}'} para personalizar</p></div></div>);
+      // ── Simple actions ──
       case 'send_email':
         return (<div className="space-y-4"><div><Label>Assunto</Label><Input placeholder="Assunto do email" value={String(config.subject || '')} onChange={e => setConfig({ ...config, subject: e.target.value })} /></div><div><Label>Conteúdo</Label><Textarea placeholder="Conteúdo do email..." rows={4} value={String(config.content || '')} onChange={e => setConfig({ ...config, content: e.target.value })} /></div></div>);
       case 'add_tag': case 'remove_tag':
@@ -464,10 +324,23 @@ function NodeConfigDialog({ node, open, onClose, onSave }: {
     }
   };
 
+  const dialogTitle = () => {
+    const titles: Record<string, string> = {
+      timer: 'Configurar Timer',
+      warmup: 'Aquecimento',
+      send_email_marketing: 'Configurar Email Marketing',
+      send_email_performance: 'Configurar Email Performance',
+      tag_filter: 'Configurar Tag',
+      send_whatsapp: 'Configurar WhatsApp',
+      send_dm: 'Configurar DM',
+    };
+    return titles[node.subtype] || `Configurar: ${node.label}`;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader><DialogTitle>Configurar: {node.label}</DialogTitle></DialogHeader>
+      <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{dialogTitle()}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">{renderFields()}</div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
@@ -524,14 +397,12 @@ function TriggerSelector({ onSelect }: { onSelect: (triggerId: string) => void }
   );
 }
 
-// ─── Flow List (My Flows) ───
+// ─── Flow List ───
 function FlowList({ onCreateNew, onEditFlow }: {
   onCreateNew: () => void;
   onEditFlow: (id: string) => void;
 }) {
   const { automations, isLoading, toggleAutomation, deleteAutomation } = useAutomations();
-
-  // Filter only flow-builder automations
   const flows = automations.filter(a => {
     const tc = a.trigger_config as Record<string, unknown> | null;
     return tc?.flow_builder === true;
@@ -540,20 +411,12 @@ function FlowList({ onCreateNew, onEditFlow }: {
   const getTriggerLabel = (a: typeof automations[0]) => {
     const tc = a.trigger_config as Record<string, unknown> | null;
     const originalTrigger = tc?.original_trigger as string | undefined;
-    const trigger = triggerOptions.find(t => t.id === originalTrigger);
-    return trigger?.label || a.trigger_type;
+    return triggerOptions.find(t => t.id === originalTrigger)?.label || a.trigger_type;
   };
 
   const getTriggerIcon = (a: typeof automations[0]) => {
     const tc = a.trigger_config as Record<string, unknown> | null;
-    const originalTrigger = tc?.original_trigger as string | undefined;
-    const trigger = triggerOptions.find(t => t.id === originalTrigger);
-    return trigger;
-  };
-
-  const getActionCount = (a: typeof automations[0]) => {
-    const actions = a.actions as unknown[] | null;
-    return actions?.length || 0;
+    return triggerOptions.find(t => t.id === (tc?.original_trigger as string));
   };
 
   return (
@@ -561,24 +424,16 @@ function FlowList({ onCreateNew, onEditFlow }: {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-3">
-            <Workflow className="h-7 w-7 text-primary" />
-            Meus Fluxos
+            <Workflow className="h-7 w-7 text-primary" />Meus Fluxos
           </h1>
           <p className="text-muted-foreground mt-1">Gerencie seus fluxos de automação visual</p>
         </div>
-        <Button onClick={onCreateNew} size="lg">
-          <Plus className="h-5 w-5 mr-2" />
-          Novo Fluxo
-        </Button>
+        <Button onClick={onCreateNew} size="lg"><Plus className="h-5 w-5 mr-2" />Novo Fluxo</Button>
       </div>
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6"><div className="h-24 bg-muted rounded-lg" /></CardContent>
-            </Card>
-          ))}
+          {[1, 2, 3].map(i => (<Card key={i} className="animate-pulse"><CardContent className="p-6"><div className="h-24 bg-muted rounded-lg" /></CardContent></Card>))}
         </div>
       ) : flows.length === 0 ? (
         <Card className="border-dashed">
@@ -588,10 +443,7 @@ function FlowList({ onCreateNew, onEditFlow }: {
             </div>
             <h3 className="text-lg font-semibold mb-1">Nenhum fluxo criado</h3>
             <p className="text-muted-foreground text-sm mb-6">Crie seu primeiro fluxo de automação visual estilo ManyChat</p>
-            <Button onClick={onCreateNew}>
-              <Plus className="h-4 w-4 mr-2" />
-              Criar Primeiro Fluxo
-            </Button>
+            <Button onClick={onCreateNew}><Plus className="h-4 w-4 mr-2" />Criar Primeiro Fluxo</Button>
           </CardContent>
         </Card>
       ) : (
@@ -599,6 +451,7 @@ function FlowList({ onCreateNew, onEditFlow }: {
           {flows.map(flow => {
             const triggerInfo = getTriggerIcon(flow);
             const TriggerIcon = triggerInfo?.icon || Zap;
+            const actionCount = (flow.actions as unknown[] | null)?.length || 0;
             return (
               <Card key={flow.id} className="group hover:shadow-md transition-all cursor-pointer border-2 hover:border-primary/30" onClick={() => onEditFlow(flow.id)}>
                 <CardContent className="p-5">
@@ -607,26 +460,13 @@ function FlowList({ onCreateNew, onEditFlow }: {
                       <TriggerIcon className="h-5 w-5" />
                     </div>
                     <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
-                      <Badge variant={flow.is_active ? 'default' : 'secondary'} className="text-[10px]">
-                        {flow.is_active ? 'Ativo' : 'Inativo'}
-                      </Badge>
+                      <Badge variant={flow.is_active ? 'default' : 'secondary'} className="text-[10px]">{flow.is_active ? 'Ativo' : 'Inativo'}</Badge>
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
+                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => onEditFlow(flow.id)}>
-                            <Settings className="h-4 w-4 mr-2" />Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => toggleAutomation.mutate({ id: flow.id, isActive: !flow.is_active })}>
-                            {flow.is_active ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}
-                            {flow.is_active ? 'Desativar' : 'Ativar'}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onClick={() => deleteAutomation.mutate(flow.id)}>
-                            <Trash2 className="h-4 w-4 mr-2" />Excluir
-                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onEditFlow(flow.id)}><Settings className="h-4 w-4 mr-2" />Editar</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => toggleAutomation.mutate({ id: flow.id, isActive: !flow.is_active })}>{flow.is_active ? <Pause className="h-4 w-4 mr-2" /> : <Play className="h-4 w-4 mr-2" />}{flow.is_active ? 'Desativar' : 'Ativar'}</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive" onClick={() => deleteAutomation.mutate(flow.id)}><Trash2 className="h-4 w-4 mr-2" />Excluir</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
@@ -634,7 +474,7 @@ function FlowList({ onCreateNew, onEditFlow }: {
                   <h3 className="font-semibold text-sm truncate">{flow.name}</h3>
                   <p className="text-xs text-muted-foreground mt-1">Gatilho: {getTriggerLabel(flow)}</p>
                   <div className="flex items-center justify-between mt-3 pt-3 border-t">
-                    <span className="text-xs text-muted-foreground">{getActionCount(flow)} ações</span>
+                    <span className="text-xs text-muted-foreground">{actionCount} ações</span>
                     <span className="text-xs text-muted-foreground">{flow.executions_count || 0} execuções</span>
                   </div>
                 </CardContent>
@@ -667,14 +507,12 @@ export default function FlowBuilder() {
   const [editingNode, setEditingNode] = useState<FlowNode | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
 
-  // Load existing flow for editing
   useEffect(() => {
     if (currentFlowId && automations.length > 0) {
       const existing = automations.find(a => a.id === currentFlowId);
       if (existing) {
         setFlowName(existing.name);
         setIsActive(existing.is_active ?? false);
-        // Reconstruct nodes from stored data
         const tc = existing.trigger_config as Record<string, unknown> | null;
         const originalTrigger = (tc?.original_trigger as string) || existing.trigger_type;
         const trigger = triggerOptions.find(t => t.id === originalTrigger);
@@ -690,7 +528,11 @@ export default function FlowBuilder() {
           const info = [...actionOptions, ...conditionOptions].find(o => o.id === a.type);
           return {
             id: a.id || crypto.randomUUID(),
-            type: conditionOptions.some(c => c.id === a.type) ? 'condition' as const : a.type === 'wait' ? 'delay' as const : 'action' as const,
+            type: conditionOptions.some(c => c.id === a.type) ? 'condition' as const
+              : ['wait'].includes(a.type) ? 'delay' as const
+              : a.type === 'timer' ? 'timer' as const
+              : a.type === 'warmup' ? 'warmup' as const
+              : 'action' as const,
             subtype: a.type,
             label: info?.label || a.type,
             config: a.config || {},
@@ -709,7 +551,7 @@ export default function FlowBuilder() {
     setNodes([{ id: crypto.randomUUID(), type: 'trigger', subtype: triggerId, label: trigger.label, config: {} }]);
   };
 
-  const handleAddStep = (type: 'action' | 'condition' | 'delay', subtype: string) => {
+  const handleAddStep = (type: FlowNode['type'], subtype: string) => {
     const info = [...actionOptions, ...conditionOptions].find(a => a.id === subtype);
     if (!info) return;
     const newNode: FlowNode = { id: crypto.randomUUID(), type, subtype, label: info.label, config: {} };
@@ -756,7 +598,6 @@ export default function FlowBuilder() {
     } as Record<string, Json>;
 
     if (currentFlowId) {
-      // Update existing
       updateAutomation.mutate({
         id: currentFlowId,
         name: flowName,
@@ -767,7 +608,6 @@ export default function FlowBuilder() {
       });
       toast({ title: '✅ Fluxo atualizado!' });
     } else {
-      // Create new
       createAutomation.mutate({
         name: flowName,
         trigger_type: triggerTypeMap[triggerNode.subtype] || triggerNode.subtype,
@@ -804,25 +644,18 @@ export default function FlowBuilder() {
     setSearchParams({});
   };
 
-  // ─── List View ───
   if (mode === 'list') {
     return <FlowList onCreateNew={handleCreateNew} onEditFlow={handleEditFlow} />;
   }
 
-  // ─── Editor View ───
   return (
     <div className="min-h-[calc(100vh-80px)] flex flex-col animate-fade-in">
-      {/* Top Bar */}
       <div className="flex items-center justify-between border-b bg-card/50 backdrop-blur-sm px-4 py-3 sticky top-0 z-10">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={handleBackToList}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <Input
-            value={flowName}
-            onChange={e => setFlowName(e.target.value)}
-            className="font-semibold text-lg border-none bg-transparent shadow-none focus-visible:ring-0 w-[240px]"
-          />
+          <Input value={flowName} onChange={e => setFlowName(e.target.value)} className="font-semibold text-lg border-none bg-transparent shadow-none focus-visible:ring-0 w-[240px]" />
           {currentFlowId && <Badge variant="outline" className="text-xs">Editando</Badge>}
         </div>
         <div className="flex items-center gap-3">
@@ -831,13 +664,11 @@ export default function FlowBuilder() {
             <Switch checked={isActive} onCheckedChange={setIsActive} />
           </div>
           <Button onClick={handleSave} disabled={!hasTrigger || nodes.length < 2}>
-            <Save className="h-4 w-4 mr-2" />
-            {currentFlowId ? 'Atualizar' : 'Salvar'} Fluxo
+            <Save className="h-4 w-4 mr-2" />{currentFlowId ? 'Atualizar' : 'Salvar'} Fluxo
           </Button>
         </div>
       </div>
 
-      {/* Canvas */}
       <ScrollArea className="flex-1">
         <div className="flex flex-col items-center py-10 px-4 min-h-[60vh]">
           {!hasTrigger ? (

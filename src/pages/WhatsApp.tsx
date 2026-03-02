@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MessageSquare, Smartphone, CheckCircle2, XCircle, Users, Send, Settings, Star, Server, Trash2, Power, Loader2 } from 'lucide-react';
 import { WhatsAppQRConnect } from '@/components/whatsapp/WhatsAppQRConnect';
 import { WhatsAppGroupsManager } from '@/components/whatsapp/WhatsAppGroupsManager';
+import { useWhatsAppGroups } from '@/hooks/useWhatsAppGroups';
 import { WhatsAppCampaignsManager } from '@/components/whatsapp/WhatsAppCampaignsManager';
 import { WhatsAppGroupMessages } from '@/components/whatsapp/WhatsAppGroupMessages';
 import { useWhatsAppInstances } from '@/hooks/useWhatsAppInstances';
@@ -21,6 +22,7 @@ export default function WhatsApp() {
     toggleInstance,
     setDefaultInstance,
   } = useWhatsAppInstances();
+  const { groups } = useWhatsAppGroups();
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -102,7 +104,7 @@ export default function WhatsApp() {
                 <Users className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">0</p>
+                <p className="text-2xl font-bold">{groups.length}</p>
                 <p className="text-sm text-muted-foreground">Grupos Gerenciados</p>
               </div>
             </div>

@@ -193,19 +193,32 @@ async function routeToInbox(
   try {
     const { organizationId, userId, channel, senderIdentifier, messageText } = params;
 
-    // Try to find existing contact by phone/whatsapp number
+    // Try to find existing contact by normalized phone/whatsapp number
     let contactId: string | null = null;
     const cleanPhone = senderIdentifier.replace(/\D/g, "");
 
-    const { data: existingContact } = await supabase
-      .from("contacts")
-      .select("id")
-      .eq("organization_id", organizationId)
-      .or(`whatsapp.eq.${cleanPhone},phone.eq.${cleanPhone}`)
-      .maybeSingle();
+    const normalizePhone = (value: string | null | undefined) => (value || "").replace(/\D/g, "");
+    const comparablePhones = Array.from(
+      new Set([
+        cleanPhone,
+        cleanPhone.startsWith("55") ? cleanPhone.slice(2) : cleanPhone,
+      ].filter(Boolean))
+    );
 
-    if (existingContact) {
-      contactId = existingContact.id;
+    const { data: orgContacts } = await supabase
+      .from("contacts")
+      .select("id, phone, whatsapp")
+      .eq("organization_id", organizationId)
+      .limit(1000);
+
+    const matchedContact = (orgContacts || []).find((contact) => {
+      const phone = normalizePhone(contact.phone);
+      const whatsapp = normalizePhone(contact.whatsapp);
+      return comparablePhones.includes(phone) || comparablePhones.includes(whatsapp);
+    });
+
+    if (matchedContact) {
+      contactId = matchedContact.id;
     } else {
       // Auto-create contact from incoming message
       const { data: newContact } = await supabase
@@ -225,15 +238,36 @@ async function routeToInbox(
       if (newContact) contactId = newContact.id;
     }
 
-    // Find or create conversation
+    // Find or create conversation (prioritize existing conversation for the same contact)
     const metadataKey = `${channel}_sender_id`;
-    const { data: existingConv } = await supabase
-      .from("conversations")
-      .select("id, contact_id")
-      .eq("organization_id", organizationId)
-      .eq("channel", channel)
-      .filter(`metadata->>${metadataKey}`, "eq", senderIdentifier)
-      .maybeSingle();
+
+    let existingConv: { id: string; contact_id: string | null } | null = null;
+
+    if (contactId) {
+      const { data: contactConv } = await supabase
+        .from("conversations")
+        .select("id, contact_id")
+        .eq("organization_id", organizationId)
+        .eq("channel", channel)
+        .eq("contact_id", contactId)
+        .order("last_message_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      existingConv = contactConv;
+    }
+
+    if (!existingConv) {
+      const { data: metadataConv } = await supabase
+        .from("conversations")
+        .select("id, contact_id")
+        .eq("organization_id", organizationId)
+        .eq("channel", channel)
+        .filter(`metadata->>${metadataKey}`, "eq", senderIdentifier)
+        .maybeSingle();
+
+      existingConv = metadataConv;
+    }
 
     let conversationId: string;
 
@@ -245,6 +279,7 @@ async function routeToInbox(
           last_message_at: new Date().toISOString(),
           status: "open",
           contact_id: contactId || existingConv.contact_id,
+          metadata: { [metadataKey]: senderIdentifier },
         })
         .eq("id", conversationId);
     } else {

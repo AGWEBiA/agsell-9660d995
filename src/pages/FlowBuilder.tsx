@@ -70,11 +70,10 @@ const actionOptions = [
   { id: 'update_score', label: 'Atualizar Score', icon: Star, color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' },
   { id: 'send_notification', label: 'Notificar Equipe', icon: Bell, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
   { id: 'create_task', label: 'Criar Tarefa', icon: CheckSquare, color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' },
+  { id: 'wait', label: 'Aguardar (Intervalo)', icon: Clock, color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
 ];
 
-const delayOptions = [
-  { id: 'wait', label: 'Aguardar', icon: Clock, color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
-];
+const delayOptions: typeof actionOptions = [];
 
 const conditionOptions = [
   { id: 'if_tag', label: 'Se tem Tag', icon: GitBranch, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
@@ -106,7 +105,7 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter }: {
   onAddAfter: () => void;
 }) {
   const getTriggerInfo = () => triggerOptions.find(t => t.id === node.subtype);
-  const getActionInfo = () => [...actionOptions, ...delayOptions, ...conditionOptions].find(a => a.id === node.subtype);
+  const getActionInfo = () => [...actionOptions, ...conditionOptions].find(a => a.id === node.subtype);
 
   if (node.type === 'trigger') {
     const info = getTriggerInfo();
@@ -200,7 +199,7 @@ function AddStepDialog({ open, onClose, onAdd }: {
   onClose: () => void;
   onAdd: (type: 'action' | 'condition' | 'delay', subtype: string) => void;
 }) {
-  const [tab, setTab] = useState<'actions' | 'conditions' | 'delay'>('actions');
+  const [tab, setTab] = useState<'actions' | 'conditions'>('actions');
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-lg">
@@ -212,28 +211,22 @@ function AddStepDialog({ open, onClose, onAdd }: {
           {([
             { key: 'actions' as const, label: 'Ações', icon: Zap },
             { key: 'conditions' as const, label: 'Condições', icon: GitBranch },
-            { key: 'delay' as const, label: 'Espera', icon: Clock },
           ]).map(t => (
             <button key={t.key} onClick={() => setTab(t.key)} className={cn('flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors', tab === t.key ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80 text-muted-foreground')}>
               <t.icon className="h-4 w-4" />{t.label}
             </button>
           ))}
         </div>
+        <p className="text-xs text-muted-foreground mb-3">💡 Use "Aguardar (Intervalo)" para definir o tempo entre ações</p>
         <div className="grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto">
           {tab === 'actions' && actionOptions.map(opt => (
-            <button key={opt.id} onClick={() => { onAdd('action', opt.id); onClose(); }} className="flex items-center gap-3 p-3 rounded-lg border hover:border-primary/50 hover:bg-accent/50 transition-all text-left">
+            <button key={opt.id} onClick={() => { onAdd(opt.id === 'wait' ? 'delay' : 'action', opt.id); onClose(); }} className="flex items-center gap-3 p-3 rounded-lg border hover:border-primary/50 hover:bg-accent/50 transition-all text-left">
               <div className={cn('flex items-center justify-center h-9 w-9 rounded-lg', opt.color)}><opt.icon className="h-4 w-4" /></div>
               <span className="text-sm font-medium">{opt.label}</span>
             </button>
           ))}
           {tab === 'conditions' && conditionOptions.map(opt => (
             <button key={opt.id} onClick={() => { onAdd('condition', opt.id); onClose(); }} className="flex items-center gap-3 p-3 rounded-lg border hover:border-primary/50 hover:bg-accent/50 transition-all text-left">
-              <div className={cn('flex items-center justify-center h-9 w-9 rounded-lg', opt.color)}><opt.icon className="h-4 w-4" /></div>
-              <span className="text-sm font-medium">{opt.label}</span>
-            </button>
-          ))}
-          {tab === 'delay' && delayOptions.map(opt => (
-            <button key={opt.id} onClick={() => { onAdd('delay', opt.id); onClose(); }} className="flex items-center gap-3 p-3 rounded-lg border hover:border-primary/50 hover:bg-accent/50 transition-all text-left">
               <div className={cn('flex items-center justify-center h-9 w-9 rounded-lg', opt.color)}><opt.icon className="h-4 w-4" /></div>
               <span className="text-sm font-medium">{opt.label}</span>
             </button>
@@ -694,10 +687,10 @@ export default function FlowBuilder() {
         };
         const actionData = (existing.actions as Array<{ id: string; type: string; config: Record<string, unknown> }>) || [];
         const actionNodes: FlowNode[] = actionData.map(a => {
-          const info = [...actionOptions, ...delayOptions, ...conditionOptions].find(o => o.id === a.type);
+          const info = [...actionOptions, ...conditionOptions].find(o => o.id === a.type);
           return {
             id: a.id || crypto.randomUUID(),
-            type: conditionOptions.some(c => c.id === a.type) ? 'condition' as const : delayOptions.some(d => d.id === a.type) ? 'delay' as const : 'action' as const,
+            type: conditionOptions.some(c => c.id === a.type) ? 'condition' as const : a.type === 'wait' ? 'delay' as const : 'action' as const,
             subtype: a.type,
             label: info?.label || a.type,
             config: a.config || {},
@@ -717,7 +710,7 @@ export default function FlowBuilder() {
   };
 
   const handleAddStep = (type: 'action' | 'condition' | 'delay', subtype: string) => {
-    const info = [...actionOptions, ...delayOptions, ...conditionOptions].find(a => a.id === subtype);
+    const info = [...actionOptions, ...conditionOptions].find(a => a.id === subtype);
     if (!info) return;
     const newNode: FlowNode = { id: crypto.randomUUID(), type, subtype, label: info.label, config: {} };
     setNodes(prev => {

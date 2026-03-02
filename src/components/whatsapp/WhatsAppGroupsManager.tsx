@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -30,9 +32,18 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
   Users,
   Plus,
-  Settings,
   Trash2,
   UserPlus,
   UserMinus,
@@ -40,31 +51,49 @@ import {
   RefreshCw,
   Crown,
   Clock,
+  Search,
+  Settings,
+  Link,
+  Copy,
+  Shield,
+  Activity,
+  BarChart3,
+  Eye,
+  ToggleLeft,
+  ToggleRight,
+  Edit,
 } from 'lucide-react';
-import { useWhatsAppGroups, WhatsAppGroup, WhatsAppGroupEvent } from '@/hooks/useWhatsAppGroups';
-import { formatDistanceToNow } from 'date-fns';
+import { useWhatsAppGroups, WhatsAppGroup, WhatsAppGroupEvent, WhatsAppGroupMember } from '@/hooks/useWhatsAppGroups';
+import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
 
 export function WhatsAppGroupsManager() {
   const {
     groups,
     isLoadingGroups,
+    refetchGroups,
     createGroup,
+    updateGroup,
     deleteGroup,
     fetchGroupMembers,
     fetchGroupEvents,
     isCreatingGroup,
+    isUpdatingGroup,
   } = useWhatsAppGroups();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<WhatsAppGroup | null>(null);
+  const [detailTab, setDetailTab] = useState<'members' | 'events' | 'settings'>('members');
+  const [groupMembers, setGroupMembers] = useState<WhatsAppGroupMember[]>([]);
   const [groupEvents, setGroupEvents] = useState<WhatsAppGroupEvent[]>([]);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
-  const [newGroup, setNewGroup] = useState<{
-    name: string;
-    description: string;
-    group_type: string;
-  }>({
+  const [searchQuery, setSearchQuery] = useState('');
+  const [deleteConfirmGroup, setDeleteConfirmGroup] = useState<WhatsAppGroup | null>(null);
+  const [editingGroup, setEditingGroup] = useState<WhatsAppGroup | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', description: '' });
+  const [newGroup, setNewGroup] = useState({
     name: '',
     description: '',
     group_type: 'group',
@@ -76,121 +105,202 @@ export function WhatsAppGroupsManager() {
     setNewGroup({ name: '', description: '', group_type: 'group' });
   };
 
-  const handleViewEvents = async (group: WhatsAppGroup) => {
+  const handleOpenDetail = async (group: WhatsAppGroup) => {
     setSelectedGroup(group);
+    setDetailTab('members');
+    setIsLoadingMembers(true);
     setIsLoadingEvents(true);
     try {
-      const events = await fetchGroupEvents(group.id);
+      const [members, events] = await Promise.all([
+        fetchGroupMembers(group.id),
+        fetchGroupEvents(group.id),
+      ]);
+      setGroupMembers(members);
       setGroupEvents(events);
     } catch (error) {
-      console.error('Error fetching events:', error);
+      console.error('Error fetching group details:', error);
     } finally {
+      setIsLoadingMembers(false);
       setIsLoadingEvents(false);
     }
   };
 
+  const handleToggleGroup = (group: WhatsAppGroup) => {
+    updateGroup({ id: group.id, is_active: !group.is_active });
+  };
+
+  const handleEditGroup = (group: WhatsAppGroup) => {
+    setEditingGroup(group);
+    setEditForm({ name: group.name, description: group.description || '' });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingGroup) return;
+    updateGroup({ id: editingGroup.id, name: editForm.name, description: editForm.description });
+    setEditingGroup(null);
+  };
+
+  const handleCopyLink = (link: string) => {
+    navigator.clipboard.writeText(link);
+    toast.success('Link copiado!');
+  };
+
   const getEventIcon = (eventType: string) => {
     switch (eventType) {
-      case 'join':
-        return <UserPlus className="h-4 w-4 text-green-500" />;
+      case 'join': return <UserPlus className="h-4 w-4 text-green-500" />;
       case 'leave':
-      case 'remove':
-        return <UserMinus className="h-4 w-4 text-red-500" />;
-      case 'promote':
-        return <Crown className="h-4 w-4 text-yellow-500" />;
-      default:
-        return <Users className="h-4 w-4 text-muted-foreground" />;
+      case 'remove': return <UserMinus className="h-4 w-4 text-red-500" />;
+      case 'promote': return <Crown className="h-4 w-4 text-yellow-500" />;
+      default: return <Users className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
   const getEventLabel = (eventType: string) => {
-    switch (eventType) {
-      case 'join':
-        return 'Entrou';
-      case 'leave':
-        return 'Saiu';
-      case 'remove':
-        return 'Removido';
-      case 'promote':
-        return 'Promovido';
-      case 'demote':
-        return 'Rebaixado';
-      default:
-        return eventType;
-    }
+    const labels: Record<string, string> = { join: 'Entrou', leave: 'Saiu', remove: 'Removido', promote: 'Promovido', demote: 'Rebaixado' };
+    return labels[eventType] || eventType;
   };
+
+  const filteredGroups = groups.filter(g =>
+    g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (g.description || '').toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const activeGroupsCount = groups.filter(g => g.is_active).length;
+  const totalMembers = groups.reduce((sum, g) => sum + (g.member_count || 0), 0);
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Stats Cards */}
+      <div className="grid gap-4 md:grid-cols-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900">
+                <Users className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{groups.length}</p>
+                <p className="text-xs text-muted-foreground">Total de Grupos</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900">
+                <Activity className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{activeGroupsCount}</p>
+                <p className="text-xs text-muted-foreground">Grupos Ativos</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900">
+                <UserPlus className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{totalMembers}</p>
+                <p className="text-xs text-muted-foreground">Total de Membros</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900">
+                <Shield className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{groups.filter(g => g.is_admin).length}</p>
+                <p className="text-xs text-muted-foreground">Você é Admin</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Header with search */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold">Grupos e Comunidades</h2>
           <p className="text-muted-foreground">
             Gerencie seus grupos do WhatsApp e monitore entradas/saídas
           </p>
         </div>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Grupo
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Criar Novo Grupo</DialogTitle>
-              <DialogDescription>
-                Adicione um grupo do WhatsApp para gerenciar
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="groupName">Nome do Grupo</Label>
-                <Input
-                  id="groupName"
-                  placeholder="Ex: Clientes VIP"
-                  value={newGroup.name}
-                  onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="groupDescription">Descrição</Label>
-                <Textarea
-                  id="groupDescription"
-                  placeholder="Descrição do grupo..."
-                  value={newGroup.description}
-                  onChange={(e) => setNewGroup({ ...newGroup, description: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="groupType">Tipo</Label>
-                <Select
-                  value={newGroup.group_type}
-                  onValueChange={(value) =>
-                    setNewGroup({ ...newGroup, group_type: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="group">Grupo</SelectItem>
-                    <SelectItem value="community">Comunidade</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                Cancelar
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:flex-initial">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar grupos..."
+              className="pl-9 w-full sm:w-[220px]"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <Button variant="outline" size="icon" onClick={() => refetchGroups()}>
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Grupo
               </Button>
-              <Button onClick={handleCreateGroup} disabled={!newGroup.name || isCreatingGroup}>
-                {isCreatingGroup ? 'Criando...' : 'Criar Grupo'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Criar Novo Grupo</DialogTitle>
+                <DialogDescription>
+                  Adicione um grupo do WhatsApp para gerenciar
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>Nome do Grupo</Label>
+                  <Input
+                    placeholder="Ex: Clientes VIP"
+                    value={newGroup.name}
+                    onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Descrição</Label>
+                  <Textarea
+                    placeholder="Descrição do grupo..."
+                    value={newGroup.description}
+                    onChange={(e) => setNewGroup({ ...newGroup, description: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tipo</Label>
+                  <Select
+                    value={newGroup.group_type}
+                    onValueChange={(value) => setNewGroup({ ...newGroup, group_type: value })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="group">Grupo</SelectItem>
+                      <SelectItem value="community">Comunidade</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancelar</Button>
+                <Button onClick={handleCreateGroup} disabled={!newGroup.name || isCreatingGroup}>
+                  {isCreatingGroup ? 'Criando...' : 'Criar Grupo'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Groups Grid */}
@@ -198,29 +308,37 @@ export function WhatsAppGroupsManager() {
         <div className="flex items-center justify-center py-12">
           <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
-      ) : groups.length === 0 ? (
+      ) : filteredGroups.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
             <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="font-semibold text-lg mb-2">Nenhum grupo cadastrado</h3>
+            <h3 className="font-semibold text-lg mb-2">
+              {searchQuery ? 'Nenhum grupo encontrado' : 'Nenhum grupo cadastrado'}
+            </h3>
             <p className="text-muted-foreground mb-4">
-              Adicione seus grupos do WhatsApp para começar a gerenciá-los
+              {searchQuery ? 'Tente um termo de busca diferente' : 'Adicione seus grupos do WhatsApp para começar a gerenciá-los'}
             </p>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Adicionar Grupo
-            </Button>
+            {!searchQuery && (
+              <Button onClick={() => setIsCreateDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Grupo
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {groups.map((group) => (
-            <Card key={group.id} className="hover:shadow-md transition-shadow">
+          {filteredGroups.map((group) => (
+            <Card
+              key={group.id}
+              className={`hover:shadow-md transition-shadow cursor-pointer ${!group.is_active ? 'opacity-60' : ''}`}
+              onClick={() => handleOpenDetail(group)}
+            >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900">
-                      <Users className="h-5 w-5 text-green-600" />
+                    <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${group.is_active ? 'bg-green-100 dark:bg-green-900' : 'bg-muted'}`}>
+                      <Users className={`h-5 w-5 ${group.is_active ? 'text-green-600' : 'text-muted-foreground'}`} />
                     </div>
                     <div>
                       <CardTitle className="text-base">{group.name}</CardTitle>
@@ -230,9 +348,11 @@ export function WhatsAppGroupsManager() {
                         </Badge>
                         {group.is_admin && (
                           <Badge variant="secondary" className="text-xs">
-                            <Crown className="h-3 w-3 mr-1" />
-                            Admin
+                            <Crown className="h-3 w-3 mr-1" />Admin
                           </Badge>
+                        )}
+                        {!group.is_active && (
+                          <Badge variant="destructive" className="text-xs">Inativo</Badge>
                         )}
                       </div>
                     </div>
@@ -241,9 +361,7 @@ export function WhatsAppGroupsManager() {
               </CardHeader>
               <CardContent>
                 {group.description && (
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                    {group.description}
-                  </p>
+                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">{group.description}</p>
                 )}
                 <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
                   <span className="flex items-center gap-1">
@@ -251,31 +369,24 @@ export function WhatsAppGroupsManager() {
                     {group.member_count} membros
                   </span>
                   {group.synced_at && (
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      Sincronizado{' '}
-                      {formatDistanceToNow(new Date(group.synced_at), {
-                        addSuffix: true,
-                        locale: ptBR,
-                      })}
+                    <span className="flex items-center gap-1 text-xs">
+                      <Clock className="h-3 w-3" />
+                      {formatDistanceToNow(new Date(group.synced_at), { addSuffix: true, locale: ptBR })}
                     </span>
                   )}
                 </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => handleViewEvents(group)}
-                  >
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Atividades
+                <div className="flex gap-2" onClick={e => e.stopPropagation()}>
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => handleOpenDetail(group)}>
+                    <Eye className="h-4 w-4 mr-2" />
+                    Detalhes
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => deleteGroup(group.id)}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => handleEditGroup(group)}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => handleToggleGroup(group)}>
+                    {group.is_active ? <ToggleRight className="h-4 w-4 text-green-600" /> : <ToggleLeft className="h-4 w-4" />}
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={() => setDeleteConfirmGroup(group)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </div>
@@ -285,67 +396,205 @@ export function WhatsAppGroupsManager() {
         </div>
       )}
 
-      {/* Events Dialog */}
+      {/* Group Detail Dialog */}
       <Dialog open={!!selectedGroup} onOpenChange={() => setSelectedGroup(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl max-h-[80vh]">
           <DialogHeader>
-            <DialogTitle>Atividades do Grupo</DialogTitle>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900">
+                <Users className="h-4 w-4 text-green-600" />
+              </div>
+              {selectedGroup?.name}
+              {selectedGroup?.is_admin && (
+                <Badge variant="secondary" className="text-xs"><Crown className="h-3 w-3 mr-1" />Admin</Badge>
+              )}
+            </DialogTitle>
             <DialogDescription>
-              {selectedGroup?.name} - Histórico de entradas e saídas
+              {selectedGroup?.description || 'Sem descrição'} • {selectedGroup?.member_count} membros
+              {selectedGroup?.invite_link && (
+                <Button variant="link" size="sm" className="ml-2 h-auto p-0" onClick={() => handleCopyLink(selectedGroup.invite_link!)}>
+                  <Copy className="h-3 w-3 mr-1" />Copiar link
+                </Button>
+              )}
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            {isLoadingEvents ? (
-              <div className="flex items-center justify-center py-8">
-                <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : groupEvents.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>Nenhum evento registrado</p>
-              </div>
-            ) : (
-              <div className="max-h-96 overflow-y-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Evento</TableHead>
-                      <TableHead>Telefone</TableHead>
-                      <TableHead>Data</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {groupEvents.map((event) => (
-                      <TableRow key={event.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {getEventIcon(event.event_type)}
-                            <span>{getEventLabel(event.event_type)}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {event.phone_number}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {formatDistanceToNow(new Date(event.created_at), {
-                            addSuffix: true,
-                            locale: ptBR,
-                          })}
-                        </TableCell>
+
+          <Tabs value={detailTab} onValueChange={v => setDetailTab(v as typeof detailTab)}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="members" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />Membros
+              </TabsTrigger>
+              <TabsTrigger value="events" className="flex items-center gap-2">
+                <Activity className="h-4 w-4" />Atividades
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />Configurações
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="members" className="mt-4">
+              {isLoadingMembers ? (
+                <div className="flex items-center justify-center py-8">
+                  <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : groupMembers.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>Nenhum membro registrado</p>
+                  <p className="text-xs mt-1">Os membros serão sincronizados automaticamente</p>
+                </div>
+              ) : (
+                <div className="max-h-[400px] overflow-y-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Telefone</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Função</TableHead>
+                        <TableHead>Entrada</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
+                    </TableHeader>
+                    <TableBody>
+                      {groupMembers.map((member) => (
+                        <TableRow key={member.id}>
+                          <TableCell className="font-medium">{member.name || '—'}</TableCell>
+                          <TableCell className="font-mono text-sm">{member.phone_number}</TableCell>
+                          <TableCell>
+                            <Badge variant={member.status === 'active' ? 'default' : 'secondary'} className="text-xs">
+                              {member.status === 'active' ? 'Ativo' : member.status === 'left' ? 'Saiu' : member.status === 'removed' ? 'Removido' : 'Banido'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {member.is_admin && <Badge variant="outline" className="text-xs"><Crown className="h-3 w-3 mr-1" />Admin</Badge>}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-xs">
+                            {formatDistanceToNow(new Date(member.joined_at), { addSuffix: true, locale: ptBR })}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="events" className="mt-4">
+              {isLoadingEvents ? (
+                <div className="flex items-center justify-center py-8">
+                  <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : groupEvents.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Clock className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>Nenhum evento registrado</p>
+                </div>
+              ) : (
+                <div className="max-h-[400px] overflow-y-auto space-y-2">
+                  {groupEvents.map((event) => (
+                    <div key={event.id} className="flex items-center gap-3 p-3 rounded-lg border bg-card">
+                      {getEventIcon(event.event_type)}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">
+                          {event.phone_number} <span className="text-muted-foreground font-normal">{getEventLabel(event.event_type).toLowerCase()}</span>
+                        </p>
+                      </div>
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">
+                        {formatDistanceToNow(new Date(event.created_at), { addSuffix: true, locale: ptBR })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="settings" className="mt-4">
+              {selectedGroup && (
+                <div className="space-y-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-1">
+                      <Label className="text-muted-foreground text-xs">Tipo</Label>
+                      <p className="font-medium">{selectedGroup.group_type === 'community' ? 'Comunidade' : 'Grupo'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-muted-foreground text-xs">Status</Label>
+                      <p className="font-medium">{selectedGroup.is_active ? 'Ativo' : 'Inativo'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-muted-foreground text-xs">Membros</Label>
+                      <p className="font-medium">{selectedGroup.member_count}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-muted-foreground text-xs">Criado em</Label>
+                      <p className="font-medium">{format(new Date(selectedGroup.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+                    </div>
+                  </div>
+                  {selectedGroup.invite_link && (
+                    <div className="space-y-1">
+                      <Label className="text-muted-foreground text-xs">Link de Convite</Label>
+                      <div className="flex items-center gap-2">
+                        <Input value={selectedGroup.invite_link} readOnly className="font-mono text-xs" />
+                        <Button variant="outline" size="sm" onClick={() => handleCopyLink(selectedGroup.invite_link!)}>
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {selectedGroup.external_group_id && (
+                    <div className="space-y-1">
+                      <Label className="text-muted-foreground text-xs">ID Externo</Label>
+                      <p className="font-mono text-xs text-muted-foreground">{selectedGroup.external_group_id}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Group Dialog */}
+      <Dialog open={!!editingGroup} onOpenChange={() => setEditingGroup(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Grupo</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Nome do Grupo</Label>
+              <Input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Descrição</Label>
+              <Textarea value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} />
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSelectedGroup(null)}>
-              Fechar
+            <Button variant="outline" onClick={() => setEditingGroup(null)}>Cancelar</Button>
+            <Button onClick={handleSaveEdit} disabled={!editForm.name || isUpdatingGroup}>
+              {isUpdatingGroup ? 'Salvando...' : 'Salvar'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirm */}
+      <AlertDialog open={!!deleteConfirmGroup} onOpenChange={() => setDeleteConfirmGroup(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover grupo?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja remover o grupo "{deleteConfirmGroup?.name}"? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (deleteConfirmGroup) { deleteGroup(deleteConfirmGroup.id); setDeleteConfirmGroup(null); } }}>
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

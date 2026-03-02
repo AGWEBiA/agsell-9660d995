@@ -1189,6 +1189,90 @@ export type Database = {
           },
         ]
       }
+      email_mailboxes: {
+        Row: {
+          address: string | null
+          created_at: string
+          daily_limit: number | null
+          domain_id: string
+          id: string
+          is_active: boolean
+          last_sent_at: string | null
+          link_facebook: string | null
+          link_instagram: string | null
+          link_telegram: string | null
+          link_whatsapp: string | null
+          link_youtube: string | null
+          logo_url: string | null
+          name: string
+          organization_id: string
+          prefix: string
+          sent_today: number | null
+          signature: string | null
+          updated_at: string
+          warmup_status: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          daily_limit?: number | null
+          domain_id: string
+          id?: string
+          is_active?: boolean
+          last_sent_at?: string | null
+          link_facebook?: string | null
+          link_instagram?: string | null
+          link_telegram?: string | null
+          link_whatsapp?: string | null
+          link_youtube?: string | null
+          logo_url?: string | null
+          name: string
+          organization_id: string
+          prefix: string
+          sent_today?: number | null
+          signature?: string | null
+          updated_at?: string
+          warmup_status?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          daily_limit?: number | null
+          domain_id?: string
+          id?: string
+          is_active?: boolean
+          last_sent_at?: string | null
+          link_facebook?: string | null
+          link_instagram?: string | null
+          link_telegram?: string | null
+          link_whatsapp?: string | null
+          link_youtube?: string | null
+          logo_url?: string | null
+          name?: string
+          organization_id?: string
+          prefix?: string
+          sent_today?: number | null
+          signature?: string | null
+          updated_at?: string
+          warmup_status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_mailboxes_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "email_domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_mailboxes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       form_submissions: {
         Row: {
           contact_id: string | null

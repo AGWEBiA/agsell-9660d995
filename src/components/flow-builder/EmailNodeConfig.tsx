@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Info, Clock, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Info, Clock, AlertCircle, Mail, ChevronDown, Shield, Flame } from 'lucide-react';
 import { TEMPLATE_VARIABLES } from './flowNodeTypes';
+import { useEmailMailboxes } from '@/hooks/useEmailMailboxes';
 
 interface EmailNodeConfigProps {
   config: Record<string, unknown>;
@@ -13,14 +17,150 @@ interface EmailNodeConfigProps {
   mode: 'marketing' | 'performance';
 }
 
+const BEST_TIMES = [
+  { day: 'Terça-feira', time: '10:00 - 11:00', score: '⭐⭐⭐⭐⭐' },
+  { day: 'Quarta-feira', time: '10:00 - 11:00', score: '⭐⭐⭐⭐⭐' },
+  { day: 'Quinta-feira', time: '09:00 - 10:00', score: '⭐⭐⭐⭐' },
+  { day: 'Terça-feira', time: '14:00 - 15:00', score: '⭐⭐⭐⭐' },
+  { day: 'Segunda-feira', time: '10:00 - 11:00', score: '⭐⭐⭐' },
+  { day: 'Quarta-feira', time: '14:00 - 15:00', score: '⭐⭐⭐' },
+  { day: 'Quinta-feira', time: '14:00 - 16:00', score: '⭐⭐⭐' },
+  { day: 'Sexta-feira', time: '09:00 - 10:00', score: '⭐⭐' },
+  { day: 'Sábado', time: '10:00 - 12:00', score: '⭐⭐' },
+  { day: 'Domingo', time: '18:00 - 20:00', score: '⭐' },
+];
+
+function SpamScoreGauge({ score }: { score: number }) {
+  const getColor = () => {
+    if (score <= 4) return 'text-green-500';
+    if (score <= 9) return 'text-yellow-500';
+    return 'text-red-500';
+  };
+  const getLabel = () => {
+    if (score <= 4) return 'Baixa';
+    if (score <= 9) return 'Média';
+    return 'Alta';
+  };
+
+  return (
+    <div className="rounded-lg border p-4 flex items-center gap-4">
+      <div className="relative h-16 w-16">
+        <svg viewBox="0 0 36 36" className="h-16 w-16 -rotate-90">
+          <path
+            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            className="text-muted"
+          />
+          <path
+            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeDasharray={`${(score / 20) * 100}, 100`}
+            className={getColor()}
+          />
+        </svg>
+        <span className={`absolute inset-0 flex items-center justify-center text-lg font-bold ${getColor()}`}>
+          {score}
+        </span>
+      </div>
+      <div>
+        <p className="text-sm font-semibold">Análise de score de e-mail</p>
+        <p className="text-xs text-muted-foreground">Probabilidade de um e-mail ser classificado como spam.</p>
+        <div className="flex gap-3 mt-1 text-xs">
+          <span className="text-green-500">● 1-4 baixa</span>
+          <span className="text-yellow-500">● 5-9 média</span>
+          <span className="text-red-500">● 10-20 alta</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function EmailNodeConfig({ config, onChange, mode }: EmailNodeConfigProps) {
+  const { allMailboxes } = useEmailMailboxes();
+  const [bestTimesOpen, setBestTimesOpen] = useState(false);
+
   const insertVariable = (key: string) => {
     const current = String(config.message || '');
     onChange({ ...config, message: current + key });
   };
 
+  // Simple spam score estimate based on content
+  const estimateSpamScore = (): number => {
+    const msg = String(config.message || '');
+    const subject = String(config.subject || '');
+    const combined = msg + ' ' + subject;
+    let score = 0;
+    if (combined.match(/grátis|free|ganhe|desconto/i)) score += 2;
+    if (combined.match(/!!+/)) score += 1;
+    if (combined.match(/TUDO EM MAIÚSCULO/)) score += 2;
+    if (combined.match(/clique aqui|click here/i)) score += 1;
+    if (combined.length < 20) score += 1;
+    if (!config.mailbox_id) score += 1;
+    return Math.min(score, 20);
+  };
+
   return (
     <div className="space-y-5">
+      {/* Mailbox selector */}
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2">
+          <Mail className="h-4 w-4" />
+          Caixa postal
+        </Label>
+        <p className="text-xs text-muted-foreground">
+          O campo abaixo será responsável pelo endereço da caixa postal que irá enviar o e-mail para os leads. O domínio precisa estar ativo/verificado.
+        </p>
+        <Select
+          value={String(config.mailbox_id || '')}
+          onValueChange={v => {
+            const mailbox = allMailboxes.find((m: any) => m.id === v);
+            onChange({
+              ...config,
+              mailbox_id: v,
+              mailbox_name: mailbox ? `${mailbox.name} - ${mailbox.from_email}` : '',
+              from_email: mailbox?.from_email || '',
+            });
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione uma caixa postal" />
+          </SelectTrigger>
+          <SelectContent>
+            {allMailboxes.length === 0 ? (
+              <SelectItem value="_none" disabled>Nenhuma caixa postal configurada</SelectItem>
+            ) : (
+              allMailboxes.map((m: any) => (
+                <SelectItem key={m.id} value={m.id}>
+                  <div className="flex items-center gap-2">
+                    <span>{m.name} - {m.from_email}</span>
+                    {m.warmup_status === 'warming' && <Flame className="h-3 w-3 text-orange-500" />}
+                  </div>
+                </SelectItem>
+              ))
+            )}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Subject (marketing only) */}
+      {mode === 'marketing' && (
+        <div className="space-y-2">
+          <Label>Assunto do e-mail</Label>
+          <p className="text-xs text-muted-foreground">
+            O campo abaixo se refere ao assunto do e-mail que o lead receberá no seu e-mail.
+          </p>
+          <Input
+            placeholder="Ex: Oferta especial para você, {{primeiro_nome}}!"
+            value={String(config.subject || '')}
+            onChange={e => onChange({ ...config, subject: e.target.value })}
+          />
+        </div>
+      )}
+
       {/* Variables hint */}
       <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10 p-4">
         <div className="flex items-center gap-2 mb-2">
@@ -44,18 +184,6 @@ export function EmailNodeConfig({ config, onChange, mode }: EmailNodeConfigProps
         </div>
       </div>
 
-      {/* Subject (marketing only) */}
-      {mode === 'marketing' && (
-        <div className="space-y-2">
-          <Label>Assunto do Email</Label>
-          <Input
-            placeholder="Ex: Oferta especial para você, {{primeiro_nome}}!"
-            value={String(config.subject || '')}
-            onChange={e => onChange({ ...config, subject: e.target.value })}
-          />
-        </div>
-      )}
-
       {/* Message */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
@@ -75,6 +203,44 @@ export function EmailNodeConfig({ config, onChange, mode }: EmailNodeConfigProps
           <p className="text-xs text-muted-foreground">
             💡 Email Performance envia e-mails com pouco HTML, facilitando que caiam na caixa de entrada ao invés de spam.
           </p>
+        )}
+      </div>
+
+      {/* Best times collapsible */}
+      <Collapsible open={bestTimesOpen} onOpenChange={setBestTimesOpen}>
+        <CollapsibleTrigger asChild>
+          <button className="flex items-center justify-between w-full p-3 rounded-lg border hover:bg-accent/50 transition-colors">
+            <span className="text-sm font-medium">Top 10 Melhores Dias e Horários para Envio de E-mails</span>
+            <ChevronDown className={`h-4 w-4 transition-transform ${bestTimesOpen ? 'rotate-180' : ''}`} />
+          </button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="mt-2 rounded-lg border divide-y">
+            {BEST_TIMES.map((t, i) => (
+              <div key={i} className="flex items-center justify-between px-3 py-2 text-xs">
+                <span className="font-medium">{i + 1}. {t.day}</span>
+                <span className="text-muted-foreground">{t.time}</span>
+                <span>{t.score}</span>
+              </div>
+            ))}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* Spam Score */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onChange({ ...config, _spam_checked: true })}
+          >
+            <Shield className="h-4 w-4 mr-1" />
+            TESTE DE SCORE
+          </Button>
+        </div>
+        {config._spam_checked && (
+          <SpamScoreGauge score={estimateSpamScore()} />
         )}
       </div>
 

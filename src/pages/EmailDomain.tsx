@@ -6,7 +6,7 @@ import { Globe, Plus, Mail, AlertCircle } from 'lucide-react';
 import { useEmailDomains } from '@/hooks/useEmailDomains';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import DomainSetupWizard from '@/components/email-domain/DomainSetupWizard';
-import DomainCard from '@/components/email-domain/DomainCard';
+import DomainConfigDashboard from '@/components/email-domain/DomainConfigDashboard';
 
 export default function EmailDomain() {
   const { currentOrganization, loading: orgLoading } = useOrganization();
@@ -64,7 +64,7 @@ export default function EmailDomain() {
             Domínio de E-mail
           </h1>
           <p className="text-muted-foreground mt-1">
-            Gerencie seus domínios de envio de e-mail
+            Gerencie seus domínios de envio de e-mail e caixas postais
           </p>
         </div>
         <Button onClick={() => setShowWizard(true)}>
@@ -99,7 +99,7 @@ export default function EmailDomain() {
       ) : (
         <div className="space-y-4">
           {domains.map((domain: any) => (
-            <DomainCard
+            <DomainConfigDashboard
               key={domain.id}
               domain={domain}
               onVerify={(id) => verifyDomain.mutate(id)}

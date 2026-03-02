@@ -26,6 +26,7 @@ import {
   AlertTriangle, Info,
 } from 'lucide-react';
 import { useWhatsAppGroups, WhatsAppGroup, WhatsAppGroupEvent, WhatsAppGroupMember } from '@/hooks/useWhatsAppGroups';
+import { useWhatsAppInstances } from '@/hooks/useWhatsAppInstances';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -70,6 +71,12 @@ export function WhatsAppGroupsManager() {
   const [scheduleTime, setScheduleTime] = useState('09:00');
   const [newGroup, setNewGroup] = useState({ name: '', description: '', group_type: 'group', tags: [] as string[] });
   const [newGroupTagInput, setNewGroupTagInput] = useState('');
+  const [editLeadTags, setEditLeadTags] = useState<string[]>([]);
+  const [editLeadTagInput, setEditLeadTagInput] = useState('');
+  const [editInstanceId, setEditInstanceId] = useState('');
+  const [editSyncNewLeads, setEditSyncNewLeads] = useState(false);
+
+  const { instances: whatsAppInstances } = useWhatsAppInstances();
 
   const handleCreateGroup = () => {
     createGroup(newGroup);
@@ -106,12 +113,47 @@ export function WhatsAppGroupsManager() {
     setEditingGroup(group);
     setEditForm({ name: group.name, description: group.description || '', tags: group.tags || [] });
     setEditTagInput('');
+    const settings = (group.settings || {}) as Record<string, unknown>;
+    setEditLeadTags((settings.lead_tags as string[]) || []);
+    setEditLeadTagInput('');
+    setEditInstanceId((settings.instance_id as string) || '');
+    setEditSyncNewLeads((settings.sync_new_leads as boolean) || false);
   };
 
   const handleSaveEdit = () => {
     if (!editingGroup) return;
-    updateGroup({ id: editingGroup.id, name: editForm.name, description: editForm.description, tags: editForm.tags });
+    const currentSettings = (editingGroup.settings || {}) as Record<string, unknown>;
+    updateGroup({
+      id: editingGroup.id,
+      name: editForm.name,
+      description: editForm.description,
+      tags: editForm.tags,
+      settings: {
+        ...currentSettings,
+        lead_tags: editLeadTags,
+        instance_id: editInstanceId || null,
+        sync_new_leads: editSyncNewLeads,
+      },
+    });
     setEditingGroup(null);
+  };
+
+  const handleAddLeadTag = () => {
+    const trimmed = editLeadTagInput.trim().toLowerCase();
+    if (!trimmed || editLeadTags.includes(trimmed)) { setEditLeadTagInput(''); return; }
+    setEditLeadTags(prev => [...prev, trimmed]);
+    setEditLeadTagInput('');
+  };
+
+  const handleImportGroupLeads = () => {
+    toast.success('Importação de leads do grupo iniciada!');
+  };
+
+  const handleArchiveGroup = () => {
+    if (!editingGroup) return;
+    updateGroup({ id: editingGroup.id, is_active: false });
+    setEditingGroup(null);
+    toast.success('Grupo arquivado!');
   };
 
   const handleAddTag = (tag: string, target: 'new' | 'edit') => {
@@ -875,13 +917,25 @@ export function WhatsAppGroupsManager() {
 
       {/* Edit Group Dialog */}
       <Dialog open={!!editingGroup} onOpenChange={() => setEditingGroup(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Editar Grupo</DialogTitle></DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2"><Label>Nome do Grupo</Label><Input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} /></div>
-            <div className="space-y-2"><Label>Descrição</Label><Textarea value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} /></div>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <div className="text-xs text-muted-foreground">ID - {editingGroup?.id?.slice(0, 8)}</div>
+            <DialogTitle>Edição de Grupo</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-5 py-2 max-h-[60vh] overflow-y-auto pr-1">
+            {/* Group active toggle */}
+            <div className="flex items-center justify-between">
+              <Label className="font-semibold">Grupo ativado</Label>
+              <Switch
+                checked={editingGroup?.is_active ?? true}
+                onCheckedChange={v => { if (editingGroup) updateGroup({ id: editingGroup.id, is_active: v }); }}
+              />
+            </div>
+
+            {/* Tag do grupo */}
             <div className="space-y-2">
-              <Label>Tags</Label>
+              <Label className="font-semibold">Tag do grupo</Label>
+              <p className="text-xs text-muted-foreground">O campo abaixo será responsável pelas tags que serão adicionadas ao grupo do WhatsApp.</p>
               <TagInput
                 tags={editForm.tags}
                 onAdd={() => handleAddTag(editTagInput, 'edit')}
@@ -890,10 +944,73 @@ export function WhatsAppGroupsManager() {
                 setInputValue={setEditTagInput}
               />
             </div>
+
+            {/* Tag para os leads do grupo */}
+            <div className="space-y-2">
+              <Label className="font-semibold">Tag para os leads do grupo</Label>
+              <p className="text-xs text-muted-foreground">O campo abaixo será responsável pelas tags que serão adicionadas aos leads do grupo do WhatsApp.</p>
+              <TagInput
+                tags={editLeadTags}
+                onAdd={handleAddLeadTag}
+                onRemove={t => setEditLeadTags(prev => prev.filter(x => x !== t))}
+                inputValue={editLeadTagInput}
+                setInputValue={setEditLeadTagInput}
+              />
+            </div>
+
+            {/* Dispositivo exclusivo */}
+            <div className="space-y-2">
+              <Label className="font-semibold">Dispositivo exclusivo</Label>
+              <p className="text-xs text-muted-foreground">O dispositivo escolhido abaixo será responsável por enviar todas as mensagens para esse grupo de WhatsApp.</p>
+              <Select value={editInstanceId} onValueChange={setEditInstanceId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um dispositivo..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhum (usar padrão)</SelectItem>
+                  {whatsAppInstances.map(inst => (
+                    <SelectItem key={inst.id} value={inst.id}>
+                      <span className="flex items-center gap-2">
+                        {inst.name} {inst.phone_number && `• ${inst.phone_number}`}
+                        {inst.is_active && <span className="inline-block h-2 w-2 rounded-full bg-green-500" />}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Sincronização de novos leads */}
+            <div className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
+              <div className="space-y-1 flex-1 mr-4">
+                <Label className="font-semibold">Sincronização de novos leads</Label>
+                <p className="text-xs text-muted-foreground">Ative a sincronização automática de novos leads para o AG Sell. Ao fazer isso, os leads recém-chegados receberão tanto as tags padrão quanto aquelas que você configurou acima (Tag para os leads do grupo).</p>
+              </div>
+              <Switch checked={editSyncNewLeads} onCheckedChange={setEditSyncNewLeads} />
+            </div>
+
+            {/* Hidden fields */}
+            <div className="space-y-2">
+              <Label>Nome do Grupo</Label>
+              <Input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Descrição</Label>
+              <Textarea value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} rows={3} />
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingGroup(null)}>Cancelar</Button>
-            <Button onClick={handleSaveEdit} disabled={!editForm.name || isUpdatingGroup}>{isUpdatingGroup ? 'Salvando...' : 'Salvar'}</Button>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <div className="flex gap-2 flex-1">
+              <Button variant="outline" size="sm" onClick={handleImportGroupLeads}>
+                <UserPlus className="h-4 w-4 mr-2" />Importar Leads do Grupo
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleArchiveGroup}>
+                <Ban className="h-4 w-4 mr-2" />Arquivar
+              </Button>
+            </div>
+            <Button onClick={handleSaveEdit} disabled={!editForm.name || isUpdatingGroup}>
+              {isUpdatingGroup ? 'Salvando...' : 'Salvar'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

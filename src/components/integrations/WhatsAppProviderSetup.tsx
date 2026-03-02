@@ -71,6 +71,8 @@ export function WhatsAppProviderSetup() {
   
   const [activeTab, setActiveTab] = useState('evolution');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [showBanWarning, setShowBanWarning] = useState(false);
+  const [pendingQRInstance, setPendingQRInstance] = useState<WhatsAppInstance | null>(null);
   const [isTesting, setIsTesting] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDefault, setIsDefault] = useState(false);
@@ -355,10 +357,19 @@ export function WhatsAppProviderSetup() {
       toast.error('Nome da instância não configurado');
       return;
     }
+    setPendingQRInstance(instance);
+    setShowBanWarning(true);
+  };
+
+  const handleConfirmBanWarning = () => {
+    setShowBanWarning(false);
+    if (!pendingQRInstance) return;
+    const instName = pendingQRInstance.config.instance_name;
     setQrInstanceName(instName);
-    setQrOrgId(instance.organization_id || '');
+    setQrOrgId(pendingQRInstance.organization_id || '');
     setShowQRDialog(true);
-    fetchQRCode(instName, instance.organization_id || '', 'connect');
+    fetchQRCode(instName, pendingQRInstance.organization_id || '', 'connect');
+    setPendingQRInstance(null);
   };
 
   const handleTestBusiness = async (instance: WhatsAppInstance) => {
@@ -744,16 +755,41 @@ export function WhatsAppProviderSetup() {
       </Dialog>
     </div>
 
-      {/* QR Code Dialog */}
+      {/* Ban Warning AlertDialog */}
+      <Dialog open={showBanWarning} onOpenChange={setShowBanWarning}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-600">
+              <AlertTriangle className="h-5 w-5" />
+              Alerta
+            </DialogTitle>
+          </DialogHeader>
+          <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10 p-4 text-sm">
+            <p className="text-foreground leading-relaxed">
+              O AG Sell exime-se de quaisquer responsabilidades quanto ao uso de automações no perfil. Ao utilizar automações em seus perfis no WhatsApp, o usuário compreende que está colocando em potencial risco suas contas e que as políticas do WhatsApp podem mudar a qualquer momento, resultando em exclusão total, permanente e irrecuperável do perfil.
+            </p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => { setShowBanWarning(false); setPendingQRInstance(null); }}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmBanWarning}>
+              Continuar Mesmo Assim
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* QR Code Dialog with Step-by-Step */}
       <Dialog open={showQRDialog} onOpenChange={(open) => { if (!open) handleCloseQRDialog(); }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <QrCode className="h-5 w-5" />
-              Conectar WhatsApp
+              Conexão não oficial
             </DialogTitle>
             <DialogDescription>
-              Escaneie o QR Code com seu WhatsApp para conectar a instância <strong>{qrInstanceName}</strong>
+              Conecte o AG Sell escaneando o QR Code de conexão diretamente no seu WhatsApp.
             </DialogDescription>
           </DialogHeader>
 
@@ -786,38 +822,113 @@ export function WhatsAppProviderSetup() {
                 </Button>
               </div>
             ) : qrCodeBase64 ? (
-              <div className="text-center">
-                <div className="relative inline-block bg-white p-2 rounded-lg">
-                  <img
-                    src={qrCodeBase64}
-                    alt="QR Code WhatsApp"
-                    className="w-64 h-64 mx-auto"
-                  />
-                </div>
-                {qrPairingCode && (
-                  <div className="mt-3 p-2 bg-muted rounded text-sm">
-                    <p className="text-muted-foreground">Código de pareamento:</p>
-                    <p className="font-mono font-bold text-lg tracking-wider">{qrPairingCode}</p>
+              <div className="space-y-4">
+                {/* Step-by-step guide */}
+                <div className="text-center mb-4">
+                  <h3 className="font-semibold text-base mb-4">Como funciona</h3>
+                  <div className="space-y-3 text-left">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Abra o WhatsApp no seu celular</p>
+                        <p className="text-xs text-muted-foreground">Certifique-se de estar com a versão mais recente instalada.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Acesse Dispositivos Conectados</p>
+                        <p className="text-xs text-muted-foreground">Vá em Configurações {'>'} Dispositivos Conectados.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Escaneie o QR Code</p>
+                        <p className="text-xs text-muted-foreground">Clique em 'Conectar um aparelho' e escaneie o código.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Aguarde a confirmação</p>
+                        <p className="text-xs text-muted-foreground">O sistema confirmará a conexão automaticamente.</p>
+                      </div>
+                    </div>
                   </div>
-                )}
-                <div className="mt-4 text-sm text-muted-foreground space-y-1">
-                  <p>1. Abra o WhatsApp no seu celular</p>
-                  <p>2. Vá em <strong>Configurações → Dispositivos Conectados</strong></p>
-                  <p>3. Toque em <strong>"Conectar um Dispositivo"</strong></p>
-                  <p>4. Escaneie este QR Code</p>
                 </div>
-                <div className="mt-4 flex justify-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => fetchQRCode(qrInstanceName, qrOrgId, 'connect')}>
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Atualizar QR Code
+
+                {/* QR Code */}
+                <div className="text-center">
+                  <div className="relative inline-block bg-white p-2 rounded-lg">
+                    <img
+                      src={qrCodeBase64}
+                      alt="QR Code WhatsApp"
+                      className="w-56 h-56 mx-auto"
+                    />
+                  </div>
+                  {qrPairingCode && (
+                    <div className="mt-3 p-2 bg-muted rounded text-sm">
+                      <p className="text-muted-foreground">Código de pareamento:</p>
+                      <p className="font-mono font-bold text-lg tracking-wider">{qrPairingCode}</p>
+                    </div>
+                  )}
+                  <div className="mt-4 flex justify-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => fetchQRCode(qrInstanceName, qrOrgId, 'connect')}>
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Atualizar QR Code
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-3 flex items-center justify-center gap-1">
+                    <RefreshCw className="h-3 w-3 animate-spin" />
+                    Aguardando conexão...
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Step-by-step guide when no QR yet */}
+                <div className="text-center">
+                  <h3 className="font-semibold text-base mb-4">Como funciona</h3>
+                  <div className="space-y-3 text-left">
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Abra o WhatsApp no seu celular</p>
+                        <p className="text-xs text-muted-foreground">Certifique-se de estar com a versão mais recente instalada.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Acesse Dispositivos Conectados</p>
+                        <p className="text-xs text-muted-foreground">Vá em Configurações {'>'} Dispositivos Conectados.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Escaneie o QR Code</p>
+                        <p className="text-xs text-muted-foreground">Clique em 'Conectar um aparelho' e escaneie o código.</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Aguarde a confirmação</p>
+                        <p className="text-xs text-muted-foreground">O sistema confirmará a conexão automaticamente.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="text-center">
+                  <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={() => fetchQRCode(qrInstanceName, qrOrgId, 'connect')}>
+                    <QrCode className="h-4 w-4 mr-2" />
+                    Conectar Canal de Comunicação
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground mt-3 flex items-center justify-center gap-1">
-                  <RefreshCw className="h-3 w-3 animate-spin" />
-                  Aguardando conexão...
-                </p>
               </div>
-            ) : null}
+            )}
           </div>
 
           <DialogFooter>

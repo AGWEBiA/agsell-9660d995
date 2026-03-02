@@ -86,6 +86,167 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Handle Evolution API connection status events
+    if (body.event === "connection.update" || body.event === "CONNECTION_UPDATE") {
+      const data = body.data || body;
+      const instanceName = (body.instance || data.instance || "").trim();
+      const state = data.state || data.status || "";
+
+      if (state === "close" || state === "disconnected" || state === "DISCONNECTED") {
+        console.log(`WhatsApp instance disconnected: ${instanceName}`);
+
+        // Find the organization that owns this instance
+        const { data: activeIntegrations } = await supabase
+          .from("organization_integrations")
+          .select("organization_id, config, name")
+          .eq("integration_type", "evolution_api")
+          .eq("is_active", true);
+
+        const normalizeInstanceName = (value: string) => value.toLowerCase().replace(/[\s_-]+/g, "");
+        const normalizedIncoming = normalizeInstanceName(instanceName);
+
+        const integration = (activeIntegrations || []).find((item) => {
+          const config = (item.config || {}) as Record<string, unknown>;
+          const configuredInstance = typeof config.instance_name === "string" ? config.instance_name : "";
+          return normalizeInstanceName(configuredInstance) === normalizedIncoming;
+        });
+
+        if (integration) {
+          // Get all org members to notify
+          const { data: orgMembers } = await supabase
+            .from("organization_members")
+            .select("user_id")
+            .eq("organization_id", integration.organization_id);
+
+          const displayName = integration.name || instanceName;
+
+          // Create in-app notification for all org members
+          for (const member of orgMembers || []) {
+            await supabase.from("notifications").insert({
+              user_id: member.user_id,
+              organization_id: integration.organization_id,
+              type: "whatsapp_disconnected",
+              title: "⚠️ WhatsApp Desconectado",
+              message: `A instância "${displayName}" foi desconectada. Reconecte o quanto antes para não perder mensagens.`,
+              link: "/integrations",
+              is_read: false,
+              metadata: { instance_name: instanceName },
+            });
+          }
+
+          // Send email notification to org members
+          const { data: memberProfiles } = await supabase
+            .from("profiles")
+            .select("user_id, full_name")
+            .in("user_id", (orgMembers || []).map((m) => m.user_id));
+
+          // Get org owner email from auth.users via admin API
+          const { data: orgOwner } = await supabase
+            .from("organization_members")
+            .select("user_id")
+            .eq("organization_id", integration.organization_id)
+            .eq("role", "owner")
+            .maybeSingle();
+
+          if (orgOwner) {
+            const { data: ownerAuth } = await supabase.auth.admin.getUserById(orgOwner.user_id);
+            const ownerEmail = ownerAuth?.user?.email;
+            const ownerName = (memberProfiles || []).find((p) => p.user_id === orgOwner.user_id)?.full_name || "";
+
+            if (ownerEmail) {
+              try {
+                // Send email via internal send-email function
+                const emailHtml = `
+                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <div style="background: #dc2626; color: white; padding: 16px 24px; border-radius: 8px 8px 0 0;">
+                      <h2 style="margin: 0;">⚠️ WhatsApp Desconectado</h2>
+                    </div>
+                    <div style="background: #fff; border: 1px solid #e5e7eb; padding: 24px; border-radius: 0 0 8px 8px;">
+                      <p>Olá${ownerName ? ` ${ownerName}` : ''},</p>
+                      <p>A instância de WhatsApp <strong>"${displayName}"</strong> foi desconectada do sistema.</p>
+                      <p style="color: #dc2626; font-weight: bold;">Enquanto estiver desconectada, você não receberá mensagens de clientes neste número.</p>
+                      <p>Para reconectar:</p>
+                      <ol>
+                        <li>Acesse o painel de <strong>Integrações</strong></li>
+                        <li>Clique em <strong>Reconectar</strong> na instância desconectada</li>
+                        <li>Escaneie o novo QR Code com seu WhatsApp</li>
+                      </ol>
+                      <a href="https://agsell.lovable.app/integrations" style="display: inline-block; background: #dc2626; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; margin-top: 12px;">
+                        Reconectar Agora
+                      </a>
+                      <p style="color: #6b7280; font-size: 12px; margin-top: 24px;">Este é um alerta automático do AG Sell.</p>
+                    </div>
+                  </div>
+                `;
+
+                // Call the send-email function internally
+                const sendEmailUrl = `${supabaseUrl}/functions/v1/send-email`;
+                await fetch(sendEmailUrl, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${supabaseServiceKey}`,
+                  },
+                  body: JSON.stringify({
+                    organization_id: integration.organization_id,
+                    to: ownerEmail,
+                    subject: `⚠️ WhatsApp Desconectado: ${displayName}`,
+                    html: emailHtml,
+                  }),
+                });
+                console.log(`Disconnect email sent to ${ownerEmail}`);
+              } catch (emailErr) {
+                console.error("Failed to send disconnect email:", emailErr);
+              }
+            }
+          }
+
+          // Try sending WhatsApp notification via another active instance
+          const otherActiveInstance = (activeIntegrations || []).find((item) => {
+            const config = (item.config || {}) as Record<string, unknown>;
+            const configuredInstance = typeof config.instance_name === "string" ? config.instance_name : "";
+            return normalizeInstanceName(configuredInstance) !== normalizedIncoming;
+          });
+
+          if (otherActiveInstance) {
+            try {
+              const otherConfig = (otherActiveInstance.config || {}) as Record<string, string>;
+              // Get owner phone to send WhatsApp alert
+              if (orgOwner) {
+                const { data: ownerContact } = await supabase
+                  .from("contacts")
+                  .select("whatsapp, phone")
+                  .eq("organization_id", integration.organization_id)
+                  .eq("user_id", orgOwner.user_id)
+                  .maybeSingle();
+
+                const ownerPhone = ownerContact?.whatsapp || ownerContact?.phone;
+                if (ownerPhone) {
+                  const sendWhatsAppUrl = `${supabaseUrl}/functions/v1/send-whatsapp`;
+                  await fetch(sendWhatsAppUrl, {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Authorization": `Bearer ${supabaseServiceKey}`,
+                    },
+                    body: JSON.stringify({
+                      organization_id: integration.organization_id,
+                      to: ownerPhone.replace(/\D/g, ""),
+                      message: `⚠️ *WhatsApp Desconectado*\n\nA instância "${displayName}" foi desconectada do AG Sell.\n\nReconecte o quanto antes para não perder mensagens de clientes.\n\n👉 Acesse: https://agsell.lovable.app/integrations`,
+                      instance_id: otherActiveInstance.organization_id,
+                    }),
+                  });
+                  console.log("WhatsApp disconnect alert sent via alternative instance");
+                }
+              }
+            } catch (whatsAppErr) {
+              console.error("Failed to send WhatsApp disconnect alert:", whatsAppErr);
+            }
+          }
+        }
+      }
+    }
+
     // Handle Evolution API format (webhook events)
     if (body.event === "messages.upsert" || body.event === "message" || body.event === "MESSAGES_UPSERT") {
       const data = body.data || body;

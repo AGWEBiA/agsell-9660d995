@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MessageSquare, Smartphone, CheckCircle2, XCircle, Users, Send, Settings, Star, Server, Trash2, Power, Loader2 } from 'lucide-react';
-import { WhatsAppQRConnect } from '@/components/whatsapp/WhatsAppQRConnect';
+import { WhatsAppProviderSetup } from '@/components/integrations/WhatsAppProviderSetup';
 import { WhatsAppGroupsManager } from '@/components/whatsapp/WhatsAppGroupsManager';
 import { useWhatsAppGroups } from '@/hooks/useWhatsAppGroups';
 import { WhatsAppCampaignsManager } from '@/components/whatsapp/WhatsAppCampaignsManager';
@@ -232,7 +232,7 @@ export default function WhatsApp() {
         </TabsList>
 
         <TabsContent value="connection" className="space-y-6">
-          <WhatsAppQRConnect />
+          <WhatsAppProviderSetup />
           
           {/* Setup Steps */}
           <Card>

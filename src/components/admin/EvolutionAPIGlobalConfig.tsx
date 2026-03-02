@@ -64,15 +64,21 @@ export function EvolutionAPIGlobalConfig() {
     }
     setIsTesting(true);
     try {
-      const res = await fetch(`${cfg.api_url}/instance/fetchInstances`, {
-        headers: { apikey: cfg.api_key },
+      const { data, error } = await supabase.functions.invoke('test-evolution-api', {
+        body: {
+          api_url: cfg.api_url,
+          api_key: cfg.api_key,
+        },
       });
-      if (res.ok) {
-        const data = await res.json();
-        const count = Array.isArray(data) ? data.length : 0;
+
+      if (error) throw error;
+
+      if (data?.success) {
+        const count = typeof data.instances_count === 'number' ? data.instances_count : 0;
         toast.success(`Conexão OK! ${count} instância(s) encontrada(s).`);
       } else {
-        toast.error('Erro ao conectar — verifique URL e chave.');
+        const msg = data?.error || 'Erro ao conectar — verifique URL e chave.';
+        toast.error(msg);
       }
     } catch {
       toast.error('Não foi possível conectar. Verifique a URL.');

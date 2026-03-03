@@ -321,18 +321,26 @@ Deno.serve(async (req) => {
       resolveDNS(`receiving.${domain}`, "MX"),
     ]);
 
-    const providerSpfVerified = [...resendRecords, ...inboundRecords].some((r: any) => {
-      const purpose = String(r?.purpose || "").toLowerCase();
-      return r?.type === "TXT" && purpose.includes("spf") && String(r?.status || "").toLowerCase() === "verified";
+    const providerRecords = [...resendRecords, ...inboundRecords];
+
+    const providerSpfVerified = providerRecords.some((r: any) => {
+      const type = String(r?.type || "").toUpperCase();
+      const value = String(r?.value || r?.data || "").toLowerCase();
+      const status = String(r?.status || "").toLowerCase();
+      return type === "TXT" && value.includes("v=spf1") && (status === "verified" || status === "valid");
     });
 
-    const providerDkimVerified = [...resendRecords, ...inboundRecords].some((r: any) => {
-      const purpose = String(r?.purpose || "").toLowerCase();
-      return purpose.includes("dkim") && String(r?.status || "").toLowerCase() === "verified";
+    const providerDkimVerified = providerRecords.some((r: any) => {
+      const name = String(r?.name || r?.record || "").toLowerCase();
+      const value = String(r?.value || r?.data || "").toLowerCase();
+      const status = String(r?.status || "").toLowerCase();
+      return (name.includes("_domainkey") || value.includes("v=dkim1") || value.includes("p=")) && (status === "verified" || status === "valid");
     });
 
-    const providerMxVerified = [...resendRecords, ...inboundRecords].some((r: any) => {
-      return r?.type === "MX" && String(r?.status || "").toLowerCase() === "verified";
+    const providerMxVerified = providerRecords.some((r: any) => {
+      const type = String(r?.type || "").toUpperCase();
+      const status = String(r?.status || "").toLowerCase();
+      return type === "MX" && (status === "verified" || status === "valid");
     });
 
     const allSpfRecords = [...txtRootRecords, ...txtSendRecords, ...txtMailRecords];

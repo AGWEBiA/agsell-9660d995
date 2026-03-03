@@ -63,6 +63,16 @@ export default function DomainCard({ domain, onVerify, onDelete, isVerifying }: 
     { label: 'MX', verified: domain.mx_verified },
   ];
 
+  const providerDnsRecords = Array.isArray(domain.dns_records) ? domain.dns_records : [];
+  const hasRecord = (key: string) => providerDnsRecords.some((r: any) => String(r?.purpose || '').toLowerCase().includes(key));
+  const displayDnsRecords = [
+    ...providerDnsRecords,
+    ...(!hasRecord('spf') ? [{ type: 'TXT', purpose: 'SPF', host: '@', name: domain.domain, zone: domain.domain, value: 'v=spf1 include:resend.com ~all', ttl: 'auto' }] : []),
+    ...(!hasRecord('dkim') ? [{ type: 'CNAME', purpose: 'DKIM', host: 'default._domainkey', name: `default._domainkey.${domain.domain}`, zone: domain.domain, value: 'Clique em "Verificar" para obter o valor DKIM do provedor', ttl: 'auto' }] : []),
+    ...(!hasRecord('dmarc') ? [{ type: 'TXT', purpose: 'DMARC', host: '_dmarc', name: `_dmarc.${domain.domain}`, zone: domain.domain, value: 'v=DMARC1; p=quarantine', ttl: 'auto' }] : []),
+    ...(!hasRecord('mx') ? [{ type: 'MX', purpose: 'MX (Mail)', host: 'mail', name: `mail.${domain.domain}`, zone: domain.domain, value: 'Clique em "Verificar" para obter os registros MX do provedor', priority: 10, ttl: 'auto' }] : []),
+  ];
+
   const allVerified = domain.status === 'verified';
 
   return (
@@ -206,8 +216,8 @@ export default function DomainCard({ domain, onVerify, onDelete, isVerifying }: 
 
             {expanded && (
               <div className="space-y-3 animate-fade-in">
-                {(domain.dns_records && domain.dns_records.length > 0) ? (
-                  domain.dns_records.map((record: any, i: number) => (
+                {displayDnsRecords.length > 0 ? (
+                  displayDnsRecords.map((record: any, i: number) => (
                     <div key={i} className="border rounded-lg p-3 space-y-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">

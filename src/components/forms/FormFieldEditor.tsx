@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,6 +30,44 @@ const FIELD_TYPES = [
 interface Props {
   fields: FormField[];
   onChange: (fields: FormField[]) => void;
+}
+
+interface OptionsInputProps {
+  options: string[];
+  onCommit: (options: string[]) => void;
+}
+
+function OptionsInput({ options, onCommit }: OptionsInputProps) {
+  const [text, setText] = useState(options.join(', '));
+
+  useEffect(() => {
+    setText(options.join(', '));
+  }, [options]);
+
+  const commit = (value: string) => {
+    const parsed = value
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    onCommit(parsed);
+  };
+
+  return (
+    <Input
+      className="h-8 text-sm"
+      value={text}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={(e) => commit(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          commit(text);
+        }
+      }}
+      placeholder="Opção 1, Opção 2, Opção 3"
+    />
+  );
 }
 
 export function FormFieldEditor({ fields, onChange }: Props) {
@@ -105,11 +143,9 @@ export function FormFieldEditor({ fields, onChange }: Props) {
             {field.type === 'select' && (
               <div className="space-y-1">
                 <Label className="text-xs">Opções (separadas por vírgula)</Label>
-                <Input
-                  className="h-8 text-sm"
-                  value={(field.options || []).join(', ')}
-                  onChange={(e) => updateField(idx, { options: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
-                  placeholder="Opção 1, Opção 2, Opção 3"
+                <OptionsInput
+                  options={field.options || []}
+                  onCommit={(options) => updateField(idx, { options })}
                 />
               </div>
             )}

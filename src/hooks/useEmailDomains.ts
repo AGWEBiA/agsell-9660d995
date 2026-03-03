@@ -91,9 +91,17 @@ export function useEmailDomains() {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['email_domains', orgId] });
       if (data.status === 'verified') {
-        toast.success('Domínio verificado com sucesso!');
+        toast.success('Domínio verificado com sucesso! Todos os registros DNS estão corretos.');
       } else {
-        toast.info('Verificação realizada. Alguns registros ainda estão pendentes.');
+        const missing: string[] = [];
+        if (!data.spf_verified) missing.push('SPF');
+        if (!data.dkim_verified) missing.push('DKIM');
+        if (!data.dmarc_verified) missing.push('DMARC');
+        if (!data.mx_verified) missing.push('MX');
+        const missingText = missing.length > 0 
+          ? `Registros pendentes: ${missing.join(', ')}` 
+          : 'Aguardando confirmação do provedor.';
+        toast.warning(`Verificação incompleta. ${missingText}`, { duration: 8000 });
       }
     },
     onError: (error: any) => {

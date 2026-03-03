@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import type { FormField } from './FormFieldEditor';
 import type { FormSettings } from './FormTemplates';
 import { DEFAULT_SETTINGS } from './FormTemplates';
+import { PhoneFieldWithDDI } from './PhoneFieldWithDDI';
 
 interface Props {
   fields: FormField[];
@@ -136,8 +137,23 @@ export function FormPreview({ fields, settings, formName = 'Pré-visualização'
               <span className="text-sm">{field.placeholder || field.label}</span>
             </div>
           );
-        default:
+        default: {
+          const isPhoneField = field.type === 'tel' || 
+            /^(telefone|phone|celular|whatsapp|tel|fone|número|numero)$/i.test(field.name?.trim() || '') ||
+            /^(telefone|phone|celular|whatsapp|tel|fone|número|numero)$/i.test(field.label?.trim() || '');
+          if (isPhoneField) {
+            return (
+              <PhoneFieldWithDDI
+                value=""
+                onChange={() => {}}
+                placeholder={field.placeholder || '(00) 00000-0000'}
+                style={inputStyle}
+                readOnly
+              />
+            );
+          }
           return <Input className="pointer-events-none" type={field.type || 'text'} placeholder={field.placeholder || (s.labelPosition === 'hidden' ? field.label : '')} style={inputStyle} readOnly />;
+        }
       }
     })();
 

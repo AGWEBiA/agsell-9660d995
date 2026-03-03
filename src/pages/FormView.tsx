@@ -17,6 +17,7 @@ import { CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { FormSettings } from '@/components/forms/FormTemplates';
 import { DEFAULT_SETTINGS } from '@/components/forms/FormTemplates';
+import { PhoneFieldWithDDI } from '@/components/forms/PhoneFieldWithDDI';
 
 interface FormField {
   name: string;
@@ -296,8 +297,24 @@ export default function FormView() {
               <span className="text-sm">{field.placeholder || field.label}</span>
             </div>
           );
-        default:
+        default: {
+          // Detect phone fields by type or label
+          const isPhoneField = field.type === 'tel' || 
+            /^(telefone|phone|celular|whatsapp|tel|fone|número|numero)$/i.test(field.name?.trim() || '') ||
+            /^(telefone|phone|celular|whatsapp|tel|fone|número|numero)$/i.test(field.label?.trim() || '');
+          if (isPhoneField) {
+            return (
+              <PhoneFieldWithDDI
+                value={value}
+                onChange={onChangeFn}
+                placeholder={field.placeholder || '(00) 00000-0000'}
+                style={inputStyle}
+                className="agsell-input"
+              />
+            );
+          }
           return <Input className="agsell-input" type={field.type || 'text'} placeholder={field.placeholder || (s.labelPosition === 'hidden' ? field.label : '')} value={value} onChange={(e) => onChangeFn(e.target.value)} style={inputStyle} />;
+        }
       }
     })();
 

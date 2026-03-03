@@ -325,15 +325,10 @@ export default function FormView() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4" style={containerStyle}>
-        <Card className={cn("w-full max-w-lg", opacity < 100 && "bg-transparent")} style={cardStyle}>
-          <CardContent className="pt-6 space-y-4">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-4 w-64" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </CardContent>
-        </Card>
+      <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: 'transparent' }}>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        </div>
       </div>
     );
   }

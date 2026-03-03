@@ -217,10 +217,10 @@ export default function DomainCard({ domain, onVerify, onDelete, isVerifying }: 
                       </div>
                       <div className="grid gap-2">
                         <div>
-                          <p className="text-xs text-muted-foreground mb-1">Nome (FQDN)</p>
-                          <div className="flex items-center gap-2 bg-muted/50 rounded px-3 py-1.5">
-                            <code className="text-xs flex-1 break-all">{record.name}</code>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => copyToClipboard(record.name)}>
+                          <p className="text-xs text-muted-foreground mb-1">Host / Nome <span className="text-[10px] opacity-60">(cole no seu provedor DNS)</span></p>
+                          <div className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded px-3 py-1.5">
+                            <code className="text-xs flex-1 break-all font-semibold">{record.host || record.name}</code>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => copyToClipboard(record.host || record.name)}>
                               <Copy className="h-3 w-3" />
                             </Button>
                           </div>
@@ -228,15 +228,15 @@ export default function DomainCard({ domain, onVerify, onDelete, isVerifying }: 
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           <div>
-                            <p className="text-xs text-muted-foreground mb-1">Host</p>
+                            <p className="text-xs text-muted-foreground mb-1">FQDN <span className="text-[10px] opacity-60">(referência)</span></p>
                             <div className="flex items-center gap-2 bg-muted/50 rounded px-3 py-1.5">
-                              <code className="text-xs flex-1 break-all">{record.host || record.name}</code>
+                              <code className="text-xs flex-1 break-all opacity-70">{record.name}</code>
                             </div>
                           </div>
                           <div>
                             <p className="text-xs text-muted-foreground mb-1">Zona</p>
                             <div className="flex items-center gap-2 bg-muted/50 rounded px-3 py-1.5">
-                              <code className="text-xs flex-1 break-all">{record.zone || domain.domain}</code>
+                              <code className="text-xs flex-1 break-all opacity-70">{record.zone || domain.domain}</code>
                             </div>
                           </div>
                         </div>

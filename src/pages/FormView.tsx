@@ -84,14 +84,27 @@ export default function FormView() {
   const totalSteps = steps.length;
   const currentFields = steps[currentStep] || [];
 
+  const opacity = s.bgOpacity ?? 100;
+  const bgWithOpacity = (() => {
+    if (!s.bgColor) return opacity < 100 ? `rgba(255,255,255,${opacity / 100})` : undefined;
+    const hex = s.bgColor.replace('#', '');
+    if (hex.length === 6) {
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      return `rgba(${r},${g},${b},${opacity / 100})`;
+    }
+    return s.bgColor;
+  })();
+
   const containerStyle: React.CSSProperties = {
-    ...(s.bgColor && { backgroundColor: s.bgColor }),
+    ...(bgWithOpacity ? { backgroundColor: bgWithOpacity } : s.bgColor ? { backgroundColor: s.bgColor } : {}),
     ...(s.textColor && { color: s.textColor }),
     ...(s.fontFamily && { fontFamily: s.fontFamily }),
   };
 
   const cardStyle: React.CSSProperties = {
-    ...(s.bgColor && { backgroundColor: s.bgColor }),
+    ...(bgWithOpacity ? { backgroundColor: bgWithOpacity } : s.bgColor ? { backgroundColor: s.bgColor } : {}),
     ...(s.borderRadius && { borderRadius: `${s.borderRadius}px` }),
     ...(s.padding && { padding: `${s.padding}px` }),
     ...(!s.showBorder && { border: 'none' }),

@@ -141,6 +141,18 @@ export function FormStyleEditor({ settings, onChange }: Props) {
             </div>
           </div>
         </div>
+
+        <div className="space-y-2">
+          <Label className="text-xs font-semibold">Transparência do fundo: {settings.bgOpacity ?? 100}%</Label>
+          <Slider
+            value={[settings.bgOpacity ?? 100]}
+            onValueChange={([v]) => update('bgOpacity', v)}
+            min={0}
+            max={100}
+            step={5}
+          />
+          <p className="text-[10px] text-muted-foreground">0% = totalmente transparente · 100% = opaco. Ideal para integrar o formulário em páginas existentes.</p>
+        </div>
       </TabsContent>
 
       <TabsContent value="typography" className="space-y-4 mt-3">

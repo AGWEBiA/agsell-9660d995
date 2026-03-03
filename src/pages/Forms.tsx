@@ -14,7 +14,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  Plus, FileText, Eye, Users, Percent, MoreHorizontal, ExternalLink, Copy, Trash2, Pencil, List, Code, LayoutTemplate,
+  Plus, FileText, Eye, Users, Percent, MoreHorizontal, ExternalLink, Copy, Trash2, Pencil, List, Code, LayoutTemplate, MonitorSmartphone,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -27,6 +27,7 @@ import { FormFieldEditor, type FormField } from '@/components/forms/FormFieldEdi
 import { FormIntegrationDialog } from '@/components/forms/FormIntegrationDialog';
 import { FormTemplates, DEFAULT_SETTINGS, type FormSettings, type FormTemplate } from '@/components/forms/FormTemplates';
 import { FormStyleEditor } from '@/components/forms/FormStyleEditor';
+import { FormPreview } from '@/components/forms/FormPreview';
 
 export default function Forms() {
   const { forms, isLoading, createForm, updateForm, toggleForm, deleteForm, getFormSubmissions } = useForms();
@@ -149,12 +150,15 @@ export default function Forms() {
             </DialogHeader>
 
             <Tabs value={createTab} onValueChange={(v) => setCreateTab(v as any)} className="mt-2">
-              <TabsList className="grid grid-cols-2 w-full">
+              <TabsList className="grid grid-cols-3 w-full">
                 <TabsTrigger value="templates" className="gap-1.5">
-                  <LayoutTemplate className="h-4 w-4" />Modelos Prontos
+                  <LayoutTemplate className="h-4 w-4" />Modelos
                 </TabsTrigger>
                 <TabsTrigger value="blank" className="gap-1.5">
                   <Pencil className="h-4 w-4" />Editor
+                </TabsTrigger>
+                <TabsTrigger value="preview" className="gap-1.5">
+                  <MonitorSmartphone className="h-4 w-4" />Pré-visualização
                 </TabsTrigger>
               </TabsList>
 
@@ -189,6 +193,15 @@ export default function Forms() {
                     />
                   </div>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="preview" className="mt-4">
+                <FormPreview
+                  fields={newForm.fields}
+                  settings={newForm.settings}
+                  formName={newForm.name || 'Pré-visualização'}
+                  formDescription={newForm.description}
+                />
               </TabsContent>
             </Tabs>
 
@@ -385,17 +398,26 @@ export default function Forms() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div>
+              <div className="space-y-4">
                 <FormFieldEditor
                   fields={editingForm?.fields ?? []}
                   onChange={(fields) => setEditingForm(prev => prev ? { ...prev, fields } : null)}
                 />
+                <div>
+                  <Label className="text-sm font-semibold mb-3 block">Aparência & Layout</Label>
+                  <FormStyleEditor
+                    settings={editingForm?.settings ?? DEFAULT_SETTINGS}
+                    onChange={(settings) => setEditingForm(prev => prev ? { ...prev, settings } : null)}
+                  />
+                </div>
               </div>
               <div>
-                <Label className="text-sm font-semibold mb-3 block">Aparência & Layout</Label>
-                <FormStyleEditor
+                <Label className="text-sm font-semibold mb-3 block">Pré-visualização</Label>
+                <FormPreview
+                  fields={editingForm?.fields ?? []}
                   settings={editingForm?.settings ?? DEFAULT_SETTINGS}
-                  onChange={(settings) => setEditingForm(prev => prev ? { ...prev, settings } : null)}
+                  formName={editingForm?.name}
+                  formDescription={editingForm?.description}
                 />
               </div>
             </div>

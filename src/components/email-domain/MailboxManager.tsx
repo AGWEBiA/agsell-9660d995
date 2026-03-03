@@ -43,11 +43,12 @@ export default function MailboxManager({ domainId, domain }: MailboxManagerProps
     name: '', prefix: '',
     link_facebook: '', link_instagram: '', link_youtube: '',
     link_whatsapp: '', link_telegram: '', signature: '', address: '',
+    daily_limit: 500,
   });
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', prefix: '', link_facebook: '', link_instagram: '', link_youtube: '', link_whatsapp: '', link_telegram: '', signature: '', address: '' });
+    setForm({ name: '', prefix: '', link_facebook: '', link_instagram: '', link_youtube: '', link_whatsapp: '', link_telegram: '', signature: '', address: '', daily_limit: 500 });
     setShowDialog(true);
   };
 
@@ -58,6 +59,7 @@ export default function MailboxManager({ domainId, domain }: MailboxManagerProps
       link_facebook: m.link_facebook || '', link_instagram: m.link_instagram || '',
       link_youtube: m.link_youtube || '', link_whatsapp: m.link_whatsapp || '',
       link_telegram: m.link_telegram || '', signature: m.signature || '', address: m.address || '',
+      daily_limit: m.daily_limit ?? 500,
     });
     setShowDialog(true);
   };
@@ -203,6 +205,11 @@ export default function MailboxManager({ domainId, domain }: MailboxManagerProps
             <div className="space-y-2">
               <Label className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />Endereço</Label>
               <Input placeholder="Rua..." value={form.address} onChange={e => setForm({...form, address: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1"><Mail className="h-3.5 w-3.5" />Limite Diário de Envios</Label>
+              <Input type="number" min={1} max={10000} placeholder="500" value={form.daily_limit} onChange={e => setForm({...form, daily_limit: parseInt(e.target.value) || 0})} />
+              <p className="text-xs text-muted-foreground">Quantidade máxima de e-mails que podem ser enviados por dia por esta caixa postal.</p>
             </div>
           </div>
           <DialogFooter>

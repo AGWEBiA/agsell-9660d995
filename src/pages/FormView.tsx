@@ -160,11 +160,9 @@ export default function FormView() {
 
     setSubmitting(true);
     try {
-      const { error, data: submission } = await supabase
+      const { error } = await supabase
         .from('form_submissions')
-        .insert({ form_id: formId, data: formData })
-        .select()
-        .single();
+        .insert({ form_id: formId, data: formData });
       if (error) throw error;
 
       try {
@@ -184,7 +182,7 @@ export default function FormView() {
             await Promise.allSettled(
               automations.map((a) =>
                 supabase.functions.invoke('process-automation', {
-                  body: { automation_id: a.id, contact_id: submission?.contact_id ?? null, trigger_event: 'form_submitted' },
+                  body: { automation_id: a.id, contact_id: null, trigger_event: 'form_submitted' },
                 })
               )
             );

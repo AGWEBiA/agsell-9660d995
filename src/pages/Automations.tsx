@@ -45,6 +45,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAutomations } from '@/hooks/useAutomations';
+import { useForms } from '@/hooks/useForms';
 import { AutomationActionsEditor, Action } from '@/components/automations/AutomationActionsEditor';
 import { AutomationTemplates, automationTemplates, type AutomationTemplate } from '@/components/automations/AutomationTemplates';
 import { PageHeader, EmptyState, FormField } from '@/components/ui/help-tooltip';
@@ -72,6 +73,7 @@ const triggerTypes = [
 export default function Automations() {
   const navigate = useNavigate();
   const { automations, isLoading, createAutomation, updateAutomation, toggleAutomation, deleteAutomation } = useAutomations();
+  const { forms } = useForms();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false);
@@ -80,19 +82,26 @@ export default function Automations() {
     name: '',
     trigger_type: '',
     channel: '',
+    form_id: '',
   });
   const [editActions, setEditActions] = useState<Action[]>([]);
 
   const handleCreate = () => {
     if (!newAutomation.name || !newAutomation.trigger_type || !newAutomation.channel) return;
+    if (newAutomation.trigger_type === 'form_submitted' && !newAutomation.form_id) return;
     createAutomation.mutate({
       name: newAutomation.name,
       trigger_type: newAutomation.trigger_type,
       is_active: false,
       actions: [],
-      trigger_config: { channel: newAutomation.channel },
+      trigger_config: {
+        channel: newAutomation.channel,
+        ...(newAutomation.trigger_type === 'form_submitted' && newAutomation.form_id
+          ? { form_id: newAutomation.form_id, form_name: forms.find(f => f.id === newAutomation.form_id)?.name || '' }
+          : {}),
+      },
     });
-    setNewAutomation({ name: '', trigger_type: '', channel: '' });
+    setNewAutomation({ name: '', trigger_type: '', channel: '', form_id: '' });
     setIsDialogOpen(false);
   };
 
@@ -218,6 +227,26 @@ export default function Automations() {
                   </SelectContent>
                 </Select>
               </FormField>
+              {newAutomation.trigger_type === 'form_submitted' && (
+                <FormField label="Formulário" required helpText="Selecione qual formulário vai disparar esta automação">
+                  <Select
+                    value={newAutomation.form_id}
+                    onValueChange={(value) => setNewAutomation(prev => ({ ...prev, form_id: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um formulário" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {forms.map(f => (
+                        <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                      ))}
+                      {forms.length === 0 && (
+                        <SelectItem value="_none" disabled>Nenhum formulário criado</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </FormField>
+              )}
               <FormField label="Canal" required helpText="Por qual canal a automação vai atuar">
                 <div className="grid grid-cols-3 gap-2">
                   {channelTypes.map((ch) => {

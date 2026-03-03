@@ -52,6 +52,7 @@ import Admin from "./pages/Admin";
 import ApiKeys from "./pages/ApiKeys";
 import Webhooks from "./pages/Webhooks";
 import EmailDomain from "./pages/EmailDomain";
+import EmailInbox from "./pages/EmailInbox";
 import InboxSettings from "./pages/InboxSettings";
 import InboxReports from "./pages/InboxReports";
 import SystemGuide from "./pages/SystemGuide";
@@ -106,6 +107,7 @@ const App = () => (
                     <Route path="inbox-settings" element={<InboxSettings />} />
                     <Route path="inbox-reports" element={<InboxReports />} />
                     <Route path="email" element={<FeatureRequiredPage feature="email_marketing" featureLabel="E-mail Marketing"><Email /></FeatureRequiredPage>} />
+                    <Route path="email-inbox" element={<FeatureRequiredPage feature="email_marketing" featureLabel="Caixa de E-mail"><EmailInbox /></FeatureRequiredPage>} />
                     <Route path="whatsapp" element={<FeatureRequiredPage feature="whatsapp" featureLabel="WhatsApp Business"><WhatsApp /></FeatureRequiredPage>} />
                     <Route path="instagram" element={<FeatureRequiredPage feature="instagram" featureLabel="Instagram"><InstagramPage /></FeatureRequiredPage>} />
                     <Route path="whatsapp-flows" element={<FeatureRequiredPage feature="whatsapp" featureLabel="WhatsApp Flows"><WhatsAppFlowsPage /></FeatureRequiredPage>} />

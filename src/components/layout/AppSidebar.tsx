@@ -69,8 +69,9 @@ const menuSections: MenuSection[] = [
     icon: MessageSquare,
     items: [
       { label: 'SAC', icon: Inbox, path: '/inbox' },
+      { label: 'Caixa de E-mail', icon: Mail, path: '/email-inbox', featureRequired: 'email_marketing' },
       { label: 'WhatsApp', icon: MessageSquare, path: '/whatsapp', featureRequired: 'whatsapp' },
-      { label: 'E-mail', icon: Mail, path: '/email', featureRequired: 'email_marketing' },
+      { label: 'E-mail Marketing', icon: Send, path: '/email', featureRequired: 'email_marketing' },
       { label: 'Instagram', icon: Instagram, path: '/instagram', featureRequired: 'instagram' },
     ],
   },

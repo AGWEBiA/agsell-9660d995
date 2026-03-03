@@ -640,6 +640,75 @@ export type Database = {
           },
         ]
       }
+      checkout_leads: {
+        Row: {
+          billing_cycle: string | null
+          converted: boolean | null
+          converted_at: string | null
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          organization_id: string | null
+          organization_name: string | null
+          plan_id: string | null
+          source: string | null
+          status: string | null
+          stripe_customer_id: string | null
+          stripe_session_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          billing_cycle?: string | null
+          converted?: boolean | null
+          converted_at?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          name: string
+          organization_id?: string | null
+          organization_name?: string | null
+          plan_id?: string | null
+          source?: string | null
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          billing_cycle?: string | null
+          converted?: boolean | null
+          converted_at?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          organization_id?: string | null
+          organization_name?: string | null
+          plan_id?: string | null
+          source?: string | null
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkout_leads_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkout_leads_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           address: string | null

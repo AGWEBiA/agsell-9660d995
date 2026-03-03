@@ -216,6 +216,12 @@ async function handleNewUserSignup(
     organizationName,
   });
 
+  // Mark checkout lead as converted
+  await supabase
+    .from('checkout_leads')
+    .update({ converted: true, converted_at: new Date().toISOString(), status: 'converted', organization_id: orgIdStr })
+    .eq('email', email);
+
   console.log("New user account created successfully:", email);
 }
 

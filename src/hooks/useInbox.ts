@@ -4,25 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import { useEffect } from 'react';
-import type { Tables, TablesInsert } from '@/integrations/supabase/types';
-
-type Conversation = Tables<'conversations'>;
-type Message = Tables<'messages'>;
-type ConversationInsert = TablesInsert<'conversations'>;
-type MessageInsert = TablesInsert<'messages'>;
-
-type ConversationWithContact = Conversation & {
-  contacts: {
-    id: string;
-    first_name: string;
-    last_name: string | null;
-    email: string | null;
-    phone: string | null;
-    whatsapp: string | null;
-    lead_score: number | null;
-  } | null;
-  messages: Message[];
-};
 
 export function useInbox() {
   const { user } = useAuth();
@@ -38,137 +19,104 @@ export function useInbox() {
         .select(`
           *,
           contacts (
-            id,
-            first_name,
-            last_name,
-            email,
-            phone,
-            whatsapp,
-            lead_score
+            id, first_name, last_name, email, phone, whatsapp, lead_score
           ),
           messages (
-            id,
-            content,
-            sender_type,
-            is_read,
-            created_at,
-            message_type,
-            media_url,
-            media_mime_type,
-            file_name
+            id, content, sender_type, is_read, created_at,
+            message_type, media_url, media_mime_type, file_name
           )
         `)
         .eq('user_id', user.id)
         .order('last_message_at', { ascending: false });
-      
       if (error) throw error;
-      return data as ConversationWithContact[];
+      return data as any[];
     },
     enabled: !!user?.id,
   });
 
-  // Realtime subscription for new messages and conversation updates
+  // Realtime
   useEffect(() => {
     if (!user?.id) return;
-
     const channel = supabase
       .channel('inbox-realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'messages' },
-        () => { queryClient.invalidateQueries({ queryKey: ['conversations'] }); }
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'conversations' },
-        () => { queryClient.invalidateQueries({ queryKey: ['conversations'] }); }
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' },
+        () => { queryClient.invalidateQueries({ queryKey: ['conversations'] }); })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' },
+        () => { queryClient.invalidateQueries({ queryKey: ['conversations'] }); })
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [user?.id, queryClient]);
 
   const createConversation = useMutation({
-    mutationFn: async (conversation: Omit<ConversationInsert, 'user_id'>) => {
-      if (!user?.id) throw new Error('User not authenticated');
+    mutationFn: async (conversation: { contact_id: string; channel: string }) => {
+      if (!user?.id) throw new Error('Not authenticated');
       const { data, error } = await supabase
         .from('conversations')
-        .insert({ ...conversation, user_id: user.id, organization_id: currentOrganization?.id || null })
+        .insert({
+          ...conversation,
+          user_id: user.id,
+          organization_id: currentOrganization?.id || null,
+        } as any)
         .select()
         .single();
-      
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-    },
-    onError: (error) => {
-      toast.error('Erro ao criar conversa: ' + error.message);
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['conversations'] }),
+    onError: (e) => toast.error('Erro ao criar conversa: ' + e.message),
   });
 
   const sendMessage = useMutation({
-    mutationFn: async (message: MessageInsert) => {
+    mutationFn: async (message: any) => {
       const { data, error } = await supabase
         .from('messages')
         .insert(message)
         .select()
         .single();
-      
       if (error) throw error;
 
-      // Update last_message_at and ensure metadata has sender ID for routing replies
+      // Update conversation + track first response
       const conv = conversationsQuery.data?.find(c => c.id === message.conversation_id);
+      const updates: Record<string, any> = {
+        last_message_at: new Date().toISOString(),
+      };
+
+      // Track first_response_at
+      if (message.sender_type === 'user' && conv && !conv.first_response_at) {
+        updates.first_response_at = new Date().toISOString();
+      }
+
+      // WhatsApp metadata
       const contactPhone = conv?.contacts?.whatsapp || conv?.contacts?.phone;
-      const cleanPhone = contactPhone ? contactPhone.replace(/\D/g, "") : null;
-      
-      const existingMetadata = (conv?.metadata as Record<string, string> | null) || {};
-      const updatedMetadata: Record<string, string> = conv?.channel === 'whatsapp' && cleanPhone
-        ? { ...existingMetadata, whatsapp_sender_id: cleanPhone }
-        : { ...existingMetadata };
+      const cleanPhone = contactPhone ? contactPhone.replace(/\D/g, '') : null;
+      const existingMeta = (conv?.metadata as Record<string, string> | null) || {};
+      if (conv?.channel === 'whatsapp' && cleanPhone) {
+        updates.metadata = { ...existingMeta, whatsapp_sender_id: cleanPhone };
+      }
 
-      await supabase
-        .from('conversations')
-        .update({ 
-          last_message_at: new Date().toISOString(),
-          metadata: updatedMetadata as unknown as Record<string, string>,
-        })
-        .eq('id', message.conversation_id);
+      await supabase.from('conversations').update(updates).eq('id', message.conversation_id);
 
-      // Actually send via WhatsApp if channel is whatsapp
+      // Send via WhatsApp if applicable
       if (conv?.channel === 'whatsapp' && contactPhone) {
         try {
-          const { data: whatsappResult, error: whatsappError } = await supabase.functions.invoke('send-whatsapp', {
+          const { data: r, error: we } = await supabase.functions.invoke('send-whatsapp', {
             body: {
               organization_id: currentOrganization?.id,
               to: contactPhone,
               message: message.content,
             },
           });
-          if (whatsappError) {
-            console.error('WhatsApp send error:', whatsappError);
-            toast.error('Mensagem salva, mas falhou ao enviar via WhatsApp');
-          } else if (whatsappResult?.error) {
-            console.error('WhatsApp API error:', whatsappResult.error);
-            toast.error(`Erro WhatsApp: ${whatsappResult.error}`);
-          }
-        } catch (err) {
-          console.error('WhatsApp invoke error:', err);
+          if (we) toast.error('Mensagem salva, mas falhou ao enviar via WhatsApp');
+          else if (r?.error) toast.error(`Erro WhatsApp: ${r.error}`);
+        } catch {
           toast.error('Falha ao enviar mensagem via WhatsApp');
         }
       }
 
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-    },
-    onError: (error) => {
-      toast.error('Erro ao enviar mensagem: ' + error.message);
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['conversations'] }),
+    onError: (e) => toast.error('Erro ao enviar mensagem: ' + e.message),
   });
 
   const markAsRead = useMutation({
@@ -178,33 +126,27 @@ export function useInbox() {
         .update({ is_read: true })
         .eq('conversation_id', conversationId)
         .eq('is_read', false);
-      
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['conversations'] }),
   });
 
-  const updateConversationStatus = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+  const updateConversation = useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string } & Record<string, any>) => {
       const { data, error } = await supabase
         .from('conversations')
-        .update({ status })
+        .update(updates)
         .eq('id', id)
         .select()
         .single();
-      
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      toast.success('Status atualizado!');
+      toast.success('Ticket atualizado!');
     },
-    onError: (error) => {
-      toast.error('Erro ao atualizar status: ' + error.message);
-    },
+    onError: (e) => toast.error('Erro: ' + e.message),
   });
 
   return {
@@ -214,6 +156,6 @@ export function useInbox() {
     createConversation,
     sendMessage,
     markAsRead,
-    updateConversationStatus,
+    updateConversation,
   };
 }

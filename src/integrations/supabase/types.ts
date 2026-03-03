@@ -813,43 +813,93 @@ export type Database = {
           },
         ]
       }
+      conversation_notes: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_notes_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversations: {
         Row: {
           assigned_to: string | null
+          category: string | null
           channel: string
           contact_id: string | null
           created_at: string
+          first_response_at: string | null
           id: string
           last_message_at: string | null
           metadata: Json | null
           organization_id: string | null
+          priority: string
+          protocol_number: string | null
+          resolved_at: string | null
           status: string | null
+          tags: string[]
           updated_at: string
           user_id: string
         }
         Insert: {
           assigned_to?: string | null
+          category?: string | null
           channel?: string
           contact_id?: string | null
           created_at?: string
+          first_response_at?: string | null
           id?: string
           last_message_at?: string | null
           metadata?: Json | null
           organization_id?: string | null
+          priority?: string
+          protocol_number?: string | null
+          resolved_at?: string | null
           status?: string | null
+          tags?: string[]
           updated_at?: string
           user_id: string
         }
         Update: {
           assigned_to?: string | null
+          category?: string | null
           channel?: string
           contact_id?: string | null
           created_at?: string
+          first_response_at?: string | null
           id?: string
           last_message_at?: string | null
           metadata?: Json | null
           organization_id?: string | null
+          priority?: string
+          protocol_number?: string | null
+          resolved_at?: string | null
           status?: string | null
+          tags?: string[]
           updated_at?: string
           user_id?: string
         }
@@ -2426,6 +2476,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      quick_replies: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string
+          created_by: string
+          id: string
+          is_active: boolean
+          organization_id: string
+          shortcut: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string
+          created_by: string
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          shortcut?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          shortcut?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quick_replies_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sac_agents: {
         Row: {

@@ -267,6 +267,7 @@ Deno.serve(async (req) => {
         const configuredInstance = typeof config.instance_name === "string" ? config.instance_name : "";
         return normalizeInstanceName(configuredInstance) === normalizedIncomingInstance;
       });
+      const integrationConfig = integration ? (integration.config || {}) as Record<string, string> : {};
 
       if (integration) {
         const { data: orgOwner } = await supabase
@@ -307,40 +308,121 @@ Deno.serve(async (req) => {
           let mediaCaption: string | null = null;
 
           if (messageData?.imageMessage) {
-            mediaUrl = messageData.imageMessage.url || messageData.imageMessage.directPath || null;
             mediaMimeType = messageData.imageMessage.mimetype || "image/jpeg";
             messageType = "image";
             mediaCaption = messageData.imageMessage.caption || null;
           } else if (messageData?.audioMessage) {
-            mediaUrl = messageData.audioMessage.url || messageData.audioMessage.directPath || null;
             mediaMimeType = messageData.audioMessage.mimetype || "audio/ogg";
             messageType = "audio";
           } else if (messageData?.videoMessage) {
-            mediaUrl = messageData.videoMessage.url || messageData.videoMessage.directPath || null;
             mediaMimeType = messageData.videoMessage.mimetype || "video/mp4";
             messageType = "video";
             mediaCaption = messageData.videoMessage.caption || null;
           } else if (messageData?.documentMessage) {
-            mediaUrl = messageData.documentMessage.url || messageData.documentMessage.directPath || null;
             mediaMimeType = messageData.documentMessage.mimetype || "application/octet-stream";
             messageType = "document";
             fileName = messageData.documentMessage.fileName || messageData.documentMessage.title || null;
             mediaCaption = messageData.documentMessage.caption || null;
           } else if (messageData?.stickerMessage) {
-            mediaUrl = messageData.stickerMessage.url || messageData.stickerMessage.directPath || null;
             mediaMimeType = messageData.stickerMessage.mimetype || "image/webp";
             messageType = "image";
           }
 
-          // Also check Evolution API v2 format with base64 media
-          if (!mediaUrl && data.message?.base64) {
-            mediaUrl = `data:${mediaMimeType || "application/octet-stream"};base64,${data.message.base64}`;
-          }
-          if (!mediaUrl && data.message?.mediaUrl) {
-            mediaUrl = data.message.mediaUrl;
+          const hasMedia = messageType !== "text";
+
+          // Download media via Evolution API getBase64 and upload to Storage
+          if (hasMedia && keyData.id) {
+            try {
+              const evoUrl = integrationConfig.server_url || integrationConfig.api_url || "";
+              const evoApiKey = integrationConfig.api_key || integrationConfig.global_api_key || "";
+              const evoInstance = integrationConfig.instance_name || instanceName;
+
+              if (evoUrl && evoApiKey) {
+                // Use Evolution API v2 getBase64 endpoint
+                const base64Url = `${evoUrl.replace(/\/$/, "")}/chat/getBase64FromMediaMessage/${encodeURIComponent(evoInstance)}`;
+                const base64Resp = await fetch(base64Url, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "apikey": evoApiKey,
+                  },
+                  body: JSON.stringify({
+                    message: { key: keyData },
+                    convertToMp4: messageType === "audio",
+                  }),
+                });
+
+                if (base64Resp.ok) {
+                  const base64Data = await base64Resp.json();
+                  const base64String = base64Data.base64 || base64Data.data || "";
+
+                  if (base64String) {
+                    // Convert base64 to binary
+                    const cleanBase64 = base64String.includes(",") ? base64String.split(",")[1] : base64String;
+                    const binaryString = atob(cleanBase64);
+                    const bytes = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                      bytes[i] = binaryString.charCodeAt(i);
+                    }
+
+                    // Determine file extension
+                    const extMap: Record<string, string> = {
+                      "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif",
+                      "audio/ogg": "ogg", "audio/ogg; codecs=opus": "ogg", "audio/mpeg": "mp3", "audio/mp4": "m4a",
+                      "video/mp4": "mp4", "application/pdf": "pdf",
+                    };
+                    const ext = extMap[mediaMimeType || ""] || mediaMimeType?.split("/")[1]?.split(";")[0] || "bin";
+                    const storagePath = `${integration.organization_id}/${crypto.randomUUID()}.${ext}`;
+                    const cleanMime = (mediaMimeType || "application/octet-stream").split(";")[0].trim();
+
+                    const { error: uploadError } = await supabase.storage
+                      .from("inbox-attachments")
+                      .upload(storagePath, bytes.buffer, {
+                        contentType: cleanMime,
+                        upsert: false,
+                      });
+
+                    if (!uploadError) {
+                      const { data: publicUrlData } = supabase.storage
+                        .from("inbox-attachments")
+                        .getPublicUrl(storagePath);
+                      mediaUrl = publicUrlData.publicUrl;
+                      console.log(`Media uploaded to storage: ${storagePath}`);
+                    } else {
+                      console.error("Storage upload error:", uploadError);
+                    }
+                  }
+                } else {
+                  console.error("Evolution getBase64 failed:", base64Resp.status, await base64Resp.text().catch(() => ""));
+                }
+              }
+            } catch (mediaErr) {
+              console.error("Error downloading media:", mediaErr);
+            }
           }
 
-          const hasMedia = Boolean(mediaUrl || messageData?.imageMessage || messageData?.videoMessage || messageData?.audioMessage || messageData?.documentMessage);
+          // Also check if Evolution API v2 sent base64 directly in the payload
+          if (!mediaUrl && data.message?.base64 && hasMedia) {
+            try {
+              const b64 = data.message.base64;
+              const cleanB64 = b64.includes(",") ? b64.split(",")[1] : b64;
+              const bin = atob(cleanB64);
+              const bytes = new Uint8Array(bin.length);
+              for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+              const ext = mediaMimeType?.split("/")[1]?.split(";")[0] || "bin";
+              const storagePath = `${integration.organization_id}/${crypto.randomUUID()}.${ext}`;
+              const cleanMime = (mediaMimeType || "application/octet-stream").split(";")[0].trim();
+              const { error: upErr } = await supabase.storage
+                .from("inbox-attachments")
+                .upload(storagePath, bytes.buffer, { contentType: cleanMime, upsert: false });
+              if (!upErr) {
+                const { data: pubUrl } = supabase.storage.from("inbox-attachments").getPublicUrl(storagePath);
+                mediaUrl = pubUrl.publicUrl;
+              }
+            } catch (e) {
+              console.error("Error uploading inline base64:", e);
+            }
+          }
 
           // Ignore delivery/read status updates that are not real inbound messages
           const isStatusOnly = !messageText && !hasMedia;

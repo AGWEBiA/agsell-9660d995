@@ -52,6 +52,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import { PhoneInput } from '@/components/ui/phone-input';
 import { useContacts, useCreateContact, useUpdateContact, useDeleteContact, type Contact, type CreateContactData } from '@/hooks/useContacts';
 import { PageHeader, EmptyState, FormField } from '@/components/ui/help-tooltip';
 import { useCompanies } from '@/hooks/useCompanies';
@@ -236,11 +237,10 @@ export default function Contacts() {
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="phone">Telefone</Label>
-                  <Input
+                  <PhoneInput
                     id="phone"
-                    value={newContact.phone}
-                    onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })}
-                    placeholder="(00) 00000-0000"
+                    value={newContact.phone || ''}
+                    onChange={(v) => setNewContact({ ...newContact, phone: v })}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -575,11 +575,11 @@ export default function Contacts() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label>Telefone</Label>
-                  <Input value={editContact.phone || ''} onChange={(e) => setEditContact({ ...editContact, phone: e.target.value })} />
+                  <PhoneInput value={editContact.phone || ''} onChange={(v) => setEditContact({ ...editContact, phone: v })} />
                 </div>
                 <div className="grid gap-2">
                   <Label>WhatsApp</Label>
-                  <Input value={editContact.whatsapp || ''} onChange={(e) => setEditContact({ ...editContact, whatsapp: e.target.value })} />
+                  <PhoneInput value={editContact.whatsapp || ''} onChange={(v) => setEditContact({ ...editContact, whatsapp: v })} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">

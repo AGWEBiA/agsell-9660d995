@@ -28,30 +28,6 @@ export function useEmailDomains() {
       const currentOrgId = currentOrganization?.id;
       if (!currentOrgId) throw new Error('Organização não selecionada. Selecione uma organização antes de continuar.');
 
-      const dnsRecords = [
-        {
-          type: 'TXT',
-          name: domain,
-          value: `v=spf1 include:amazonses.com include:resend.com ~all`,
-          purpose: 'SPF',
-          description: 'Autoriza o provedor de e-mail a enviar em nome do seu domínio',
-        },
-        {
-          type: 'CNAME',
-          name: `default._domainkey.${domain}`,
-          value: `default._domainkey.${domain}.d.{provider}`,
-          purpose: 'DKIM',
-          description: 'Assinatura digital para autenticar e-mails enviados',
-        },
-        {
-          type: 'TXT',
-          name: `_dmarc.${domain}`,
-          value: `v=DMARC1; p=quarantine; rua=mailto:dmarc@${domain}; pct=100`,
-          purpose: 'DMARC',
-          description: 'Política de autenticação e relatórios de e-mail',
-        },
-      ];
-
       const { data, error } = await supabase
         .from('email_domains' as any)
         .insert({
@@ -59,7 +35,6 @@ export function useEmailDomains() {
           domain,
           from_email: from_email || `noreply@${domain}`,
           from_name: from_name || '',
-          dns_records: dnsRecords,
         })
         .select()
         .single();
@@ -67,9 +42,13 @@ export function useEmailDomains() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['email_domains', orgId] });
-      toast.success('Domínio adicionado! Configure os registros DNS para verificação.');
+      toast.success('Domínio adicionado! Registrando no provedor e buscando registros DNS...');
+      // Auto-trigger verification to register on Resend and get real DNS records
+      if (data?.id) {
+        verifyDomain.mutate(data.id);
+      }
     },
     onError: (error: any) => {
       if (error.message?.includes('duplicate key')) {

@@ -79,11 +79,8 @@ const menuSections: MenuSection[] = [
     label: 'Marketing',
     icon: Megaphone,
     items: [
-      { label: 'Automações', icon: Zap, path: '/automations', featureRequired: 'automacoes' },
-      { label: 'Flow Builder', icon: Workflow, path: '/flow-builder', featureRequired: 'automacoes' },
-      { label: 'WhatsApp Flows', icon: ListChecks, path: '/whatsapp-flows', featureRequired: 'whatsapp' },
+      { label: 'Automações', icon: Workflow, path: '/flow-builder', featureRequired: 'automacoes' },
       { label: 'Lead Scoring', icon: Target, path: '/lead-scoring', featureRequired: 'lead_scoring' },
-      { label: 'Sequências', icon: GitBranch, path: '/sequences' },
       { label: 'Testes A/B', icon: FlaskConical, path: '/ab-tests' },
       { label: 'Growth Tools', icon: Rocket, path: '/growth-tools' },
       { label: 'Formulários', icon: FileText, path: '/forms' },

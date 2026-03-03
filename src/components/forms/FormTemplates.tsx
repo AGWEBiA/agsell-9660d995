@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { FileText, Mail, ClipboardList, MessageSquare, UserPlus, Star, ShoppingCart, Calendar } from 'lucide-react';
+import { FileText, Mail, ClipboardList, MessageSquare, UserPlus, Star, ShoppingCart, Calendar, Video } from 'lucide-react';
 import type { FormField } from './FormFieldEditor';
 
 export interface FormTemplate {
@@ -164,6 +164,29 @@ const TEMPLATES: FormTemplate[] = [
       { name: 'description', label: 'Descrição', type: 'textarea', required: true, placeholder: 'Descreva o problema em detalhes...' },
     ],
     settings: { ...DEFAULT_SETTINGS, layout: 'two-columns', buttonText: 'Abrir Chamado' },
+  },
+  {
+    id: 'webinar',
+    name: 'Inscrição Webinar / Live',
+    description: 'Formulário estilo landing page para inscrição em lives e webinars. Campos lado a lado com radio.',
+    icon: <Video className="h-6 w-6" />,
+    category: 'Eventos',
+    fields: [
+      { name: 'name', label: 'Nome', type: 'text', required: true, placeholder: 'Nome' },
+      { name: 'whatsapp', label: 'Seu WhatsApp', type: 'tel', required: true, placeholder: 'Seu whatsapp' },
+      { name: 'email', label: 'E-mail', type: 'email', required: true, placeholder: 'E-mail' },
+      { name: 'experience', label: 'Experiência', type: 'radio', required: false, options: ['Já invisto', 'Ainda não invisto'] },
+    ],
+    settings: {
+      ...DEFAULT_SETTINGS,
+      layout: 'two-columns',
+      labelPosition: 'hidden',
+      buttonText: 'QUERO GARANTIR MINHA VAGA',
+      primaryColor: '#3b82f6',
+      borderRadius: '8',
+      showBorder: false,
+      shadow: 'none',
+    },
   },
 ];
 

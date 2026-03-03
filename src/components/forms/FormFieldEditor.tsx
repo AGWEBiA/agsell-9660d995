@@ -23,6 +23,7 @@ const FIELD_TYPES = [
   { value: 'number', label: 'Número' },
   { value: 'textarea', label: 'Texto longo' },
   { value: 'select', label: 'Seleção' },
+  { value: 'radio', label: 'Opção única (Radio)' },
   { value: 'checkbox', label: 'Checkbox' },
   { value: 'url', label: 'URL' },
 ];
@@ -178,7 +179,7 @@ export function FormFieldEditor({ fields, onChange }: Props) {
               </div>
             </div>
 
-            {field.type === 'select' && (
+            {(field.type === 'select' || field.type === 'radio') && (
               <div className="space-y-1">
                 <Label className="text-xs">Opções (separadas por vírgula)</Label>
                 <OptionsInput

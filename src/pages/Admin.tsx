@@ -39,6 +39,7 @@ import { UsersManagement } from '@/components/admin/UsersManagement';
 import { AssignPlanDialog } from '@/components/admin/AssignPlanDialog';
 import { FinancialDashboard } from '@/components/admin/FinancialDashboard';
 import { EvolutionAPIGlobalConfig } from '@/components/admin/EvolutionAPIGlobalConfig';
+import { SystemOverviewDashboard } from '@/components/admin/SystemOverviewDashboard';
 
 export default function Admin() {
   const { user, isAdmin, loading: isCheckingAdmin } = useAuth();
@@ -177,10 +178,14 @@ export default function Admin() {
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Visão Geral
+          </TabsTrigger>
+          <TabsTrigger value="system-data" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            Dados do Sistema
           </TabsTrigger>
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
@@ -402,6 +407,10 @@ export default function Admin() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="system-data">
+          <SystemOverviewDashboard />
         </TabsContent>
 
         <TabsContent value="users">

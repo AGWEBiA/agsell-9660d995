@@ -41,6 +41,7 @@ import { WarmupNodeConfig } from '@/components/flow-builder/WarmupNodeConfig';
 import { EmailNodeConfig } from '@/components/flow-builder/EmailNodeConfig';
 import { TagFilterNodeConfig } from '@/components/flow-builder/TagFilterNodeConfig';
 import { WhatsAppNodeConfig } from '@/components/flow-builder/WhatsAppNodeConfig';
+import { ConditionalNodeConfig } from '@/components/flow-builder/ConditionalNodeConfig';
 
 // ─── Node Component ───
 function FlowNodeCard({ node, onEdit, onDelete, onAddAfter }: {
@@ -66,6 +67,16 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter }: {
       case 'tag_filter':
         const entryTags = (c.entry_tags as string[]) || [];
         return entryTags.length > 0 ? `Tags: ${entryTags.join(', ')}` : '';
+      case 'conditional':
+      case 'if_tag':
+      case 'if_keyword':
+      case 'if_score': {
+        const conditions = (c.conditions as Array<{ field: string; value: string }>) || [];
+        if (conditions.length > 0) {
+          return conditions.map(cond => `${cond.field}${cond.value ? `: ${cond.value}` : ''}`).join(', ');
+        }
+        return '';
+      }
       default:
         return '';
     }
@@ -401,7 +412,10 @@ function NodeConfigDialog({ node, open, onClose, onSave }: {
       case 'abandonment':
         return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Detecta leads que abandonaram o fluxo sem converter.</p><div className="flex gap-2"><div className="flex-1"><Label>Tempo de inatividade</Label><Input type="number" min={1} value={String(config.inactivity_duration || 30)} onChange={e => setConfig({ ...config, inactivity_duration: parseInt(e.target.value) || 30 })} /></div><div className="flex-1"><Label>Unidade</Label><Select value={String(config.inactivity_unit || 'minutes')} onValueChange={v => setConfig({ ...config, inactivity_unit: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="minutes">Minutos</SelectItem><SelectItem value="hours">Horas</SelectItem><SelectItem value="days">Dias</SelectItem></SelectContent></Select></div></div></div>);
       case 'conditional':
-        return (<div className="space-y-4"><div><Label>Campo para verificar</Label><Select value={String(config.field || 'tag')} onValueChange={v => setConfig({ ...config, field: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="tag">Tem Tag</SelectItem><SelectItem value="score">Score ≥</SelectItem><SelectItem value="email">Tem Email</SelectItem><SelectItem value="whatsapp">Tem WhatsApp</SelectItem><SelectItem value="source">Fonte do contato</SelectItem></SelectContent></Select></div>{config.field === 'tag' && (<div><Label>Tag</Label><Input placeholder="Ex: comprador" value={String(config.tag_name || '')} onChange={e => setConfig({ ...config, tag_name: e.target.value })} /></div>)}{config.field === 'score' && (<div><Label>Score mínimo</Label><Input type="number" placeholder="50" value={String(config.min_score || '')} onChange={e => setConfig({ ...config, min_score: parseInt(e.target.value) || 0 })} /></div>)}</div>);
+      case 'if_tag':
+      case 'if_keyword':
+      case 'if_score':
+        return <ConditionalNodeConfig config={config} onChange={setConfig} />;
 
       // ── Simple actions ──
       case 'send_email':
@@ -416,12 +430,6 @@ function NodeConfigDialog({ node, open, onClose, onSave }: {
         return (<div className="space-y-4"><div><Label>Título da Tarefa</Label><Input placeholder="Follow-up com lead" value={String(config.title || '')} onChange={e => setConfig({ ...config, title: e.target.value })} /></div><div><Label>Prazo (dias)</Label><Input type="number" placeholder="3" value={String(config.due_days || '')} onChange={e => setConfig({ ...config, due_days: parseInt(e.target.value) || 0 })} /></div></div>);
       case 'wait':
         return (<div className="flex gap-2"><div className="flex-1"><Label>Tempo</Label><Input type="number" placeholder="1" value={String(config.duration || '')} onChange={e => setConfig({ ...config, duration: parseInt(e.target.value) || 0 })} /></div><div className="flex-1"><Label>Unidade</Label><Select value={String(config.unit || 'hours')} onValueChange={v => setConfig({ ...config, unit: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="minutes">Minutos</SelectItem><SelectItem value="hours">Horas</SelectItem><SelectItem value="days">Dias</SelectItem></SelectContent></Select></div></div>);
-      case 'if_tag':
-        return (<div><Label>Tag para verificar</Label><Input placeholder="Ex: Lead Quente" value={String(config.tag_name || '')} onChange={e => setConfig({ ...config, tag_name: e.target.value })} /></div>);
-      case 'if_keyword':
-        return (<div><Label>Palavra para verificar</Label><Input placeholder="Ex: comprar" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /></div>);
-      case 'if_score':
-        return (<div><Label>Score mínimo</Label><Input type="number" placeholder="50" value={String(config.min_score || '')} onChange={e => setConfig({ ...config, min_score: parseInt(e.target.value) || 0 })} /></div>);
       default:
         return <p className="text-sm text-muted-foreground">Nenhuma configuração adicional necessária.</p>;
     }

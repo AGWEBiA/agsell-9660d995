@@ -87,7 +87,7 @@ export const nodeCategories = [
     ],
   },
   {
-    label: 'CRM',
+    label: 'CRM/E-mail',
     nodes: [
       { id: 'update_score', label: 'Atualizar Score', icon: Star, color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' },
       { id: 'send_notification', label: 'Notificar Equipe', icon: Bell, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },

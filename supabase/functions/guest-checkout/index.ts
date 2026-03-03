@@ -104,6 +104,20 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Save lead asynchronously (fire-and-forget, won't block checkout)
+    const leadPromise = supabase.from("checkout_leads").upsert(
+      {
+        email,
+        name,
+        organization_name: organizationName,
+        plan_id: planId,
+        billing_cycle: billingCycle,
+        status: "started",
+        source: "landing_page",
+      },
+      { onConflict: "email", ignoreDuplicates: false }
+    ).select("id").single();
+
     // Real Stripe checkout
     const stripe = new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" });
 
@@ -180,6 +194,17 @@ Deno.serve(async (req) => {
         is_new_user: 'true',
       },
     });
+
+    // Update lead with Stripe IDs (fire-and-forget)
+    const leadResult = await leadPromise;
+    if (leadResult.data?.id) {
+      supabase.from("checkout_leads").update({
+        stripe_customer_id: customerId,
+        stripe_session_id: session.id,
+        status: "redirected_to_stripe",
+        updated_at: new Date().toISOString(),
+      }).eq("id", leadResult.data.id).then(() => {});
+    }
 
     return new Response(
       JSON.stringify({ url: session.url }),

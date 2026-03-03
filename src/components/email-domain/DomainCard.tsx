@@ -88,17 +88,15 @@ export default function DomainCard({ domain, onVerify, onDelete, isVerifying }: 
 
           <div className="flex items-center gap-2">
             <StatusBadge status={domain.status} />
-            {!allVerified && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onVerify(domain.id)}
-                disabled={isVerifying}
-              >
-                <RefreshCw className={`h-4 w-4 mr-1 ${isVerifying ? 'animate-spin' : ''}`} />
-                Verificar
-              </Button>
-            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onVerify(domain.id)}
+              disabled={isVerifying}
+            >
+              <RefreshCw className={`h-4 w-4 mr-1 ${isVerifying ? 'animate-spin' : ''}`} />
+              {allVerified ? 'Reverificar' : 'Verificar'}
+            </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive h-8 w-8">

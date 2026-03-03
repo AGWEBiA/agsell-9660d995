@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -225,6 +226,17 @@ export default function FormView() {
                 ))}
               </SelectContent>
             </Select>
+          );
+        case 'radio':
+          return (
+            <RadioGroup value={value} onValueChange={onChangeFn} className="flex flex-wrap gap-4">
+              {(field.options || []).map(opt => (
+                <div key={opt} className="flex items-center gap-2">
+                  <RadioGroupItem value={opt} id={`${field.name}-${opt}`} />
+                  <Label htmlFor={`${field.name}-${opt}`} className="text-sm font-normal cursor-pointer">{opt}</Label>
+                </div>
+              ))}
+            </RadioGroup>
           );
         case 'checkbox':
           return (

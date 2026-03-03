@@ -60,8 +60,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Format phone number
-    const phoneNumber = whatsappReq.to.replace(/\D/g, "");
+    // Format phone number — ensure country code (default Brazil +55)
+    let phoneNumber = whatsappReq.to.replace(/\D/g, "");
+    if (phoneNumber.length >= 10 && phoneNumber.length <= 11 && !phoneNumber.startsWith("55")) {
+      phoneNumber = "55" + phoneNumber;
+    }
 
     // Try Evolution API first — use GLOBAL config + org instance name
     const { data: evolutionInt } = await supabase

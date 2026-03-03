@@ -142,15 +142,20 @@ export function useEmailCampaigns() {
         }
       }
 
-      // Update campaign stats
+      // Update campaign stats - mark as failed if no emails were sent
+      const finalStatus = sentCount > 0 ? 'sent' : 'failed';
       await supabase
         .from('email_campaigns')
         .update({
-          status: 'sent',
+          status: finalStatus,
           sent_count: sentCount,
-          sent_at: new Date().toISOString(),
+          sent_at: sentCount > 0 ? new Date().toISOString() : null,
         })
         .eq('id', campaignId);
+
+      if (sentCount === 0) {
+        throw new Error(`Nenhum e-mail foi entregue. ${failCount} falha(s). Verifique se o domínio de envio está verificado no provedor de e-mail.`);
+      }
 
       return { sentCount, failCount };
     },

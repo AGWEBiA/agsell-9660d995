@@ -405,10 +405,14 @@ export default function FormView() {
   return (
     <div className="agsell-form min-h-screen flex items-center justify-center p-4" style={containerStyle}>
       <Card className={cn("w-full max-w-lg", opacity < 100 && "bg-transparent")} style={cardStyle}>
-        <CardHeader>
-          <CardTitle style={s.textColor ? { color: s.textColor } : undefined}>{form.name}</CardTitle>
-          {form.description && <CardDescription>{form.description}</CardDescription>}
-        </CardHeader>
+        {(s.showTitle !== false || (s.showDescription !== false && form.description)) && (
+          <CardHeader>
+            {s.showTitle !== false && (
+              <CardTitle style={s.textColor ? { color: s.textColor } : undefined}>{form.name}</CardTitle>
+            )}
+            {s.showDescription !== false && form.description && <CardDescription>{form.description}</CardDescription>}
+          </CardHeader>
+        )}
         <CardContent>
           {s.layout === 'multi-step' && totalSteps > 1 && (
             <div className="mb-6 space-y-2">

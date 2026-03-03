@@ -223,10 +223,14 @@ export function FormPreview({ fields, settings, formName = 'Pré-visualização'
       >
         <div className="flex items-center justify-center p-4" style={containerStyle}>
           <Card className="w-full max-w-lg" style={cardStyle}>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg" style={s.textColor ? { color: s.textColor } : undefined}>{formName}</CardTitle>
-              {formDescription && <CardDescription className="text-xs">{formDescription}</CardDescription>}
-            </CardHeader>
+            {(s.showTitle !== false || (s.showDescription !== false && formDescription)) && (
+              <CardHeader className="pb-3">
+                {s.showTitle !== false && (
+                  <CardTitle className="text-lg" style={s.textColor ? { color: s.textColor } : undefined}>{formName}</CardTitle>
+                )}
+                {s.showDescription !== false && formDescription && <CardDescription className="text-xs">{formDescription}</CardDescription>}
+              </CardHeader>
+            )}
             <CardContent>
               {s.layout === 'multi-step' && totalSteps > 1 && (
                 <div className="mb-4 space-y-1.5">

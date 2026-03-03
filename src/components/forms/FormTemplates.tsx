@@ -31,6 +31,8 @@ export interface FormSettings {
   labelPosition: 'top' | 'left' | 'hidden';
   showBorder: boolean;
   shadow: 'none' | 'sm' | 'md' | 'lg';
+  showTitle: boolean;
+  showDescription: boolean;
 }
 
 export const DEFAULT_SETTINGS: FormSettings = {
@@ -49,6 +51,8 @@ export const DEFAULT_SETTINGS: FormSettings = {
   labelPosition: 'top',
   showBorder: true,
   shadow: 'md',
+  showTitle: true,
+  showDescription: true,
 };
 
 const TEMPLATES: FormTemplate[] = [

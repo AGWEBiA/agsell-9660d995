@@ -69,6 +69,16 @@ export function FormStyleEditor({ settings, onChange }: Props) {
         </div>
 
         <div className="flex items-center justify-between">
+          <Label className="text-xs">Exibir título do formulário</Label>
+          <Switch checked={settings.showTitle ?? true} onCheckedChange={(c) => update('showTitle', c)} />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <Label className="text-xs">Exibir descrição do formulário</Label>
+          <Switch checked={settings.showDescription ?? true} onCheckedChange={(c) => update('showDescription', c)} />
+        </div>
+
+        <div className="flex items-center justify-between">
           <Label className="text-xs">Mostrar borda</Label>
           <Switch checked={settings.showBorder} onCheckedChange={(c) => update('showBorder', c)} />
         </div>

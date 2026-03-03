@@ -242,7 +242,7 @@ export default function FormView() {
           );
         case 'radio':
           return (
-            <RadioGroup value={value} onValueChange={onChangeFn} className="flex flex-wrap gap-4">
+            <RadioGroup value={value} onValueChange={onChangeFn} className="flex flex-col gap-3">
               {(field.options || []).map(opt => (
                 <div key={opt} className="flex items-center gap-2">
                   <RadioGroupItem value={opt} id={`${field.name}-${opt}`} />

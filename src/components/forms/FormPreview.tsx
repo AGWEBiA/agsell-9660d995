@@ -108,7 +108,7 @@ export function FormPreview({ fields, settings, formName = 'Pré-visualização'
           );
         case 'radio':
           return (
-            <RadioGroup className="flex flex-wrap gap-4 pointer-events-none">
+            <RadioGroup className="flex flex-col gap-3 pointer-events-none">
               {(field.options || []).map(opt => (
                 <div key={opt} className="flex items-center gap-2">
                   <RadioGroupItem value={opt} id={`preview-${field.name}-${opt}`} />

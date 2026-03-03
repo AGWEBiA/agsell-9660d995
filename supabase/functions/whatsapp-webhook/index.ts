@@ -333,9 +333,22 @@ Deno.serve(async (req) => {
           // Download media via Evolution API getBase64 and upload to Storage
           if (hasMedia && keyData.id) {
             try {
-              const evoUrl = integrationConfig.server_url || integrationConfig.api_url || "";
-              const evoApiKey = integrationConfig.api_key || integrationConfig.global_api_key || "";
+              // Prefer instance config, fallback to global platform settings
+              let evoUrl = integrationConfig.server_url || integrationConfig.api_url || "";
+              let evoApiKey = integrationConfig.api_key || integrationConfig.global_api_key || "";
               const evoInstance = integrationConfig.instance_name || instanceName;
+
+              if (!evoUrl || !evoApiKey) {
+                const { data: globalEvoSetting } = await supabase
+                  .from("platform_settings")
+                  .select("value")
+                  .eq("key", "evolution_api")
+                  .maybeSingle();
+
+                const globalEvoValue = (globalEvoSetting?.value || {}) as Record<string, unknown>;
+                if (!evoUrl && typeof globalEvoValue.api_url === "string") evoUrl = globalEvoValue.api_url;
+                if (!evoApiKey && typeof globalEvoValue.api_key === "string") evoApiKey = globalEvoValue.api_key;
+              }
 
               if (evoUrl && evoApiKey) {
                 // Use Evolution API v2 getBase64 endpoint
@@ -395,6 +408,8 @@ Deno.serve(async (req) => {
                 } else {
                   console.error("Evolution getBase64 failed:", base64Resp.status, await base64Resp.text().catch(() => ""));
                 }
+              } else {
+                console.error("Evolution API credentials/URL not found (instance or global config)");
               }
             } catch (mediaErr) {
               console.error("Error downloading media:", mediaErr);

@@ -19,6 +19,7 @@ export interface FormSettings {
   layout: 'single' | 'two-columns' | 'multi-step' | 'inline';
   primaryColor: string;
   bgColor: string;
+  bgOpacity: number;
   textColor: string;
   borderRadius: string;
   fontFamily: string;
@@ -36,6 +37,7 @@ export const DEFAULT_SETTINGS: FormSettings = {
   layout: 'single',
   primaryColor: '',
   bgColor: '',
+  bgOpacity: 100,
   textColor: '',
   borderRadius: '8',
   fontFamily: '',

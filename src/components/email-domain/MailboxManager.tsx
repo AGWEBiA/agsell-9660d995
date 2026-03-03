@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Progress } from '@/components/ui/progress';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from '@/components/ui/dialog';
@@ -14,7 +15,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   Mail, Plus, Trash2, Edit, Facebook, Instagram, Youtube, Send,
-  MessageCircle, MapPin, PenLine, Flame, Loader2,
+  MessageCircle, MapPin, PenLine, Flame, Loader2, Gauge,
 } from 'lucide-react';
 import { useEmailMailboxes, type EmailMailbox } from '@/hooks/useEmailMailboxes';
 
@@ -22,6 +23,15 @@ interface MailboxManagerProps {
   domainId: string;
   domain: string;
 }
+
+// Presets de limite diário baseados em boas práticas de entregabilidade
+const DAILY_LIMIT_PRESETS = [
+  { label: 'Aquecimento', value: 50, description: 'Domínio novo (primeiros 7 dias)' },
+  { label: 'Conservador', value: 200, description: 'Reputação em construção' },
+  { label: 'Moderado', value: 500, description: 'Domínio com boa reputação' },
+  { label: 'Alto Volume', value: 1000, description: 'Domínio consolidado' },
+  { label: 'Máximo', value: 2000, description: 'Alto volume, reputação excelente' },
+];
 
 function WarmupBadge({ status }: { status: string }) {
   switch (status) {
@@ -34,6 +44,14 @@ function WarmupBadge({ status }: { status: string }) {
   }
 }
 
+function getDefaultLimitForWarmup(warmupStatus: string): number {
+  switch (warmupStatus) {
+    case 'warming': return 50;
+    case 'warmed': return 500;
+    default: return 200;
+  }
+}
+
 export default function MailboxManager({ domainId, domain }: MailboxManagerProps) {
   const { mailboxes, isLoading, createMailbox, updateMailbox, deleteMailbox } = useEmailMailboxes(domainId);
   const [showDialog, setShowDialog] = useState(false);
@@ -43,12 +61,12 @@ export default function MailboxManager({ domainId, domain }: MailboxManagerProps
     name: '', prefix: '',
     link_facebook: '', link_instagram: '', link_youtube: '',
     link_whatsapp: '', link_telegram: '', signature: '', address: '',
-    daily_limit: 500,
+    daily_limit: 200,
   });
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', prefix: '', link_facebook: '', link_instagram: '', link_youtube: '', link_whatsapp: '', link_telegram: '', signature: '', address: '', daily_limit: 500 });
+    setForm({ name: '', prefix: '', link_facebook: '', link_instagram: '', link_youtube: '', link_whatsapp: '', link_telegram: '', signature: '', address: '', daily_limit: 200 });
     setShowDialog(true);
   };
 
@@ -59,7 +77,7 @@ export default function MailboxManager({ domainId, domain }: MailboxManagerProps
       link_facebook: m.link_facebook || '', link_instagram: m.link_instagram || '',
       link_youtube: m.link_youtube || '', link_whatsapp: m.link_whatsapp || '',
       link_telegram: m.link_telegram || '', signature: m.signature || '', address: m.address || '',
-      daily_limit: m.daily_limit ?? 500,
+      daily_limit: m.daily_limit ?? getDefaultLimitForWarmup(m.warmup_status),
     });
     setShowDialog(true);
   };
@@ -102,56 +120,78 @@ export default function MailboxManager({ domainId, domain }: MailboxManagerProps
         </Card>
       ) : (
         <div className="grid gap-3">
-          {mailboxes.map((m: any) => (
-            <Card key={m.id} className="hover:border-primary/30 transition-colors">
-              <CardContent className="py-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Mail className="h-5 w-5 text-primary" />
+          {mailboxes.map((m: any) => {
+            const sentToday = m.sent_today ?? 0;
+            const dailyLimit = m.daily_limit ?? 500;
+            const usagePercent = dailyLimit > 0 ? Math.min((sentToday / dailyLimit) * 100, 100) : 0;
+            const isNearLimit = usagePercent >= 80;
+
+            return (
+              <Card key={m.id} className="hover:border-primary/30 transition-colors">
+                <CardContent className="py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Mail className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-sm">{m.name}</p>
+                        <p className="text-xs text-muted-foreground">{m.prefix}@{domain}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-sm">{m.name}</p>
-                      <p className="text-xs text-muted-foreground">{m.prefix}@{domain}</p>
+                    <div className="flex items-center gap-2">
+                      <WarmupBadge status={m.warmup_status} />
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(m)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Remover caixa postal?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              O endereço <strong>{m.prefix}@{domain}</strong> não poderá mais ser usado para envios.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => deleteMailbox.mutate(m.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              Remover
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <WarmupBadge status={m.warmup_status} />
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(m)}>
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Remover caixa postal?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            O endereço <strong>{m.prefix}@{domain}</strong> não poderá mais ser usado para envios.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => deleteMailbox.mutate(m.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            Remover
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+
+                  {/* Sending progress */}
+                  <div className="mt-3 space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="flex items-center gap-1 text-muted-foreground">
+                        <Gauge className="h-3 w-3" />
+                        Envios hoje
+                      </span>
+                      <span className={`font-medium ${isNearLimit ? 'text-destructive' : 'text-foreground'}`}>
+                        {sentToday} / {dailyLimit}
+                      </span>
+                    </div>
+                    <Progress value={usagePercent} className="h-1.5" />
                   </div>
-                </div>
-                {/* Quick info row */}
-                <div className="flex gap-2 mt-2 flex-wrap">
-                  {m.signature && <Badge variant="outline" className="text-[10px]"><PenLine className="h-3 w-3 mr-1" />{m.signature}</Badge>}
-                  {m.link_instagram && <Badge variant="outline" className="text-[10px]"><Instagram className="h-3 w-3 mr-1" />Instagram</Badge>}
-                  {m.link_whatsapp && <Badge variant="outline" className="text-[10px]"><MessageCircle className="h-3 w-3 mr-1" />WhatsApp</Badge>}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+
+                  {/* Quick info row */}
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    {m.signature && <Badge variant="outline" className="text-[10px]"><PenLine className="h-3 w-3 mr-1" />{m.signature}</Badge>}
+                    {m.link_instagram && <Badge variant="outline" className="text-[10px]"><Instagram className="h-3 w-3 mr-1" />Instagram</Badge>}
+                    {m.link_whatsapp && <Badge variant="outline" className="text-[10px]"><MessageCircle className="h-3 w-3 mr-1" />WhatsApp</Badge>}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
@@ -206,10 +246,36 @@ export default function MailboxManager({ domainId, domain }: MailboxManagerProps
               <Label className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />Endereço</Label>
               <Input placeholder="Rua..." value={form.address} onChange={e => setForm({...form, address: e.target.value})} />
             </div>
-            <div className="space-y-2">
-              <Label className="flex items-center gap-1"><Mail className="h-3.5 w-3.5" />Limite Diário de Envios</Label>
-              <Input type="number" min={1} max={10000} placeholder="500" value={form.daily_limit} onChange={e => setForm({...form, daily_limit: parseInt(e.target.value) || 0})} />
-              <p className="text-xs text-muted-foreground">Quantidade máxima de e-mails que podem ser enviados por dia por esta caixa postal.</p>
+
+            {/* Daily Limit with presets */}
+            <div className="space-y-3 p-3 rounded-lg border bg-muted/30">
+              <Label className="flex items-center gap-1 font-semibold"><Gauge className="h-3.5 w-3.5" />Limite Diário de Envios</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {DAILY_LIMIT_PRESETS.map(preset => (
+                  <Button
+                    key={preset.value}
+                    type="button"
+                    size="sm"
+                    variant={form.daily_limit === preset.value ? 'default' : 'outline'}
+                    className="text-xs h-7 px-2.5"
+                    onClick={() => setForm({...form, daily_limit: preset.value})}
+                  >
+                    {preset.label} ({preset.value})
+                  </Button>
+                ))}
+              </div>
+              <Input
+                type="number"
+                min={1}
+                max={10000}
+                placeholder="200"
+                value={form.daily_limit}
+                onChange={e => setForm({...form, daily_limit: parseInt(e.target.value) || 0})}
+              />
+              <p className="text-xs text-muted-foreground">
+                {DAILY_LIMIT_PRESETS.find(p => p.value === form.daily_limit)?.description ||
+                  'Valor personalizado. Recomendamos começar com limites baixos e aumentar gradualmente para proteger a reputação do domínio.'}
+              </p>
             </div>
           </div>
           <DialogFooter>

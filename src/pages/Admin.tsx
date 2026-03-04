@@ -26,6 +26,7 @@ import {
   CreditCard,
   Mail,
   Crown,
+  Bug,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,6 +41,7 @@ import { AssignPlanDialog } from '@/components/admin/AssignPlanDialog';
 import { FinancialDashboard } from '@/components/admin/FinancialDashboard';
 import { EvolutionAPIGlobalConfig } from '@/components/admin/EvolutionAPIGlobalConfig';
 import { SystemOverviewDashboard } from '@/components/admin/SystemOverviewDashboard';
+import { ErrorMonitoringDashboard } from '@/components/admin/ErrorMonitoringDashboard';
 
 export default function Admin() {
   const { user, isAdmin, loading: isCheckingAdmin } = useAuth();
@@ -210,6 +212,10 @@ export default function Admin() {
           <TabsTrigger value="whatsapp" className="flex items-center gap-2">
             <Activity className="h-4 w-4" />
             WhatsApp
+          </TabsTrigger>
+          <TabsTrigger value="errors" className="flex items-center gap-2">
+            <Bug className="h-4 w-4" />
+            Erros do Sistema
           </TabsTrigger>
         </TabsList>
 
@@ -434,6 +440,9 @@ export default function Admin() {
         </TabsContent>
         <TabsContent value="whatsapp">
           <EvolutionAPIGlobalConfig />
+        </TabsContent>
+        <TabsContent value="errors">
+          <ErrorMonitoringDashboard />
         </TabsContent>
       </Tabs>
 

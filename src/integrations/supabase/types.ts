@@ -2957,6 +2957,71 @@ export type Database = {
           },
         ]
       }
+      system_errors: {
+        Row: {
+          created_at: string
+          endpoint: string | null
+          error_details: string | null
+          error_message: string
+          id: string
+          metadata: Json | null
+          module: string
+          notes: string | null
+          organization_id: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          stack_trace: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          endpoint?: string | null
+          error_details?: string | null
+          error_message: string
+          id?: string
+          metadata?: Json | null
+          module?: string
+          notes?: string | null
+          organization_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          stack_trace?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string | null
+          error_details?: string | null
+          error_message?: string
+          id?: string
+          metadata?: Json | null
+          module?: string
+          notes?: string | null
+          organization_id?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          stack_trace?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_errors_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tags: {
         Row: {
           color: string | null

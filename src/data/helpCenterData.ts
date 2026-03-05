@@ -1035,12 +1035,29 @@ Classifique conversas por:
     categoryId: 'communication',
     title: 'WhatsApp',
     icon: MessageSquare,
-    description: 'Guia completo: conectar via QR Code, múltiplas instâncias, campanhas em massa e grupos.',
-    readTime: '8 min',
+    description: 'Guia completo: QR Code, API Oficial (Meta), Coex (duplo canal), múltiplas instâncias e campanhas.',
+    readTime: '12 min',
     popular: true,
-    content: `Integre o WhatsApp ao AG Sell para comunicação direta com seus contatos, campanhas em massa e automações.
+    content: `Integre o WhatsApp ao AG Sell para comunicação direta com seus contatos, campanhas em massa e automações. O sistema suporta **múltiplos provedores simultaneamente** — incluindo a API Oficial da Meta e a Evolution API via QR Code.
 
-## Conectando sua conta via QR Code
+## Provedores disponíveis
+
+O AG Sell oferece **quatro modalidades** de conexão WhatsApp, que podem ser usadas **simultaneamente**:
+
+| Provedor | Tipo | Indicado para |
+|----------|------|---------------|
+| **Evolution API (QR Code)** | Não oficial | Testes, uso pessoal, agilidade |
+| **WhatsApp Business API (Meta)** | Oficial | Alto volume, profissionalismo, templates |
+| **WhatsApp com Coexistência (Beta)** | Oficial + App | Manter app pessoal + API no mesmo número |
+| **Z-API** | Não oficial | Alternativa simplificada |
+
+> **Coex (Coexistência)** permite usar o mesmo número no app do celular e na API simultaneamente — recurso avançado da API Oficial da Meta.
+
+---
+
+## Opção 1: Conectando via QR Code (Evolution API)
+
+Esta é a forma mais rápida de começar:
 
 1. Acesse **"WhatsApp"** no menu lateral
 2. Clique em **"Conectar WhatsApp"**
@@ -1056,36 +1073,104 @@ Classifique conversas por:
 
 ⚠️ **Importante**: A conexão pode cair se o celular ficar muito tempo sem internet ou se o WhatsApp for deslogado. Reconecte escaneando um novo QR Code.
 
-## Configuração do provedor
+---
 
-O AG Sell suporta dois provedores de API WhatsApp:
+## Opção 2: WhatsApp Business API Oficial (Meta)
 
-### Evolution API
-- Servidor próprio para máxima privacidade
-- Configure a URL do servidor e API Key
-- Ideal para empresas com infraestrutura própria
+A API Oficial oferece **maior estabilidade, templates aprovados e suporte a alto volume de mensagens**. Siga os passos:
 
-### Z-API
-- API simplificada e gerenciada
-- Configure Instance ID, Token e Client Token
-- Ideal para quem quer praticidade
+### Pré-requisitos
 
-A configuração do provedor é feita em **"Integrações"** no menu lateral.
+1. **Conta Meta Business Suite** verificada em [business.facebook.com](https://business.facebook.com)
+2. **App criado** no [Meta for Developers](https://developers.facebook.com) (tipo "Business")
+3. Produto **WhatsApp** adicionado ao app
+4. **Número de telefone** registrado e verificado na plataforma Meta
+
+### Obtendo as credenciais
+
+1. Acesse o [Meta for Developers](https://developers.facebook.com) → seu App → **WhatsApp** → **Configuração da API**
+2. Copie as seguintes informações:
+   - **Phone Number ID** — Identificador único do seu número
+   - **WhatsApp Business Account ID (WABA ID)** — ID da conta business
+   - **Access Token Permanente** — Token de acesso (gere um token permanente no painel de System Users)
+
+### Configurando no AG Sell
+
+1. Acesse **"Integrações"** no menu lateral
+2. Na seção **WhatsApp**, clique em **"Configurar"**
+3. Selecione a aba **"WhatsApp Business API"**
+4. Preencha os campos:
+   - **Phone Number ID**
+   - **Business Account ID**
+   - **Access Token**
+   - **Webhook Verify Token** (crie um token personalizado, ex: "agsell_verify_2024")
+5. Clique em **"Salvar Configuração"**
+
+### Configurando o Webhook na Meta
+
+Para receber mensagens dos clientes, configure o webhook no Meta:
+
+1. No Meta for Developers, vá em **WhatsApp** → **Configuração** → **Webhook**
+2. Cole a **URL do Webhook** exibida na interface do AG Sell
+3. Cole o **Verify Token** que você definiu
+4. Clique em **"Verificar e Salvar"**
+5. Inscreva-se nos campos: **messages**, **message_deliveries**, **message_reads**
+
+✅ Pronto! As mensagens recebidas aparecerão automaticamente no Inbox.
+
+---
+
+## Opção 3: WhatsApp com Coexistência (Beta)
+
+O modo **Coex** permite usar o **mesmo número no app do celular e na API** simultaneamente. Isso é possível graças ao recurso de coexistência da API Oficial da Meta.
+
+### Como funciona
+
+- Você continua usando o WhatsApp normalmente no celular
+- A API envia e recebe mensagens pelo mesmo número
+- Ideal para profissionais que não querem separar número pessoal/profissional
+
+### Configuração
+
+1. Siga todos os passos da **Opção 2** (API Oficial)
+2. Na tela de configuração, marque a opção **"Habilitar Coexistência (Coex)"**
+3. Salve a configuração
+
+⚠️ **Atenção**: O recurso de Coexistência é um **recurso Beta** da Meta. Nem todos os números podem ser habilitados. Consulte a documentação oficial da Meta para verificar a disponibilidade.
+
+---
 
 ## Múltiplas instâncias
 
-Você pode conectar **vários números de WhatsApp** simultaneamente:
+Você pode conectar **vários números de WhatsApp** simultaneamente, inclusive usando **provedores diferentes** para cada número:
 
 1. Na página do WhatsApp, clique em **"Adicionar Instância"**
-2. Defina um nome para identificação (ex: "Vendas", "Suporte")
-3. Conecte escaneando o QR Code
-4. Use o **seletor no topo** da página para alternar entre contas
+2. Defina um nome para identificação (ex: "Vendas - QR Code", "Suporte - API Oficial")
+3. Escolha o provedor (Evolution API, API Oficial, Z-API ou Coex)
+4. Configure as credenciais do provedor escolhido
+5. Use o **seletor no topo** da página para alternar entre contas
 
-### Casos de uso
-- **Departamentos** — Um número para vendas, outro para suporte
-- **Equipes** — Números diferentes para cada time
-- **Regiões** — Números com DDDs diferentes
-- **Pessoal vs Profissional** — Separar comunicação
+### Exemplo de configuração multi-instância
+
+| Instância | Provedor | Número | Uso |
+|-----------|----------|--------|-----|
+| Vendas | API Oficial | +55 11 9xxxx-1111 | Alto volume, templates |
+| Suporte | Evolution API (QR) | +55 11 9xxxx-2222 | Atendimento rápido |
+| Pessoal | Coex (Beta) | +55 11 9xxxx-3333 | App + API simultaneamente |
+
+### Instância padrão
+
+- Defina uma instância como **padrão** — ela será usada automaticamente quando nenhuma instância for especificada
+- Para campanhas e automações, você pode **escolher qual instância** usar
+
+### Roteamento inteligente
+
+Quando uma mensagem é enviada sem especificar a instância:
+1. O sistema verifica se há uma **instância padrão** ativa
+2. Se não houver, prioriza **Evolution API** como fallback
+3. Em último caso, usa a **primeira instância ativa** disponível
+
+---
 
 ## Campanhas de envio em massa
 
@@ -1140,16 +1225,30 @@ Todas as mensagens de WhatsApp são:
 - **Disponíveis para automações** como gatilho
 - **Contabilizadas no Lead Score** (se configurado)
 
+## Comparativo: QR Code vs API Oficial
+
+| Característica | QR Code (Evolution) | API Oficial (Meta) |
+|----------------|--------------------|--------------------|
+| Configuração | Simples (escanear QR) | Requer conta Meta Business |
+| Estabilidade | Média (depende do celular) | Alta (infraestrutura Meta) |
+| Templates | Não suporta | Suporta templates aprovados |
+| Volume | Limitado | Alto volume |
+| Custo | Sem custo da Meta | Cobrança por conversa (Meta) |
+| Coexistência | Não | Sim (Beta) |
+| Ideal para | Início rápido, testes | Operações profissionais |
+
 ## Boas práticas
 
-- 📱 **Mantenha o celular conectado** à internet para evitar desconexão
+- 📱 **Mantenha o celular conectado** à internet (para QR Code)
 - 🔄 **Reconecte proativamente** — Verifique o status da conexão regularmente
 - ✍️ **Personalize mensagens** — Use {{nome}} para incluir o nome do contato
 - ⏰ **Respeite horários** — Evite enviar mensagens fora do horário comercial
 - 📊 **Monitore o engajamento** — Acompanhe taxas de leitura e resposta
 - 🚫 **Evite spam** — Envie conteúdo relevante para não ser bloqueado
+- 🔀 **Use múltiplas instâncias** — Separe canais por departamento ou finalidade
+- 🏢 **API Oficial para produção** — Para operações críticas, prefira a API Oficial
 
-💡 **Dica**: Combine WhatsApp com automações para criar fluxos como: "Quando um novo contato for criado, enviar mensagem de boas-vindas automaticamente".`,
+💡 **Dica**: Combine WhatsApp com automações para criar fluxos como: "Quando um novo contato for criado, enviar mensagem de boas-vindas automaticamente". Você pode escolher qual instância/provedor usar em cada automação.`,
   },
   {
     id: 'email-marketing',

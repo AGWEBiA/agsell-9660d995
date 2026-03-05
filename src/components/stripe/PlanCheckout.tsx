@@ -22,6 +22,7 @@ interface Plan {
   price_monthly: number;
   price_yearly: number;
   features: string[];
+  kiwify_checkout_url?: string | null;
 }
 
 interface PlanCheckoutProps {
@@ -30,14 +31,18 @@ interface PlanCheckoutProps {
   onOpenChange: (open: boolean) => void;
 }
 
+type PaymentProvider = 'stripe' | 'kiwify';
+
 export function PlanCheckout({ plan, open, onOpenChange }: PlanCheckoutProps) {
   const { currentOrganization } = useOrganization();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [paymentProvider, setPaymentProvider] = useState<PaymentProvider>('stripe');
   const [isLoading, setIsLoading] = useState(false);
 
   const price = billingCycle === 'monthly' ? plan.price_monthly : plan.price_yearly;
   const monthlyEquivalent = billingCycle === 'yearly' ? plan.price_yearly / 12 : plan.price_monthly;
   const savings = billingCycle === 'yearly' ? (plan.price_monthly * 12) - plan.price_yearly : 0;
+  const hasKiwify = !!plan.kiwify_checkout_url;
 
   const handleCheckout = async () => {
     if (!currentOrganization) {
@@ -47,21 +52,36 @@ export function PlanCheckout({ plan, open, onOpenChange }: PlanCheckoutProps) {
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('create-checkout', {
-        body: {
-          organizationId: currentOrganization.id,
-          planId: plan.id,
-          billingCycle,
-        },
-      });
-
-      if (error) throw error;
-
-      if (data?.url) {
-        window.location.href = data.url;
+      if (paymentProvider === 'kiwify') {
+        const { data, error } = await supabase.functions.invoke('create-kiwify-checkout', {
+          body: {
+            planId: plan.id,
+            billingCycle,
+          },
+        });
+        if (error) throw error;
+        if (data?.url) {
+          window.open(data.url, '_blank');
+          toast.info('Você será redirecionado para a Kiwify para completar o pagamento.');
+          onOpenChange(false);
+        } else {
+          throw new Error(data?.error || 'Erro ao gerar link Kiwify');
+        }
       } else {
-        toast.success('Plano atualizado com sucesso!');
-        onOpenChange(false);
+        const { data, error } = await supabase.functions.invoke('create-checkout', {
+          body: {
+            organizationId: currentOrganization.id,
+            planId: plan.id,
+            billingCycle,
+          },
+        });
+        if (error) throw error;
+        if (data?.url) {
+          window.location.href = data.url;
+        } else {
+          toast.success('Plano atualizado com sucesso!');
+          onOpenChange(false);
+        }
       }
     } catch (error) {
       console.error('Checkout error:', error);
@@ -80,7 +100,7 @@ export function PlanCheckout({ plan, open, onOpenChange }: PlanCheckoutProps) {
             Assinar {plan.name}
           </DialogTitle>
           <DialogDescription>
-            Selecione o ciclo de cobrança preferido
+            Selecione o ciclo de cobrança e forma de pagamento
           </DialogDescription>
         </DialogHeader>
 
@@ -125,6 +145,42 @@ export function PlanCheckout({ plan, open, onOpenChange }: PlanCheckoutProps) {
             </div>
           </RadioGroup>
 
+          {/* Payment Provider Selection */}
+          {hasKiwify && (
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">Forma de Pagamento</Label>
+              <RadioGroup
+                value={paymentProvider}
+                onValueChange={(v) => setPaymentProvider(v as PaymentProvider)}
+                className="grid grid-cols-2 gap-3"
+              >
+                <div className="relative">
+                  <RadioGroupItem value="stripe" id="pay-stripe" className="peer sr-only" />
+                  <Label
+                    htmlFor="pay-stripe"
+                    className="flex flex-col items-center gap-2 rounded-lg border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                  >
+                    <CreditCard className="h-5 w-5" />
+                    <span className="text-sm font-medium">Cartão / Stripe</span>
+                    <span className="text-xs text-muted-foreground">Crédito internacional</span>
+                  </Label>
+                </div>
+
+                <div className="relative">
+                  <RadioGroupItem value="kiwify" id="pay-kiwify" className="peer sr-only" />
+                  <Label
+                    htmlFor="pay-kiwify"
+                    className="flex flex-col items-center gap-2 rounded-lg border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                  >
+                    <span className="text-lg font-bold text-green-600">K</span>
+                    <span className="text-sm font-medium">Kiwify</span>
+                    <span className="text-xs text-muted-foreground">PIX, Boleto, Cartão</span>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </div>
+          )}
+
           {/* Features */}
           <div className="bg-muted/50 rounded-lg p-4">
             <p className="text-sm font-medium mb-3">Incluso no plano:</p>
@@ -141,7 +197,7 @@ export function PlanCheckout({ plan, open, onOpenChange }: PlanCheckoutProps) {
           {/* Security Note */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Shield className="h-4 w-4" />
-            Pagamento seguro processado pelo Stripe
+            Pagamento seguro processado {paymentProvider === 'kiwify' ? 'pela Kiwify' : 'pelo Stripe'}
           </div>
         </div>
 

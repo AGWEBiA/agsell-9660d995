@@ -2437,6 +2437,8 @@ export type Database = {
           id: string
           is_active: boolean | null
           is_default: boolean | null
+          kiwify_checkout_url: string | null
+          kiwify_product_id: string | null
           max_ai_requests_per_month: number
           max_automations: number | null
           max_contacts: number | null
@@ -2462,6 +2464,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
+          kiwify_checkout_url?: string | null
+          kiwify_product_id?: string | null
           max_ai_requests_per_month?: number
           max_automations?: number | null
           max_contacts?: number | null
@@ -2487,6 +2491,8 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           is_default?: boolean | null
+          kiwify_checkout_url?: string | null
+          kiwify_product_id?: string | null
           max_ai_requests_per_month?: number
           max_automations?: number | null
           max_contacts?: number | null
@@ -2906,7 +2912,9 @@ export type Database = {
           current_period_start: string | null
           id: string
           organization_id: string
+          payment_provider: string | null
           plan_id: string
+          provider_subscription_id: string | null
           status: string
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
@@ -2920,7 +2928,9 @@ export type Database = {
           current_period_start?: string | null
           id?: string
           organization_id: string
+          payment_provider?: string | null
           plan_id: string
+          provider_subscription_id?: string | null
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -2934,7 +2944,9 @@ export type Database = {
           current_period_start?: string | null
           id?: string
           organization_id?: string
+          payment_provider?: string | null
           plan_id?: string
+          provider_subscription_id?: string | null
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null

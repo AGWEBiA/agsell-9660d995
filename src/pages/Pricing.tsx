@@ -96,6 +96,7 @@ interface Plan {
   max_forms: number;
   max_ai_requests_per_month: number;
   features: string[];
+  kiwify_checkout_url?: string | null;
 }
 
 const FEATURE_LABELS: Record<string, string> = {
@@ -230,6 +231,7 @@ interface CheckoutFormData {
   email: string;
   organizationName: string;
   couponCode: string;
+  paymentProvider: 'stripe' | 'kiwify';
 }
 
 function GuestCheckoutDialog({ 
@@ -248,6 +250,7 @@ function GuestCheckoutDialog({
     email: '',
     organizationName: '',
     couponCode: '',
+    paymentProvider: 'stripe',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showCouponField, setShowCouponField] = useState(false);
@@ -267,26 +270,47 @@ function GuestCheckoutDialog({
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('guest-checkout', {
-        body: {
-          planId: plan.id,
-          billingCycle,
-          name: formData.name,
-          email: formData.email,
-          organizationName: formData.organizationName,
-          couponCode: formData.couponCode || undefined,
-        },
-      });
+      if (formData.paymentProvider === 'kiwify') {
+        // Kiwify checkout
+        const { data, error } = await supabase.functions.invoke('create-kiwify-checkout', {
+          body: {
+            planId: plan.id,
+            billingCycle,
+            name: formData.name,
+            email: formData.email,
+            organizationName: formData.organizationName,
+          },
+        });
 
-      if (error) throw error;
+        if (error) throw error;
+        if (data?.url) {
+          window.open(data.url, '_blank');
+          toast.info('Você será redirecionado para a Kiwify para completar o pagamento.');
+          onOpenChange(false);
+        } else {
+          throw new Error(data?.error || 'Erro ao gerar link Kiwify');
+        }
+      } else {
+        // Stripe checkout (original flow)
+        const { data, error } = await supabase.functions.invoke('guest-checkout', {
+          body: {
+            planId: plan.id,
+            billingCycle,
+            name: formData.name,
+            email: formData.email,
+            organizationName: formData.organizationName,
+            couponCode: formData.couponCode || undefined,
+          },
+        });
 
-      if (data?.url) {
-        // Redirect to Stripe Checkout
-        window.location.href = data.url;
-      } else if (data?.success) {
-        // Free plan - account created
-        toast.success('Conta criada! Verifique seu e-mail para as credenciais de acesso.');
-        onOpenChange(false);
+        if (error) throw error;
+
+        if (data?.url) {
+          window.location.href = data.url;
+        } else if (data?.success) {
+          toast.success('Conta criada! Verifique seu e-mail para as credenciais de acesso.');
+          onOpenChange(false);
+        }
       }
     } catch (error) {
       console.error('Checkout error:', error);
@@ -349,29 +373,68 @@ function GuestCheckoutDialog({
 
           {!isFree && (
             <>
-              {/* Coupon Field */}
-              {!showCouponField ? (
-                <button
-                  type="button"
-                  onClick={() => setShowCouponField(true)}
-                  className="flex items-center gap-1 text-sm text-primary hover:underline"
-                >
-                  <Tag className="h-3 w-3" />
-                  Tenho um cupom de desconto
-                </button>
-              ) : (
+              {/* Payment Provider Selection */}
+              {plan.kiwify_checkout_url && (
                 <div className="space-y-2">
-                  <Label htmlFor="couponCode">Cupom de Desconto</Label>
-                  <Input
-                    id="couponCode"
-                    placeholder="Digite o código do cupom"
-                    value={formData.couponCode}
-                    onChange={(e) => setFormData(prev => ({ ...prev, couponCode: e.target.value.toUpperCase() }))}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    O desconto será aplicado na próxima etapa
-                  </p>
+                  <Label className="text-sm font-medium">Forma de Pagamento</Label>
+                  <RadioGroup
+                    value={formData.paymentProvider}
+                    onValueChange={(v) => setFormData(prev => ({ ...prev, paymentProvider: v as 'stripe' | 'kiwify' }))}
+                    className="grid grid-cols-2 gap-3"
+                  >
+                    <div className="relative">
+                      <RadioGroupItem value="stripe" id="guest-pay-stripe" className="peer sr-only" />
+                      <Label
+                        htmlFor="guest-pay-stripe"
+                        className="flex flex-col items-center gap-1 rounded-lg border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                      >
+                        <CreditCard className="h-5 w-5" />
+                        <span className="text-sm font-medium">Cartão / Stripe</span>
+                        <span className="text-xs text-muted-foreground">Crédito internacional</span>
+                      </Label>
+                    </div>
+                    <div className="relative">
+                      <RadioGroupItem value="kiwify" id="guest-pay-kiwify" className="peer sr-only" />
+                      <Label
+                        htmlFor="guest-pay-kiwify"
+                        className="flex flex-col items-center gap-1 rounded-lg border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                      >
+                        <span className="text-lg font-bold text-primary">K</span>
+                        <span className="text-sm font-medium">Kiwify</span>
+                        <span className="text-xs text-muted-foreground">PIX, Boleto, Cartão</span>
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
+              )}
+
+              {/* Coupon Field (only for Stripe) */}
+              {formData.paymentProvider === 'stripe' && (
+                <>
+                  {!showCouponField ? (
+                    <button
+                      type="button"
+                      onClick={() => setShowCouponField(true)}
+                      className="flex items-center gap-1 text-sm text-primary hover:underline"
+                    >
+                      <Tag className="h-3 w-3" />
+                      Tenho um cupom de desconto
+                    </button>
+                  ) : (
+                    <div className="space-y-2">
+                      <Label htmlFor="couponCode">Cupom de Desconto</Label>
+                      <Input
+                        id="couponCode"
+                        placeholder="Digite o código do cupom"
+                        value={formData.couponCode}
+                        onChange={(e) => setFormData(prev => ({ ...prev, couponCode: e.target.value.toUpperCase() }))}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        O desconto será aplicado na próxima etapa
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
 
               <div className="bg-muted/50 rounded-lg p-4">
@@ -395,7 +458,7 @@ function GuestCheckoutDialog({
             <Shield className="h-4 w-4" />
             {isFree 
               ? 'Seus dados estão protegidos' 
-              : 'Pagamento seguro processado pelo Stripe'
+              : `Pagamento seguro processado ${formData.paymentProvider === 'kiwify' ? 'pela Kiwify' : 'pelo Stripe'}`
             }
           </div>
 
@@ -446,6 +509,7 @@ export default function Pricing() {
           max_automations: p.max_automations || 5,
           max_forms: p.max_forms || 3,
           max_ai_requests_per_month: (p as any).max_ai_requests_per_month || 0,
+          kiwify_checkout_url: (p as any).kiwify_checkout_url || null,
         })));
       }
       setIsLoading(false);

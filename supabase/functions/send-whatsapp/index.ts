@@ -8,6 +8,7 @@ const corsHeaders = {
 
 interface WhatsAppRequest {
   organization_id: string;
+  instance_id?: string; // Optional: specify which instance to use
   to: string;
   message: string;
   media_url?: string;
@@ -66,13 +67,52 @@ Deno.serve(async (req) => {
       phoneNumber = "55" + phoneNumber;
     }
 
-    // Try Evolution API first — use GLOBAL config + org instance name
+    // If instance_id is provided, use that specific instance
+    if (whatsappReq.instance_id) {
+      const { data: specificInt } = await supabase
+        .from("organization_integrations")
+        .select("config, integration_type")
+        .eq("id", whatsappReq.instance_id)
+        .eq("organization_id", whatsappReq.organization_id)
+        .eq("is_active", true)
+        .single();
+
+      if (!specificInt) {
+        return new Response(
+          JSON.stringify({ error: "Specified instance not found or inactive" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (specificInt.integration_type === "evolution_api") {
+        const { data: globalConfig } = await supabase
+          .from("platform_settings")
+          .select("value")
+          .eq("key", "evolution_api")
+          .single();
+
+        const globalEvo = globalConfig?.value as Record<string, string> | null;
+        const orgConfig = specificInt.config as Record<string, string>;
+        const mergedConfig: Record<string, string> = {
+          api_url: globalEvo?.api_url || orgConfig.api_url || "",
+          api_key: globalEvo?.api_key || orgConfig.api_key || "",
+          instance_name: (orgConfig.instance_name || "").trim(),
+        };
+        return await sendWithEvolutionAPI(mergedConfig, phoneNumber, whatsappReq);
+      } else {
+        return await sendWithBusinessAPI(specificInt.config as Record<string, string>, phoneNumber, whatsappReq);
+      }
+    }
+
+    // Try Evolution API first — use default or first active instance
     const { data: evolutionInt } = await supabase
       .from("organization_integrations")
       .select("config")
       .eq("organization_id", whatsappReq.organization_id)
       .eq("integration_type", "evolution_api")
       .eq("is_active", true)
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle();
 
     if (evolutionInt) {
@@ -105,6 +145,8 @@ Deno.serve(async (req) => {
       .eq("organization_id", whatsappReq.organization_id)
       .eq("integration_type", "whatsapp_business")
       .eq("is_active", true)
+      .order("created_at", { ascending: true })
+      .limit(1)
       .maybeSingle();
 
     if (businessInt) {

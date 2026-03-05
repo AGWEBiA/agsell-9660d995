@@ -92,3 +92,6 @@ verify_jwt = false
 
 [functions.migrate-platform]
 verify_jwt = false
+
+[functions.create-kiwify-checkout]
+verify_jwt = false

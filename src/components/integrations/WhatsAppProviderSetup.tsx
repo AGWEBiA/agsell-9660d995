@@ -52,6 +52,7 @@ interface WhatsAppBusinessConfig {
   business_account_id: string;
   webhook_verify_token: string;
   phone_number: string;
+  coexistence_mode: boolean;
 }
 
 export function WhatsAppProviderSetup() {
@@ -222,6 +223,7 @@ export function WhatsAppProviderSetup() {
     business_account_id: '',
     webhook_verify_token: '',
     phone_number: '',
+    coexistence_mode: false,
   });
 
   // Get existing integrations by type
@@ -250,7 +252,7 @@ export function WhatsAppProviderSetup() {
   }
 
   const resetForm = () => {
-    setBusinessConfig({ access_token: '', phone_number_id: '', business_account_id: '', webhook_verify_token: '', phone_number: '' });
+    setBusinessConfig({ access_token: '', phone_number_id: '', business_account_id: '', webhook_verify_token: '', phone_number: '', coexistence_mode: false });
     setInstanceName('');
     setEvolutionInstanceName('');
     setEvolutionPhone('');
@@ -306,10 +308,12 @@ export function WhatsAppProviderSetup() {
 
     setIsSaving(true);
     try {
+      const { coexistence_mode, ...rest } = businessConfig;
+      const configToSave = { ...rest, coexistence_mode: String(coexistence_mode) } as Record<string, string>;
       await createInstance.mutateAsync({
         name: instanceName,
         integration_type: 'whatsapp_business',
-        config: { ...businessConfig } as Record<string, string>,
+        config: configToSave,
         phone_number: businessConfig.phone_number || businessConfig.phone_number_id,
         is_default: isDefault || instances.length === 0,
       });
@@ -441,9 +445,12 @@ export function WhatsAppProviderSetup() {
                       Padrão
                     </Badge>
                   )}
+                  {!isEvolution && instance.config.coexistence_mode === 'true' && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Coex</Badge>
+                  )}
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  {isEvolution ? 'Evolution API' : 'WhatsApp Business API'}
+                  {isEvolution ? 'Evolution API' : instance.config.coexistence_mode === 'true' ? 'API Oficial + Coexistência' : 'WhatsApp Business API'}
                   {instance.phone_number && ` • ${instance.phone_number}`}
                 </CardDescription>
               </div>
@@ -594,7 +601,7 @@ export function WhatsAppProviderSetup() {
           {/* WhatsApp Oficial */}
           <button
             className="w-full flex items-center gap-4 px-6 py-4 hover:bg-muted/50 transition-colors text-left"
-            onClick={() => { setActiveTab('business'); setIsDialogOpen(true); }}
+            onClick={() => { setActiveTab('business'); setBusinessConfig(prev => ({ ...prev, coexistence_mode: false })); setIsDialogOpen(true); }}
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900 shrink-0">
               <Smartphone className="h-5 w-5 text-green-600" />
@@ -608,7 +615,7 @@ export function WhatsAppProviderSetup() {
           {/* WhatsApp com Coexistência */}
           <button
             className="w-full flex items-center gap-4 px-6 py-4 hover:bg-muted/50 transition-colors text-left"
-            onClick={() => { setActiveTab('business'); setIsDialogOpen(true); }}
+            onClick={() => { setActiveTab('business'); setBusinessConfig(prev => ({ ...prev, coexistence_mode: true })); setIsDialogOpen(true); }}
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900 shrink-0">
               <Smartphone className="h-5 w-5 text-green-600" />
@@ -756,6 +763,18 @@ export function WhatsAppProviderSetup() {
             </TabsContent>
 
             <TabsContent value="business" className="space-y-4 mt-4">
+              {businessConfig.coexistence_mode && (
+                <div className="bg-amber-50 dark:bg-amber-950 rounded-lg p-3 text-sm text-amber-800 dark:text-amber-200">
+                  <p className="flex items-center gap-2 font-medium">
+                    <AlertTriangle className="h-4 w-4" />
+                    Modo Coexistência (Beta)
+                  </p>
+                  <p className="mt-1 text-xs">
+                    Permite manter o WhatsApp Business App ativo no celular enquanto usa a API oficial com o mesmo número. 
+                    Este recurso precisa ser habilitado pela Meta no momento do registro do número.
+                  </p>
+                </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="biz-token">Access Token *</Label>
                 <Input
@@ -785,6 +804,18 @@ export function WhatsAppProviderSetup() {
                 />
               </div>
               <div className="space-y-2">
+                <Label htmlFor="biz-verify-token">Webhook Verify Token</Label>
+                <Input
+                  id="biz-verify-token"
+                  placeholder="Token de verificação do webhook"
+                  value={businessConfig.webhook_verify_token}
+                  onChange={(e) => setBusinessConfig({ ...businessConfig, webhook_verify_token: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Defina um token e use-o na configuração do webhook no Meta for Developers
+                </p>
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="biz-phone">Número do WhatsApp</Label>
                 <Input
                   id="biz-phone"
@@ -792,6 +823,19 @@ export function WhatsAppProviderSetup() {
                   value={businessConfig.phone_number}
                   onChange={(e) => setBusinessConfig({ ...businessConfig, phone_number: e.target.value })}
                 />
+              </div>
+              {/* Webhook URL info */}
+              <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-2">
+                <p className="font-medium flex items-center gap-2">
+                  <ExternalLink className="h-4 w-4" />
+                  URL do Webhook (para configurar no Meta)
+                </p>
+                <code className="block text-xs bg-background p-2 rounded border break-all select-all">
+                  {`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/whatsapp-webhook`}
+                </code>
+                <p className="text-xs text-muted-foreground">
+                  Cole esta URL no campo "Callback URL" nas configurações do Webhook no Meta for Developers.
+                </p>
               </div>
             </TabsContent>
           </Tabs>

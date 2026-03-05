@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, FileJson, CheckCircle2, AlertCircle, Loader2, Mail, Zap, GitBranch } from 'lucide-react';
+import { Upload, FileJson, CheckCircle2, AlertCircle, Loader2, Mail, Zap, GitBranch, Workflow } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -46,6 +46,18 @@ const sampleSequences = JSON.stringify({
   }]
 }, null, 2);
 
+const sampleFunnels = JSON.stringify({
+  funnels: [{
+    name: "Funil de Lançamento",
+    steps: [
+      { name: "Captura", type: "email", delay_days: 0, subject: "Você foi selecionado!", html: "<h1>Parabéns {{nome}}</h1><p>Você entrou no nosso grupo exclusivo.</p>" },
+      { name: "Nutrição 1", type: "email", delay_days: 2, subject: "Dica exclusiva para você", html: "<p>Aqui vai uma dica que vai mudar seu jogo...</p>" },
+      { name: "Nutrição 2", type: "email", delay_days: 5, subject: "Caso de sucesso", html: "<p>Veja como o João conseguiu resultados...</p>" },
+      { name: "Oferta", type: "email", delay_days: 7, subject: "Última chance!", html: "<p>A oferta encerra hoje às 23:59...</p>" },
+    ]
+  }]
+}, null, 2);
+
 export function MigrationJSONImport({ platformName }: Props) {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
@@ -60,6 +72,7 @@ export function MigrationJSONImport({ platformName }: Props) {
       case 'automations': setJsonText(sampleAutomation); break;
       case 'templates': setJsonText(sampleEmailTemplates); break;
       case 'sequences': setJsonText(sampleSequences); break;
+      case 'funnels': setJsonText(sampleFunnels); break;
     }
   };
 
@@ -132,6 +145,57 @@ export function MigrationJSONImport({ platformName }: Props) {
         queryClient.invalidateQueries({ queryKey: ['sequences'] });
       }
 
+      if (activeType === 'funnels' && data.funnels) {
+        for (const funnel of data.funnels) {
+          // Funis visuais → extraímos o conteúdo dos e-mails como sequência
+          const { data: seqRow, error: seqError } = await supabase.from('sequences').insert({
+            name: funnel.name || 'Funil Importado',
+            channel: 'email',
+            status: 'draft',
+            created_by: user.id,
+            organization_id: currentOrganization?.id || '',
+          }).select('id').single();
+
+          if (seqError || !seqRow) { errorCount++; continue; }
+
+          const steps = funnel.steps || funnel.nodes || funnel.emails || [];
+          for (let i = 0; i < steps.length; i++) {
+            const step = steps[i];
+            // Aceita múltiplos formatos de funil
+            const subject = step.subject || step.email_subject || step.name || `Etapa ${i + 1}`;
+            const html = step.html || step.body || step.content || step.email_body || '';
+            const delayDays = step.delay_days ?? step.wait_days ?? step.day ?? (i * 2);
+            
+            await supabase.from('sequence_steps').insert({
+              sequence_id: seqRow.id,
+              step_order: i + 1,
+              delay_days: delayDays,
+              channel: step.channel || step.type || 'email',
+              subject,
+              content: html,
+            });
+          }
+
+          // Também salva cada e-mail do funil como template draft
+          for (const step of steps) {
+            const html = step.html || step.body || step.content || step.email_body || '';
+            if (html) {
+              await supabase.from('email_campaigns').insert({
+                name: `[${funnel.name}] ${step.name || step.subject || 'E-mail'}`,
+                subject: step.subject || step.email_subject || step.name || '',
+                content: html,
+                status: 'draft',
+                user_id: user.id,
+                organization_id: currentOrganization?.id || null,
+              });
+            }
+          }
+          successCount++;
+        }
+        queryClient.invalidateQueries({ queryKey: ['sequences'] });
+        queryClient.invalidateQueries({ queryKey: ['email_campaigns'] });
+      }
+
       setResult({ type: activeType, success: successCount, errors: errorCount });
       toast.success(`${successCount} item(ns) importado(s)!`);
     } catch (err: any) {
@@ -159,14 +223,17 @@ export function MigrationJSONImport({ platformName }: Props) {
               <Zap className="h-4 w-4 mr-1" /> Automações
             </TabsTrigger>
             <TabsTrigger value="templates" className="flex-1">
-              <Mail className="h-4 w-4 mr-1" /> Templates E-mail
+              <Mail className="h-4 w-4 mr-1" /> Templates
             </TabsTrigger>
             <TabsTrigger value="sequences" className="flex-1">
               <GitBranch className="h-4 w-4 mr-1" /> Sequências
             </TabsTrigger>
+            <TabsTrigger value="funnels" className="flex-1">
+              <Workflow className="h-4 w-4 mr-1" /> Funis
+            </TabsTrigger>
           </TabsList>
 
-          {['automations', 'templates', 'sequences'].map(type => (
+          {['automations', 'templates', 'sequences', 'funnels'].map(type => (
             <TabsContent key={type} value={type}>
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
@@ -187,7 +254,7 @@ export function MigrationJSONImport({ platformName }: Props) {
                 <Textarea
                   value={jsonText}
                   onChange={e => setJsonText(e.target.value)}
-                  placeholder={`Cole seu JSON de ${type === 'automations' ? 'automações' : type === 'templates' ? 'templates' : 'sequências'} aqui...`}
+                  placeholder={`Cole seu JSON de ${type === 'automations' ? 'automações' : type === 'templates' ? 'templates' : type === 'funnels' ? 'funis' : 'sequências'} aqui...`}
                   className="font-mono text-xs min-h-[250px]"
                 />
 
@@ -203,7 +270,7 @@ export function MigrationJSONImport({ platformName }: Props) {
           <div className="flex items-center gap-3 p-3 rounded-lg bg-accent/50">
             {result.errors === 0 ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : <AlertCircle className="h-5 w-5 text-yellow-500" />}
             <div>
-              <p className="font-medium">{result.success} {result.type === 'automations' ? 'automação(ões)' : result.type === 'templates' ? 'template(s)' : 'sequência(s)'} importada(s)</p>
+              <p className="font-medium">{result.success} {result.type === 'automations' ? 'automação(ões)' : result.type === 'templates' ? 'template(s)' : result.type === 'funnels' ? 'funil(is)' : 'sequência(s)'} importada(s)</p>
               {result.errors > 0 && <p className="text-sm text-muted-foreground">{result.errors} erro(s)</p>}
             </div>
           </div>

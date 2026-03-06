@@ -11,8 +11,9 @@ import {
   Search, Send, Paperclip, Smile, Phone, Video,
   MessageSquare, Mail, CheckCheck, Plus, Bot, Image as ImageIcon,
   FileAudio, File as FileIcon, X, Loader2,
-  AlertTriangle, Clock, Hash, ChevronLeft, UserPlus, Inbox as InboxIcon, User,
+  AlertTriangle, Clock, Hash, ChevronLeft, UserPlus, Inbox as InboxIcon, User, Ticket,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useInbox } from '@/hooks/useInbox';
 import { useContacts } from '@/hooks/useContacts';
 import { useAssignmentRules } from '@/hooks/useAssignmentRules';
@@ -22,6 +23,7 @@ import { SendIAButton } from '@/components/inbox/SendIAButton';
 import { AudioTranscription } from '@/components/inbox/AudioTranscription';
 import { ContactInfoPanel } from '@/components/inbox/ContactInfoPanel';
 import { supabase } from '@/integrations/supabase/client';
+import { useSupportTickets } from '@/hooks/useSupportTickets';
 import { toast } from 'sonner';
 import Picker from '@emoji-mart/react';
 import data from '@emoji-mart/data';
@@ -66,8 +68,10 @@ export default function Inbox() {
   const contactsQuery = useContacts();
   const contacts = contactsQuery.data ?? [];
   const { assignConversation } = useAssignmentRules();
+  const { createTicket: createSupportTicket } = useSupportTickets();
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
+  const navigate = useNavigate();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -466,27 +470,45 @@ export default function Inbox() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    {/* Assumir atendimento button */}
-                    {!selectedConversation.assigned_to && (
-                      <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handleAssumirAtendimento}>
-                        <User className="h-3 w-3" />
-                        Assumir
-                      </Button>
-                    )}
-                    <SendIAButton
-                      conversationId={selectedConversation.id}
-                      contactName={`${selectedConversation.contacts?.first_name || ''} ${selectedConversation.contacts?.last_name || ''}`}
-                      lastMessages={selectedConversation.messages || []}
-                      onSendMessage={(content) => {
-                        sendMessage.mutate({
-                          conversation_id: selectedConversation.id,
-                          content,
-                          sender_type: 'user',
-                        });
-                      }}
-                    />
-                  </div>
+                   <div className="flex items-center gap-1">
+                     {/* Assumir atendimento button */}
+                     {!selectedConversation.assigned_to && (
+                       <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={handleAssumirAtendimento}>
+                         <User className="h-3 w-3" />
+                         Assumir
+                       </Button>
+                     )}
+                     {/* Abrir Ticket de Suporte */}
+                     <Button
+                       size="sm"
+                       variant="outline"
+                       className="h-7 text-xs gap-1"
+                       onClick={() => {
+                         createSupportTicket.mutate({
+                           title: `Suporte: ${selectedConversation.contacts?.first_name || ''} ${selectedConversation.contacts?.last_name || ''}`.trim(),
+                           contact_id: selectedConversation.contact_id,
+                           conversation_id: selectedConversation.id,
+                         }, {
+                           onSuccess: () => navigate('/support'),
+                         });
+                       }}
+                     >
+                       <Ticket className="h-3 w-3" />
+                       Abrir Ticket
+                     </Button>
+                     <SendIAButton
+                       conversationId={selectedConversation.id}
+                       contactName={`${selectedConversation.contacts?.first_name || ''} ${selectedConversation.contacts?.last_name || ''}`}
+                       lastMessages={selectedConversation.messages || []}
+                       onSendMessage={(content) => {
+                         sendMessage.mutate({
+                           conversation_id: selectedConversation.id,
+                           content,
+                           sender_type: 'user',
+                         });
+                       }}
+                     />
+                   </div>
                 </div>
               </CardHeader>
 

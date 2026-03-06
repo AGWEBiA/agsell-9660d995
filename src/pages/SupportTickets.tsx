@@ -18,8 +18,10 @@ import {
 import {
   Plus, Search, Ticket, Clock, CheckCircle2, AlertTriangle, BarChart3,
   Hash, Trash2, StickyNote, ChevronRight, ArrowLeft, UserCheck, Link as LinkIcon,
+  Send, MessageSquareReply,
 } from 'lucide-react';
 import { useSupportTickets, useSupportTicketNotes, SupportTicket } from '@/hooks/useSupportTickets';
+import { useTicketReplies } from '@/hooks/useTicketReplies';
 import { useContacts } from '@/hooks/useContacts';
 import { useOrganizationMembers } from '@/hooks/useOrganizationMembers';
 import { useAuth } from '@/contexts/AuthContext';
@@ -304,7 +306,9 @@ function TicketDetailView({ ticket, tickets, members, onBack, onUpdate, onDelete
   onCreateSubTicket: (title: string) => void;
 }) {
   const { notes, addNote, deleteNote } = useSupportTicketNotes(ticket.id);
+  const { replies, sendReply, deleteReply } = useTicketReplies(ticket.id);
   const [noteInput, setNoteInput] = useState('');
+  const [replyInput, setReplyInput] = useState('');
   const [subTicketTitle, setSubTicketTitle] = useState('');
   const [showSubForm, setShowSubForm] = useState(false);
 
@@ -385,6 +389,64 @@ function TicketDetailView({ ticket, tickets, members, onBack, onUpdate, onDelete
                           variant="ghost" size="icon"
                           className="h-5 w-5 absolute top-2 right-2 opacity-0 group-hover:opacity-100"
                           onClick={() => deleteNote.mutate(note.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+
+          {/* Replies to requester */}
+          <Card>
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-sm flex items-center gap-2"><MessageSquareReply className="h-4 w-4" />Respostas ao Solicitante</CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4 space-y-3">
+              <div className="space-y-2">
+                <Textarea
+                  placeholder="Escreva sua resposta para o solicitante..."
+                  value={replyInput}
+                  onChange={e => setReplyInput(e.target.value)}
+                  rows={3}
+                  className="text-sm"
+                />
+                <div className="flex justify-end">
+                  <Button
+                    size="sm"
+                    disabled={sendReply.isPending || !replyInput.trim()}
+                    onClick={() => {
+                      sendReply.mutate({ content: replyInput.trim() });
+                      setReplyInput('');
+                    }}
+                  >
+                    <Send className="h-3.5 w-3.5 mr-1.5" />
+                    Enviar Resposta
+                  </Button>
+                </div>
+              </div>
+              <ScrollArea className="max-h-80">
+                {replies.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-6">Nenhuma resposta enviada</p>
+                ) : (
+                  <div className="space-y-2">
+                    {replies.map(reply => (
+                      <div key={reply.id} className="p-3 rounded-md border bg-primary/5 text-sm group relative">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Send className="h-3 w-3 text-primary" />
+                          <span className="font-medium text-xs">{reply.profile_name}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {format(new Date(reply.created_at), "dd/MM HH:mm", { locale: ptBR })}
+                          </span>
+                        </div>
+                        <p className="text-xs whitespace-pre-wrap">{reply.content}</p>
+                        <Button
+                          variant="ghost" size="icon"
+                          className="h-5 w-5 absolute top-2 right-2 opacity-0 group-hover:opacity-100"
+                          onClick={() => deleteReply.mutate(reply.id)}
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>

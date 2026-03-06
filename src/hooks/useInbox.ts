@@ -25,7 +25,7 @@ export function useInbox() {
           ),
           messages (
             id, content, sender_type, is_read, created_at,
-            message_type, media_url, media_mime_type, file_name
+            message_type, media_url, media_mime_type, file_name, sender_id
           )
         `)
         .order('last_message_at', { ascending: false })
@@ -39,6 +39,35 @@ export function useInbox() {
 
       const { data, error } = await query;
       if (error) throw error;
+
+      // Fetch sender names for messages with sender_id
+      const allSenderIds = new Set<string>();
+      (data as any[])?.forEach(conv => {
+        conv.messages?.forEach((m: any) => {
+          if (m.sender_id) allSenderIds.add(m.sender_id);
+        });
+      });
+
+      const senderNames: Record<string, string> = {};
+      if (allSenderIds.size > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name')
+          .in('user_id', Array.from(allSenderIds));
+        profiles?.forEach(p => {
+          if (p.full_name) senderNames[p.user_id] = p.full_name;
+        });
+      }
+
+      // Attach sender_name to messages
+      (data as any[])?.forEach(conv => {
+        conv.messages?.forEach((m: any) => {
+          if (m.sender_id && senderNames[m.sender_id]) {
+            m.sender_name = senderNames[m.sender_id];
+          }
+        });
+      });
+
       return data as any[];
     },
     enabled: !!user?.id,
@@ -95,9 +124,13 @@ export function useInbox() {
 
   const sendMessage = useMutation({
     mutationFn: async (message: any) => {
+      const messageToInsert = { ...message };
+      if (message.sender_type === 'user' && user?.id) {
+        messageToInsert.sender_id = user.id;
+      }
       const { data, error } = await supabase
         .from('messages')
-        .insert(message)
+        .insert(messageToInsert)
         .select()
         .single();
       if (error) throw error;

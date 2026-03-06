@@ -2040,6 +2040,7 @@ export type Database = {
           media_mime_type: string | null
           media_url: string | null
           message_type: string
+          sender_id: string | null
           sender_type: string
         }
         Insert: {
@@ -2052,6 +2053,7 @@ export type Database = {
           media_mime_type?: string | null
           media_url?: string | null
           message_type?: string
+          sender_id?: string | null
           sender_type?: string
         }
         Update: {
@@ -2064,6 +2066,7 @@ export type Database = {
           media_mime_type?: string | null
           media_url?: string | null
           message_type?: string
+          sender_id?: string | null
           sender_type?: string
         }
         Relationships: [

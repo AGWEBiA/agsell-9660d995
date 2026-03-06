@@ -341,7 +341,14 @@ const EXCLUSIVE_DIFFERENTIALS = [
     title: 'Migração Completa em Minutos',
     description: 'Traga seus contatos, automações, templates de e-mail, sequências e funis de qualquer plataforma. Suporte a CSV, JSON, API e Webhooks — sem perder dados.',
     badge: 'Exclusivo',
-    span: 'md:col-span-3',
+    span: '',
+  },
+  {
+    icon: Headphones,
+    title: 'Portal de Suporte White-label',
+    description: 'Ofereça aos seus clientes um portal público de atendimento com a sua marca. Abertura e acompanhamento de tickets por protocolo, chat ao vivo via WhatsApp e integração automática ao CRM — sem exigir login.',
+    badge: 'Exclusivo',
+    span: 'md:col-span-2',
   },
 ];
 

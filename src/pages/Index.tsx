@@ -229,6 +229,7 @@ const FEATURE_CATEGORIES = [
       { icon: Globe, title: 'API Pública + Webhooks', desc: 'API REST com rate limiting, webhooks inbound e outbound para integrar com qualquer sistema.' },
       { icon: FileText, title: 'Formulários Web', desc: 'Capture leads com formulários customizados embarcáveis no seu site com integração ao CRM.' },
       { icon: Shield, title: 'Permissões Granulares (RBAC)', desc: 'Controle quem vê e faz o quê. Papéis customizáveis por módulo e ação.' },
+      { icon: Headphones, title: 'Portal de Suporte White-label', desc: 'Portal público com sua marca para clientes abrirem e acompanharem tickets sem login.' },
     ]
   },
 ];

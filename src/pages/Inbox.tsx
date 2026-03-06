@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import {
   Search, Send, Paperclip, Smile, Phone, Video,
   MessageSquare, Mail, CheckCheck, Plus, Bot, Image as ImageIcon,
-  FileAudio, File as FileIcon, X, Loader2, Filter,
+  FileAudio, File as FileIcon, X, Loader2,
   AlertTriangle, Clock, Hash, ChevronLeft, UserPlus, Inbox as InboxIcon, User,
 } from 'lucide-react';
 import { useInbox } from '@/hooks/useInbox';
@@ -78,8 +78,8 @@ export default function Inbox() {
   const [pendingFile, setPendingFile] = useState<{ file: File; preview?: string; type: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [channelFilter, setChannelFilter] = useState<string>('all');
+  const [channelFilter] = useState<string>('all');
+  const [statusFilter] = useState<string>('all');
   const [queueTab, setQueueTab] = useState<QueueTab>('todos');
   const [newConversation, setNewConversation] = useState({ contact_id: '', channel: 'whatsapp' });
   const [newContact, setNewContact] = useState({ first_name: '', email: '', phone: '', channel: 'whatsapp' });
@@ -230,13 +230,6 @@ export default function Inbox() {
     todos: conversations.length,
   };
 
-  // Count by status (within queue)
-  const statusCounts = {
-    all: queueFiltered.length,
-    open: queueFiltered.filter(c => c.status === 'open').length,
-    pending: queueFiltered.filter(c => c.status === 'pending').length,
-    resolved: queueFiltered.filter(c => c.status === 'resolved').length,
-  };
 
   if (isLoading) {
     return (
@@ -365,39 +358,6 @@ export default function Inbox() {
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input placeholder="Buscar por nome ou protocolo..." className="pl-9 h-8 text-xs" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
-            {/* Status filter tabs */}
-            <div className="flex gap-1">
-              {[
-                { key: 'all', label: 'Todos' },
-                { key: 'open', label: 'Abertos' },
-                { key: 'pending', label: 'Pendentes' },
-                { key: 'resolved', label: 'Resolvidos' },
-              ].map(s => (
-                <Button
-                  key={s.key}
-                  variant={statusFilter === s.key ? 'default' : 'ghost'}
-                  size="sm"
-                  className="h-7 text-xs px-2 flex-1"
-                  onClick={() => setStatusFilter(s.key)}
-                >
-                  {s.label}
-                  <Badge variant="secondary" className="ml-1 text-[10px] h-4 px-1">
-                    {statusCounts[s.key as keyof typeof statusCounts] ?? 0}
-                  </Badge>
-                </Button>
-              ))}
-            </div>
-            {/* Channel filter */}
-            <Select value={channelFilter} onValueChange={setChannelFilter}>
-              <SelectTrigger className="h-7 text-xs"><Filter className="h-3 w-3 mr-1" /><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os canais</SelectItem>
-                <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                <SelectItem value="email">Email</SelectItem>
-                <SelectItem value="instagram">Instagram</SelectItem>
-                <SelectItem value="telegram">Telegram</SelectItem>
-              </SelectContent>
-            </Select>
           </CardHeader>
           <CardContent className="p-0 flex-1 overflow-hidden">
             {filteredConversations.length === 0 ? (
@@ -538,7 +498,10 @@ export default function Inbox() {
                       const msgType = message.message_type || 'text';
                       return (
                         <div key={message.id} className={`flex ${message.sender_type === 'user' ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-[70%] rounded-lg p-3 ${message.sender_type === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                            <div className={`max-w-[70%] rounded-lg p-3 ${message.sender_type === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                            {message.sender_type === 'user' && message.sender_name && (
+                              <p className="text-xs font-semibold mb-1 opacity-80">{message.sender_name}</p>
+                            )}
                             {msgType === 'image' && message.media_url && (
                               <a href={message.media_url} target="_blank" rel="noopener noreferrer">
                                 <img src={message.media_url} alt={message.file_name || 'Imagem'} className="rounded-md max-w-full max-h-60 object-cover mb-1" loading="lazy" />

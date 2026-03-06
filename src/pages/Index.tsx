@@ -229,6 +229,7 @@ const FEATURE_CATEGORIES = [
       { icon: Globe, title: 'API Pública + Webhooks', desc: 'API REST com rate limiting, webhooks inbound e outbound para integrar com qualquer sistema.' },
       { icon: FileText, title: 'Formulários Web', desc: 'Capture leads com formulários customizados embarcáveis no seu site com integração ao CRM.' },
       { icon: Shield, title: 'Permissões Granulares (RBAC)', desc: 'Controle quem vê e faz o quê. Papéis customizáveis por módulo e ação.' },
+      { icon: Headphones, title: 'Portal de Suporte White-label', desc: 'Portal público com sua marca para clientes abrirem e acompanharem tickets sem login.' },
     ]
   },
 ];
@@ -341,7 +342,14 @@ const EXCLUSIVE_DIFFERENTIALS = [
     title: 'Migração Completa em Minutos',
     description: 'Traga seus contatos, automações, templates de e-mail, sequências e funis de qualquer plataforma. Suporte a CSV, JSON, API e Webhooks — sem perder dados.',
     badge: 'Exclusivo',
-    span: 'md:col-span-3',
+    span: '',
+  },
+  {
+    icon: Headphones,
+    title: 'Portal de Suporte White-label',
+    description: 'Ofereça aos seus clientes um portal público de atendimento com a sua marca. Abertura e acompanhamento de tickets por protocolo, chat ao vivo via WhatsApp e integração automática ao CRM — sem exigir login.',
+    badge: 'Exclusivo',
+    span: 'md:col-span-2',
   },
 ];
 

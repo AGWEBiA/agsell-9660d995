@@ -67,6 +67,7 @@ import FlowBuilder from "./pages/FlowBuilder";
 import TechnicalManual from "./pages/TechnicalManual";
 import Migration from "./pages/Migration";
 import SupportTickets from "./pages/SupportTickets";
+import SupportCenter from "./pages/SupportCenter";
 import TicketTracker from "./pages/TicketTracker";
 import NotFound from "./pages/NotFound";
 
@@ -142,6 +143,7 @@ const App = () => (
                     <Route path="channels" element={<Channels />} />
                     <Route path="migration" element={<Migration />} />
                     <Route path="support" element={<SupportTickets />} />
+                    <Route path="support-center" element={<SupportCenter />} />
                   </Route>
                   
                   {/* Plans accessible even with expired subscription */}

@@ -45,6 +45,7 @@ import { SystemOverviewDashboard } from '@/components/admin/SystemOverviewDashbo
 import { ErrorMonitoringDashboard } from '@/components/admin/ErrorMonitoringDashboard';
 import { KiwifyConfig } from '@/components/admin/KiwifyConfig';
 import { PaymentGatewayConfig } from '@/components/admin/PaymentGatewayConfig';
+import { SalesRecoveryDashboard } from '@/components/admin/SalesRecoveryDashboard';
 
 export default function Admin() {
   const { user, isAdmin, loading: isCheckingAdmin } = useAuth();
@@ -228,8 +229,11 @@ export default function Admin() {
             <Bug className="h-4 w-4" />
             Erros do Sistema
           </TabsTrigger>
+          <TabsTrigger value="sales-recovery" className="flex items-center gap-2">
+            <ShoppingCart className="h-4 w-4" />
+            Vendas
+          </TabsTrigger>
         </TabsList>
-
         <TabsContent value="overview" className="space-y-6">
           {/* KPIs */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -457,6 +461,9 @@ export default function Admin() {
         </TabsContent>
         <TabsContent value="kiwify">
           <KiwifyConfig />
+        </TabsContent>
+        <TabsContent value="sales-recovery">
+          <SalesRecoveryDashboard />
         </TabsContent>
         <TabsContent value="gateway">
           <PaymentGatewayConfig />

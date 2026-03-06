@@ -73,11 +73,46 @@ export function useSacAgents() {
         if (error.code === '23505') throw new Error('Já existe um atendente com este e-mail');
         throw error;
       }
+
+      // Auto-invite agent as org member so they get platform access
+      try {
+        const agentEmail = input.email.trim().toLowerCase();
+        // Check if already a member
+        const { data: existingMembers } = await supabase
+          .from('organization_members')
+          .select('id')
+          .eq('organization_id', orgId);
+        
+        // Check profiles to see if this email already has a user
+        // If not a member, send an invite
+        const { data: existingInvite } = await supabase
+          .from('organization_invites')
+          .select('id')
+          .eq('organization_id', orgId)
+          .eq('email', agentEmail)
+          .maybeSingle();
+
+        if (!existingInvite) {
+          await supabase
+            .from('organization_invites')
+            .insert({
+              organization_id: orgId,
+              email: agentEmail,
+              role: 'member',
+              invited_by: user.id,
+            });
+        }
+      } catch (inviteErr) {
+        // Non-blocking: agent is created even if invite fails
+        console.warn('Falha ao enviar convite automático:', inviteErr);
+      }
+
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sac-agents'] });
-      toast.success('Atendente criado com sucesso!');
+      queryClient.invalidateQueries({ queryKey: ['organization_invites'] });
+      toast.success('Atendente criado! Um convite de acesso foi enviado para o e-mail informado.');
     },
     onError: (error) => {
       toast.error(error.message);

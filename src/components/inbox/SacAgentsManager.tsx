@@ -64,7 +64,7 @@ function AgentFormDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>Preencha os dados do atendente.</DialogDescription>
+          <DialogDescription>Preencha os dados do atendente. Um convite de acesso ao sistema será enviado automaticamente para o e-mail informado.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1">

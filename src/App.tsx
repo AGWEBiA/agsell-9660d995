@@ -66,6 +66,8 @@ import Channels from "./pages/Channels";
 import FlowBuilder from "./pages/FlowBuilder";
 import TechnicalManual from "./pages/TechnicalManual";
 import Migration from "./pages/Migration";
+import SupportTickets from "./pages/SupportTickets";
+import TicketTracker from "./pages/TicketTracker";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -92,6 +94,8 @@ const App = () => (
                   <Route path="/terms-of-service" element={<TermsOfService />} />
                   <Route path="/purchase-success" element={<PurchaseSuccess />} />
                   <Route path="/forms/:formId" element={<FormView />} />
+                  <Route path="/ticket/:protocol" element={<TicketTracker />} />
+                  <Route path="/ticket" element={<TicketTracker />} />
                   <Route path="/agency-invite/:token" element={<AgencyInvite />} />
                   <Route path="/manual-tecnico" element={<TechnicalManual />} />
                   <Route path="/subscription-expired" element={<ProtectedRoute allowExpired><SubscriptionExpired /></ProtectedRoute>} />
@@ -137,6 +141,7 @@ const App = () => (
                     <Route path="sequences" element={<Sequences />} />
                     <Route path="channels" element={<Channels />} />
                     <Route path="migration" element={<Migration />} />
+                    <Route path="support" element={<SupportTickets />} />
                   </Route>
                   
                   {/* Plans accessible even with expired subscription */}

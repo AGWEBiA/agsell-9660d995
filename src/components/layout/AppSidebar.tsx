@@ -8,7 +8,7 @@ import {
   ChevronDown, Trophy, Shield, Key, Webhook, SlidersHorizontal,
   Instagram, ListChecks, Home, Megaphone, Lightbulb, Wrench,
   HelpCircle, Briefcase, X, FlaskConical, Rocket, GitBranch, Send,
-  Lock, BookOpen, Workflow, ArrowRightLeft,
+  Lock, BookOpen, Workflow, ArrowRightLeft, Ticket,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -69,6 +69,7 @@ const menuSections: MenuSection[] = [
     icon: MessageSquare,
     items: [
       { label: 'SAC', icon: Inbox, path: '/inbox' },
+      { label: 'Suporte', icon: Ticket, path: '/support' },
       { label: 'Caixa de E-mail', icon: Mail, path: '/email-inbox', featureRequired: 'email_marketing' },
       { label: 'WhatsApp', icon: MessageSquare, path: '/whatsapp', featureRequired: 'whatsapp' },
       { label: 'E-mail Marketing', icon: Send, path: '/email', featureRequired: 'email_marketing' },

@@ -2978,6 +2978,213 @@ export type Database = {
           },
         ]
       }
+      support_ticket_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number | null
+          file_type: string | null
+          file_url: string
+          id: string
+          ticket_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url: string
+          id?: string
+          ticket_id: string
+          uploaded_by: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string
+          id?: string
+          ticket_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ticket_attachments_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_ticket_dependencies: {
+        Row: {
+          created_at: string
+          depends_on_ticket_id: string
+          id: string
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string
+          depends_on_ticket_id: string
+          id?: string
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string
+          depends_on_ticket_id?: string
+          id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ticket_dependencies_depends_on_ticket_id_fkey"
+            columns: ["depends_on_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_ticket_dependencies_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_ticket_notes: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          note_type: string
+          ticket_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          note_type?: string
+          ticket_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          note_type?: string
+          ticket_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_ticket_notes_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          category: string | null
+          closed_at: string | null
+          contact_id: string | null
+          conversation_id: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          organization_id: string
+          parent_ticket_id: string | null
+          priority: string
+          protocol_number: string
+          resolved_at: string | null
+          sla_deadline_at: string | null
+          sla_hours: number | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string | null
+          closed_at?: string | null
+          contact_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          organization_id: string
+          parent_ticket_id?: string | null
+          priority?: string
+          protocol_number?: string
+          resolved_at?: string | null
+          sla_deadline_at?: string | null
+          sla_hours?: number | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string | null
+          closed_at?: string | null
+          contact_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          organization_id?: string
+          parent_ticket_id?: string | null
+          priority?: string
+          protocol_number?: string
+          resolved_at?: string | null
+          sla_deadline_at?: string | null
+          sla_hours?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_parent_ticket_id_fkey"
+            columns: ["parent_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_errors: {
         Row: {
           created_at: string

@@ -6,7 +6,7 @@ import {
   Inbox, Mail, MessageSquare, Zap, BarChart3, Target, FileText,
   Link as LinkIcon, Settings, Bot, Brain, ChevronLeft, ChevronRight,
   ChevronDown, Trophy, Shield, Key, Webhook, SlidersHorizontal,
-  Instagram, ListChecks, Home, Megaphone, Lightbulb, Wrench,
+  Instagram, ListChecks, Home, Megaphone, Lightbulb, Wrench, Headphones,
   HelpCircle, Briefcase, X, FlaskConical, Rocket, GitBranch, Send,
   Lock, BookOpen, Workflow, ArrowRightLeft, Ticket,
 } from 'lucide-react';
@@ -104,6 +104,7 @@ const menuSections: MenuSection[] = [
     label: 'Ajuda',
     icon: HelpCircle,
     items: [
+      { label: 'Central de Atendimento', icon: Headphones, path: '/support-center' },
       { label: 'Central de Ajuda', icon: HelpCircle, path: '/help-center' },
       { label: 'Guia do Sistema', icon: BookOpen, path: '/system-guide' },
       { label: 'Migração de Dados', icon: ArrowRightLeft, path: '/migration' },

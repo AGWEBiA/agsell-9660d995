@@ -186,6 +186,7 @@ export default function PaidGroups() {
           </div>
         </TabsContent>
 
+        <TabsContent value="dashboard"><PaidGroupsDashboard /></TabsContent>
         <TabsContent value="config"><PaidGroupsConfig /></TabsContent>
         <TabsContent value="groups"><PaidGroupsManager /></TabsContent>
         <TabsContent value="products"><PaidGroupProducts /></TabsContent>

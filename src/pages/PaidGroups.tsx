@@ -102,6 +102,7 @@ export default function PaidGroups() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="guide" className="gap-1.5"><BookOpen className="h-4 w-4" /> Passo a Passo</TabsTrigger>
+          <TabsTrigger value="dashboard" className="gap-1.5"><BarChart3 className="h-4 w-4" /> Dashboard</TabsTrigger>
           <TabsTrigger value="config" className="gap-1.5"><Settings className="h-4 w-4" /> Configuração</TabsTrigger>
           <TabsTrigger value="groups" className="gap-1.5"><Users className="h-4 w-4" /> Grupos</TabsTrigger>
           <TabsTrigger value="products" className="gap-1.5"><Package className="h-4 w-4" /> Produtos</TabsTrigger>

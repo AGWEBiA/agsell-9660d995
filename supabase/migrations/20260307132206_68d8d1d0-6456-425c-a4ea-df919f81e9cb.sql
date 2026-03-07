@@ -1,0 +1,1 @@
+UPDATE public.plans SET price_monthly = 1297.00, price_yearly = 12970.00 WHERE slug = 'agencia';

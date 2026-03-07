@@ -53,7 +53,7 @@ O AG Sell é uma plataforma SaaS de CRM, automação de marketing e atendimento 
 ## 1.3 Modelo de Negócio
 
 - Modelo SaaS estritamente pago (sem plano gratuito ativo para público)
-- 4 níveis: Starter (R$197), Professional (R$397), Enterprise (R$797), Agência (R$997)
+- 4 níveis: Starter (R$197), Professional (R$397), Enterprise (R$797), Agência (R$1.297)
 - Cobrança via Stripe com ciclos mensal e anual (desconto 17% anual)
 - WhatsApp ilimitado em todos os planos
 

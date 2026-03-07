@@ -413,14 +413,14 @@ export function WhatsAppProviderSetup() {
 
   return (
     <>
-      <Dialog open={true} onOpenChange={() => {}}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" hideCloseButton={false}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-green-600" />
-              Configuração do WhatsApp
-            </DialogTitle>
-          </DialogHeader>
+      <Card className="max-w-2xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-green-600" />
+            Configuração do WhatsApp
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
 
           {/* Status badges */}
           <div className="flex flex-wrap gap-2">

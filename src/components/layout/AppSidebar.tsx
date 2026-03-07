@@ -9,7 +9,7 @@ import {
   Instagram, ListChecks, Home, Megaphone, Lightbulb, Wrench, Headphones,
   HelpCircle, Briefcase, X, FlaskConical, Rocket, GitBranch, Send,
   Lock, BookOpen, Workflow, ArrowRightLeft, Ticket, ShieldCheck, Activity,
-  Layout, Clock, Sparkles, Smile,
+  Layout, Clock, Sparkles, Smile, Route, Crosshair, Wand2, Monitor,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';

@@ -473,6 +473,9 @@ export default function Admin() {
         <TabsContent value="gateway">
           <PaymentGatewayConfig />
         </TabsContent>
+        <TabsContent value="wa-groups">
+          <PlanWhatsAppGroupsManager />
+        </TabsContent>
       </Tabs>
 
       <AssignPlanDialog

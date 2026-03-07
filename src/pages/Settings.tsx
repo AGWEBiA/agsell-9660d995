@@ -164,13 +164,36 @@ export default function Settings() {
           <TabsTrigger value="privacy" className="text-xs sm:text-sm"><Shield className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Privacidade</span></TabsTrigger>
         </TabsList>
 
-        <TabsContent value="profile" className="mt-4">
+        <TabsContent value="profile" className="mt-4 space-y-4">
           <Card>
             <CardHeader><CardTitle>Perfil</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-2"><Label>Nome</Label><Input placeholder="Seu nome" /></div>
               <div className="grid gap-2"><Label>Email</Label><Input type="email" placeholder="seu@email.com" value={user?.email || ''} disabled /></div>
               <Button>Salvar</Button>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Phone className="h-5 w-5" /> WhatsApp</CardTitle>
+              <CardDescription>Seu número de WhatsApp para acesso a grupos exclusivos do seu plano.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-2">
+                <Label>Número de WhatsApp</Label>
+                <div className="flex gap-2">
+                  <span className="flex items-center px-3 bg-muted rounded-md text-sm text-muted-foreground">+55</span>
+                  <Input
+                    value={formatPhoneDisplay(whatsappNumber)}
+                    onChange={(e) => setWhatsappNumber(e.target.value.replace(/\D/g, ''))}
+                    placeholder="(11) 99999-9999"
+                    maxLength={16}
+                  />
+                </div>
+              </div>
+              <Button onClick={() => saveWhatsAppMutation.mutate()} disabled={saveWhatsAppMutation.isPending}>
+                {saveWhatsAppMutation.isPending ? 'Salvando...' : 'Salvar WhatsApp'}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>

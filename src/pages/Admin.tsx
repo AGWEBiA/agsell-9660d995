@@ -46,6 +46,7 @@ import { ErrorMonitoringDashboard } from '@/components/admin/ErrorMonitoringDash
 import { KiwifyConfig } from '@/components/admin/KiwifyConfig';
 import { PaymentGatewayConfig } from '@/components/admin/PaymentGatewayConfig';
 import { SalesRecoveryDashboard } from '@/components/admin/SalesRecoveryDashboard';
+import { PlanWhatsAppGroupsManager } from '@/components/admin/PlanWhatsAppGroupsManager';
 
 export default function Admin() {
   const { user, isAdmin, loading: isCheckingAdmin } = useAuth();

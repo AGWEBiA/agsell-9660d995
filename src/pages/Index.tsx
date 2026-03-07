@@ -162,7 +162,7 @@ function ToolReplacementSection() {
 
 // ─── Stats ──────────────────────────────────────────────────
 const STATS = [
-  { value: '20+', label: 'Funcionalidades integradas' },
+  { value: '30+', label: 'Funcionalidades integradas' },
   { value: '6', label: 'Ferramentas substituídas' },
   { value: '50%', label: 'Mais conversões' },
   { value: '24/7', label: 'IA trabalhando por você' },

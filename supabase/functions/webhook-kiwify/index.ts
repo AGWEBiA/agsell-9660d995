@@ -278,6 +278,11 @@ Deno.serve(async (req) => {
         processed: true,
         processed_at: new Date().toISOString(),
       }).eq("id", webhookEvent.id);
+
+      // Sync WhatsApp groups
+      if (existingUser) {
+        await callSyncUser(existingUser.id, true);
+      }
     }
 
     // --- Handle refunds and chargebacks ---

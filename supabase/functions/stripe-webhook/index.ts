@@ -299,6 +299,37 @@ async function handlePaymentFailed(
   console.log("Payment failed for subscription:", stripeSubscriptionId);
 }
 
+async function syncWhatsAppGroupsByEmail(supabase: SupabaseClientType, email: string, shouldBeActive: boolean) {
+  try {
+    const { data: userData } = await supabase.auth.admin.listUsers();
+    const user = userData?.users?.find((u: { email?: string }) => u.email?.toLowerCase() === email.toLowerCase());
+    if (user) {
+      await callSyncUser(supabase, user.id, shouldBeActive);
+    }
+  } catch (err) {
+    console.error("Error syncing WhatsApp groups:", err);
+  }
+}
+
+async function callSyncUser(supabase: SupabaseClientType, userId: string, shouldBeActive: boolean) {
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const response = await fetch(`${supabaseUrl}/functions/v1/subscription-whatsapp-groups`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({ action: "sync_user", user_id: userId, should_be_active: shouldBeActive }),
+    });
+    const result = await response.text();
+    console.log("WhatsApp group sync result:", result);
+  } catch (err) {
+    console.error("Error calling subscription-whatsapp-groups:", err);
+  }
+}
+
 function generatePassword(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
   let password = '';

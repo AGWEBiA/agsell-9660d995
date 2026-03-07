@@ -309,6 +309,9 @@ Deno.serve(async (req) => {
 
           logStep("Subscription deactivated due to " + payload.order_status);
         }
+
+        // Sync WhatsApp groups - remove
+        await callSyncUser(existingUser.id, false);
       }
 
       await supabase.from("webhook_events").update({

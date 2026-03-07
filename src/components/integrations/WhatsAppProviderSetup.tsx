@@ -77,7 +77,7 @@ export function WhatsAppProviderSetup() {
   const [officialPhoneNumberId, setOfficialPhoneNumberId] = useState('');
   const [officialAccessToken, setOfficialAccessToken] = useState('');
   const [officialWabaId, setOfficialWabaId] = useState('');
-  const [officialWebhookToken, setOfficialWebhookToken] = useState('');
+  // webhook token is auto-generated
   const [officialPhone, setOfficialPhone] = useState('');
 
   // QR Code states
@@ -282,7 +282,7 @@ export function WhatsAppProviderSetup() {
           phone_number_id: officialPhoneNumberId,
           access_token: officialAccessToken,
           waba_id: officialWabaId,
-          webhook_verify_token: officialWebhookToken,
+          webhook_verify_token: crypto.randomUUID(),
           phone_number: officialPhone,
         } as Record<string, string>,
         phone_number: officialPhone || officialPhoneNumberId,
@@ -291,7 +291,7 @@ export function WhatsAppProviderSetup() {
       setOfficialPhoneNumberId('');
       setOfficialAccessToken('');
       setOfficialWabaId('');
-      setOfficialWebhookToken('');
+      
       setOfficialPhone('');
       toast.success('API Oficial configurada com sucesso!');
     } finally {
@@ -617,43 +617,45 @@ export function WhatsAppProviderSetup() {
                 </h4>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Phone Number ID *</Label>
+                    <Label>Phone Number ID <span className="text-destructive">*</span></Label>
                     <Input
-                      placeholder="ID do número no Meta Business"
+                      placeholder="Ex: 123456789012345"
                       value={officialPhoneNumberId}
                       onChange={e => setOfficialPhoneNumberId(e.target.value)}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Encontre em: Meta for Developers → WhatsApp → API Setup → Phone Number ID
+                    </p>
                   </div>
                   <div className="space-y-2">
-                    <Label>Access Token permanente *</Label>
+                    <Label>Access Token permanente <span className="text-destructive">*</span></Label>
                     <Input
-                      placeholder="Token de acesso"
+                      placeholder="Token de acesso permanente"
                       type="password"
                       value={officialAccessToken}
                       onChange={e => setOfficialAccessToken(e.target.value)}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Obtenha em: Meta Business Suite → WhatsApp → Configurações da API → Token de acesso permanente
+                      Crie um System User em Meta Business Suite → Configurações → Usuários do sistema → Gerar token com permissão <code className="bg-muted px-1 rounded">whatsapp_business_messaging</code>
                     </p>
                   </div>
+
+                  <Separator className="my-2" />
+                  <p className="text-xs text-muted-foreground font-medium">Campos opcionais (recomendados)</p>
+
                   <div className="space-y-2">
-                    <Label>WABA ID (Business Account ID)</Label>
+                    <Label>WABA ID <span className="text-xs text-muted-foreground">(opcional — necessário para templates)</span></Label>
                     <Input
-                      placeholder="ID da conta Business"
+                      placeholder="Ex: 987654321098765"
                       value={officialWabaId}
                       onChange={e => setOfficialWabaId(e.target.value)}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      WhatsApp Business Account ID. Necessário para gerenciar templates de mensagem.
+                    </p>
                   </div>
                   <div className="space-y-2">
-                    <Label>Webhook Verify Token</Label>
-                    <Input
-                      placeholder="Token de verificação"
-                      value={officialWebhookToken}
-                      onChange={e => setOfficialWebhookToken(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Número do WhatsApp</Label>
+                    <Label>Número do WhatsApp <span className="text-xs text-muted-foreground">(opcional — exibição)</span></Label>
                     <Input
                       placeholder="+55 11 99999-9999"
                       value={officialPhone}

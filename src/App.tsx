@@ -88,6 +88,7 @@ import ConditionalContent from "./pages/ConditionalContent";
 import SMSMarketing from "./pages/SMSMarketing";
 import CustomReports from "./pages/CustomReports";
 import RevenueReporting from "./pages/RevenueReporting";
+import PaidGroups from "./pages/PaidGroups";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

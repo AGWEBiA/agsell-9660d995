@@ -256,7 +256,7 @@ function FeatureShowcase() {
         <div className="max-w-xl mx-auto text-center mb-14">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-medium text-primary mb-4">
             <Layers className="h-3 w-3" />
-            +20 funcionalidades
+            +30 funcionalidades
           </div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4">
             Tudo que você precisa,

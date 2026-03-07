@@ -55,7 +55,7 @@ export const helpCategories: HelpCategory[] = [
     id: 'intelligence',
     title: 'Inteligência e Analytics',
     icon: BarChart3,
-    description: 'Dashboards analíticos, Assistente IA, Agentes de IA e Gamificação.',
+    description: 'Dashboards, Assistente IA, Agentes IA, Gamificação, Site Tracking, Atribuição, Sentimento, Relatórios e Metas.',
   },
   {
     id: 'settings',

@@ -4,9 +4,10 @@ import { PaidGroupsConfig } from '@/components/paid-groups/PaidGroupsConfig';
 import { PaidGroupsManager } from '@/components/paid-groups/PaidGroupsManager';
 import { PaidGroupProducts } from '@/components/paid-groups/PaidGroupProducts';
 import { PaidGroupMembers } from '@/components/paid-groups/PaidGroupMembers';
+import { PaidGroupsDashboard } from '@/components/paid-groups/PaidGroupsDashboard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Users, Package, Users2, BookOpen, ChevronDown, ChevronUp, CheckCircle2, ArrowRight, Webhook, ShieldCheck, Zap } from 'lucide-react';
+import { Settings, Users, Package, Users2, BookOpen, ChevronDown, ChevronUp, CheckCircle2, ArrowRight, Webhook, ShieldCheck, Zap, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 

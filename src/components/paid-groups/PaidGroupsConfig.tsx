@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Copy, ExternalLink, Eye, EyeOff } from 'lucide-react';
+import { Copy, Eye, EyeOff } from 'lucide-react';
 import { usePaidGroupsConfig } from '@/hooks/usePaidGroups';
 import { toast } from 'sonner';
+import { PaidGroupsQRConnect } from './PaidGroupsQRConnect';
 
 const SUPPORTED_GATEWAYS = [
   'Stripe', 'Kiwify', 'Hotmart', 'Eduzz', 'Monetizze', 'PerfectPay',
@@ -30,15 +31,7 @@ export function PaidGroupsConfig() {
     }
   }, [config]);
 
-  const webhookUrl = config?.webhook_secret
-    ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paid-groups-webhook/${config.webhook_secret}/{gateway}`
-    : 'Salve a configuração para gerar a URL do webhook';
-
-  const copyWebhook = (gateway: string) => {
-    const finalUrl = webhookUrl.replace('{gateway}', gateway.toLowerCase().replace(/\s+/g, ''));
-    navigator.clipboard.writeText(finalUrl);
-    toast.success('URL copiada!');
-  };
+  const hasConfig = !!(config?.evolution_api_url && config?.evolution_api_key);
 
   return (
     <div className="space-y-6">
@@ -70,6 +63,9 @@ export function PaidGroupsConfig() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* QR Code Connection */}
+      <PaidGroupsQRConnect hasConfig={hasConfig} />
 
       <Card>
         <CardHeader>

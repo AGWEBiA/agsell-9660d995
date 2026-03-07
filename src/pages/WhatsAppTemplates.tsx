@@ -11,7 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Plus, Search, Trash2, Edit, Eye, Clock, CheckCircle, XCircle, AlertCircle,
-  FileText, Link as LinkIcon, MessageSquare, Phone, RefreshCw,
+  FileText, Link as LinkIcon, MessageSquare, Phone, RefreshCw, Send,
 } from 'lucide-react';
 import { useWhatsAppTemplates, WhatsAppTemplate, TemplateButton, TemplateVariable } from '@/hooks/useWhatsAppTemplates';
 import { useWhatsAppInstances } from '@/hooks/useWhatsAppInstances';
@@ -338,13 +338,16 @@ function TemplateForm({
 }
 
 export default function WhatsAppTemplatesPage() {
-  const { templates, isLoading, createTemplate, updateTemplate, deleteTemplate } = useWhatsAppTemplates();
+  const { templates, isLoading, createTemplate, updateTemplate, deleteTemplate, submitToMeta, syncFromMeta, checkStatus } = useWhatsAppTemplates();
+  const { activeInstances } = useWhatsAppInstances();
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [editingTemplate, setEditingTemplate] = useState<WhatsAppTemplate | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [previewTemplate, setPreviewTemplate] = useState<WhatsAppTemplate | null>(null);
+  const [showSync, setShowSync] = useState(false);
+  const [syncFilters, setSyncFilters] = useState<{ name: string; category: string; language: string; status: string }>({ name: '', category: '', language: '', status: '' });
 
   const filtered = templates.filter(t => {
     if (search && !t.name.toLowerCase().includes(search.toLowerCase())) return false;
@@ -353,18 +356,32 @@ export default function WhatsAppTemplatesPage() {
     return true;
   });
 
+  const handleSync = () => {
+    const f: Record<string, string> = {};
+    if (syncFilters.name) f.name = syncFilters.name;
+    if (syncFilters.category) f.category = syncFilters.category;
+    if (syncFilters.language) f.language = syncFilters.language;
+    if (syncFilters.status) f.status = syncFilters.status;
+    syncFromMeta.mutate(Object.keys(f).length ? f : undefined, { onSuccess: () => setShowSync(false) });
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Templates API Oficial</h1>
           <p className="text-sm text-muted-foreground">
             Crie templates de mensagens para reutilização nos disparos via API oficial.
           </p>
         </div>
-        <Button onClick={() => setShowCreate(true)}>
-          <Plus className="h-4 w-4 mr-2" /> Novo template API Oficial
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowSync(true)} disabled={syncFromMeta.isPending}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${syncFromMeta.isPending ? 'animate-spin' : ''}`} /> Sincronizar
+          </Button>
+          <Button onClick={() => setShowCreate(true)}>
+            <Plus className="h-4 w-4 mr-2" /> Novo template API Oficial
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -410,10 +427,15 @@ export default function WhatsAppTemplatesPage() {
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <FileText className="h-12 w-12 text-muted-foreground/50 mb-4" />
             <h3 className="text-lg font-medium">Nenhum template encontrado</h3>
-            <p className="text-sm text-muted-foreground mt-1">Crie seu primeiro template para começar a enviar mensagens via API Oficial.</p>
-            <Button className="mt-4" onClick={() => setShowCreate(true)}>
-              <Plus className="h-4 w-4 mr-2" /> Criar template
-            </Button>
+            <p className="text-sm text-muted-foreground mt-1">Crie seu primeiro template ou sincronize da Meta.</p>
+            <div className="flex gap-2 mt-4">
+              <Button variant="outline" onClick={() => setShowSync(true)}>
+                <RefreshCw className="h-4 w-4 mr-2" /> Sincronizar da Meta
+              </Button>
+              <Button onClick={() => setShowCreate(true)}>
+                <Plus className="h-4 w-4 mr-2" /> Criar template
+              </Button>
+            </div>
           </CardContent>
         </Card>
       ) : (
@@ -447,6 +469,16 @@ export default function WhatsAppTemplatesPage() {
                     há {format(new Date(t.created_at), "d 'de' MMM", { locale: ptBR })}
                   </span>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {!t.external_template_id && (
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" title="Enviar para Meta" onClick={() => submitToMeta.mutate(t.id)} disabled={submitToMeta.isPending}>
+                        <Send className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    {t.external_template_id && (
+                      <Button variant="ghost" size="icon" className="h-7 w-7" title="Atualizar status" onClick={() => checkStatus.mutate(t.id)} disabled={checkStatus.isPending}>
+                        <RefreshCw className={`h-3.5 w-3.5 ${checkStatus.isPending ? 'animate-spin' : ''}`} />
+                      </Button>
+                    )}
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setPreviewTemplate(t)}>
                       <Eye className="h-3.5 w-3.5" />
                     </Button>
@@ -485,6 +517,77 @@ export default function WhatsAppTemplatesPage() {
               }
             }}
           />
+        </DialogContent>
+      </Dialog>
+
+      {/* Sync Dialog */}
+      <Dialog open={showSync} onOpenChange={setShowSync}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Sincronizar Templates</DialogTitle>
+            <DialogDescription>Importe templates existentes da API Oficial da Meta.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Nome do template</Label>
+              <Input placeholder="Digite o nome do template" value={syncFilters.name} onChange={e => setSyncFilters(p => ({ ...p, name: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <Label>Categoria</Label>
+              <Select value={syncFilters.category} onValueChange={v => setSyncFilters(p => ({ ...p, category: v }))}>
+                <SelectTrigger><SelectValue placeholder="Todas as categorias" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todas as categorias</SelectItem>
+                  {CATEGORIES.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Idioma</Label>
+              <Select value={syncFilters.language} onValueChange={v => setSyncFilters(p => ({ ...p, language: v }))}>
+                <SelectTrigger><SelectValue placeholder="Todos os idiomas" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos os idiomas</SelectItem>
+                  {LANGUAGES.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Dispositivo *</Label>
+              <Select defaultValue="">
+                <SelectTrigger><SelectValue placeholder="Selecionar dispositivo" /></SelectTrigger>
+                <SelectContent>
+                  {activeInstances.filter(i => i.integration_type === 'whatsapp_business').map(inst => (
+                    <SelectItem key={inst.id} value={inst.id}>{inst.name}</SelectItem>
+                  ))}
+                  {activeInstances.filter(i => i.integration_type === 'whatsapp_business').length === 0 && (
+                    <SelectItem value="_none" disabled>Nenhum dispositivo API Oficial</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={syncFilters.status} onValueChange={v => setSyncFilters(p => ({ ...p, status: v }))}>
+                <SelectTrigger><SelectValue placeholder="Todos os status" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos os status</SelectItem>
+                  <SelectItem value="APPROVED">Aprovado</SelectItem>
+                  <SelectItem value="PENDING">Pendente</SelectItem>
+                  <SelectItem value="REJECTED">Rejeitado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">
+              Importante: A sincronização pode demorar alguns minutos dependendo da quantidade de templates. Não feche esta janela durante o processo.
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button variant="outline" onClick={() => setShowSync(false)}>Cancelar</Button>
+              <Button onClick={handleSync} disabled={syncFromMeta.isPending}>
+                {syncFromMeta.isPending ? 'Sincronizando...' : 'Sincronizar'}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 

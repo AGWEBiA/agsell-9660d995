@@ -131,11 +131,68 @@ export function useWhatsAppTemplates() {
     onError: (e) => toast.error(e.message),
   });
 
+  // Submit template to Meta for approval
+  const submitToMeta = useMutation({
+    mutationFn: async (templateId: string) => {
+      if (!currentOrganization?.id) throw new Error('Sem organização');
+      const { data, error } = await supabase.functions.invoke('whatsapp-templates', {
+        body: { organization_id: currentOrganization.id, action: 'create', template_id: templateId },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Erro ao enviar para Meta');
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['whatsapp_templates'] });
+      toast.success(data.message || 'Template enviado para aprovação!');
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  // Sync templates from Meta
+  const syncFromMeta = useMutation({
+    mutationFn: async (filters?: { name?: string; category?: string; language?: string; status?: string }) => {
+      if (!currentOrganization?.id) throw new Error('Sem organização');
+      const { data, error } = await supabase.functions.invoke('whatsapp-templates', {
+        body: { organization_id: currentOrganization.id, action: 'sync', filters },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Erro ao sincronizar');
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['whatsapp_templates'] });
+      toast.success(data.message || 'Sincronização concluída!');
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  // Check single template status
+  const checkStatus = useMutation({
+    mutationFn: async (templateId: string) => {
+      if (!currentOrganization?.id) throw new Error('Sem organização');
+      const { data, error } = await supabase.functions.invoke('whatsapp-templates', {
+        body: { organization_id: currentOrganization.id, action: 'status', template_id: templateId },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Erro ao consultar status');
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['whatsapp_templates'] });
+      toast.success(`Status atualizado: ${data.status}`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   return {
     templates: templatesQuery.data || [],
     isLoading: templatesQuery.isLoading,
     createTemplate,
     updateTemplate,
     deleteTemplate,
+    submitToMeta,
+    syncFromMeta,
+    checkStatus,
   };
 }

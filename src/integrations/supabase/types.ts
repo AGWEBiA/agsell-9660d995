@@ -1110,6 +1110,68 @@ export type Database = {
           },
         ]
       }
+      conversion_goals: {
+        Row: {
+          created_at: string
+          created_by: string
+          current_count: number | null
+          current_value: number | null
+          deadline: string | null
+          description: string | null
+          goal_type: string
+          id: string
+          name: string
+          organization_id: string
+          status: string | null
+          target_count: number | null
+          target_event: string | null
+          target_value: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          current_count?: number | null
+          current_value?: number | null
+          deadline?: string | null
+          description?: string | null
+          goal_type?: string
+          id?: string
+          name: string
+          organization_id: string
+          status?: string | null
+          target_count?: number | null
+          target_event?: string | null
+          target_value?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          current_count?: number | null
+          current_value?: number | null
+          deadline?: string | null
+          description?: string | null
+          goal_type?: string
+          id?: string
+          name?: string
+          organization_id?: string
+          status?: string | null
+          target_count?: number | null
+          target_event?: string | null
+          target_value?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversion_goals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       csat_responses: {
         Row: {
           agent_id: string | null
@@ -1212,6 +1274,51 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "csat_surveys_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_win_scores: {
+        Row: {
+          created_at: string
+          deal_id: string
+          factors: Json | null
+          id: string
+          last_calculated_at: string
+          organization_id: string
+          win_probability: number | null
+        }
+        Insert: {
+          created_at?: string
+          deal_id: string
+          factors?: Json | null
+          id?: string
+          last_calculated_at?: string
+          organization_id: string
+          win_probability?: number | null
+        }
+        Update: {
+          created_at?: string
+          deal_id?: string
+          factors?: Json | null
+          id?: string
+          last_calculated_at?: string
+          organization_id?: string
+          win_probability?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_win_scores_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: true
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_win_scores_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1601,6 +1708,71 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "forms_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      goal_conversions: {
+        Row: {
+          contact_id: string | null
+          converted_at: string
+          deal_id: string | null
+          goal_id: string
+          id: string
+          metadata: Json | null
+          organization_id: string
+          source: string | null
+          value: number | null
+        }
+        Insert: {
+          contact_id?: string | null
+          converted_at?: string
+          deal_id?: string | null
+          goal_id: string
+          id?: string
+          metadata?: Json | null
+          organization_id: string
+          source?: string | null
+          value?: number | null
+        }
+        Update: {
+          contact_id?: string | null
+          converted_at?: string
+          deal_id?: string | null
+          goal_id?: string
+          id?: string
+          metadata?: Json | null
+          organization_id?: string
+          source?: string | null
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "goal_conversions_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goal_conversions_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goal_conversions_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "conversion_goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "goal_conversions_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -2937,6 +3109,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "sac_agents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales_routing_rules: {
+        Row: {
+          conditions: Json | null
+          created_at: string
+          eligible_users: string[] | null
+          id: string
+          is_active: boolean | null
+          last_assigned_index: number | null
+          name: string
+          organization_id: string
+          priority: number | null
+          strategy: string
+          updated_at: string
+        }
+        Insert: {
+          conditions?: Json | null
+          created_at?: string
+          eligible_users?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          last_assigned_index?: number | null
+          name: string
+          organization_id: string
+          priority?: number | null
+          strategy?: string
+          updated_at?: string
+        }
+        Update: {
+          conditions?: Json | null
+          created_at?: string
+          eligible_users?: string[] | null
+          id?: string
+          is_active?: boolean | null
+          last_assigned_index?: number | null
+          name?: string
+          organization_id?: string
+          priority?: number | null
+          strategy?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_routing_rules_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"

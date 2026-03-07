@@ -107,3 +107,6 @@ verify_jwt = false
 
 [functions.ai-builder]
 verify_jwt = false
+
+[functions.predict-win]
+verify_jwt = false

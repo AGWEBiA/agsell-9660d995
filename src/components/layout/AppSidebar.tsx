@@ -10,7 +10,7 @@ import {
   HelpCircle, Briefcase, X, FlaskConical, Rocket, GitBranch, Send,
   Lock, BookOpen, Workflow, ArrowRightLeft, Ticket, ShieldCheck, Activity,
   Layout, Clock, Sparkles, Smile, Route, Crosshair, Wand2, Monitor,
-  Phone, DollarSign,
+  Phone, DollarSign, Crown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';

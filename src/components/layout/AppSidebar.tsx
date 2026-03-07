@@ -8,7 +8,8 @@ import {
   ChevronDown, Trophy, Shield, Key, Webhook, SlidersHorizontal,
   Instagram, ListChecks, Home, Megaphone, Lightbulb, Wrench, Headphones,
   HelpCircle, Briefcase, X, FlaskConical, Rocket, GitBranch, Send,
-  Lock, BookOpen, Workflow, ArrowRightLeft, Ticket,
+  Lock, BookOpen, Workflow, ArrowRightLeft, Ticket, ShieldCheck, Activity,
+  Layout, Clock, Sparkles, Smile,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -61,6 +62,7 @@ const menuSections: MenuSection[] = [
       { label: 'Empresas', icon: Building2, path: '/companies' },
       { label: 'Pipeline', icon: Kanban, path: '/pipeline' },
       { label: 'Tags', icon: Tags, path: '/tags' },
+      { label: 'Preferências', icon: ShieldCheck, path: '/contact-preferences' },
     ],
   },
   {
@@ -87,6 +89,9 @@ const menuSections: MenuSection[] = [
       { label: 'Testes A/B', icon: FlaskConical, path: '/ab-tests' },
       { label: 'Growth Tools', icon: Rocket, path: '/growth-tools' },
       { label: 'Formulários', icon: FileText, path: '/forms' },
+      { label: 'Landing Pages', icon: Layout, path: '/landing-pages' },
+      { label: 'Event Tracking', icon: Activity, path: '/event-tracking' },
+      { label: 'Predictive Send', icon: Clock, path: '/predictive-sending' },
     ],
   },
   {
@@ -95,8 +100,11 @@ const menuSections: MenuSection[] = [
     icon: Lightbulb,
     items: [
       { label: 'Analytics', icon: BarChart3, path: '/analytics', featureRequired: 'analytics' },
+      { label: 'Atribuição', icon: GitBranch, path: '/attribution' },
+      { label: 'Sentimento', icon: Smile, path: '/sentiment' },
       { label: 'Assistente IA', icon: Bot, path: '/ai-assistant' },
       { label: 'Agentes IA', icon: Brain, path: '/ai-agents' },
+      { label: 'AI Builder', icon: Sparkles, path: '/ai-builder' },
       { label: 'Gamificação', icon: Trophy, path: '/gamification' },
     ],
   },

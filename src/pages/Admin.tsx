@@ -234,6 +234,10 @@ export default function Admin() {
             <ShoppingCart className="h-4 w-4" />
             Vendas
           </TabsTrigger>
+          <TabsTrigger value="wa-groups" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Grupos WA
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-6">
           {/* KPIs */}

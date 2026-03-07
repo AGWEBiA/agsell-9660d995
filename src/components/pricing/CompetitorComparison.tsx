@@ -208,7 +208,7 @@ export function CompetitorComparison({ showChart = true }: CompetitorComparisonP
                         color: 'hsl(var(--popover-foreground))',
                       }}
                     />
-                    <Bar dataKey="score" radius={[0, 6, 6, 0]} barSize={36}>
+                    <Bar dataKey="score" radius={[0, 6, 6, 0]} barSize={36} activeBar={false}>
                       {chartData.map((entry) => (
                         <Cell key={entry.key} fill={CHART_COLORS[entry.key]} />
                       ))}

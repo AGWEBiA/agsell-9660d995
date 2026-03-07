@@ -1055,6 +1055,7 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <Logo variant="red" size="sm" showText />
             <div className="flex items-center gap-4 sm:gap-6 text-xs sm:text-sm text-muted-foreground">
+              <Link to="/features" className="hover:text-foreground transition-colors">Funcionalidades</Link>
               <Link to="/privacy-policy" className="hover:text-foreground transition-colors">Privacidade</Link>
               <Link to="/terms-of-service" className="hover:text-foreground transition-colors">Termos</Link>
               <Link to="/pricing" className="hover:text-foreground transition-colors">Preços</Link>

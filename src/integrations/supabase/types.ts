@@ -2809,6 +2809,113 @@ export type Database = {
           },
         ]
       }
+      plan_whatsapp_group_links: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          plan_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          plan_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          plan_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_whatsapp_group_links_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "plan_whatsapp_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_whatsapp_group_links_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_whatsapp_groups: {
+        Row: {
+          created_at: string
+          group_jid: string
+          id: string
+          instance_name: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          group_jid?: string
+          id?: string
+          instance_name?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          group_jid?: string
+          id?: string
+          instance_name?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      plan_whatsapp_members: {
+        Row: {
+          added_at: string
+          created_at: string
+          group_id: string
+          id: string
+          removed_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          added_at?: string
+          created_at?: string
+          group_id: string
+          id?: string
+          removed_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          added_at?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+          removed_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_whatsapp_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "plan_whatsapp_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plans: {
         Row: {
           created_at: string
@@ -3001,6 +3108,7 @@ export type Database = {
           phone: string | null
           updated_at: string
           user_id: string
+          whatsapp_number: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -3010,6 +3118,7 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id: string
+          whatsapp_number?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -3019,6 +3128,7 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id?: string
+          whatsapp_number?: string | null
         }
         Relationships: []
       }

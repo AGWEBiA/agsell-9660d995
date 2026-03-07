@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { CompetitorComparison } from '@/components/pricing/CompetitorComparison';
 import { Badge } from '@/components/ui/badge';
 import { Logo } from '@/components/ui/Logo';
 import { cn } from '@/lib/utils';

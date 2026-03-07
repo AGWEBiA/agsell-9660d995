@@ -679,8 +679,8 @@ export function WhatsAppProviderSetup() {
               </div>
             </TabsContent>
           </Tabs>
-        </DialogContent>
-      </Dialog>
+        </CardContent>
+      </Card>
 
       {/* Ban Warning */}
       <Dialog open={showBanWarning} onOpenChange={setShowBanWarning}>

@@ -25,9 +25,54 @@ import { Link } from 'react-router-dom';
 
 export default function Settings() {
   const { user, signOut } = useAuth();
+  const queryClient = useQueryClient();
   const [exportLoading, setExportLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+
+  const { data: profile } = useQuery({
+    queryKey: ['my-profile-whatsapp', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('whatsapp_number')
+        .eq('user_id', user.id)
+        .single();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  useEffect(() => {
+    if (profile?.whatsapp_number) setWhatsappNumber(profile.whatsapp_number);
+  }, [profile]);
+
+  const saveWhatsAppMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) throw new Error('Não autenticado');
+      const digits = whatsappNumber.replace(/\D/g, '');
+      const { error } = await supabase
+        .from('profiles')
+        .update({ whatsapp_number: digits })
+        .eq('user_id', user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-profile-whatsapp'] });
+      toast.success('Número salvo com sucesso!');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const formatPhoneDisplay = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    if (digits.length <= 11) return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+  };
 
   const handleExportData = async () => {
     setExportLoading(true);

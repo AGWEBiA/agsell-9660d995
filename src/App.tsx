@@ -166,6 +166,11 @@ const App = () => (
                     <Route path="ai-builder" element={<AIBuilder />} />
                     <Route path="predictive-sending" element={<PredictiveSending />} />
                     <Route path="sentiment" element={<SentimentDashboard />} />
+                    <Route path="site-tracking" element={<SiteTracking />} />
+                    <Route path="sales-routing" element={<SalesRouting />} />
+                    <Route path="goals" element={<Goals />} />
+                    <Route path="win-probability" element={<WinProbability />} />
+                    <Route path="conditional-content" element={<ConditionalContent />} />
                     <Route path="support" element={<SupportTickets />} />
                     <Route path="support-center" element={<SupportCenter />} />
                     <Route path="support-portal-settings" element={<FeatureRequiredPage feature="customer_support_center" featureLabel="Portal de Suporte"><SupportPortalSettingsPage /></FeatureRequiredPage>} />

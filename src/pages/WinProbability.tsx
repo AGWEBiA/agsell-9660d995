@@ -15,7 +15,7 @@ export default function WinProbability() {
   const { currentOrganization } = useOrganization();
   const orgId = currentOrganization?.id;
   const queryClient = useQueryClient();
-  const { deals } = usePipeline();
+  const { data: deals } = useDeals();
 
   const { data: scores = [] } = useQuery({
     queryKey: ['deal-win-scores', orgId],

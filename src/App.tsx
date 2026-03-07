@@ -72,6 +72,13 @@ import SupportPortal from "./pages/SupportPortal";
 import SupportPortalSettingsPage from "./pages/SupportPortalSettings";
 import TicketTracker from "./pages/TicketTracker";
 import WhatsAppTemplates from "./pages/WhatsAppTemplates";
+import ContactPreferences from "./pages/ContactPreferences";
+import EventTracking from "./pages/EventTracking";
+import Attribution from "./pages/Attribution";
+import LandingPagesPage from "./pages/LandingPages";
+import AIBuilder from "./pages/AIBuilder";
+import PredictiveSending from "./pages/PredictiveSending";
+import SentimentDashboard from "./pages/SentimentDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

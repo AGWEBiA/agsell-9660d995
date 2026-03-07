@@ -84,6 +84,9 @@ import SalesRouting from "./pages/SalesRouting";
 import Goals from "./pages/Goals";
 import WinProbability from "./pages/WinProbability";
 import ConditionalContent from "./pages/ConditionalContent";
+import SMSMarketing from "./pages/SMSMarketing";
+import CustomReports from "./pages/CustomReports";
+import RevenueReporting from "./pages/RevenueReporting";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

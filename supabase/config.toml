@@ -110,3 +110,6 @@ verify_jwt = false
 
 [functions.predict-win]
 verify_jwt = false
+
+[functions.subscription-whatsapp-groups]
+verify_jwt = false

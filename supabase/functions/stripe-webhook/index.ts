@@ -61,6 +61,11 @@ Deno.serve(async (req) => {
         if (session.metadata?.is_new_user === 'true') {
           await handleNewUserSignup(supabase, session);
         }
+
+        // Sync WhatsApp groups for the user
+        if (session.customer_details?.email) {
+          await syncWhatsAppGroupsByEmail(supabase, session.customer_details.email, true);
+        }
         break;
       }
 
@@ -73,6 +78,22 @@ Deno.serve(async (req) => {
       case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
         await handleSubscriptionCanceled(supabase, subscription);
+
+        // Sync WhatsApp groups - remove from groups
+        const { data: canceledSub } = await supabase
+          .from('subscriptions')
+          .select('organization_id')
+          .eq('stripe_subscription_id', subscription.id)
+          .maybeSingle();
+        if (canceledSub) {
+          const { data: members } = await supabase
+            .from('organization_members')
+            .select('user_id')
+            .eq('organization_id', canceledSub.organization_id);
+          for (const m of members || []) {
+            await callSyncUser(supabase, m.user_id, false);
+          }
+        }
         break;
       }
 
@@ -276,6 +297,37 @@ async function handlePaymentFailed(
   }
 
   console.log("Payment failed for subscription:", stripeSubscriptionId);
+}
+
+async function syncWhatsAppGroupsByEmail(supabase: SupabaseClientType, email: string, shouldBeActive: boolean) {
+  try {
+    const { data: userData } = await supabase.auth.admin.listUsers();
+    const user = userData?.users?.find((u: { email?: string }) => u.email?.toLowerCase() === email.toLowerCase());
+    if (user) {
+      await callSyncUser(supabase, user.id, shouldBeActive);
+    }
+  } catch (err) {
+    console.error("Error syncing WhatsApp groups:", err);
+  }
+}
+
+async function callSyncUser(supabase: SupabaseClientType, userId: string, shouldBeActive: boolean) {
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const response = await fetch(`${supabaseUrl}/functions/v1/subscription-whatsapp-groups`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({ action: "sync_user", user_id: userId, should_be_active: shouldBeActive }),
+    });
+    const result = await response.text();
+    console.log("WhatsApp group sync result:", result);
+  } catch (err) {
+    console.error("Error calling subscription-whatsapp-groups:", err);
+  }
 }
 
 function generatePassword(): string {

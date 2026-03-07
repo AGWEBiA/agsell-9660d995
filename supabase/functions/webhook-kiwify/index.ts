@@ -278,6 +278,11 @@ Deno.serve(async (req) => {
         processed: true,
         processed_at: new Date().toISOString(),
       }).eq("id", webhookEvent.id);
+
+      // Sync WhatsApp groups
+      if (existingUser) {
+        await callSyncUser(existingUser.id, true);
+      }
     }
 
     // --- Handle refunds and chargebacks ---
@@ -304,6 +309,9 @@ Deno.serve(async (req) => {
 
           logStep("Subscription deactivated due to " + payload.order_status);
         }
+
+        // Sync WhatsApp groups - remove
+        await callSyncUser(existingUser.id, false);
       }
 
       await supabase.from("webhook_events").update({
@@ -441,6 +449,25 @@ async function upsertContact(supabase: any, payload: KiwifyPayload, planName: st
       status: "customer",
       notes: `Produto: ${payload.product_name} | Plano: ${planName} | Pedido: ${payload.order_id}`,
     });
+  }
+}
+
+async function callSyncUser(userId: string, shouldBeActive: boolean) {
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const response = await fetch(`${supabaseUrl}/functions/v1/subscription-whatsapp-groups`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({ action: "sync_user", user_id: userId, should_be_active: shouldBeActive }),
+    });
+    const result = await response.text();
+    logStep("WhatsApp group sync result", result);
+  } catch (err) {
+    logStep("Error calling subscription-whatsapp-groups", err);
   }
 }
 

@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { User, Bell, Shield, Download, Trash2, AlertTriangle, HelpCircle } from 'lucide-react';
+import { User, Bell, Shield, Download, Trash2, AlertTriangle, HelpCircle, Phone } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,9 +25,54 @@ import { Link } from 'react-router-dom';
 
 export default function Settings() {
   const { user, signOut } = useAuth();
+  const queryClient = useQueryClient();
   const [exportLoading, setExportLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+
+  const { data: profile } = useQuery({
+    queryKey: ['my-profile-whatsapp', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('whatsapp_number')
+        .eq('user_id', user.id)
+        .single();
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  useEffect(() => {
+    if (profile?.whatsapp_number) setWhatsappNumber(profile.whatsapp_number);
+  }, [profile]);
+
+  const saveWhatsAppMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) throw new Error('Não autenticado');
+      const digits = whatsappNumber.replace(/\D/g, '');
+      const { error } = await supabase
+        .from('profiles')
+        .update({ whatsapp_number: digits })
+        .eq('user_id', user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-profile-whatsapp'] });
+      toast.success('Número salvo com sucesso!');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const formatPhoneDisplay = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+    if (digits.length <= 11) return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
+  };
 
   const handleExportData = async () => {
     setExportLoading(true);
@@ -118,13 +164,36 @@ export default function Settings() {
           <TabsTrigger value="privacy" className="text-xs sm:text-sm"><Shield className="h-4 w-4 sm:mr-2" /><span className="hidden sm:inline">Privacidade</span></TabsTrigger>
         </TabsList>
 
-        <TabsContent value="profile" className="mt-4">
+        <TabsContent value="profile" className="mt-4 space-y-4">
           <Card>
             <CardHeader><CardTitle>Perfil</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-2"><Label>Nome</Label><Input placeholder="Seu nome" /></div>
               <div className="grid gap-2"><Label>Email</Label><Input type="email" placeholder="seu@email.com" value={user?.email || ''} disabled /></div>
               <Button>Salvar</Button>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2"><Phone className="h-5 w-5" /> WhatsApp</CardTitle>
+              <CardDescription>Seu número de WhatsApp para acesso a grupos exclusivos do seu plano.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid gap-2">
+                <Label>Número de WhatsApp</Label>
+                <div className="flex gap-2">
+                  <span className="flex items-center px-3 bg-muted rounded-md text-sm text-muted-foreground">+55</span>
+                  <Input
+                    value={formatPhoneDisplay(whatsappNumber)}
+                    onChange={(e) => setWhatsappNumber(e.target.value.replace(/\D/g, ''))}
+                    placeholder="(11) 99999-9999"
+                    maxLength={16}
+                  />
+                </div>
+              </div>
+              <Button onClick={() => saveWhatsAppMutation.mutate()} disabled={saveWhatsAppMutation.isPending}>
+                {saveWhatsAppMutation.isPending ? 'Salvando...' : 'Salvar WhatsApp'}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>

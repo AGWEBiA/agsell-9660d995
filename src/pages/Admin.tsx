@@ -46,6 +46,7 @@ import { ErrorMonitoringDashboard } from '@/components/admin/ErrorMonitoringDash
 import { KiwifyConfig } from '@/components/admin/KiwifyConfig';
 import { PaymentGatewayConfig } from '@/components/admin/PaymentGatewayConfig';
 import { SalesRecoveryDashboard } from '@/components/admin/SalesRecoveryDashboard';
+import { PlanWhatsAppGroupsManager } from '@/components/admin/PlanWhatsAppGroupsManager';
 
 export default function Admin() {
   const { user, isAdmin, loading: isCheckingAdmin } = useAuth();
@@ -232,6 +233,10 @@ export default function Admin() {
           <TabsTrigger value="sales-recovery" className="flex items-center gap-2">
             <ShoppingCart className="h-4 w-4" />
             Vendas
+          </TabsTrigger>
+          <TabsTrigger value="wa-groups" className="flex items-center gap-2">
+            <Users className="h-4 w-4" />
+            Grupos WA
           </TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-6">
@@ -467,6 +472,9 @@ export default function Admin() {
         </TabsContent>
         <TabsContent value="gateway">
           <PaymentGatewayConfig />
+        </TabsContent>
+        <TabsContent value="wa-groups">
+          <PlanWhatsAppGroupsManager />
         </TabsContent>
       </Tabs>
 

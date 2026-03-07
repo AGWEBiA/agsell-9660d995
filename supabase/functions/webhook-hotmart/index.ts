@@ -185,6 +185,16 @@ Deno.serve(async (req) => {
         .from("webhook_events")
         .update({ processed: true, processed_at: new Date().toISOString() })
         .eq("id", webhookEvent.id);
+
+      // Sync WhatsApp groups for this buyer
+      if (payload.buyer_email) {
+        await syncWhatsAppGroupsByEmail(supabase, payload.buyer_email, true);
+      }
+    }
+
+    // Handle refunds/chargebacks - remove from WhatsApp groups
+    if ((payload.status === "refunded" || payload.status === "chargeback") && payload.buyer_email) {
+      await syncWhatsAppGroupsByEmail(supabase, payload.buyer_email, false);
     }
 
     return new Response(
@@ -200,3 +210,27 @@ Deno.serve(async (req) => {
     );
   }
 });
+
+// deno-lint-ignore no-explicit-any
+async function syncWhatsAppGroupsByEmail(supabase: any, email: string, shouldBeActive: boolean) {
+  try {
+    const { data: userData } = await supabase.auth.admin.listUsers();
+    const user = userData?.users?.find((u: { email?: string }) => u.email?.toLowerCase() === email.toLowerCase());
+    if (user) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const response = await fetch(`${supabaseUrl}/functions/v1/subscription-whatsapp-groups`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${serviceKey}`,
+        },
+        body: JSON.stringify({ action: "sync_user", user_id: user.id, should_be_active: shouldBeActive }),
+      });
+      const result = await response.text();
+      console.log("WhatsApp group sync result:", result);
+    }
+  } catch (err) {
+    console.error("Error syncing WhatsApp groups:", err);
+  }
+}

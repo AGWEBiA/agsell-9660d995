@@ -121,6 +121,7 @@ const App = () => (
                     <Route path="whatsapp" element={<FeatureRequiredPage feature="whatsapp" featureLabel="WhatsApp Business"><WhatsApp /></FeatureRequiredPage>} />
                     <Route path="instagram" element={<FeatureRequiredPage feature="instagram" featureLabel="Instagram"><InstagramPage /></FeatureRequiredPage>} />
                     <Route path="whatsapp-flows" element={<FeatureRequiredPage feature="whatsapp" featureLabel="WhatsApp Flows"><WhatsAppFlowsPage /></FeatureRequiredPage>} />
+                    <Route path="whatsapp-templates" element={<FeatureRequiredPage feature="whatsapp" featureLabel="Templates API Oficial"><WhatsAppTemplates /></FeatureRequiredPage>} />
                     <Route path="automations" element={<FeatureRequiredPage feature="automacoes" featureLabel="Automações"><Automations /></FeatureRequiredPage>} />
                     <Route path="lead-scoring" element={<FeatureRequiredPage feature="lead_scoring" featureLabel="Lead Scoring"><LeadScoring /></FeatureRequiredPage>} />
                     <Route path="forms" element={<Forms />} />

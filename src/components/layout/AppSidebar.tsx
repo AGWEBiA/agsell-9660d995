@@ -89,6 +89,9 @@ const menuSections: MenuSection[] = [
       { label: 'Testes A/B', icon: FlaskConical, path: '/ab-tests' },
       { label: 'Growth Tools', icon: Rocket, path: '/growth-tools' },
       { label: 'Formulários', icon: FileText, path: '/forms' },
+      { label: 'Landing Pages', icon: Layout, path: '/landing-pages' },
+      { label: 'Event Tracking', icon: Activity, path: '/event-tracking' },
+      { label: 'Predictive Send', icon: Clock, path: '/predictive-sending' },
     ],
   },
   {

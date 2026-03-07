@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { usePipeline } from '@/hooks/usePipeline';
+import { useDeals } from '@/hooks/usePipeline';
 import { toast } from 'sonner';
 import { Brain, TrendingUp, TrendingDown, Loader2, RefreshCw, ThumbsUp, ThumbsDown, Lightbulb } from 'lucide-react';
 

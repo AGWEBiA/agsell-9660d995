@@ -40,6 +40,8 @@ export function PaidGroupsConfig() {
     toast.success('URL copiada!');
   };
 
+  const hasConfig = !!(config?.evolution_api_url && config?.evolution_api_key);
+
   return (
     <div className="space-y-6">
       <Card>

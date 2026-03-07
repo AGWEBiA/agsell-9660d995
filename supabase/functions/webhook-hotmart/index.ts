@@ -185,6 +185,16 @@ Deno.serve(async (req) => {
         .from("webhook_events")
         .update({ processed: true, processed_at: new Date().toISOString() })
         .eq("id", webhookEvent.id);
+
+      // Sync WhatsApp groups for this buyer
+      if (payload.buyer_email) {
+        await syncWhatsAppGroupsByEmail(supabase, payload.buyer_email, true);
+      }
+    }
+
+    // Handle refunds/chargebacks - remove from WhatsApp groups
+    if ((payload.status === "refunded" || payload.status === "chargeback") && payload.buyer_email) {
+      await syncWhatsAppGroupsByEmail(supabase, payload.buyer_email, false);
     }
 
     return new Response(

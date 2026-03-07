@@ -452,6 +452,25 @@ async function upsertContact(supabase: any, payload: KiwifyPayload, planName: st
   }
 }
 
+async function callSyncUser(userId: string, shouldBeActive: boolean) {
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const response = await fetch(`${supabaseUrl}/functions/v1/subscription-whatsapp-groups`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({ action: "sync_user", user_id: userId, should_be_active: shouldBeActive }),
+    });
+    const result = await response.text();
+    logStep("WhatsApp group sync result", result);
+  } catch (err) {
+    logStep("Error calling subscription-whatsapp-groups", err);
+  }
+}
+
 function generatePassword(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
   let password = '';

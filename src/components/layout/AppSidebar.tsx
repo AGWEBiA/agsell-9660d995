@@ -61,6 +61,8 @@ const menuSections: MenuSection[] = [
       { label: 'Contatos', icon: Users, path: '/contacts' },
       { label: 'Empresas', icon: Building2, path: '/companies' },
       { label: 'Pipeline', icon: Kanban, path: '/pipeline' },
+      { label: 'Win Probability', icon: Brain, path: '/win-probability' },
+      { label: 'Sales Routing', icon: Route, path: '/sales-routing' },
       { label: 'Tags', icon: Tags, path: '/tags' },
       { label: 'Preferências', icon: ShieldCheck, path: '/contact-preferences' },
     ],

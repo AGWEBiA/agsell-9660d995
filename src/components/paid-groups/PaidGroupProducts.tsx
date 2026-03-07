@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -9,8 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Trash2, Package, Settings } from 'lucide-react';
 import { usePaidGroupProducts, usePaidGroups, usePaidGroupProductLinks } from '@/hooks/usePaidGroups';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { supabase } from '@/integrations/supabase/client';
 
 const GATEWAYS = [
   'stripe', 'kiwify', 'hotmart', 'eduzz', 'monetizze', 'perfectpay',
@@ -23,8 +24,6 @@ export function PaidGroupProducts() {
   const { groups } = usePaidGroups();
   const { linkGroup, unlinkGroup } = usePaidGroupProductLinks();
   const [open, setOpen] = useState(false);
-  const [mappingsOpen, setMappingsOpen] = useState<string | null>(null);
-  const [linksOpen, setLinksOpen] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -128,20 +127,18 @@ export function PaidGroupProducts() {
   );
 }
 
-function ProductGroupLinks({ productId, groups, linkGroup, unlinkGroup }: any) {
+function ProductGroupLinks({ productId, groups, linkGroup, unlinkGroup }: { productId: string; groups: any[]; linkGroup: any; unlinkGroup: any }) {
   const [open, setOpen] = useState(false);
-  const { data: links, isLoading } = (() => {
-    const { data, isLoading } = require('@tanstack/react-query').useQuery({
-      queryKey: ['paid-group-product-links', productId],
-      queryFn: async () => {
-        const { supabase } = require('@/integrations/supabase/client');
-        const { data, error } = await supabase.from('paid_group_product_links').select('*').eq('product_id', productId);
-        if (error) throw error;
-        return data;
-      },
-    });
-    return { data: data ?? [], isLoading };
-  })();
+
+  const { data: links = [] } = useQuery({
+    queryKey: ['paid-group-product-links', productId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('paid_group_product_links').select('*').eq('product_id', productId);
+      if (error) throw error;
+      return data;
+    },
+    enabled: open,
+  });
 
   const linkedGroupIds = links.map((l: any) => l.group_id);
 

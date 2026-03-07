@@ -84,6 +84,9 @@ import SalesRouting from "./pages/SalesRouting";
 import Goals from "./pages/Goals";
 import WinProbability from "./pages/WinProbability";
 import ConditionalContent from "./pages/ConditionalContent";
+import SMSMarketing from "./pages/SMSMarketing";
+import CustomReports from "./pages/CustomReports";
+import RevenueReporting from "./pages/RevenueReporting";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -171,6 +174,9 @@ const App = () => (
                     <Route path="goals" element={<Goals />} />
                     <Route path="win-probability" element={<WinProbability />} />
                     <Route path="conditional-content" element={<ConditionalContent />} />
+                    <Route path="sms-marketing" element={<SMSMarketing />} />
+                    <Route path="custom-reports" element={<CustomReports />} />
+                    <Route path="revenue-reporting" element={<RevenueReporting />} />
                     <Route path="support" element={<SupportTickets />} />
                     <Route path="support-center" element={<SupportCenter />} />
                     <Route path="support-portal-settings" element={<FeatureRequiredPage feature="customer_support_center" featureLabel="Portal de Suporte"><SupportPortalSettingsPage /></FeatureRequiredPage>} />

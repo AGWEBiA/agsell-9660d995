@@ -10,6 +10,7 @@ import {
   HelpCircle, Briefcase, X, FlaskConical, Rocket, GitBranch, Send,
   Lock, BookOpen, Workflow, ArrowRightLeft, Ticket, ShieldCheck, Activity,
   Layout, Clock, Sparkles, Smile, Route, Crosshair, Wand2, Monitor,
+  Phone, DollarSign,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -78,6 +79,7 @@ const menuSections: MenuSection[] = [
       { label: 'WhatsApp', icon: MessageSquare, path: '/whatsapp', featureRequired: 'whatsapp' },
       { label: 'Templates API', icon: FileText, path: '/whatsapp-templates', featureRequired: 'whatsapp' },
       { label: 'E-mail Marketing', icon: Send, path: '/email', featureRequired: 'email_marketing' },
+      { label: 'SMS Marketing', icon: Phone, path: '/sms-marketing' },
       { label: 'Instagram', icon: Instagram, path: '/instagram', featureRequired: 'instagram' },
     ],
   },
@@ -105,6 +107,8 @@ const menuSections: MenuSection[] = [
     icon: Lightbulb,
     items: [
       { label: 'Analytics', icon: BarChart3, path: '/analytics', featureRequired: 'analytics' },
+      { label: 'Custom Reports', icon: BarChart3, path: '/custom-reports' },
+      { label: 'Revenue', icon: DollarSign, path: '/revenue-reporting' },
       { label: 'Atribuição', icon: GitBranch, path: '/attribution' },
       { label: 'Sentimento', icon: Smile, path: '/sentiment' },
       { label: 'Assistente IA', icon: Bot, path: '/ai-assistant' },

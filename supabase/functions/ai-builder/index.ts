@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 serve(async (req) => {
@@ -12,16 +12,11 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     const { type, prompt, organization_id } = await req.json();
-    // type: 'email_campaign' | 'automation_flow' | 'subject_line' | 'whatsapp_message'
 
-    if (!type || !prompt || !organization_id) {
-      return new Response(JSON.stringify({ error: "type, prompt and organization_id required" }), {
+    if (!type || !prompt) {
+      return new Response(JSON.stringify({ error: "type and prompt required" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -39,6 +34,12 @@ serve(async (req) => {
       
       whatsapp_message: `Você é um especialista em comunicação via WhatsApp para negócios. Crie uma mensagem de WhatsApp eficaz. Retorne APENAS um JSON:
 {"message": "texto da mensagem", "cta": "call to action sugerido"}`,
+
+      brand_kit: `Você é um especialista em branding. Analise a URL fornecida e extraia a identidade visual. Retorne APENAS um JSON:
+{"colors": ["#hex1", "#hex2", ...], "fonts": ["Font1", "Font2"], "logo_url": "url ou null", "tone": "descrição do tom de comunicação"}`,
+
+      suggested_segments: `Você é um especialista em CRM e segmentação de clientes. Com base nos dados fornecidos, sugira segmentos de alto impacto. Retorne APENAS um JSON:
+{"segments": [{"name": "nome", "description": "desc", "criteria": "critérios", "estimated_contacts": N, "impact": "high|medium|low", "icon": "trending|alert|cart|users"}]}`,
     };
 
     const aiResponse = await fetch("https://api.lovable.dev/v1/chat/completions", {

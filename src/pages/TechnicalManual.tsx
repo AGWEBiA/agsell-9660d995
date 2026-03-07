@@ -906,6 +906,16 @@ Checkout → Stripe Session → Webhook checkout.session.completed
 | \`sms_configs\` | Configuração SMS | organization_id |
 | \`organization_integrations\` | Integrações de terceiros | organization_id |
 | \`import_jobs\` | Jobs de importação CSV | organization_id |
+| \`site_events\` | Eventos de rastreamento de site | organization_id |
+| \`site_tracking_sessions\` | Sessões de visitantes | organization_id |
+| \`sentiment_analysis\` | Análise de sentimento IA | organization_id |
+| \`attribution_touchpoints\` | Touchpoints de atribuição | organization_id |
+| \`landing_pages\` | Landing pages de captura | organization_id |
+| \`predictive_send_profiles\` | Perfis de envio preditivo | organization_id |
+| \`contact_preferences\` | Preferências de opt-out | organization_id |
+| \`conversion_goals\` | Metas de conversão | organization_id |
+| \`sales_routing_rules\` | Regras de roteamento de vendas | organization_id |
+| \`deal_win_scores\` | Scores de probabilidade de fechamento | organization_id |
 
 ## 12.2 Funções RPC
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { CompetitorComparison } from '@/components/pricing/CompetitorComparison';
 import { Badge } from '@/components/ui/badge';
 import { Logo } from '@/components/ui/Logo';
 import { cn } from '@/lib/utils';
@@ -245,6 +246,13 @@ export default function Features() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Competitor Comparison */}
+      <section className="border-t border-border/40">
+        <div className="container mx-auto px-4 sm:px-6 py-16 md:py-24">
+          <CompetitorComparison />
         </div>
       </section>
 

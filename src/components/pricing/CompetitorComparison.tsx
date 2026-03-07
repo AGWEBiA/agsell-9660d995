@@ -44,6 +44,7 @@ const COMPARISON_DATA: ComparisonFeature[] = [
   { label: 'Transcrição de Áudio (IA)', agSell: 'yes', sellflux: 'no', activeCampaign: 'no', rdStation: 'no', hubspot: 'no' },
   { label: 'Portal de Suporte White-label', agSell: 'yes', sellflux: 'no', activeCampaign: 'no', rdStation: 'no', hubspot: 'partial' },
   { label: 'Central de Migração (CSV, JSON, API)', agSell: 'yes', sellflux: 'no', activeCampaign: 'partial', rdStation: 'partial', hubspot: 'partial' },
+  { label: 'Grupos Pagos com 20+ Gateways (Beta)', agSell: 'yes', sellflux: 'no', activeCampaign: 'no', rdStation: 'no', hubspot: 'no' },
 ];
 
 function StatusIcon({ status }: { status: 'yes' | 'no' | 'partial' }) {

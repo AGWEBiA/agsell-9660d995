@@ -106,6 +106,8 @@ const menuSections: MenuSection[] = [
     icon: Lightbulb,
     items: [
       { label: 'Analytics', icon: BarChart3, path: '/analytics', featureRequired: 'analytics' },
+      { label: 'Custom Reports', icon: BarChart3, path: '/custom-reports' },
+      { label: 'Revenue', icon: DollarSign, path: '/revenue-reporting' },
       { label: 'Atribuição', icon: GitBranch, path: '/attribution' },
       { label: 'Sentimento', icon: Smile, path: '/sentiment' },
       { label: 'Assistente IA', icon: Bot, path: '/ai-assistant' },

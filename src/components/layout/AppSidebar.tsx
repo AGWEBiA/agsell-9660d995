@@ -62,6 +62,7 @@ const menuSections: MenuSection[] = [
       { label: 'Empresas', icon: Building2, path: '/companies' },
       { label: 'Pipeline', icon: Kanban, path: '/pipeline' },
       { label: 'Tags', icon: Tags, path: '/tags' },
+      { label: 'Preferências', icon: ShieldCheck, path: '/contact-preferences' },
     ],
   },
   {

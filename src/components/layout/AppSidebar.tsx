@@ -100,8 +100,11 @@ const menuSections: MenuSection[] = [
     icon: Lightbulb,
     items: [
       { label: 'Analytics', icon: BarChart3, path: '/analytics', featureRequired: 'analytics' },
+      { label: 'Atribuição', icon: GitBranch, path: '/attribution' },
+      { label: 'Sentimento', icon: Smile, path: '/sentiment' },
       { label: 'Assistente IA', icon: Bot, path: '/ai-assistant' },
       { label: 'Agentes IA', icon: Brain, path: '/ai-agents' },
+      { label: 'AI Builder', icon: Sparkles, path: '/ai-builder' },
       { label: 'Gamificação', icon: Trophy, path: '/gamification' },
     ],
   },

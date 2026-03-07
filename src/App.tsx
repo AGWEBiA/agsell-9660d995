@@ -18,6 +18,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Pricing from "./pages/Pricing";
+import Features from "./pages/Features";
 import PurchaseSuccess from "./pages/PurchaseSuccess";
 import SubscriptionExpired from "./pages/SubscriptionExpired";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -109,6 +110,7 @@ const App = () => (
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/features" element={<Features />} />
                   <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                   <Route path="/terms-of-service" element={<TermsOfService />} />
                   <Route path="/purchase-success" element={<PurchaseSuccess />} />

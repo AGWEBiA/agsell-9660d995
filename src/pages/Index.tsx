@@ -1002,8 +1002,8 @@ export default function LandingPage() {
         <div className="container mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
           <Logo variant="red" size="md" showText />
           <nav className="hidden md:flex items-center gap-6 text-sm">
+            <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">Funcionalidades</Link>
             <a href="#diferenciais" className="text-muted-foreground hover:text-foreground transition-colors">Diferenciais</a>
-            <a href="#recursos" className="text-muted-foreground hover:text-foreground transition-colors">Recursos</a>
             <a href="#planos" className="text-muted-foreground hover:text-foreground transition-colors">Planos</a>
             <a href="#comparativo" className="text-muted-foreground hover:text-foreground transition-colors">Comparativo</a>
           </nav>
@@ -1055,6 +1055,7 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <Logo variant="red" size="sm" showText />
             <div className="flex items-center gap-4 sm:gap-6 text-xs sm:text-sm text-muted-foreground">
+              <Link to="/features" className="hover:text-foreground transition-colors">Funcionalidades</Link>
               <Link to="/privacy-policy" className="hover:text-foreground transition-colors">Privacidade</Link>
               <Link to="/terms-of-service" className="hover:text-foreground transition-colors">Termos</Link>
               <Link to="/pricing" className="hover:text-foreground transition-colors">Preços</Link>

@@ -291,7 +291,7 @@ export function WhatsAppProviderSetup() {
       setOfficialPhoneNumberId('');
       setOfficialAccessToken('');
       setOfficialWabaId('');
-      setOfficialWebhookToken('');
+      
       setOfficialPhone('');
       toast.success('API Oficial configurada com sucesso!');
     } finally {

@@ -484,7 +484,15 @@ export default function Admin() {
           <PlanWhatsAppGroupsManager />
         </TabsContent>
         <TabsContent value="platform-support">
-          <PlatformSupportDashboard />
+        <TabsContent value="platform-support" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <PlatformSupportDashboard />
+            </div>
+            <div>
+              <SupportWhatsAppConfig />
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
 

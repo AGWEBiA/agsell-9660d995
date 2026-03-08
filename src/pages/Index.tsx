@@ -98,7 +98,7 @@ function Navbar() {
 // ─── SECTION 2: Hero ────────────────────────────────────────
 function HeroSection() {
   return (
-    <section className="relative py-24 md:py-32 lg:py-40 overflow-hidden">
+    <section className="relative py-16 md:py-20 lg:py-28 overflow-hidden">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-[hsl(2,76%,53%)]/5 blur-3xl" />
         <div className="absolute -bottom-20 -left-20 w-[500px] h-[500px] rounded-full bg-[hsl(2,76%,53%)]/3 blur-3xl" />

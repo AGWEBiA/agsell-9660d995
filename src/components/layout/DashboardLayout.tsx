@@ -129,6 +129,8 @@ export function DashboardLayout() {
         open={showOnboarding} 
         onComplete={() => setShowOnboarding(false)} 
       />
+
+      <SupportAgentChat />
     </div>
   );
 }

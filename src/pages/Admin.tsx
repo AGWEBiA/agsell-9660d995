@@ -498,7 +498,8 @@ export default function Admin() {
             </div>
           </div>
         </TabsContent>
-        <TabsContent value="voip-config">
+        <TabsContent value="voip-config" className="space-y-6">
+          <VoipProviderConfig />
           <VoipPackagesAdmin />
         </TabsContent>
       </Tabs>

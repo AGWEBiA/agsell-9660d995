@@ -110,7 +110,7 @@ function HeroSection() {
             🇧🇷 Feito para o mercado brasileiro
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[64px] font-bold tracking-tight leading-[1.1] mb-6 text-white">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[64px] font-bold tracking-tight leading-[1.1] mb-6 text-white">
             Sua equipe vende mais quando não precisa gerenciar{' '}
             <span className="text-[hsl(2,76%,53%)]">6 ferramentas</span> ao mesmo tempo.
           </h1>

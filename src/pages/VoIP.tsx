@@ -20,7 +20,26 @@ const VoIP = () => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100);
   };
 
-  const formatPricePerCredit = (cents: number) => {
+  const handlePurchase = async (packageId: string) => {
+    try {
+      setPurchasingId(packageId);
+      const { data, error } = await supabase.functions.invoke('purchase-voip-credits', {
+        body: { packageId },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      } else {
+        throw new Error('Nenhuma URL de checkout retornada');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao iniciar compra');
+    } finally {
+      setPurchasingId(null);
+    }
+  };
+
+
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2 }).format(cents / 100);
   };
 

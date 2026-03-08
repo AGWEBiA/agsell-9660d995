@@ -1083,7 +1083,10 @@ export default function LandingPage() {
 
 function FloatingSupportWidget() {
   const [open, setOpen] = useState(false);
-  const [waConfig, setWaConfig] = useState<{ phone_number: string; message: string } | null>(null);
+  const [waConfig, setWaConfig] = useState<{ phone_number: string; message: string }>({
+    phone_number: '',
+    message: 'Olá, preciso de ajuda com a AG Sell',
+  });
 
   useEffect(() => {
     supabase
@@ -1102,7 +1105,7 @@ function FloatingSupportWidget() {
       });
   }, []);
 
-  const waLink = waConfig?.phone_number
+  const waLink = waConfig.phone_number
     ? `https://wa.me/${waConfig.phone_number}?text=${encodeURIComponent(waConfig.message)}`
     : null;
 

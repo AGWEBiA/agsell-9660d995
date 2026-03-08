@@ -137,6 +137,30 @@ const VoIP = () => {
           </TabsTrigger>
         </TabsList>
 
+        {/* Softphone */}
+        <TabsContent value="softphone">
+          <div className="grid gap-6 md:grid-cols-2">
+            <Softphone />
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Como usar o Softphone</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm text-muted-foreground">
+                <p>• <strong>Sem provedor WebRTC:</strong> O botão "Ligar" abre o discador nativo do seu dispositivo</p>
+                <p>• <strong>Com WebRTC configurado:</strong> A chamada é feita diretamente pelo navegador</p>
+                <p>• Você também pode ligar clicando no ícone de telefone no perfil de qualquer contato</p>
+                <p>• As chamadas são registradas automaticamente e os créditos descontados</p>
+                <p>• Com gravação ativa, a transcrição e análise de sentimento são feitas por IA</p>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Analytics */}
+        <TabsContent value="analytics">
+          <CallAnalyticsDashboard />
+        </TabsContent>
+
         {/* Pacotes de Créditos */}
         <TabsContent value="packages">
           <Card>

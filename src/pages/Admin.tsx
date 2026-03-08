@@ -49,6 +49,7 @@ import { PaymentGatewayConfig } from '@/components/admin/PaymentGatewayConfig';
 import { SalesRecoveryDashboard } from '@/components/admin/SalesRecoveryDashboard';
 import { PlanWhatsAppGroupsManager } from '@/components/admin/PlanWhatsAppGroupsManager';
 import { PlatformSupportDashboard } from '@/components/admin/PlatformSupportDashboard';
+import { SupportWhatsAppConfig } from '@/components/admin/SupportWhatsAppConfig';
 
 export default function Admin() {
   const { user, isAdmin, loading: isCheckingAdmin } = useAuth();

@@ -166,6 +166,34 @@ Deno.serve(async (req) => {
   }
 });
 
+async function registerSyncWebhook(
+  baseUrl: string,
+  apiKey: string,
+  instanceName: string,
+  supabaseUrl: string,
+) {
+  try {
+    const syncWebhookUrl = `${supabaseUrl}/functions/v1/sync-whatsapp-reconnect`;
+    // Set webhook for connection events
+    await fetch(`${baseUrl}/webhook/set/${encodeURIComponent(instanceName)}`, {
+      method: "POST",
+      headers: {
+        apikey: apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url: syncWebhookUrl,
+        webhook_by_events: true,
+        webhook_base64: false,
+        events: ["CONNECTION_UPDATE"],
+      }),
+    });
+    console.log(`Sync webhook registered for ${instanceName}`);
+  } catch (e) {
+    console.error(`Failed to register sync webhook for ${instanceName}:`, e);
+  }
+}
+
 async function getQRCode(
   baseUrl: string,
   apiKey: string,

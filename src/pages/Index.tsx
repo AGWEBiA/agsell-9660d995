@@ -940,9 +940,9 @@ function Footer() {
   return (
     <footer className="border-t border-[hsl(0,0%,16%)]" role="contentinfo">
       <div className="container mx-auto px-4 sm:px-6 py-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex flex-col items-center gap-6 text-center md:flex-row md:justify-between md:text-left">
           <Logo variant="red" size="sm" showText />
-          <nav className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs sm:text-sm text-[hsl(0,0%,63%)]" aria-label="Links do rodapé">
+          <nav className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm text-[hsl(0,0%,63%)]" aria-label="Links do rodapé">
             <a href="#funcionalidades" className="hover:text-white transition-colors">Funcionalidades</a>
             <a href="#diferenciais" className="hover:text-white transition-colors">Diferenciais</a>
             <a href="#planos" className="hover:text-white transition-colors">Planos</a>

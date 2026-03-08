@@ -49,6 +49,7 @@ import { PaymentGatewayConfig } from '@/components/admin/PaymentGatewayConfig';
 import { SalesRecoveryDashboard } from '@/components/admin/SalesRecoveryDashboard';
 import { PlanWhatsAppGroupsManager } from '@/components/admin/PlanWhatsAppGroupsManager';
 import { PlatformSupportDashboard } from '@/components/admin/PlatformSupportDashboard';
+import { SupportWhatsAppConfig } from '@/components/admin/SupportWhatsAppConfig';
 
 export default function Admin() {
   const { user, isAdmin, loading: isCheckingAdmin } = useAuth();
@@ -482,8 +483,15 @@ export default function Admin() {
         <TabsContent value="wa-groups">
           <PlanWhatsAppGroupsManager />
         </TabsContent>
-        <TabsContent value="platform-support">
-          <PlatformSupportDashboard />
+        <TabsContent value="platform-support" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <PlatformSupportDashboard />
+            </div>
+            <div>
+              <SupportWhatsAppConfig />
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
 

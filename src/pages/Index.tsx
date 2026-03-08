@@ -80,7 +80,7 @@ function Navbar() {
             <a href="#planos" onClick={() => setMobileMenuOpen(false)} className="text-[hsl(0,0%,63%)] hover:text-white transition-colors py-2 text-sm">Planos</a>
             <div className="flex gap-2 pt-2 border-t border-[hsl(0,0%,16%)]">
               <Link to="/login" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="outline" size="sm" className="w-full border-white/20 text-white/80 hover:text-white hover:bg-white/5 text-xs">Entrar</Button>
+                <Button variant="ghost" size="sm" className="w-full text-white/90 hover:text-white hover:bg-white/10 font-medium text-xs rounded-full">Entrar</Button>
               </Link>
               <a href="#planos" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
                 <Button size="sm" className="w-full rounded-full text-xs bg-[hsl(2,76%,53%)] hover:bg-[hsl(2,76%,45%)] text-white">

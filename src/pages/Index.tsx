@@ -12,7 +12,8 @@ import {
   Workflow, Vote, SplitSquareVertical, CreditCard, Tag, X,
   Instagram, Headphones, Trophy, Flame, DollarSign, Replace,
   CheckCircle2, ArrowDown, MousePointerClick, Gauge, Lock,
-  Megaphone, PieChart, Hash, ArrowLeftRight, Upload, FileJson
+  Megaphone, PieChart, Hash, ArrowLeftRight, Upload, FileJson,
+  Ticket,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

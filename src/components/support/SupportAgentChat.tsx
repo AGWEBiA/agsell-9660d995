@@ -321,10 +321,7 @@ export function SupportAgentChat() {
               ].map((q) => (
                 <button
                   key={q}
-                  onClick={() => {
-                    setInput(q);
-                    setTimeout(() => handleSend(), 50);
-                  }}
+                  onClick={() => sendMessage(q)}
                   className="text-xs px-2.5 py-1.5 rounded-full border border-border hover:bg-muted transition-colors text-muted-foreground"
                 >
                   {q}

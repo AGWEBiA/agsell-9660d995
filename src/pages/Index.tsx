@@ -98,7 +98,7 @@ function Navbar() {
 // ─── SECTION 2: Hero ────────────────────────────────────────
 function HeroSection() {
   return (
-    <section className="relative py-24 md:py-32 lg:py-40 overflow-hidden">
+    <section className="relative py-16 md:py-20 lg:py-28 overflow-hidden">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-[hsl(2,76%,53%)]/5 blur-3xl" />
         <div className="absolute -bottom-20 -left-20 w-[500px] h-[500px] rounded-full bg-[hsl(2,76%,53%)]/3 blur-3xl" />
@@ -190,7 +190,7 @@ const REPLACED_TOOLS = [
 function CostComparisonSection() {
   return (
     <section id="comparativo" className="relative overflow-hidden">
-      <div className="container mx-auto px-4 sm:px-6 py-16 md:py-24 relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 py-10 md:py-16 relative z-10">
         <div className="max-w-xl mx-auto text-center mb-12">
           <div className="inline-flex items-center gap-2 rounded-full border border-[hsl(2,76%,53%)]/20 bg-[hsl(2,76%,53%)]/10 px-4 py-1.5 text-xs font-semibold tracking-wider uppercase text-[hsl(2,76%,53%)] mb-4">
             <Replace className="h-3 w-3" />
@@ -267,7 +267,7 @@ const TABLE_ROWS = [
 function ComparisonTableSection() {
   return (
     <section className="border-y border-[hsl(0,0%,16%)] bg-[hsl(0,0%,7%)]">
-      <div className="container mx-auto px-4 sm:px-6 py-16 md:py-24">
+      <div className="container mx-auto px-4 sm:px-6 py-10 md:py-16">
         <div className="max-w-xl mx-auto text-center mb-12">
           <div className="inline-flex items-center gap-2 rounded-full border border-[hsl(2,76%,53%)]/20 bg-[hsl(2,76%,53%)]/10 px-4 py-1.5 text-xs font-semibold tracking-wider uppercase text-[hsl(2,76%,53%)] mb-4">
             Comparativo
@@ -390,7 +390,7 @@ const DIFFERENTIALS = [
 function DifferentialsSection() {
   return (
     <section id="diferenciais" className="relative overflow-hidden">
-      <div className="container mx-auto px-4 sm:px-6 py-16 md:py-24 relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 py-10 md:py-16 relative z-10">
         <div className="max-w-2xl mx-auto text-center mb-12">
           <div className="inline-flex items-center gap-2 rounded-full border border-[hsl(2,76%,53%)]/20 bg-[hsl(2,76%,53%)]/10 px-4 py-1.5 text-xs font-semibold tracking-wider uppercase text-[hsl(2,76%,53%)] mb-4">
             <Award className="h-3 w-3" />
@@ -486,7 +486,7 @@ function FeaturesSection() {
 
   return (
     <section id="funcionalidades" className="relative overflow-hidden">
-      <div className="container mx-auto px-4 sm:px-6 py-16 md:py-24 relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 py-10 md:py-16 relative z-10">
         <div className="max-w-xl mx-auto text-center mb-12">
           <div className="inline-flex items-center gap-2 rounded-full border border-[hsl(2,76%,53%)]/20 bg-[hsl(2,76%,53%)]/10 px-4 py-1.5 text-xs font-semibold tracking-wider uppercase text-[hsl(2,76%,53%)] mb-4">
             <Layers className="h-3 w-3" />
@@ -548,7 +548,7 @@ const BR_FEATURES = [
 function BrazilSection() {
   return (
     <section className="border-y border-[hsl(0,0%,16%)] bg-[hsl(0,0%,7%)]">
-      <div className="container mx-auto px-4 sm:px-6 py-16 md:py-24">
+      <div className="container mx-auto px-4 sm:px-6 py-10 md:py-16">
         <div className="max-w-2xl mx-auto text-center mb-12">
           <div className="inline-flex items-center gap-2 rounded-full border border-[hsl(2,76%,53%)]/20 bg-[hsl(2,76%,53%)]/10 px-4 py-1.5 text-xs font-semibold tracking-wider uppercase text-[hsl(2,76%,53%)] mb-4">
             🇧🇷 Feito para o Brasil
@@ -589,7 +589,7 @@ const MIGRATION_ITEMS = [
 function MigrationSection() {
   return (
     <section className="relative overflow-hidden">
-      <div className="container mx-auto px-4 sm:px-6 py-16 md:py-24 relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 py-10 md:py-16 relative z-10">
         <div className="max-w-xl mx-auto text-center mb-12">
           <div className="inline-flex items-center gap-2 rounded-full border border-[hsl(2,76%,53%)]/20 bg-[hsl(2,76%,53%)]/10 px-4 py-1.5 text-xs font-semibold tracking-wider uppercase text-[hsl(2,76%,53%)] mb-4">
             <ArrowLeftRight className="h-3 w-3" />
@@ -711,7 +711,7 @@ function PlansSection() {
 
   return (
     <section id="planos" className="border-y border-[hsl(0,0%,16%)] bg-[hsl(0,0%,7%)]">
-      <div className="container mx-auto px-4 sm:px-6 py-16 md:py-24">
+      <div className="container mx-auto px-4 sm:px-6 py-10 md:py-16">
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 rounded-full border border-[hsl(2,76%,53%)]/20 bg-[hsl(2,76%,53%)]/10 px-4 py-1.5 text-xs font-semibold tracking-wider uppercase text-[hsl(2,76%,53%)] mb-4">
             PLANOS
@@ -874,7 +874,7 @@ const FAQ_ITEMS = [
 function FAQSection() {
   return (
     <section className="relative overflow-hidden">
-      <div className="container mx-auto px-4 sm:px-6 py-16 md:py-24 relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 py-10 md:py-16 relative z-10">
         <div className="max-w-xl mx-auto text-center mb-12">
           <div className="inline-flex items-center gap-2 rounded-full border border-[hsl(2,76%,53%)]/20 bg-[hsl(2,76%,53%)]/10 px-4 py-1.5 text-xs font-semibold tracking-wider uppercase text-[hsl(2,76%,53%)] mb-4">
             Dúvidas frequentes
@@ -906,7 +906,7 @@ function FAQSection() {
 // ─── SECTION 12: CTA Final ──────────────────────────────────
 function CTASection() {
   return (
-    <section className="container mx-auto px-4 sm:px-6 py-16 md:py-24">
+    <section className="container mx-auto px-4 sm:px-6 py-10 md:py-16">
       <div className="relative rounded-3xl overflow-hidden px-6 sm:px-8 py-12 sm:py-16 md:py-20 text-center"
         style={{ background: 'linear-gradient(135deg, hsl(0,0%,8%) 0%, hsl(2,76%,15%) 100%)' }}
       >

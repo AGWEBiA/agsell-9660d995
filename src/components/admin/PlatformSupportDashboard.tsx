@@ -32,6 +32,7 @@ interface PlatformTicket {
   category: string | null;
   created_at: string;
   updated_at: string;
+  assigned_to: string | null;
   org_name?: string;
   creator_name?: string;
 }

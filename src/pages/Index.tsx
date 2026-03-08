@@ -133,7 +133,7 @@ function HeroSection() {
               </Button>
             </a>
             <a href="#comparativo" className="w-full sm:w-auto">
-              <Button size="lg" variant="outline" className="h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base rounded-full border-white/20 text-white/80 hover:text-white hover:bg-white/5 w-full">
+              <Button size="lg" variant="outline" className="h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base rounded-full border-[hsl(0,0%,25%)] bg-transparent text-white hover:bg-white/10 hover:border-[hsl(0,0%,40%)] transition-all w-full">
                 Ver quanto você economiza
                 <ArrowDown className="ml-1 h-4 w-4 shrink-0" />
               </Button>

@@ -906,7 +906,7 @@ function FAQSection() {
 // ─── SECTION 12: CTA Final ──────────────────────────────────
 function CTASection() {
   return (
-    <section className="container mx-auto px-4 sm:px-6 py-16 md:py-24">
+    <section className="container mx-auto px-4 sm:px-6 py-10 md:py-16">
       <div className="relative rounded-3xl overflow-hidden px-6 sm:px-8 py-12 sm:py-16 md:py-20 text-center"
         style={{ background: 'linear-gradient(135deg, hsl(0,0%,8%) 0%, hsl(2,76%,15%) 100%)' }}
       >

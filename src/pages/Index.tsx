@@ -1083,15 +1083,35 @@ export default function LandingPage() {
 
 function FloatingSupportWidget() {
   const [open, setOpen] = useState(false);
+  const [waConfig, setWaConfig] = useState<{ phone_number: string; message: string } | null>(null);
+
+  useEffect(() => {
+    supabase
+      .from('platform_settings')
+      .select('value')
+      .eq('key', 'support_whatsapp')
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.value) {
+          const val = data.value as any;
+          setWaConfig({
+            phone_number: val.phone_number || '',
+            message: val.message || 'Olá, preciso de ajuda com a AG Sell',
+          });
+        }
+      });
+  }, []);
+
+  const waLink = waConfig?.phone_number
+    ? `https://wa.me/${waConfig.phone_number}?text=${encodeURIComponent(waConfig.message)}`
+    : null;
 
   return (
     <>
-      {/* Overlay */}
       {open && (
         <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
       )}
 
-      {/* Popup */}
       {open && (
         <div className="fixed bottom-20 right-4 sm:right-6 z-50 w-72 rounded-2xl border bg-card shadow-xl animate-fade-in">
           <div className="p-4 border-b">
@@ -1104,21 +1124,23 @@ function FloatingSupportWidget() {
             </p>
           </div>
           <div className="p-2 space-y-1">
-            <a
-              href="https://wa.me/5511999999999?text=Ol%C3%A1%2C%20preciso%20de%20ajuda%20com%20a%20AG%20Sell"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/60 transition-colors group"
-            >
-              <div className="h-9 w-9 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0 group-hover:bg-green-500/20 transition-colors">
-                <MessageSquare className="h-4 w-4 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium">WhatsApp</p>
-                <p className="text-[10px] text-muted-foreground">Fale com nossa equipe agora</p>
-              </div>
-            </a>
+            {waLink && (
+              <a
+                href={waLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/60 transition-colors group"
+              >
+                <div className="h-9 w-9 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0 group-hover:bg-green-500/20 transition-colors">
+                  <MessageSquare className="h-4 w-4 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">WhatsApp</p>
+                  <p className="text-[10px] text-muted-foreground">Fale com nossa equipe agora</p>
+                </div>
+              </a>
+            )}
             <a
               href="mailto:suporte@agsell.com.br?subject=Preciso%20de%20ajuda"
               onClick={() => setOpen(false)}
@@ -1136,7 +1158,6 @@ function FloatingSupportWidget() {
         </div>
       )}
 
-      {/* FAB Button */}
       <button
         onClick={() => setOpen(!open)}
         className={cn(

@@ -4161,6 +4161,7 @@ export type Database = {
           created_by: string
           description: string | null
           id: string
+          is_platform_ticket: boolean | null
           organization_id: string
           parent_ticket_id: string | null
           priority: string
@@ -4182,6 +4183,7 @@ export type Database = {
           created_by: string
           description?: string | null
           id?: string
+          is_platform_ticket?: boolean | null
           organization_id: string
           parent_ticket_id?: string | null
           priority?: string
@@ -4203,6 +4205,7 @@ export type Database = {
           created_by?: string
           description?: string | null
           id?: string
+          is_platform_ticket?: boolean | null
           organization_id?: string
           parent_ticket_id?: string | null
           priority?: string

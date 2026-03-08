@@ -10,6 +10,7 @@ import { MigrationAPIConnect } from '@/components/migration/MigrationAPIConnect'
 import { MigrationWebhookGuide } from '@/components/migration/MigrationWebhookGuide';
 
 const platforms = [
+  { id: 'manychat', name: 'ManyChat', apiSupport: false, webhookSupport: false, color: 'bg-blue-600' },
   { id: 'activecampaign', name: 'ActiveCampaign', apiSupport: true, webhookSupport: false, color: 'bg-blue-500' },
   { id: 'rdstation', name: 'RD Station', apiSupport: true, webhookSupport: false, color: 'bg-purple-500' },
   { id: 'sellflux', name: 'SellFlux', apiSupport: false, webhookSupport: true, color: 'bg-orange-500' },

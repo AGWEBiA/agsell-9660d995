@@ -104,6 +104,7 @@ export function useSupportTickets() {
       conversation_id?: string | null;
       parent_ticket_id?: string | null;
       sla_hours?: number;
+      is_platform_ticket?: boolean;
     }) => {
       if (!orgId || !user?.id) throw new Error('Sem organização');
       const slaHours = input.sla_hours || 24;
@@ -123,6 +124,7 @@ export function useSupportTickets() {
           parent_ticket_id: input.parent_ticket_id || null,
           sla_hours: slaHours,
           sla_deadline_at: slaDeadline,
+          is_platform_ticket: input.is_platform_ticket || false,
         } as any)
         .select()
         .single();

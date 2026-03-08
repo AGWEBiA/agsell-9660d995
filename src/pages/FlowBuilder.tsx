@@ -617,6 +617,8 @@ export default function FlowBuilder() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const { automations, createAutomation, updateAutomation } = useAutomations();
+  const editId2 = searchParams.get('id');
+  const { data: nodeAnalytics } = useFlowNodeAnalytics(editId2 || undefined);
 
   const editId = searchParams.get('id');
   const isNew = searchParams.get('new') === '1';

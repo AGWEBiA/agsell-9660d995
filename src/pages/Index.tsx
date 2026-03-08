@@ -1083,7 +1083,10 @@ export default function LandingPage() {
 
 function FloatingSupportWidget() {
   const [open, setOpen] = useState(false);
-  const [waConfig, setWaConfig] = useState<{ phone_number: string; message: string } | null>(null);
+  const [waConfig, setWaConfig] = useState<{ phone_number: string; message: string }>({
+    phone_number: '',
+    message: 'Olá, preciso de ajuda com a AG Sell',
+  });
 
   useEffect(() => {
     supabase
@@ -1102,7 +1105,7 @@ function FloatingSupportWidget() {
       });
   }, []);
 
-  const waLink = waConfig?.phone_number
+  const waLink = waConfig.phone_number
     ? `https://wa.me/${waConfig.phone_number}?text=${encodeURIComponent(waConfig.message)}`
     : null;
 
@@ -1124,7 +1127,7 @@ function FloatingSupportWidget() {
             </p>
           </div>
           <div className="p-2 space-y-1">
-            {waLink && (
+            {waLink ? (
               <a
                 href={waLink}
                 target="_blank"
@@ -1140,6 +1143,16 @@ function FloatingSupportWidget() {
                   <p className="text-[10px] text-muted-foreground">Fale com nossa equipe agora</p>
                 </div>
               </a>
+            ) : (
+              <div className="flex items-center gap-3 p-3 rounded-xl opacity-50 cursor-not-allowed">
+                <div className="h-9 w-9 rounded-lg bg-green-500/10 flex items-center justify-center shrink-0">
+                  <MessageSquare className="h-4 w-4 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">WhatsApp</p>
+                  <p className="text-[10px] text-muted-foreground">Em breve disponível</p>
+                </div>
+              </div>
             )}
             <a
               href="mailto:suporte@agsell.com.br?subject=Preciso%20de%20ajuda"

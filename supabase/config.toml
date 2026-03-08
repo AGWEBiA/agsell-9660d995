@@ -113,3 +113,6 @@ verify_jwt = false
 
 [functions.subscription-whatsapp-groups]
 verify_jwt = false
+
+[functions.sync-whatsapp-reconnect]
+verify_jwt = false

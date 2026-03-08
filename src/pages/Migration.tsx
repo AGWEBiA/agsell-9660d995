@@ -10,6 +10,7 @@ import { MigrationAPIConnect } from '@/components/migration/MigrationAPIConnect'
 import { MigrationWebhookGuide } from '@/components/migration/MigrationWebhookGuide';
 
 const platforms = [
+  { id: 'manychat', name: 'ManyChat', apiSupport: false, webhookSupport: false, color: 'bg-blue-600' },
   { id: 'activecampaign', name: 'ActiveCampaign', apiSupport: true, webhookSupport: false, color: 'bg-blue-500' },
   { id: 'rdstation', name: 'RD Station', apiSupport: true, webhookSupport: false, color: 'bg-purple-500' },
   { id: 'sellflux', name: 'SellFlux', apiSupport: false, webhookSupport: true, color: 'bg-orange-500' },
@@ -124,6 +125,43 @@ export default function Migration() {
               </p>
             </div>
           </div>
+
+          {selectedPlatform === 'manychat' && (
+            <Card className="mb-4 border-blue-500/30 bg-blue-500/5">
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 text-blue-500" />
+                  Como exportar do ManyChat
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 text-sm">
+                <div>
+                  <p className="font-semibold mb-1">📋 Leads / Contatos (CSV)</p>
+                  <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                    <li>No ManyChat, vá em <strong>Audience → All Contacts</strong></li>
+                    <li>Aplique filtros se necessário (ex: tag, canal)</li>
+                    <li>Clique em <strong>Export</strong> (canto superior direito)</li>
+                    <li>Baixe o arquivo CSV e importe na aba <strong>Importar CSV</strong> abaixo</li>
+                  </ol>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Campos comuns: Name, Email, Phone, Gender, Timezone, Last Interaction, Tags
+                  </p>
+                </div>
+                <div>
+                  <p className="font-semibold mb-1">⚡ Automações / Flows (JSON)</p>
+                  <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                    <li>Vá em <strong>Automation → Flows</strong></li>
+                    <li>Abra o flow desejado e clique nos <strong>3 pontos → Export</strong></li>
+                    <li>Ou use a <strong>ManyChat API</strong> (<code>/fb/page/getFlows</code>) para exportar todos</li>
+                    <li>Cole o JSON na aba <strong>Importar JSON</strong> abaixo</li>
+                  </ol>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    O importador converterá os steps do ManyChat em ações equivalentes na AG Sell (envio de e-mail, tags, delays).
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Tabs defaultValue={platform?.apiSupport ? 'api' : platform?.webhookSupport ? 'webhook' : 'csv'}>
             <TabsList>

@@ -90,6 +90,7 @@ import CustomReports from "./pages/CustomReports";
 import RevenueReporting from "./pages/RevenueReporting";
 import PaidGroups from "./pages/PaidGroups";
 import SystemStatus from "./pages/SystemStatus";
+import VoIP from "./pages/VoIP";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

@@ -1003,6 +1003,14 @@ function CTASection() {
 
 // ─── Main Landing Page ──────────────────────────────────────
 export default function LandingPage() {
+  useEffect(() => {
+    document.title = 'AG Sell — CRM com WhatsApp, E-mail, IA e Automação | Plataforma All-in-One';
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute('content', 'AG Sell é a plataforma all-in-one que substitui HubSpot, ActiveCampaign, ManyChat, Intercom e ChatGPT. CRM, WhatsApp multi-instância, e-mail marketing, agentes IA com RAG, inbox omnichannel e automação — tudo integrado a partir de R$ 197/mês.');
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}

@@ -25,6 +25,8 @@ import { supabase } from '@/integrations/supabase/client';
 // ─── SECTION 1: Navbar ──────────────────────────────────────
 function Navbar() {
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', handler);
@@ -50,16 +52,45 @@ function Navbar() {
           <a href="#planos" className="text-[hsl(0,0%,63%)] hover:text-white transition-colors">Planos</a>
         </nav>
         <div className="flex items-center gap-2 sm:gap-3">
-          <Link to="/login">
+          <Link to="/login" className="hidden sm:block">
             <Button variant="outline" size="sm" className="border-white/20 text-white/80 hover:text-white hover:bg-white/5 text-xs sm:text-sm">Entrar</Button>
           </Link>
-          <a href="#planos">
+          <a href="#planos" className="hidden sm:block">
             <Button size="sm" className="rounded-full px-4 sm:px-5 text-xs sm:text-sm bg-[hsl(2,76%,53%)] hover:bg-[hsl(2,76%,45%)] text-white">
               Começar agora
             </Button>
           </a>
+          <button
+            className="md:hidden p-2 text-white"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Menu"
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Layers className="h-5 w-5" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden bg-[hsl(0,0%,5%)]/95 backdrop-blur-xl border-t border-[hsl(0,0%,16%)] animate-fade-in">
+          <nav className="container mx-auto px-4 py-4 flex flex-col gap-3">
+            <a href="#funcionalidades" onClick={() => setMobileMenuOpen(false)} className="text-[hsl(0,0%,63%)] hover:text-white transition-colors py-2 text-sm">Funcionalidades</a>
+            <a href="#diferenciais" onClick={() => setMobileMenuOpen(false)} className="text-[hsl(0,0%,63%)] hover:text-white transition-colors py-2 text-sm">Diferenciais</a>
+            <a href="#comparativo" onClick={() => setMobileMenuOpen(false)} className="text-[hsl(0,0%,63%)] hover:text-white transition-colors py-2 text-sm">Comparativo</a>
+            <a href="#planos" onClick={() => setMobileMenuOpen(false)} className="text-[hsl(0,0%,63%)] hover:text-white transition-colors py-2 text-sm">Planos</a>
+            <div className="flex gap-2 pt-2 border-t border-[hsl(0,0%,16%)]">
+              <Link to="/login" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
+                <Button variant="outline" size="sm" className="w-full border-white/20 text-white/80 hover:text-white hover:bg-white/5 text-xs">Entrar</Button>
+              </Link>
+              <a href="#planos" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
+                <Button size="sm" className="w-full rounded-full text-xs bg-[hsl(2,76%,53%)] hover:bg-[hsl(2,76%,45%)] text-white">
+                  Começar agora
+                </Button>
+              </a>
+            </div>
+          </nav>
+        </div>
+      )}
     </header>
   );
 }
@@ -79,7 +110,7 @@ function HeroSection() {
             🇧🇷 Feito para o mercado brasileiro
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[64px] font-bold tracking-tight leading-[1.1] mb-6 text-white">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[64px] font-bold tracking-tight leading-[1.1] mb-6 text-white">
             Sua equipe vende mais quando não precisa gerenciar{' '}
             <span className="text-[hsl(2,76%,53%)]">6 ferramentas</span> ao mesmo tempo.
           </h1>
@@ -88,23 +119,23 @@ function HeroSection() {
             A AG Sell une CRM, WhatsApp, e-mail, Instagram e IA em uma única plataforma — para você atender mais rápido, fechar mais negócios e pagar menos do que você paga hoje.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-[hsl(0,0%,63%)] mb-8">
-            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-500" />Comece a vender em menos de 10 minutos</span>
-            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-500" />Suporte em português, sem fila</span>
-            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-500" />Sem contrato anual, sem multa</span>
+          <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm text-[hsl(0,0%,63%)] mb-8">
+            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />Comece a vender em menos de 10 minutos</span>
+            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />Suporte em português, sem fila</span>
+            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />Sem contrato anual, sem multa</span>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-3 justify-center mb-6">
-            <a href="#planos">
-              <Button size="lg" className="h-14 px-10 text-base font-semibold rounded-full bg-[hsl(2,76%,53%)] hover:bg-[hsl(2,76%,45%)] text-white shadow-lg shadow-[hsl(2,76%,53%)]/20 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 justify-center mb-6 px-2 sm:px-0">
+            <a href="#planos" className="w-full sm:w-auto">
+              <Button size="lg" className="h-12 sm:h-14 px-6 sm:px-10 text-sm sm:text-base font-semibold rounded-full bg-[hsl(2,76%,53%)] hover:bg-[hsl(2,76%,45%)] text-white shadow-lg shadow-[hsl(2,76%,53%)]/20 w-full">
                 Começar agora — a partir de R$ 197/mês
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <ArrowRight className="ml-2 h-4 sm:h-5 w-4 sm:w-5 shrink-0" />
               </Button>
             </a>
-            <a href="#comparativo">
-              <Button size="lg" variant="outline" className="h-14 px-8 text-base rounded-full border-white/20 text-white/80 hover:text-white hover:bg-white/5 w-full sm:w-auto">
+            <a href="#comparativo" className="w-full sm:w-auto">
+              <Button size="lg" variant="outline" className="h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base rounded-full border-white/20 text-white/80 hover:text-white hover:bg-white/5 w-full">
                 Ver quanto você economiza
-                <ArrowDown className="ml-1 h-4 w-4" />
+                <ArrowDown className="ml-1 h-4 w-4 shrink-0" />
               </Button>
             </a>
           </div>
@@ -249,8 +280,8 @@ function ComparisonTableSection() {
           </p>
         </div>
 
-        <div className="overflow-x-auto max-w-6xl mx-auto">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto max-w-6xl mx-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="border-b border-[hsl(0,0%,16%)]">
                 <th className="text-left py-3 px-4 text-[hsl(0,0%,63%)] font-medium">Funcionalidade</th>
@@ -470,13 +501,13 @@ function FeaturesSection() {
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-2 mb-10">
+        <div className="flex overflow-x-auto pb-2 sm:flex-wrap sm:justify-center gap-2 mb-10 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
           {FEATURE_TABS.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'px-4 py-2 rounded-full text-sm font-medium transition-all border',
+                'px-4 py-2 rounded-full text-sm font-medium transition-all border whitespace-nowrap shrink-0',
                 activeTab === tab.id
                   ? 'bg-[hsl(2,76%,53%)] text-white border-[hsl(2,76%,53%)]'
                   : 'bg-[hsl(0,0%,10%)] text-[hsl(0,0%,63%)] border-[hsl(0,0%,16%)] hover:border-[hsl(0,0%,30%)]'
@@ -709,7 +740,7 @@ function PlansSection() {
             <p>Planos sendo configurados. Visite a <Link to="/pricing" className="text-[hsl(2,76%,53%)] underline">página de preços</Link>.</p>
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
             {plans.map((plan) => {
               const isPro = plan.slug === 'professional';
               const price = billingCycle === 'monthly' ? plan.price_monthly : Math.round(plan.price_yearly / 12);
@@ -889,10 +920,10 @@ function CTASection() {
           <p className="text-white/60 text-base sm:text-lg max-w-lg mx-auto mb-8">
             Comece hoje com a AG Sell e economize mais de R$ 1.650/mês — com mais integração, mais velocidade e mais vendas.
           </p>
-          <a href="#planos">
-            <Button size="lg" className="h-14 px-10 text-base font-semibold rounded-full bg-[hsl(2,76%,53%)] hover:bg-[hsl(2,76%,45%)] text-white shadow-lg shadow-[hsl(2,76%,53%)]/20">
+          <a href="#planos" className="inline-block w-full sm:w-auto px-4 sm:px-0">
+            <Button size="lg" className="h-12 sm:h-14 px-6 sm:px-10 text-sm sm:text-base font-semibold rounded-full bg-[hsl(2,76%,53%)] hover:bg-[hsl(2,76%,45%)] text-white shadow-lg shadow-[hsl(2,76%,53%)]/20 w-full sm:w-auto">
               Começar agora — a partir de R$ 197/mês
-              <ArrowRight className="ml-2 h-5 w-5" />
+              <ArrowRight className="ml-2 h-4 sm:h-5 w-4 sm:w-5 shrink-0" />
             </Button>
           </a>
           <p className="text-xs text-white/40 mt-4">
@@ -909,9 +940,9 @@ function Footer() {
   return (
     <footer className="border-t border-[hsl(0,0%,16%)]" role="contentinfo">
       <div className="container mx-auto px-4 sm:px-6 py-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex flex-col items-center gap-6 text-center md:flex-row md:justify-between md:text-left">
           <Logo variant="red" size="sm" showText />
-          <nav className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs sm:text-sm text-[hsl(0,0%,63%)]" aria-label="Links do rodapé">
+          <nav className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm text-[hsl(0,0%,63%)]" aria-label="Links do rodapé">
             <a href="#funcionalidades" className="hover:text-white transition-colors">Funcionalidades</a>
             <a href="#diferenciais" className="hover:text-white transition-colors">Diferenciais</a>
             <a href="#planos" className="hover:text-white transition-colors">Planos</a>

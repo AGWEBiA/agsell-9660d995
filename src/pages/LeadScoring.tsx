@@ -166,6 +166,13 @@ export default function LeadScoring() {
         </Dialog>
       </div>
 
+      <Tabs defaultValue="rules" className="w-full">
+        <TabsList>
+          <TabsTrigger value="rules">Regras Manuais</TabsTrigger>
+          <TabsTrigger value="predictive">🧠 Scoring Preditivo (IA)</TabsTrigger>
+        </TabsList>
+        <TabsContent value="rules" className="space-y-6">
+
       {/* Segments Overview */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card>

@@ -155,7 +155,7 @@ export default function AIBuilder() {
                                 <Copy className="h-3.5 w-3.5 mr-1" /> Copiar HTML
                               </Button>
                             </div>
-                            <div className="border rounded-lg p-4 max-h-[300px] overflow-y-auto bg-background" dangerouslySetInnerHTML={{ __html: result.html_content }} />
+                            <div className="border rounded-lg p-4 max-h-[300px] overflow-y-auto bg-background" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(result.html_content) }} />
                           </div>
                         )}
                       </>

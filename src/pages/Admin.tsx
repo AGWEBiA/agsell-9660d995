@@ -29,6 +29,7 @@ import {
   Bug,
   ShoppingCart,
   Ticket,
+  MessageSquare,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -52,6 +53,7 @@ import { PlatformSupportDashboard } from '@/components/admin/PlatformSupportDash
 import { SupportWhatsAppConfig } from '@/components/admin/SupportWhatsAppConfig';
 import { VoipPackagesAdmin } from '@/components/admin/VoipPackagesAdmin';
 import { VoipProviderConfig } from '@/components/admin/VoipProviderConfig';
+import { SmsPackagesAdmin } from '@/components/admin/SmsPackagesAdmin';
 export default function Admin() {
   const { user, isAdmin, loading: isCheckingAdmin } = useAuth();
   const [assignPlanOrg, setAssignPlanOrg] = useState<{ id: string; name: string } | null>(null);
@@ -249,6 +251,10 @@ export default function Admin() {
           <TabsTrigger value="voip-config" className="flex items-center gap-2">
             <Activity className="h-4 w-4" />
             VoIP
+          </TabsTrigger>
+          <TabsTrigger value="sms-config" className="flex items-center gap-2">
+            <MessageSquare className="h-4 w-4" />
+            SMS
           </TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-6">
@@ -501,6 +507,9 @@ export default function Admin() {
         <TabsContent value="voip-config" className="space-y-6">
           <VoipProviderConfig />
           <VoipPackagesAdmin />
+        </TabsContent>
+        <TabsContent value="sms-config" className="space-y-6">
+          <SmsPackagesAdmin />
         </TabsContent>
       </Tabs>
 

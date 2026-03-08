@@ -3975,6 +3975,71 @@ export type Database = {
           },
         ]
       }
+      sms_campaigns: {
+        Row: {
+          click_count: number
+          created_at: string
+          credits_used: number
+          delivered_count: number
+          failed_count: number
+          id: string
+          message: string
+          name: string
+          organization_id: string
+          recipient_count: number
+          scheduled_at: string | null
+          sent_at: string | null
+          sent_count: number
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          click_count?: number
+          created_at?: string
+          credits_used?: number
+          delivered_count?: number
+          failed_count?: number
+          id?: string
+          message: string
+          name: string
+          organization_id: string
+          recipient_count?: number
+          scheduled_at?: string | null
+          sent_at?: string | null
+          sent_count?: number
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          click_count?: number
+          created_at?: string
+          credits_used?: number
+          delivered_count?: number
+          failed_count?: number
+          id?: string
+          message?: string
+          name?: string
+          organization_id?: string
+          recipient_count?: number
+          scheduled_at?: string | null
+          sent_at?: string | null
+          sent_count?: number
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_campaigns_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sms_configs: {
         Row: {
           created_at: string | null
@@ -4015,6 +4080,140 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_credit_packages: {
+        Row: {
+          created_at: string
+          credits: number
+          id: string
+          is_active: boolean
+          kiwify_checkout_url: string | null
+          kiwify_product_id: string | null
+          name: string
+          price_cents: number
+          price_per_credit_cents: number
+          sort_order: number
+          stripe_price_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credits: number
+          id?: string
+          is_active?: boolean
+          kiwify_checkout_url?: string | null
+          kiwify_product_id?: string | null
+          name: string
+          price_cents: number
+          price_per_credit_cents: number
+          sort_order?: number
+          stripe_price_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credits?: number
+          id?: string
+          is_active?: boolean
+          kiwify_checkout_url?: string | null
+          kiwify_product_id?: string | null
+          name?: string
+          price_cents?: number
+          price_per_credit_cents?: number
+          sort_order?: number
+          stripe_price_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sms_credits: {
+        Row: {
+          balance: number
+          id: string
+          organization_id: string
+          total_purchased: number
+          total_used: number
+          updated_at: string
+        }
+        Insert: {
+          balance?: number
+          id?: string
+          organization_id: string
+          total_purchased?: number
+          total_used?: number
+          updated_at?: string
+        }
+        Update: {
+          balance?: number
+          id?: string
+          organization_id?: string
+          total_purchased?: number
+          total_used?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_credits_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sms_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          organization_id: string
+          package_id: string | null
+          payment_method: string | null
+          payment_reference: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          organization_id: string
+          package_id?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          type?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          organization_id?: string
+          package_id?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sms_transactions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sms_transactions_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "sms_credit_packages"
             referencedColumns: ["id"]
           },
         ]

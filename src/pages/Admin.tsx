@@ -28,6 +28,7 @@ import {
   Crown,
   Bug,
   ShoppingCart,
+  Ticket,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -47,6 +48,7 @@ import { KiwifyConfig } from '@/components/admin/KiwifyConfig';
 import { PaymentGatewayConfig } from '@/components/admin/PaymentGatewayConfig';
 import { SalesRecoveryDashboard } from '@/components/admin/SalesRecoveryDashboard';
 import { PlanWhatsAppGroupsManager } from '@/components/admin/PlanWhatsAppGroupsManager';
+import { PlatformSupportDashboard } from '@/components/admin/PlatformSupportDashboard';
 
 export default function Admin() {
   const { user, isAdmin, loading: isCheckingAdmin } = useAuth();
@@ -237,6 +239,10 @@ export default function Admin() {
           <TabsTrigger value="wa-groups" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
             Grupos WA
+          </TabsTrigger>
+          <TabsTrigger value="platform-support" className="flex items-center gap-2">
+            <Ticket className="h-4 w-4" />
+            Suporte
           </TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-6">
@@ -475,6 +481,9 @@ export default function Admin() {
         </TabsContent>
         <TabsContent value="wa-groups">
           <PlanWhatsAppGroupsManager />
+        </TabsContent>
+        <TabsContent value="platform-support">
+          <PlatformSupportDashboard />
         </TabsContent>
       </Tabs>
 

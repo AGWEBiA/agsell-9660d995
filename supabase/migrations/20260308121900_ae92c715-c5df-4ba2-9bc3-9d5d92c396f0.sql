@@ -1,0 +1,1 @@
+ALTER TABLE support_tickets ADD COLUMN is_platform_ticket BOOLEAN DEFAULT false;

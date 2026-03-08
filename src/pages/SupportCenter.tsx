@@ -65,6 +65,7 @@ export default function SupportCenter() {
         description: ticketDescription,
         category: ticketCategory,
         priority: ticketPriority as any,
+        is_platform_ticket: true,
       }, {
         onSuccess: () => {
           toast.success('Ticket criado com sucesso! Nossa equipe entrará em contato.');

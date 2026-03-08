@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useAutomations } from '@/hooks/useAutomations';
+import { useFlowNodeAnalytics } from '@/hooks/useFlowNodeAnalytics';
 import { useForms } from '@/hooks/useForms';
 import { cn } from '@/lib/utils';
 import type { Json } from '@/integrations/supabase/types';
@@ -43,12 +44,16 @@ import { TagFilterNodeConfig } from '@/components/flow-builder/TagFilterNodeConf
 import { WhatsAppNodeConfig } from '@/components/flow-builder/WhatsAppNodeConfig';
 import { ConditionalNodeConfig } from '@/components/flow-builder/ConditionalNodeConfig';
 
+import { FlowNodeAnalyticsOverlay } from '@/components/automations/FlowNodeAnalyticsOverlay';
+import type { FlowNodeAnalytic } from '@/hooks/useFlowNodeAnalytics';
+
 // ─── Node Component ───
-function FlowNodeCard({ node, onEdit, onDelete, onAddAfter }: {
+function FlowNodeCard({ node, onEdit, onDelete, onAddAfter, analytics }: {
   node: FlowNode;
   onEdit: () => void;
   onDelete: () => void;
   onAddAfter: () => void;
+  analytics?: FlowNodeAnalytic;
 }) {
   const getTriggerInfo = () => triggerOptions.find(t => t.id === node.subtype);
   const getActionInfo = () => [...actionOptions, ...conditionOptions].find(a => a.id === node.subtype);
@@ -172,6 +177,7 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter }: {
             <div className="flex-1 rounded-md bg-red-50 dark:bg-red-900/20 p-2 text-center text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">❌ Não</div>
           </div>
         )}
+        <FlowNodeAnalyticsOverlay analytics={analytics} />
       </div>
       <div className="flex flex-col items-center">
         <div className="w-0.5 h-6 bg-border" />
@@ -611,6 +617,8 @@ export default function FlowBuilder() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { toast } = useToast();
   const { automations, createAutomation, updateAutomation } = useAutomations();
+  const editId2 = searchParams.get('id');
+  const { data: nodeAnalytics } = useFlowNodeAnalytics(editId2 || undefined);
 
   const editId = searchParams.get('id');
   const isNew = searchParams.get('new') === '1';
@@ -811,6 +819,7 @@ export default function FlowBuilder() {
                   onEdit={() => handleEditNode(node)}
                   onDelete={() => handleDeleteNode(index)}
                   onAddAfter={() => { setAddAfterIndex(index); setAddStepOpen(true); }}
+                  analytics={nodeAnalytics?.find(a => a.node_id === node.id)}
                 />
               ))}
               <div className="flex flex-col items-center">

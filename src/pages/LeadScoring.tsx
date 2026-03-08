@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -36,6 +37,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useLeadScoring } from '@/hooks/useLeadScoring';
+import { PredictiveScoringDashboard } from '@/components/lead-scoring/PredictiveScoringDashboard';
 
 const eventTypes = [
   { value: 'email_opened', label: 'Email Aberto', icon: Eye },
@@ -100,7 +102,7 @@ export default function LeadScoring() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Lead Scoring</h1>
-          <p className="text-muted-foreground">Configure regras de pontuação para qualificar leads</p>
+          <p className="text-muted-foreground">Configure regras de pontuação e scoring preditivo com IA</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
@@ -163,6 +165,13 @@ export default function LeadScoring() {
           </DialogContent>
         </Dialog>
       </div>
+
+      <Tabs defaultValue="rules" className="w-full">
+        <TabsList>
+          <TabsTrigger value="rules">Regras Manuais</TabsTrigger>
+          <TabsTrigger value="predictive">🧠 Scoring Preditivo (IA)</TabsTrigger>
+        </TabsList>
+        <TabsContent value="rules" className="space-y-6">
 
       {/* Segments Overview */}
       <div className="grid gap-4 md:grid-cols-3">
@@ -325,6 +334,11 @@ export default function LeadScoring() {
           </CardContent>
         </Card>
       </div>
+        </TabsContent>
+        <TabsContent value="predictive">
+          <PredictiveScoringDashboard />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

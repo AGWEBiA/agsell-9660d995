@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useIntegrations, Integration } from '@/hooks/useIntegrations';
+import { IntegrationMarketplace } from '@/components/integrations/IntegrationMarketplace';
 import { WhatsAppProviderSetup } from '@/components/integrations/WhatsAppProviderSetup';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader, HelpTooltip } from '@/components/ui/help-tooltip';
@@ -99,6 +100,9 @@ export default function Integrations() {
             <Instagram className="h-4 w-4" />
             Instagram
           </TabsTrigger>
+          <TabsTrigger value="marketplace" className="flex items-center gap-2">
+            🛒 Marketplace
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="whatsapp" className="mt-6">
@@ -128,6 +132,9 @@ export default function Integrations() {
               </Button>
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="marketplace" className="mt-6">
+          <IntegrationMarketplace />
         </TabsContent>
       </Tabs>
 

@@ -32,6 +32,8 @@ export const triggerOptions = [
   { id: 'contact_created', label: 'Contato Criado', icon: UserPlus, channel: 'crm', color: 'from-blue-500 to-indigo-500', description: 'Quando um novo contato é adicionado' },
   { id: 'contact_source', label: 'Fonte do Contato', icon: UserPlus, channel: 'crm', color: 'from-indigo-400 to-blue-400', description: 'Quando contato vem de uma fonte específica' },
   { id: 'form_submitted', label: 'Formulário Enviado', icon: CheckSquare, channel: 'crm', color: 'from-indigo-500 to-blue-500', description: 'Quando um formulário específico é preenchido' },
+  { id: 'page_visited', label: 'Página Visitada', icon: Globe, channel: 'site', color: 'from-cyan-500 to-blue-500', description: 'Quando um contato visita uma página específica do seu site' },
+  { id: 'site_event', label: 'Evento no Site', icon: MousePointer, channel: 'site', color: 'from-teal-500 to-cyan-500', description: 'Quando um evento customizado é disparado no site' },
 ];
 
 // ── Node categories matching SellFlux sidebar ──
@@ -120,6 +122,8 @@ export const triggerTypeMap: Record<string, string> = {
   contact_created: 'contact_created',
   contact_source: 'contact_created',
   form_submitted: 'form_submitted',
+  page_visited: 'page_visited',
+  site_event: 'site_event',
 };
 
 export const TEMPLATE_VARIABLES = [

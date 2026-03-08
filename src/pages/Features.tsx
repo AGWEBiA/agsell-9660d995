@@ -53,11 +53,13 @@ const ALL_FEATURES = [
     bgColor: 'bg-purple-500/10',
     features: [
       { icon: Zap, name: 'Automações Avançadas', desc: 'Triggers por webhook, formulário, tag ou evento. Ações em cadeia com condições if/else.', plans: ['starter', 'professional', 'enterprise', 'agencia'] },
-      { icon: Workflow, name: 'Flow Builder Visual', desc: 'Construtor drag-and-drop com 20+ ações: timers, condições, aquecimento, tags e mais.', plans: ['starter', 'professional', 'enterprise', 'agencia'] },
+      { icon: Workflow, name: 'Flow Builder com Analytics por Nó', desc: 'Construtor drag-and-drop com 20+ ações e métricas em tempo real por nó: entradas, saídas e conversões.', plans: ['starter', 'professional', 'enterprise', 'agencia'] },
       { icon: ListChecks, name: 'Sequências (Drip Campaigns)', desc: 'Séries de mensagens (e-mail, WhatsApp, SMS) com delays configuráveis.', plans: ['starter', 'professional', 'enterprise', 'agencia'] },
       { icon: Vote, name: 'WhatsApp Flows (Enquetes)', desc: 'Formulários interativos dentro do WhatsApp com mapeamento de respostas e lógica condicional.', plans: ['starter', 'professional', 'enterprise', 'agencia'] },
-      { icon: SplitSquareVertical, name: 'Testes A/B', desc: 'Compare variantes de mensagens em WhatsApp e e-mail com métricas de conversão.', plans: ['starter', 'professional', 'enterprise', 'agencia'] },
-      { icon: SlidersHorizontal, name: 'Conteúdo Condicional', desc: 'Blocos dinâmicos em e-mails que mudam conforme tags, score ou status do contato.', plans: ['professional', 'enterprise', 'agencia'] },
+      { icon: SplitSquareVertical, name: 'Testes A/B de Fluxos Completos', desc: 'Compare fluxos inteiros de automação para descobrir qual converte mais, não apenas mensagens.', plans: ['professional', 'enterprise', 'agencia'] },
+      { icon: SlidersHorizontal, name: 'Conteúdo Condicional em E-mails', desc: 'Blocos dinâmicos que mudam conforme tags, score ou status do contato.', plans: ['professional', 'enterprise', 'agencia'] },
+      { icon: Globe, name: 'Site Tracking → Trigger Automático', desc: 'Dispare automações quando um contato visitar uma página específica do seu site.', plans: ['professional', 'enterprise', 'agencia'] },
+      { icon: ListChecks, name: 'Histórico de Execução por Contato', desc: 'Timeline visual de cada automação e etapa por onde o contato passou.', plans: ['starter', 'professional', 'enterprise', 'agencia'] },
     ],
   },
   {

@@ -176,6 +176,7 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter, analytics }: {
             <div className="flex-1 rounded-md bg-red-50 dark:bg-red-900/20 p-2 text-center text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">❌ Não</div>
           </div>
         )}
+        <FlowNodeAnalyticsOverlay analytics={analytics} />
       </div>
       <div className="flex flex-col items-center">
         <div className="w-0.5 h-6 bg-border" />

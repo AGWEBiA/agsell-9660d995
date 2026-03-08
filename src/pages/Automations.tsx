@@ -68,6 +68,8 @@ const triggerTypes = [
   { value: 'whatsapp_received', label: 'WhatsApp Recebido' },
   { value: 'instagram_dm', label: 'DM Recebida no Instagram' },
   { value: 'instagram_comment', label: 'Comentário no Instagram' },
+  { value: 'page_visited', label: 'Página Visitada no Site' },
+  { value: 'site_event', label: 'Evento no Site' },
 ];
 
 export default function Automations() {

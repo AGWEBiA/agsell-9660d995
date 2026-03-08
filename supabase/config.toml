@@ -125,3 +125,6 @@ verify_jwt = false
 
 [functions.purchase-sms-credits]
 verify_jwt = false
+
+[functions.predictive-scoring]
+verify_jwt = false

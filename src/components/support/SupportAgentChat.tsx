@@ -79,11 +79,10 @@ export function SupportAgentChat() {
     }
   };
 
-  const handleSend = async () => {
-    const trimmed = input.trim();
-    if (!trimmed || isLoading) return;
+  const sendMessage = async (text: string) => {
+    if (!text.trim() || isLoading) return;
 
-    const userMsg: ChatMessage = { role: 'user', content: trimmed };
+    const userMsg: ChatMessage = { role: 'user', content: text.trim() };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setInput('');

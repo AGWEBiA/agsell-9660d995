@@ -280,8 +280,8 @@ function ComparisonTableSection() {
           </p>
         </div>
 
-        <div className="overflow-x-auto max-w-6xl mx-auto">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto max-w-6xl mx-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+          <table className="w-full text-sm min-w-[640px]">
             <thead>
               <tr className="border-b border-[hsl(0,0%,16%)]">
                 <th className="text-left py-3 px-4 text-[hsl(0,0%,63%)] font-medium">Funcionalidade</th>

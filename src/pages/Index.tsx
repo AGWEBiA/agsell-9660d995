@@ -53,7 +53,7 @@ function Navbar() {
         </nav>
         <div className="flex items-center gap-2 sm:gap-3">
           <Link to="/login" className="hidden sm:block">
-            <Button variant="outline" size="sm" className="border-white/20 text-white/80 hover:text-white hover:bg-white/5 text-xs sm:text-sm">Entrar</Button>
+            <Button variant="ghost" size="sm" className="text-white/90 hover:text-white hover:bg-white/10 font-medium text-xs sm:text-sm rounded-full px-4">Entrar</Button>
           </Link>
           <a href="#planos" className="hidden sm:block">
             <Button size="sm" className="rounded-full px-4 sm:px-5 text-xs sm:text-sm bg-[hsl(2,76%,53%)] hover:bg-[hsl(2,76%,45%)] text-white">
@@ -80,7 +80,7 @@ function Navbar() {
             <a href="#planos" onClick={() => setMobileMenuOpen(false)} className="text-[hsl(0,0%,63%)] hover:text-white transition-colors py-2 text-sm">Planos</a>
             <div className="flex gap-2 pt-2 border-t border-[hsl(0,0%,16%)]">
               <Link to="/login" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="outline" size="sm" className="w-full border-white/20 text-white/80 hover:text-white hover:bg-white/5 text-xs">Entrar</Button>
+                <Button variant="ghost" size="sm" className="w-full text-white/90 hover:text-white hover:bg-white/10 font-medium text-xs rounded-full">Entrar</Button>
               </Link>
               <a href="#planos" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
                 <Button size="sm" className="w-full rounded-full text-xs bg-[hsl(2,76%,53%)] hover:bg-[hsl(2,76%,45%)] text-white">
@@ -133,7 +133,7 @@ function HeroSection() {
               </Button>
             </a>
             <a href="#comparativo" className="w-full sm:w-auto">
-              <Button size="lg" variant="outline" className="h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base rounded-full border-white/20 text-white/80 hover:text-white hover:bg-white/5 w-full">
+              <Button size="lg" variant="outline" className="h-12 sm:h-14 px-6 sm:px-8 text-sm sm:text-base rounded-full border-[hsl(0,0%,25%)] bg-transparent text-white hover:bg-white/10 hover:border-[hsl(0,0%,40%)] transition-all w-full">
                 Ver quanto você economiza
                 <ArrowDown className="ml-1 h-4 w-4 shrink-0" />
               </Button>

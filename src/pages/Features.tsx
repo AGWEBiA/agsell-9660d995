@@ -71,6 +71,7 @@ const ALL_FEATURES = [
       { icon: Bot, name: 'Agentes IA com RAG', desc: 'IA que acessa sua base de conhecimento, responde clientes e transfere para humanos.', plans: ['starter', 'professional', 'enterprise', 'agencia'] },
       { icon: Brain, name: 'AI Builder (Brand Kit + Copy)', desc: 'Gere e-mails, automações e copy. Extraia identidade visual de sites automaticamente.', plans: ['starter', 'professional', 'enterprise', 'agencia'] },
       { icon: Brain, name: 'Segmentos Sugeridos por IA', desc: 'IA analisa sua base e sugere segmentações de alto impacto automaticamente.', plans: ['professional', 'enterprise', 'agencia'] },
+      { icon: Brain, name: 'Scoring Preditivo com IA', desc: 'IA analisa comportamento e calcula automaticamente a probabilidade de conversão de cada lead.', plans: ['professional', 'enterprise', 'agencia'] },
       { icon: Search, name: 'Envio Preditivo', desc: 'IA determina o melhor horário de envio para cada contato individualmente.', plans: ['professional', 'enterprise', 'agencia'] },
       { icon: Brain, name: 'Análise de Sentimento', desc: 'Classifica tom das mensagens (positivo/neutro/negativo) com extração de palavras-chave.', plans: ['professional', 'enterprise', 'agencia'] },
       { icon: Target, name: 'Win Probability', desc: 'Calcula probabilidade de fechamento de cada deal com fatores explicativos.', plans: ['professional', 'enterprise', 'agencia'] },

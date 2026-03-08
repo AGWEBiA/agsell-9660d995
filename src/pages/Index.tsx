@@ -740,7 +740,7 @@ function PlansSection() {
             <p>Planos sendo configurados. Visite a <Link to="/pricing" className="text-[hsl(2,76%,53%)] underline">página de preços</Link>.</p>
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto">
             {plans.map((plan) => {
               const isPro = plan.slug === 'professional';
               const price = billingCycle === 'monthly' ? plan.price_monthly : Math.round(plan.price_yearly / 12);

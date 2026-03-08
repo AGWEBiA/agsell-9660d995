@@ -37,6 +37,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useLeadScoring } from '@/hooks/useLeadScoring';
+import { PredictiveScoringDashboard } from '@/components/lead-scoring/PredictiveScoringDashboard';
 
 const eventTypes = [
   { value: 'email_opened', label: 'Email Aberto', icon: Eye },

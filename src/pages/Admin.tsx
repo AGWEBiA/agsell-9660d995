@@ -50,7 +50,7 @@ import { SalesRecoveryDashboard } from '@/components/admin/SalesRecoveryDashboar
 import { PlanWhatsAppGroupsManager } from '@/components/admin/PlanWhatsAppGroupsManager';
 import { PlatformSupportDashboard } from '@/components/admin/PlatformSupportDashboard';
 import { SupportWhatsAppConfig } from '@/components/admin/SupportWhatsAppConfig';
-
+import { VoipPackagesAdmin } from '@/components/admin/VoipPackagesAdmin';
 export default function Admin() {
   const { user, isAdmin, loading: isCheckingAdmin } = useAuth();
   const [assignPlanOrg, setAssignPlanOrg] = useState<{ id: string; name: string } | null>(null);

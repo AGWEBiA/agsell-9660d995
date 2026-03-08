@@ -102,7 +102,7 @@ export default function LeadScoring() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Lead Scoring</h1>
-          <p className="text-muted-foreground">Configure regras de pontuação para qualificar leads</p>
+          <p className="text-muted-foreground">Configure regras de pontuação e scoring preditivo com IA</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>

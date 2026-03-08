@@ -819,6 +819,7 @@ export default function FlowBuilder() {
                   onEdit={() => handleEditNode(node)}
                   onDelete={() => handleDeleteNode(index)}
                   onAddAfter={() => { setAddAfterIndex(index); setAddStepOpen(true); }}
+                  analytics={nodeAnalytics?.find(a => a.node_id === node.id)}
                 />
               ))}
               <div className="flex flex-col items-center">

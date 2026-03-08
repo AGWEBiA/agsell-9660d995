@@ -345,7 +345,7 @@ export function SupportAgentChat() {
               <Button
                 size="icon"
                 className="h-10 w-10 shrink-0"
-                onClick={handleSend}
+                onClick={() => sendMessage(input)}
                 disabled={!input.trim() || isLoading}
               >
                 <Send className="h-4 w-4" />

@@ -53,7 +53,7 @@ function Navbar() {
         </nav>
         <div className="flex items-center gap-2 sm:gap-3">
           <Link to="/login" className="hidden sm:block">
-            <Button variant="outline" size="sm" className="border-white/20 text-white/80 hover:text-white hover:bg-white/5 text-xs sm:text-sm">Entrar</Button>
+            <Button variant="ghost" size="sm" className="text-white/90 hover:text-white hover:bg-white/10 font-medium text-xs sm:text-sm rounded-full px-4">Entrar</Button>
           </Link>
           <a href="#planos" className="hidden sm:block">
             <Button size="sm" className="rounded-full px-4 sm:px-5 text-xs sm:text-sm bg-[hsl(2,76%,53%)] hover:bg-[hsl(2,76%,45%)] text-white">

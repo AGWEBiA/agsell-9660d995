@@ -710,6 +710,88 @@ export type Database = {
           },
         ]
       }
+      calls: {
+        Row: {
+          contact_id: string | null
+          created_at: string | null
+          credits_used: number | null
+          deal_id: string | null
+          direction: string
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          metadata: Json | null
+          notes: string | null
+          organization_id: string
+          phone_number: string
+          recording_url: string | null
+          started_at: string | null
+          status: string
+          transcript: string | null
+          user_id: string
+        }
+        Insert: {
+          contact_id?: string | null
+          created_at?: string | null
+          credits_used?: number | null
+          deal_id?: string | null
+          direction?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          organization_id: string
+          phone_number: string
+          recording_url?: string | null
+          started_at?: string | null
+          status?: string
+          transcript?: string | null
+          user_id: string
+        }
+        Update: {
+          contact_id?: string | null
+          created_at?: string | null
+          credits_used?: number | null
+          deal_id?: string | null
+          direction?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          organization_id?: string
+          phone_number?: string
+          recording_url?: string | null
+          started_at?: string | null
+          status?: string
+          transcript?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calls_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calls_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calls_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checkout_leads: {
         Row: {
           billing_cycle: string | null
@@ -4659,6 +4741,131 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      voip_credit_packages: {
+        Row: {
+          created_at: string | null
+          credits: number
+          id: string
+          is_active: boolean | null
+          name: string
+          price_cents: number
+          price_per_credit_cents: number
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          credits: number
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price_cents: number
+          price_per_credit_cents: number
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          credits?: number
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price_cents?: number
+          price_per_credit_cents?: number
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      voip_credits: {
+        Row: {
+          balance: number
+          id: string
+          organization_id: string
+          total_purchased: number
+          total_used: number
+          updated_at: string | null
+        }
+        Insert: {
+          balance?: number
+          id?: string
+          organization_id: string
+          total_purchased?: number
+          total_used?: number
+          updated_at?: string | null
+        }
+        Update: {
+          balance?: number
+          id?: string
+          organization_id?: string
+          total_purchased?: number
+          total_used?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voip_credits_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voip_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string | null
+          id: string
+          organization_id: string
+          package_id: string | null
+          payment_method: string | null
+          payment_reference: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          organization_id: string
+          package_id?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          type?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          organization_id?: string
+          package_id?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voip_transactions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voip_transactions_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "voip_credit_packages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       webhook_events: {
         Row: {

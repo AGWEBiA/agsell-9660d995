@@ -119,10 +119,10 @@ function HeroSection() {
             A AG Sell une CRM, WhatsApp, e-mail, Instagram e IA em uma única plataforma — para você atender mais rápido, fechar mais negócios e pagar menos do que você paga hoje.
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-[hsl(0,0%,63%)] mb-8">
-            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-500" />Comece a vender em menos de 10 minutos</span>
-            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-500" />Suporte em português, sem fila</span>
-            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-500" />Sem contrato anual, sem multa</span>
+          <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm text-[hsl(0,0%,63%)] mb-8">
+            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />Comece a vender em menos de 10 minutos</span>
+            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />Suporte em português, sem fila</span>
+            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />Sem contrato anual, sem multa</span>
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 justify-center mb-6 px-2 sm:px-0">

@@ -482,6 +482,9 @@ export default function Admin() {
         <TabsContent value="wa-groups">
           <PlanWhatsAppGroupsManager />
         </TabsContent>
+        <TabsContent value="platform-support">
+          <PlatformSupportDashboard />
+        </TabsContent>
       </Tabs>
 
       <AssignPlanDialog

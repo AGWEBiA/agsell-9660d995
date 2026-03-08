@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Phone, PhoneCall, CreditCard, History, TrendingUp, Wallet, Package, Clock, Loader2 } from 'lucide-react';
+import { Phone, PhoneCall, CreditCard, History, TrendingUp, Wallet, Package, Clock, Loader2, BarChart3 } from 'lucide-react';
 import { useVoip } from '@/hooks/useVoip';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';

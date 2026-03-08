@@ -497,6 +497,9 @@ export default function Admin() {
             </div>
           </div>
         </TabsContent>
+        <TabsContent value="voip-config">
+          <VoipPackagesAdmin />
+        </TabsContent>
       </Tabs>
 
       <AssignPlanDialog

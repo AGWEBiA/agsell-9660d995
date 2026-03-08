@@ -102,6 +102,8 @@ Deno.serve(async (req) => {
           // Instance might already exist — try to connect instead
           if (createRes.status === 403 || createRes.status === 409 ||
               (typeof parsed.message === "string" && parsed.message.toLowerCase().includes("already"))) {
+            // Register sync webhook before returning QR
+            await registerSyncWebhook(baseUrl, apiKey, instanceName, supabaseUrl);
             return await getQRCode(baseUrl, apiKey, instanceName, controller.signal);
           }
           return jsonResponse({
@@ -110,6 +112,9 @@ Deno.serve(async (req) => {
             details: parsed,
           });
         }
+
+        // Register sync webhook for reconnection events
+        await registerSyncWebhook(baseUrl, apiKey, instanceName, supabaseUrl);
 
         // Check if QR came in the create response
         const qr = parsed.qrcode as Record<string, unknown> | undefined;

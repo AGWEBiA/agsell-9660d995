@@ -4,13 +4,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Phone, PhoneCall, CreditCard, History, TrendingUp, Wallet, Package, Clock, Loader2 } from 'lucide-react';
+import { Phone, PhoneCall, CreditCard, History, TrendingUp, Wallet, Package, Clock, Loader2, BarChart3 } from 'lucide-react';
 import { useVoip } from '@/hooks/useVoip';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Softphone } from '@/components/voip/Softphone';
+import { CallAnalyticsDashboard } from '@/components/voip/CallAnalyticsDashboard';
 
 const VoIP = () => {
   const { packages, credits, transactions, calls, isLoading } = useVoip();
@@ -112,10 +114,18 @@ const VoIP = () => {
       </div>
 
       <Tabs defaultValue="packages" className="space-y-4">
-        <TabsList>
+        <TabsList className="flex-wrap h-auto gap-1">
+          <TabsTrigger value="softphone" className="gap-1.5">
+            <Phone className="h-4 w-4" />
+            Softphone
+          </TabsTrigger>
           <TabsTrigger value="packages" className="gap-1.5">
             <Package className="h-4 w-4" />
             Pacotes de Créditos
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="gap-1.5">
+            <BarChart3 className="h-4 w-4" />
+            Analytics
           </TabsTrigger>
           <TabsTrigger value="history" className="gap-1.5">
             <History className="h-4 w-4" />
@@ -126,6 +136,30 @@ const VoIP = () => {
             Histórico de Ligações
           </TabsTrigger>
         </TabsList>
+
+        {/* Softphone */}
+        <TabsContent value="softphone">
+          <div className="grid gap-6 md:grid-cols-2">
+            <Softphone />
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Como usar o Softphone</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm text-muted-foreground">
+                <p>• <strong>Sem provedor WebRTC:</strong> O botão "Ligar" abre o discador nativo do seu dispositivo</p>
+                <p>• <strong>Com WebRTC configurado:</strong> A chamada é feita diretamente pelo navegador</p>
+                <p>• Você também pode ligar clicando no ícone de telefone no perfil de qualquer contato</p>
+                <p>• As chamadas são registradas automaticamente e os créditos descontados</p>
+                <p>• Com gravação ativa, a transcrição e análise de sentimento são feitas por IA</p>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Analytics */}
+        <TabsContent value="analytics">
+          <CallAnalyticsDashboard />
+        </TabsContent>
 
         {/* Pacotes de Créditos */}
         <TabsContent value="packages">

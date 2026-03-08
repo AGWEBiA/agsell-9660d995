@@ -23,6 +23,7 @@ import {
   Plus, Trash2, Copy,
 } from 'lucide-react';
 import { useConversationNotes } from '@/hooks/useConversationNotes';
+import { SoftphoneTrigger } from '@/components/voip/Softphone';
 import { useQuickReplies } from '@/hooks/useQuickReplies';
 import { useOrganizationMembers } from '@/hooks/useOrganizationMembers';
 import { useSacAgents } from '@/hooks/useSacAgents';
@@ -139,9 +140,16 @@ export function ContactInfoPanel({
                 </div>
               )}
               {contact?.phone && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Phone className="h-4 w-4 shrink-0" />
-                  <span>{contact.phone}</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Phone className="h-4 w-4 shrink-0" />
+                    <span>{contact.phone}</span>
+                  </div>
+                  <SoftphoneTrigger
+                    contactPhone={contact.phone}
+                    contactName={`${contact.first_name} ${contact.last_name || ''}`}
+                    contactId={contact.id}
+                  />
                 </div>
               )}
               {contact?.whatsapp && (

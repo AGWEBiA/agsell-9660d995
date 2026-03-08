@@ -51,6 +51,7 @@ import { PlanWhatsAppGroupsManager } from '@/components/admin/PlanWhatsAppGroups
 import { PlatformSupportDashboard } from '@/components/admin/PlatformSupportDashboard';
 import { SupportWhatsAppConfig } from '@/components/admin/SupportWhatsAppConfig';
 import { VoipPackagesAdmin } from '@/components/admin/VoipPackagesAdmin';
+import { VoipProviderConfig } from '@/components/admin/VoipProviderConfig';
 export default function Admin() {
   const { user, isAdmin, loading: isCheckingAdmin } = useAuth();
   const [assignPlanOrg, setAssignPlanOrg] = useState<{ id: string; name: string } | null>(null);
@@ -497,7 +498,8 @@ export default function Admin() {
             </div>
           </div>
         </TabsContent>
-        <TabsContent value="voip-config">
+        <TabsContent value="voip-config" className="space-y-6">
+          <VoipProviderConfig />
           <VoipPackagesAdmin />
         </TabsContent>
       </Tabs>

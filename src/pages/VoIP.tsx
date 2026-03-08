@@ -11,6 +11,8 @@ import { ptBR } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Softphone } from '@/components/voip/Softphone';
+import { CallAnalyticsDashboard } from '@/components/voip/CallAnalyticsDashboard';
 
 const VoIP = () => {
   const { packages, credits, transactions, calls, isLoading } = useVoip();

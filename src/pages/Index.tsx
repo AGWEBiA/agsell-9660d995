@@ -501,13 +501,13 @@ function FeaturesSection() {
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-2 mb-10">
+        <div className="flex overflow-x-auto pb-2 sm:flex-wrap sm:justify-center gap-2 mb-10 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
           {FEATURE_TABS.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                'px-4 py-2 rounded-full text-sm font-medium transition-all border',
+                'px-4 py-2 rounded-full text-sm font-medium transition-all border whitespace-nowrap shrink-0',
                 activeTab === tab.id
                   ? 'bg-[hsl(2,76%,53%)] text-white border-[hsl(2,76%,53%)]'
                   : 'bg-[hsl(0,0%,10%)] text-[hsl(0,0%,63%)] border-[hsl(0,0%,16%)] hover:border-[hsl(0,0%,30%)]'

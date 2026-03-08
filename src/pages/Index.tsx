@@ -469,18 +469,20 @@ const FEATURE_TABS = [
   {
     id: 'automacao', label: 'Automação & IA',
     items: [
-      { icon: Workflow, title: 'Flow Builder Visual', desc: '20+ ações: timers, condições, aquecimento, tags.' },
+      { icon: Workflow, title: 'Flow Builder com Analytics', desc: '20+ ações com métricas por nó: entradas, saídas e conversões.' },
       { icon: Bot, title: 'Agentes IA com RAG', desc: 'IA que acessa sua base e responde clientes.' },
-      { icon: Zap, title: 'Automações Avançadas', desc: 'Triggers por webhook, formulário, tag ou evento.' },
-      { icon: Sparkles, title: 'Assistente IA', desc: 'Gere relatórios e insights em linguagem natural.' },
+      { icon: Zap, title: 'Automações Avançadas', desc: 'Triggers por webhook, formulário, tag, página visitada ou evento.' },
+      { icon: Sparkles, title: 'Scoring Preditivo (IA)', desc: 'IA calcula probabilidade de conversão de cada lead.' },
+      { icon: Globe, title: 'Site Tracking → Trigger', desc: 'Visitou uma página? Automação dispara.' },
+      { icon: BarChart3, title: 'A/B de Fluxos Completos', desc: 'Compare fluxos inteiros e descubra qual converte mais.' },
     ]
   },
   {
     id: 'gestao', label: 'Gestão & Integrações',
     items: [
       { icon: Layers, title: 'Modo Agência', desc: 'Multi-tenant com dados isolados.' },
-      { icon: Globe, title: 'API Pública + Webhooks', desc: 'REST com rate limiting.' },
-      { icon: FileText, title: 'Formulários Web', desc: 'Capture leads com formulários embarcáveis.' },
+      { icon: Globe, title: 'Marketplace 30+ Integrações', desc: 'Google Ads, Calendly, Zapier, Mercado Pago e mais.' },
+      { icon: Globe, title: 'Webhooks com Retry', desc: 'Fila de entrega com backoff e dead-letter.' },
       { icon: Shield, title: 'Permissões RBAC', desc: 'Controle quem vê e faz o quê.' },
     ]
   },
@@ -490,7 +492,7 @@ const FEATURE_TABS = [
       { icon: Brain, title: 'AI Builder', desc: 'Gere e-mails e copy com IA.' },
       { icon: Target, title: 'Win Probability', desc: 'IA calcula probabilidade de fechamento.' },
       { icon: BarChart3, title: 'Atribuição Multi-toque', desc: 'Descubra quais canais geram mais receita.' },
-      { icon: BarChart3, title: 'Relatórios & Metas', desc: 'Dashboards e relatórios de receita.' },
+      { icon: Mail, title: 'Conteúdo Condicional', desc: 'Blocos dinâmicos em e-mails por tags e score.' },
     ]
   },
 ];

@@ -122,3 +122,6 @@ verify_jwt = false
 
 [functions.voip-call]
 verify_jwt = false
+
+[functions.purchase-sms-credits]
+verify_jwt = false

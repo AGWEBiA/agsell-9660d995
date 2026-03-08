@@ -507,6 +507,9 @@ export default function Admin() {
           <VoipProviderConfig />
           <VoipPackagesAdmin />
         </TabsContent>
+        <TabsContent value="sms-config" className="space-y-6">
+          <SmsPackagesAdmin />
+        </TabsContent>
       </Tabs>
 
       <AssignPlanDialog

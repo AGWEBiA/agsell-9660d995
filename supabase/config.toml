@@ -116,3 +116,6 @@ verify_jwt = false
 
 [functions.sync-whatsapp-reconnect]
 verify_jwt = false
+
+[functions.purchase-voip-credits]
+verify_jwt = false

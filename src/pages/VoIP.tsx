@@ -1,20 +1,42 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Phone, PhoneCall, CreditCard, History, TrendingUp, Wallet, Package, Clock } from 'lucide-react';
+import { Phone, PhoneCall, CreditCard, History, TrendingUp, Wallet, Package, Clock, Loader2 } from 'lucide-react';
 import { useVoip } from '@/hooks/useVoip';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const VoIP = () => {
   const { packages, credits, transactions, calls, isLoading } = useVoip();
+  const [purchasingId, setPurchasingId] = useState<string | null>(null);
 
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100);
+  };
+
+  const handlePurchase = async (packageId: string) => {
+    try {
+      setPurchasingId(packageId);
+      const { data, error } = await supabase.functions.invoke('purchase-voip-credits', {
+        body: { packageId },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      } else {
+        throw new Error('Nenhuma URL de checkout retornada');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao iniciar compra');
+    } finally {
+      setPurchasingId(null);
+    }
   };
 
   const formatPricePerCredit = (cents: number) => {
@@ -143,9 +165,18 @@ const VoIP = () => {
                         <p className="text-xs text-muted-foreground">
                           {formatPricePerCredit(pkg.price_per_credit_cents)} por crédito
                         </p>
-                        <Button className="w-full" variant={isPopular ? 'default' : 'outline'}>
-                          <CreditCard className="h-4 w-4 mr-2" />
-                          Comprar
+                        <Button
+                          className="w-full"
+                          variant={isPopular ? 'default' : 'outline'}
+                          onClick={() => handlePurchase(pkg.id)}
+                          disabled={purchasingId === pkg.id}
+                        >
+                          {purchasingId === pkg.id ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <CreditCard className="h-4 w-4 mr-2" />
+                          )}
+                          {purchasingId === pkg.id ? 'Processando...' : 'Comprar'}
                         </Button>
                       </CardContent>
                     </Card>

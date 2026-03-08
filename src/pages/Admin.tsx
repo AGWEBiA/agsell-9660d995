@@ -50,7 +50,7 @@ import { SalesRecoveryDashboard } from '@/components/admin/SalesRecoveryDashboar
 import { PlanWhatsAppGroupsManager } from '@/components/admin/PlanWhatsAppGroupsManager';
 import { PlatformSupportDashboard } from '@/components/admin/PlatformSupportDashboard';
 import { SupportWhatsAppConfig } from '@/components/admin/SupportWhatsAppConfig';
-
+import { VoipPackagesAdmin } from '@/components/admin/VoipPackagesAdmin';
 export default function Admin() {
   const { user, isAdmin, loading: isCheckingAdmin } = useAuth();
   const [assignPlanOrg, setAssignPlanOrg] = useState<{ id: string; name: string } | null>(null);
@@ -244,6 +244,10 @@ export default function Admin() {
           <TabsTrigger value="platform-support" className="flex items-center gap-2">
             <Ticket className="h-4 w-4" />
             Suporte
+          </TabsTrigger>
+          <TabsTrigger value="voip-config" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            VoIP
           </TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-6">
@@ -492,6 +496,9 @@ export default function Admin() {
               <SupportWhatsAppConfig />
             </div>
           </div>
+        </TabsContent>
+        <TabsContent value="voip-config">
+          <VoipPackagesAdmin />
         </TabsContent>
       </Tabs>
 

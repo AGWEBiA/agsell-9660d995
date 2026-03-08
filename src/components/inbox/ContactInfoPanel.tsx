@@ -140,9 +140,16 @@ export function ContactInfoPanel({
                 </div>
               )}
               {contact?.phone && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Phone className="h-4 w-4 shrink-0" />
-                  <span>{contact.phone}</span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Phone className="h-4 w-4 shrink-0" />
+                    <span>{contact.phone}</span>
+                  </div>
+                  <SoftphoneTrigger
+                    contactPhone={contact.phone}
+                    contactName={`${contact.first_name} ${contact.last_name || ''}`}
+                    contactId={contact.id}
+                  />
                 </div>
               )}
               {contact?.whatsapp && (

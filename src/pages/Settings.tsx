@@ -107,12 +107,12 @@ export default function Settings() {
 
       // Log audit event
       supabase.rpc('log_audit_event', {
-        _org_id: null,
+        _org_id: null as any,
         _action: 'export',
         _resource_type: 'user_data',
         _resource_id: user?.id || null,
         _details: null,
-      }).catch(console.error);
+      }).then(({ error }) => { if (error) console.error('Audit:', error); });
 
       toast.success('Dados exportados com sucesso!');
     } catch (error) {

@@ -105,6 +105,15 @@ export default function Settings() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
+      // Log audit event
+      supabase.rpc('log_audit_event', {
+        _org_id: null,
+        _action: 'export',
+        _resource_type: 'user_data',
+        _resource_id: user?.id || null,
+        _details: null,
+      }).catch(console.error);
+
       toast.success('Dados exportados com sucesso!');
     } catch (error) {
       toast.error('Erro ao exportar dados. Tente novamente.');

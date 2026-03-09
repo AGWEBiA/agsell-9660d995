@@ -5,7 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import { User, Bell, Shield, Download, Trash2, AlertTriangle, HelpCircle, Phone } from 'lucide-react';
+import { User, Bell, Shield, Download, Trash2, AlertTriangle, HelpCircle, Phone, FileText, ShieldAlert } from 'lucide-react';
+import { AuditLogPanel } from '@/components/security/AuditLogPanel';
+import { SecurityAlertsPanel } from '@/components/security/SecurityAlertsPanel';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -102,6 +104,15 @@ export default function Settings() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+
+      // Log audit event
+      supabase.rpc('log_audit_event', {
+        _org_id: null as any,
+        _action: 'export',
+        _resource_type: 'user_data',
+        _resource_id: user?.id || null,
+        _details: null,
+      }).then(({ error }) => { if (error) console.error('Audit:', error); });
 
       toast.success('Dados exportados com sucesso!');
     } catch (error) {
@@ -214,15 +225,17 @@ export default function Settings() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="security" className="mt-4">
+        <TabsContent value="security" className="mt-4 space-y-4">
           <Card>
-            <CardHeader><CardTitle>Segurança</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Alterar Senha</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-2"><Label>Senha atual</Label><Input type="password" /></div>
               <div className="grid gap-2"><Label>Nova senha</Label><Input type="password" /></div>
               <Button>Alterar senha</Button>
             </CardContent>
           </Card>
+          <SecurityAlertsPanel />
+          <AuditLogPanel />
         </TabsContent>
 
         <TabsContent value="privacy" className="mt-4 space-y-4">

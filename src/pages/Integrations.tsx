@@ -102,6 +102,10 @@ export default function Integrations() {
             <Instagram className="h-4 w-4" />
             Instagram
           </TabsTrigger>
+          <TabsTrigger value="google" className="flex items-center gap-2">
+            <FileSpreadsheet className="h-4 w-4" />
+            Google
+          </TabsTrigger>
           <TabsTrigger value="marketplace" className="flex items-center gap-2">
             🛒 Marketplace
           </TabsTrigger>

@@ -139,6 +139,20 @@ export default function Integrations() {
             </CardContent>
           </Card>
         </TabsContent>
+        <TabsContent value="google" className="mt-6 space-y-6">
+          <Tabs defaultValue="forms">
+            <TabsList>
+              <TabsTrigger value="forms">Google Forms</TabsTrigger>
+              <TabsTrigger value="sheets">Google Sheets</TabsTrigger>
+            </TabsList>
+            <TabsContent value="forms" className="mt-4">
+              <GoogleFormsGuide />
+            </TabsContent>
+            <TabsContent value="sheets" className="mt-4">
+              <GoogleSheetsIntegration />
+            </TabsContent>
+          </Tabs>
+        </TabsContent>
         <TabsContent value="marketplace" className="mt-6">
           <IntegrationMarketplace />
         </TabsContent>

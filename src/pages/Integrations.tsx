@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Check, Settings, Trash2, TestTube, AlertCircle, RefreshCw, MessageSquare, Instagram } from 'lucide-react';
+import { Check, Settings, Trash2, TestTube, AlertCircle, RefreshCw, MessageSquare, Instagram, FileSpreadsheet } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,8 @@ import {
 import { useIntegrations, Integration } from '@/hooks/useIntegrations';
 import { IntegrationMarketplace } from '@/components/integrations/IntegrationMarketplace';
 import { WhatsAppProviderSetup } from '@/components/integrations/WhatsAppProviderSetup';
+import { GoogleFormsGuide } from '@/components/integrations/GoogleFormsGuide';
+import { GoogleSheetsIntegration } from '@/components/integrations/GoogleSheetsIntegration';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader, HelpTooltip } from '@/components/ui/help-tooltip';
 
@@ -100,6 +102,10 @@ export default function Integrations() {
             <Instagram className="h-4 w-4" />
             Instagram
           </TabsTrigger>
+          <TabsTrigger value="google" className="flex items-center gap-2">
+            <FileSpreadsheet className="h-4 w-4" />
+            Google
+          </TabsTrigger>
           <TabsTrigger value="marketplace" className="flex items-center gap-2">
             🛒 Marketplace
           </TabsTrigger>
@@ -132,6 +138,20 @@ export default function Integrations() {
               </Button>
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="google" className="mt-6 space-y-6">
+          <Tabs defaultValue="forms">
+            <TabsList>
+              <TabsTrigger value="forms">Google Forms</TabsTrigger>
+              <TabsTrigger value="sheets">Google Sheets</TabsTrigger>
+            </TabsList>
+            <TabsContent value="forms" className="mt-4">
+              <GoogleFormsGuide />
+            </TabsContent>
+            <TabsContent value="sheets" className="mt-4">
+              <GoogleSheetsIntegration />
+            </TabsContent>
+          </Tabs>
         </TabsContent>
         <TabsContent value="marketplace" className="mt-6">
           <IntegrationMarketplace />

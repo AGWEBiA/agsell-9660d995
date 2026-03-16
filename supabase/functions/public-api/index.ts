@@ -225,7 +225,7 @@ Deno.serve(async (req) => {
       .eq("id", apiKeyData.id);
 
     // Parse URL path to determine resource
-    const url = new URL(req.url);
+    const reqUrl = new URL(req.url);
     const pathParts = url.pathname.split("/").filter(Boolean);
     const resource = pathParts[1];
     const resourceId = pathParts[2];

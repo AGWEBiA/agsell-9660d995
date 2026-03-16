@@ -117,52 +117,68 @@ Deno.serve(async (req) => {
     const eventType = eventTypeMap[payload.order_status] || `unknown.${payload.order_status}`;
 
     // --- Find plan by Kiwify product ID ---
-    // Try matching by product_id (monthly first, then yearly)
     let plan: { id: string; name: string; slug: string; price_monthly: number } | null = null;
+    const orderValue = extractOrderValue(payload);
+    const checkoutLink = payload.checkout_link; // e.g., "iCnaIJs"
 
-    // First try exact product_id match
-    const { data: matchedPlans } = await supabase
-      .from("plans")
-      .select("id, name, slug, price_monthly")
-      .eq("kiwify_product_id", payload.product_id)
-      .eq("is_active", true);
-
-    if (matchedPlans && matchedPlans.length === 1) {
-      plan = matchedPlans[0];
-    } else if (matchedPlans && matchedPlans.length > 1) {
-      // Multiple plans with same product_id — try to match by order value
-      const orderValue = payload.order_value || 0;
-      // Order value from Kiwify is in BRL (e.g., 397.00)
-      const closestPlan = matchedPlans.reduce((best, p) => {
-        const diff = Math.abs(p.price_monthly - orderValue);
-        const bestDiff = Math.abs(best.price_monthly - orderValue);
-        return diff < bestDiff ? p : best;
-      }, matchedPlans[0]);
-      plan = closestPlan;
-      logStep("Multiple plans matched, selected by price", { selected: closestPlan.name, orderValue });
-    }
-
-    // Fallback: try yearly product_id
-    if (!plan) {
-      const { data: yearlyPlans } = await supabase
+    // Strategy 1: Match by checkout_link (most precise — each plan has unique checkout URL)
+    if (checkoutLink && !plan) {
+      const { data: allPlans } = await supabase
         .from("plans")
-        .select("id, name, slug, price_monthly")
-        .eq("kiwify_product_id_yearly", payload.product_id)
+        .select("id, name, slug, price_monthly, kiwify_checkout_url, kiwify_checkout_url_yearly")
         .eq("is_active", true);
 
-      if (yearlyPlans && yearlyPlans.length === 1) {
-        plan = yearlyPlans[0];
-      } else if (yearlyPlans && yearlyPlans.length > 1) {
-        const orderValue = payload.order_value || 0;
-        plan = yearlyPlans.reduce((best, p) => {
-          const diff = Math.abs(p.price_monthly * 10 - orderValue); // yearly ~ 10 months
-          const bestDiff = Math.abs(best.price_monthly * 10 - orderValue);
-          return diff < bestDiff ? p : best;
-        }, yearlyPlans[0]);
+      if (allPlans) {
+        for (const p of allPlans) {
+          const monthlyUrl = p.kiwify_checkout_url || "";
+          const yearlyUrl = p.kiwify_checkout_url_yearly || "";
+          if (monthlyUrl.includes(checkoutLink) || yearlyUrl.includes(checkoutLink)) {
+            plan = { id: p.id, name: p.name, slug: p.slug, price_monthly: p.price_monthly };
+            logStep("Plan matched by checkout_link", { link: checkoutLink, plan: p.name });
+            break;
+          }
+        }
       }
     }
 
-    // Final fallback: if still no plan but we have a checkout_lead with plan_id, use that
+    // Strategy 2: Match by Subscription.plan.name
+    if (!plan && payload.Subscription?.plan?.name) {
+      const subPlanName = payload.Subscription.plan.name;
+      const { data: namedPlan } = await supabase
+        .from("plans")
+        .select("id, name, slug, price_monthly")
+        .ilike("name", `%${subPlanName}%`)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (namedPlan) {
+        plan = namedPlan;
+        logStep("Plan matched by subscription name", { subPlanName, plan: namedPlan.name });
+      }
+    }
+
+    // Strategy 3: Match by product_id (single match)
+    if (!plan && productId) {
+      const { data: matchedPlans } = await supabase
+        .from("plans")
+        .select("id, name, slug, price_monthly")
+        .or(`kiwify_product_id.eq.${productId},kiwify_product_id_yearly.eq.${productId}`)
+        .eq("is_active", true);
+
+      if (matchedPlans && matchedPlans.length === 1) {
+        plan = matchedPlans[0];
+      } else if (matchedPlans && matchedPlans.length > 1 && orderValue > 0) {
+        // Multiple plans — match by closest price
+        const closestPlan = matchedPlans.reduce((best, p) => {
+          const diff = Math.abs(p.price_monthly - orderValue);
+          const bestDiff = Math.abs(best.price_monthly - orderValue);
+          return diff < bestDiff ? p : best;
+        }, matchedPlans[0]);
+        plan = closestPlan;
+        logStep("Multiple plans matched, selected by price", { selected: closestPlan.name, orderValue });
+      }
+    }
+
+    // Strategy 4: Fallback from checkout_leads
     if (!plan && customerEmail) {
       const { data: lead } = await supabase
         .from("checkout_leads")
@@ -186,7 +202,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    logStep("Plan lookup", { productId: payload.product_id, found: !!plan, planName: plan?.name });
+    logStep("Plan lookup", { productId, found: !!plan, planName: plan?.name });
 
     // --- Store webhook event ---
     const { data: webhookEvent, error: webhookError } = await supabase

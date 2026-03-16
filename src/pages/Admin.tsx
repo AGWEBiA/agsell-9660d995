@@ -155,7 +155,7 @@ export default function Admin() {
       const label = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
       let accMrr = 0;
       organizations.forEach((org: any) => {
-        const sub = org.subscriptions?.[0];
+        const sub = getPrimarySubscription(org);
         if (sub?.status === 'active' && sub.plans?.price_monthly) {
           const subDate = new Date(sub.created_at);
           if (subDate <= new Date(d.getFullYear(), d.getMonth() + 1, 0)) {

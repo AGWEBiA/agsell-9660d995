@@ -66,6 +66,7 @@ export default function Admin() {
         .from('organizations')
         .select(`
           *,
+          organization_plan:plans!organizations_plan_id_fkey(name),
           organization_members(count),
           subscriptions(*, plans(*))
         `);

@@ -717,7 +717,15 @@ function PlansSection() {
     try {
       const { data, error } = await supabase.functions.invoke('guest-checkout', { body: { planId: selectedPlan.id, billingCycle, name: formData.name, email: formData.email, organizationName: formData.organizationName, couponCode: formData.couponCode || undefined } });
       if (error) throw error;
-      if (data?.url) { window.location.href = data.url; }
+      if (data?.url) {
+        if (data?.gateway === 'kiwify') {
+          window.open(data.url, '_blank');
+          toast.info('Você será redirecionado para completar o pagamento.');
+          setShowCheckout(false);
+        } else {
+          window.location.href = data.url;
+        }
+      }
       else if (data?.success) { toast.success('Conta criada! Verifique seu e-mail.'); setShowCheckout(false); }
     } catch { toast.error('Erro ao processar. Tente novamente.'); }
     finally { setIsSubmitting(false); }

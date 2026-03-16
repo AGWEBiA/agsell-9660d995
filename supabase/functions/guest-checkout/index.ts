@@ -17,8 +17,8 @@ function sanitizeString(val: string, maxLen = 200): string {
 
 // --- Rate Limiting (in-memory, per-instance) ---
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_MAX = 5; // max requests per window per email
-const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const RATE_LIMIT_MAX = 5;
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
 
 function checkRateLimit(key: string): boolean {
   const now = Date.now();
@@ -52,7 +52,6 @@ Deno.serve(async (req) => {
     const organizationName = sanitizeString(rawBody.organizationName || "", 200);
     const couponCode = rawBody.couponCode ? sanitizeString(rawBody.couponCode, 50) : undefined;
 
-    // Validate required fields
     if (!planId || !name || !email || !organizationName) {
       return new Response(
         JSON.stringify({ error: "Missing required fields" }),
@@ -67,7 +66,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Rate limit by email
     if (!checkRateLimit(email)) {
       return new Response(
         JSON.stringify({ error: "Too many requests. Please try again later." }),
@@ -91,9 +89,8 @@ Deno.serve(async (req) => {
 
     const isFree = plan.price_monthly === 0;
 
-    // For free plans or test mode (no Stripe key), create account directly
-    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (isFree || !stripeSecretKey) {
+    // For free plans, create account directly
+    if (isFree) {
       const result = await createAccountDirectly(supabase, {
         email, name, organizationName, planId, billingCycle,
         planName: plan.name, isFree,
@@ -104,7 +101,25 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Save lead asynchronously (fire-and-forget, won't block checkout)
+    // --- Check platform gateway settings ---
+    const { data: gatewaySettings } = await supabase
+      .from("platform_settings")
+      .select("value")
+      .eq("key", "payment_gateway")
+      .maybeSingle();
+
+    const settings = (gatewaySettings?.value as Record<string, unknown>) ?? {
+      stripe_enabled: true,
+      kiwify_enabled: false,
+      default_gateway: "stripe",
+    };
+
+    const defaultGateway = settings.default_gateway as string;
+    const kiwifyEnabled = settings.kiwify_enabled as boolean;
+    const stripeEnabled = settings.stripe_enabled as boolean;
+    const origin = req.headers.get("origin") || "https://agsell.lovable.app";
+
+    // Save lead
     const leadPromise = supabase.from("checkout_leads").upsert(
       {
         email,
@@ -118,97 +133,72 @@ Deno.serve(async (req) => {
       { onConflict: "email", ignoreDuplicates: false }
     ).select("id").single();
 
-    // Real Stripe checkout
-    const stripe = new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" });
+    // --- KIWIFY FLOW ---
+    if ((defaultGateway === "kiwify" && kiwifyEnabled) || (kiwifyEnabled && !stripeEnabled)) {
+      const checkoutUrlStr = billingCycle === "yearly" && plan.kiwify_checkout_url_yearly
+        ? plan.kiwify_checkout_url_yearly
+        : plan.kiwify_checkout_url;
 
-    // Check for existing customer
-    const customers = await stripe.customers.list({ email, limit: 1 });
-    let customerId = customers.data[0]?.id;
-
-    if (!customerId) {
-      const customer = await stripe.customers.create({
-        email,
-        name,
-        metadata: { organization_name: organizationName },
-      });
-      customerId = customer.id;
-    }
-
-    // Use pre-configured Stripe price ID or create dynamically
-    const stripePriceId = billingCycle === "yearly"
-      ? plan.stripe_price_id_yearly
-      : plan.stripe_price_id_monthly;
-
-    let priceId: string;
-    if (stripePriceId) {
-      priceId = stripePriceId;
-      console.log(`Using pre-configured Stripe price: ${priceId}`);
-    } else {
-      const amount = billingCycle === "yearly"
-        ? Math.round(plan.price_yearly * 100)
-        : Math.round(plan.price_monthly * 100);
-
-      const price = await stripe.prices.create({
-        currency: "brl",
-        unit_amount: amount,
-        recurring: { interval: billingCycle === "yearly" ? "year" : "month" },
-        product_data: {
-          name: `AG Sell - ${plan.name}`,
-          metadata: { plan_id: plan.id },
-        },
-      });
-      priceId = price.id;
-    }
-
-    // Validate coupon if provided
-    let discounts: { coupon: string }[] | undefined;
-    if (couponCode) {
-      try {
-        const coupons = await stripe.coupons.list({ limit: 100 });
-        const matchingCoupon = coupons.data.find(
-          (c: Stripe.Coupon) => c.name?.toLowerCase() === couponCode.toLowerCase() || c.id.toLowerCase() === couponCode.toLowerCase()
-        );
-        if (matchingCoupon && matchingCoupon.valid) {
-          discounts = [{ coupon: matchingCoupon.id }];
+      if (!checkoutUrlStr) {
+        // Fallback: if no Kiwify URL configured, try Stripe
+        if (stripeEnabled) {
+          console.log("[GUEST-CHECKOUT] Kiwify URL not configured, falling back to Stripe");
+          return await handleStripeCheckout(supabase, plan, {
+            email, name, organizationName, planId, billingCycle, couponCode, origin,
+          }, leadPromise);
         }
-      } catch (couponError) {
-        console.error("Error validating coupon:", couponError);
+        return new Response(
+          JSON.stringify({ error: "Checkout não configurado para este plano. Contate o suporte." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
+
+      const checkoutUrl = new URL(checkoutUrlStr);
+      if (name) checkoutUrl.searchParams.set("name", name);
+      if (email) checkoutUrl.searchParams.set("email", email);
+
+      // Update lead
+      const leadResult = await leadPromise;
+      if (leadResult.data?.id) {
+        supabase.from("checkout_leads").update({
+          status: "redirected_to_kiwify",
+          source: "kiwify",
+          updated_at: new Date().toISOString(),
+        }).eq("id", leadResult.data.id).then(() => {});
+      }
+
+      console.log(`[GUEST-CHECKOUT] Kiwify redirect for ${email}, plan ${plan.name}`);
+
+      return new Response(
+        JSON.stringify({ url: checkoutUrl.toString(), gateway: "kiwify" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // Create checkout session
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      line_items: [{ price: priceId, quantity: 1 }],
-      mode: "subscription",
-      discounts,
-      allow_promotion_codes: !discounts,
-      success_url: `${req.headers.get("origin")}/purchase-success?plan=${encodeURIComponent(plan.name)}`,
-      cancel_url: `${req.headers.get("origin")}/pricing?canceled=true`,
-      metadata: {
-        plan_id: planId,
-        billing_cycle: billingCycle,
-        user_name: name,
-        user_email: email,
-        organization_name: organizationName,
-        is_new_user: 'true',
-      },
-    });
+    // --- STRIPE FLOW ---
+    if (stripeEnabled || defaultGateway === "stripe") {
+      return await handleStripeCheckout(supabase, plan, {
+        email, name, organizationName, planId, billingCycle, couponCode, origin,
+      }, leadPromise);
+    }
 
-    // Update lead with Stripe IDs (fire-and-forget)
-    const leadResult = await leadPromise;
-    if (leadResult.data?.id) {
-      supabase.from("checkout_leads").update({
-        stripe_customer_id: customerId,
-        stripe_session_id: session.id,
-        status: "redirected_to_stripe",
-        updated_at: new Date().toISOString(),
-      }).eq("id", leadResult.data.id).then(() => {});
+    // No gateway enabled
+    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeSecretKey) {
+      // Test mode: create account directly
+      const result = await createAccountDirectly(supabase, {
+        email, name, organizationName, planId, billingCycle,
+        planName: plan.name, isFree: false,
+      });
+      return new Response(
+        JSON.stringify(result),
+        { status: result.error ? 400 : 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     return new Response(
-      JSON.stringify({ url: session.url }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ error: "Nenhum gateway de pagamento habilitado." }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
     console.error("Guest checkout error:", error);
@@ -218,6 +208,115 @@ Deno.serve(async (req) => {
     );
   }
 });
+
+// --- Stripe checkout handler ---
+// deno-lint-ignore no-explicit-any
+async function handleStripeCheckout(supabase: any, plan: any, params: {
+  email: string; name: string; organizationName: string;
+  planId: string; billingCycle: string; couponCode?: string; origin: string;
+// deno-lint-ignore no-explicit-any
+}, leadPromise: any) {
+  const { email, name, organizationName, planId, billingCycle, couponCode, origin } = params;
+
+  const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+  if (!stripeSecretKey) {
+    // Test mode
+    const result = await createAccountDirectly(supabase, {
+      email, name, organizationName, planId, billingCycle,
+      planName: plan.name, isFree: false,
+    });
+    return new Response(
+      JSON.stringify(result),
+      { status: result.error ? 400 : 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  const stripe = new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" });
+
+  const customers = await stripe.customers.list({ email, limit: 1 });
+  let customerId = customers.data[0]?.id;
+
+  if (!customerId) {
+    const customer = await stripe.customers.create({
+      email, name,
+      metadata: { organization_name: organizationName },
+    });
+    customerId = customer.id;
+  }
+
+  const stripePriceId = billingCycle === "yearly"
+    ? plan.stripe_price_id_yearly
+    : plan.stripe_price_id_monthly;
+
+  let priceId: string;
+  if (stripePriceId) {
+    priceId = stripePriceId;
+  } else {
+    const amount = billingCycle === "yearly"
+      ? Math.round(plan.price_yearly * 100)
+      : Math.round(plan.price_monthly * 100);
+    const price = await stripe.prices.create({
+      currency: "brl",
+      unit_amount: amount,
+      recurring: { interval: billingCycle === "yearly" ? "year" : "month" },
+      product_data: {
+        name: `AG Sell - ${plan.name}`,
+        metadata: { plan_id: plan.id },
+      },
+    });
+    priceId = price.id;
+  }
+
+  let discounts: { coupon: string }[] | undefined;
+  if (couponCode) {
+    try {
+      const coupons = await stripe.coupons.list({ limit: 100 });
+      const matchingCoupon = coupons.data.find(
+        (c: Stripe.Coupon) => c.name?.toLowerCase() === couponCode.toLowerCase() || c.id.toLowerCase() === couponCode.toLowerCase()
+      );
+      if (matchingCoupon && matchingCoupon.valid) {
+        discounts = [{ coupon: matchingCoupon.id }];
+      }
+    } catch (couponError) {
+      console.error("Error validating coupon:", couponError);
+    }
+  }
+
+  const session = await stripe.checkout.sessions.create({
+    customer: customerId,
+    line_items: [{ price: priceId, quantity: 1 }],
+    mode: "subscription",
+    discounts,
+    allow_promotion_codes: !discounts,
+    success_url: `${origin}/purchase-success?plan=${encodeURIComponent(plan.name)}`,
+    cancel_url: `${origin}/pricing?canceled=true`,
+    metadata: {
+      plan_id: planId,
+      billing_cycle: billingCycle,
+      user_name: name,
+      user_email: email,
+      organization_name: organizationName,
+      is_new_user: 'true',
+    },
+  });
+
+  const leadResult = await leadPromise;
+  if (leadResult.data?.id) {
+    supabase.from("checkout_leads").update({
+      stripe_customer_id: customerId,
+      stripe_session_id: session.id,
+      status: "redirected_to_stripe",
+      updated_at: new Date().toISOString(),
+    }).eq("id", leadResult.data.id).then(() => {});
+  }
+
+  console.log(`[GUEST-CHECKOUT] Stripe redirect for ${email}, plan ${plan.name}`);
+
+  return new Response(
+    JSON.stringify({ url: session.url, gateway: "stripe" }),
+    { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
+}
 
 // --- Shared account creation logic ---
 // deno-lint-ignore no-explicit-any

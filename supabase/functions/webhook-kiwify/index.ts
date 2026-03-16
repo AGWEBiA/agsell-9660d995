@@ -221,7 +221,7 @@ Deno.serve(async (req) => {
       throw webhookError;
     }
 
-    const customerEmail = payload.Customer?.email?.toLowerCase();
+    // customerEmail already defined above
 
     // --- Update checkout_leads with payment status ---
     if (customerEmail) {

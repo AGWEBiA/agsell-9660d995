@@ -340,17 +340,21 @@ Deno.serve(async (req) => {
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/^-|-$/g, '');
 
-          // Create organization
-          const { data: orgId } = await supabase.rpc('create_organization_with_owner', {
-            org_name: orgName,
-            org_slug: `${slug}-${Date.now()}`,
-          });
+          // Create organization directly (RPC uses auth.uid() which is null in service context)
+          const { data: newOrg, error: orgError } = await supabase
+            .from('organizations')
+            .insert({ name: orgName, slug: `${slug}-${Date.now()}` })
+            .select('id')
+            .single();
 
-          // Fix membership (RPC creates with auth.uid(), we need to override)
-          await supabase.from('organization_members').delete().eq('organization_id', orgId);
-          await supabase.from('organization_members').insert({
-            organization_id: orgId, user_id: userId, role: 'owner',
-          });
+          const orgId = newOrg?.id;
+          if (orgError || !orgId) {
+            logStep("ERROR creating organization", orgError?.message);
+          } else {
+            // Add user as owner
+            await supabase.from('organization_members').insert({
+              organization_id: orgId, user_id: userId, role: 'owner',
+            });
 
           await activateSubscription(supabase, {
             organizationId: orgId,

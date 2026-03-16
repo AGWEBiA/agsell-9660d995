@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Check, Settings, Trash2, TestTube, AlertCircle, RefreshCw, MessageSquare, Instagram, FileSpreadsheet } from 'lucide-react';
+import { Check, Settings, Trash2, TestTube, AlertCircle, RefreshCw, MessageSquare, Instagram, FileSpreadsheet, Plug } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,7 @@ import { IntegrationMarketplace } from '@/components/integrations/IntegrationMar
 import { WhatsAppProviderSetup } from '@/components/integrations/WhatsAppProviderSetup';
 import { GoogleFormsGuide } from '@/components/integrations/GoogleFormsGuide';
 import { GoogleSheetsIntegration } from '@/components/integrations/GoogleSheetsIntegration';
+import { AGSellAPISetup } from '@/components/integrations/AGSellAPISetup';
 import { useNavigate } from 'react-router-dom';
 import { PageHeader, HelpTooltip } from '@/components/ui/help-tooltip';
 

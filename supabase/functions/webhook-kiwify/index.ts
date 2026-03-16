@@ -452,7 +452,7 @@ Deno.serve(async (req) => {
           // Create organization directly (RPC uses auth.uid() which is null in service context)
           const { data: newOrg, error: orgError } = await supabase
             .from('organizations')
-            .insert({ name: orgName, slug: `${slug}-${Date.now()}` })
+            .insert({ name: orgName, slug: `${slug}-${Date.now()}`, plan_id: plan.id })
             .select('id')
             .single();
 

@@ -348,16 +348,23 @@ async function createAccountDirectly(supabase: any, params: {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 
-  const { data: orgId } = await supabase.rpc('create_organization_with_owner', {
-    org_name: organizationName,
-    org_slug: `${slug}-${Date.now()}`,
-  });
+  // Create org directly instead of using RPC (auth.uid() is null in service context)
+  const { data: newOrg, error: orgInsertError } = await supabase
+    .from('organizations')
+    .insert({ name: organizationName, slug: `${slug}-${Date.now()}`, plan_id: planId })
+    .select('id')
+    .single();
 
-  await supabase.from('organization_members').delete().eq('organization_id', orgId);
+  if (orgInsertError || !newOrg?.id) {
+    console.error("[GUEST-CHECKOUT] Error creating organization:", orgInsertError?.message);
+    return { error: "Erro ao criar organização" };
+  }
+
+  const orgId = newOrg.id;
+
   await supabase.from('organization_members').insert({
     organization_id: orgId, user_id: userId, role: 'owner',
   });
-  await supabase.from('organizations').update({ plan_id: planId }).eq('id', orgId);
 
   const periodDays = isFree ? 365 : (billingCycle === 'yearly' ? 365 : 30);
   await supabase.from('subscriptions').insert({

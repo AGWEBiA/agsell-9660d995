@@ -11,8 +11,12 @@ const corsHeaders = {
 interface KiwifyPayload {
   order_id: string;
   order_status: string;
-  product_id: string;
-  product_name: string;
+  product_id?: string;
+  product_name?: string;
+  Product?: {
+    product_id?: string;
+    product_name?: string;
+  };
   Customer: {
     email: string;
     full_name: string;
@@ -28,11 +32,16 @@ interface KiwifyPayload {
     start_date?: string;
     next_payment?: string;
   };
+  Commissions?: {
+    charge_amount?: number;
+    product_base_price?: number;
+  };
   payment_method: string;
   payment_status: string;
-  order_value: number;
+  order_value?: number;
+  checkout_link?: string;
+  subscription_id?: string;
   created_at: string;
-  // Custom fields passed via checkout URL params
   custom_fields?: {
     organization_name?: string;
     user_name?: string;
@@ -44,6 +53,19 @@ const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[KIWIFY-WEBHOOK] ${step}${detailsStr}`);
 };
+
+// Extract product_id from various payload locations
+function extractProductId(payload: KiwifyPayload): string | undefined {
+  return payload.Product?.product_id || payload.product_id || undefined;
+}
+
+// Extract order value in BRL (convert from centavos if needed)
+function extractOrderValue(payload: KiwifyPayload): number {
+  if (payload.order_value) return payload.order_value;
+  const chargeAmount = payload.Commissions?.charge_amount || payload.Commissions?.product_base_price;
+  if (chargeAmount) return chargeAmount / 100; // centavos to BRL
+  return 0;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -59,7 +81,10 @@ Deno.serve(async (req) => {
     const payload = JSON.parse(rawBody) as KiwifyPayload;
     const signature = req.headers.get("x-kiwify-signature");
 
-    logStep("Webhook received", { status: payload.order_status, email: payload.Customer?.email, product: payload.product_id });
+    const productId = extractProductId(payload);
+    const customerEmail = payload.Customer?.email?.toLowerCase();
+
+    logStep("Webhook received", { status: payload.order_status, email: customerEmail, product: productId, checkoutLink: payload.checkout_link });
 
     // --- Signature verification ---
     const kiwifySecret = Deno.env.get("KIWIFY_WEBHOOK_SECRET");
@@ -92,13 +117,92 @@ Deno.serve(async (req) => {
     const eventType = eventTypeMap[payload.order_status] || `unknown.${payload.order_status}`;
 
     // --- Find plan by Kiwify product ID ---
-    const { data: plan } = await supabase
-      .from("plans")
-      .select("id, name, slug, price_monthly")
-      .eq("kiwify_product_id", payload.product_id)
-      .maybeSingle();
+    let plan: { id: string; name: string; slug: string; price_monthly: number } | null = null;
+    const orderValue = extractOrderValue(payload);
+    const checkoutLink = payload.checkout_link; // e.g., "iCnaIJs"
 
-    logStep("Plan lookup", { productId: payload.product_id, found: !!plan });
+    // Strategy 1: Match by checkout_link (most precise — each plan has unique checkout URL)
+    if (checkoutLink && !plan) {
+      const { data: allPlans } = await supabase
+        .from("plans")
+        .select("id, name, slug, price_monthly, kiwify_checkout_url, kiwify_checkout_url_yearly")
+        .eq("is_active", true);
+
+      if (allPlans) {
+        for (const p of allPlans) {
+          const monthlyUrl = p.kiwify_checkout_url || "";
+          const yearlyUrl = p.kiwify_checkout_url_yearly || "";
+          if (monthlyUrl.includes(checkoutLink) || yearlyUrl.includes(checkoutLink)) {
+            plan = { id: p.id, name: p.name, slug: p.slug, price_monthly: p.price_monthly };
+            logStep("Plan matched by checkout_link", { link: checkoutLink, plan: p.name });
+            break;
+          }
+        }
+      }
+    }
+
+    // Strategy 2: Match by Subscription.plan.name
+    if (!plan && payload.Subscription?.plan?.name) {
+      const subPlanName = payload.Subscription.plan.name;
+      const { data: namedPlan } = await supabase
+        .from("plans")
+        .select("id, name, slug, price_monthly")
+        .ilike("name", `%${subPlanName}%`)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (namedPlan) {
+        plan = namedPlan;
+        logStep("Plan matched by subscription name", { subPlanName, plan: namedPlan.name });
+      }
+    }
+
+    // Strategy 3: Match by product_id (single match)
+    if (!plan && productId) {
+      const { data: matchedPlans } = await supabase
+        .from("plans")
+        .select("id, name, slug, price_monthly")
+        .or(`kiwify_product_id.eq.${productId},kiwify_product_id_yearly.eq.${productId}`)
+        .eq("is_active", true);
+
+      if (matchedPlans && matchedPlans.length === 1) {
+        plan = matchedPlans[0];
+      } else if (matchedPlans && matchedPlans.length > 1 && orderValue > 0) {
+        // Multiple plans — match by closest price
+        const closestPlan = matchedPlans.reduce((best, p) => {
+          const diff = Math.abs(p.price_monthly - orderValue);
+          const bestDiff = Math.abs(best.price_monthly - orderValue);
+          return diff < bestDiff ? p : best;
+        }, matchedPlans[0]);
+        plan = closestPlan;
+        logStep("Multiple plans matched, selected by price", { selected: closestPlan.name, orderValue });
+      }
+    }
+
+    // Strategy 4: Fallback from checkout_leads
+    if (!plan && customerEmail) {
+      const { data: lead } = await supabase
+        .from("checkout_leads")
+        .select("plan_id")
+        .ilike("email", customerEmail)
+        .not("plan_id", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (lead?.plan_id) {
+        const { data: leadPlan } = await supabase
+          .from("plans")
+          .select("id, name, slug, price_monthly")
+          .eq("id", lead.plan_id)
+          .single();
+        if (leadPlan) {
+          plan = leadPlan;
+          logStep("Plan resolved from checkout_lead", { planName: leadPlan.name });
+        }
+      }
+    }
+
+    logStep("Plan lookup", { productId, found: !!plan, planName: plan?.name });
 
     // --- Store webhook event ---
     const { data: webhookEvent, error: webhookError } = await supabase
@@ -117,7 +221,7 @@ Deno.serve(async (req) => {
       throw webhookError;
     }
 
-    const customerEmail = payload.Customer?.email?.toLowerCase();
+    // customerEmail already defined above
 
     // --- Update checkout_leads with payment status ---
     if (customerEmail) {
@@ -194,7 +298,7 @@ Deno.serve(async (req) => {
           .select("organization_id")
           .eq("user_id", existingUser.id)
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (membership && plan) {
           await activateSubscription(supabase, {
@@ -205,6 +309,35 @@ Deno.serve(async (req) => {
             billingCycle: detectBillingCycle(payload),
           });
           logStep("Subscription activated for existing user");
+        } else if (!membership && plan) {
+          // Existing user without organization — create org + subscription
+          logStep("Existing user without org, creating one");
+          const customerName = existingUser.user_metadata?.full_name || payload.Customer.full_name || "Usuário";
+          const orgName = `Org de ${customerName}`;
+          const slug = orgName.toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, '');
+
+          const { data: newOrg } = await supabase
+            .from('organizations')
+            .insert({ name: orgName, slug: `${slug}-${Date.now()}` })
+            .select('id')
+            .single();
+
+          if (newOrg?.id) {
+            await supabase.from('organization_members').insert({
+              organization_id: newOrg.id, user_id: existingUser.id, role: 'owner',
+            });
+            await activateSubscription(supabase, {
+              organizationId: newOrg.id,
+              planId: plan.id,
+              kiwifyOrderId: payload.order_id,
+              kiwifySubscriptionId: payload.Subscription?.id,
+              billingCycle: detectBillingCycle(payload),
+            });
+            logStep("Org + subscription created for existing user", { orgId: newOrg.id });
+          }
         }
       } else if (plan) {
         // New user — create account + org + subscription
@@ -236,36 +369,41 @@ Deno.serve(async (req) => {
             .replace(/[^a-z0-9]+/g, '-')
             .replace(/^-|-$/g, '');
 
-          // Create organization
-          const { data: orgId } = await supabase.rpc('create_organization_with_owner', {
-            org_name: orgName,
-            org_slug: `${slug}-${Date.now()}`,
-          });
+          // Create organization directly (RPC uses auth.uid() which is null in service context)
+          const { data: newOrg, error: orgError } = await supabase
+            .from('organizations')
+            .insert({ name: orgName, slug: `${slug}-${Date.now()}` })
+            .select('id')
+            .single();
 
-          // Fix membership (RPC creates with auth.uid(), we need to override)
-          await supabase.from('organization_members').delete().eq('organization_id', orgId);
-          await supabase.from('organization_members').insert({
-            organization_id: orgId, user_id: userId, role: 'owner',
-          });
+          const orgId = newOrg?.id;
+          if (orgError || !orgId) {
+            logStep("ERROR creating organization", orgError?.message);
+          } else {
+            // Add user as owner
+            await supabase.from('organization_members').insert({
+              organization_id: orgId, user_id: userId, role: 'owner',
+            });
 
-          await activateSubscription(supabase, {
-            organizationId: orgId,
-            planId: plan.id,
-            kiwifyOrderId: payload.order_id,
-            kiwifySubscriptionId: payload.Subscription?.id,
-            billingCycle: detectBillingCycle(payload),
-          });
+            await activateSubscription(supabase, {
+              organizationId: orgId,
+              planId: plan.id,
+              kiwifyOrderId: payload.order_id,
+              kiwifySubscriptionId: payload.Subscription?.id,
+              billingCycle: detectBillingCycle(payload),
+            });
 
-          // Send welcome email
-          await sendWelcomeEmail(supabase, {
-            email: customerEmail,
-            name: customerName,
-            password,
-            planName: plan.name,
-            organizationName: orgName,
-          });
+            // Send welcome email
+            await sendWelcomeEmail(supabase, {
+              email: customerEmail,
+              name: customerName,
+              password,
+              planName: plan.name,
+              organizationName: orgName,
+            });
 
-          logStep("New account created and subscription activated", { userId, orgId });
+            logStep("New account created and subscription activated", { userId, orgId });
+          }
         }
       }
 

@@ -544,10 +544,12 @@ async function handleMetrics(supabase: any, orgId: string, subResource: string |
       return await metricsPipeline(supabase, orgId, from, to);
     case "automations":
       return await metricsAutomations(supabase, orgId, from, to);
+    case "forms":
+      return await metricsForms(supabase, orgId, from, to);
     default:
       return {
         error: "Unknown metrics endpoint",
-        available: ["overview", "email", "leads", "pipeline", "automations"],
+        available: ["overview", "email", "leads", "pipeline", "automations", "forms"],
       };
   }
 }

@@ -158,6 +158,9 @@ export default function Integrations() {
             </TabsContent>
           </Tabs>
         </TabsContent>
+        <TabsContent value="agsell" className="mt-6">
+          <AGSellAPISetup />
+        </TabsContent>
         <TabsContent value="marketplace" className="mt-6">
           <IntegrationMarketplace />
         </TabsContent>

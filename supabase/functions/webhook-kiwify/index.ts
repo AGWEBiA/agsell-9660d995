@@ -11,8 +11,12 @@ const corsHeaders = {
 interface KiwifyPayload {
   order_id: string;
   order_status: string;
-  product_id: string;
-  product_name: string;
+  product_id?: string;
+  product_name?: string;
+  Product?: {
+    product_id?: string;
+    product_name?: string;
+  };
   Customer: {
     email: string;
     full_name: string;
@@ -28,11 +32,16 @@ interface KiwifyPayload {
     start_date?: string;
     next_payment?: string;
   };
+  Commissions?: {
+    charge_amount?: number;
+    product_base_price?: number;
+  };
   payment_method: string;
   payment_status: string;
-  order_value: number;
+  order_value?: number;
+  checkout_link?: string;
+  subscription_id?: string;
   created_at: string;
-  // Custom fields passed via checkout URL params
   custom_fields?: {
     organization_name?: string;
     user_name?: string;
@@ -44,6 +53,19 @@ const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[KIWIFY-WEBHOOK] ${step}${detailsStr}`);
 };
+
+// Extract product_id from various payload locations
+function extractProductId(payload: KiwifyPayload): string | undefined {
+  return payload.Product?.product_id || payload.product_id || undefined;
+}
+
+// Extract order value in BRL (convert from centavos if needed)
+function extractOrderValue(payload: KiwifyPayload): number {
+  if (payload.order_value) return payload.order_value;
+  const chargeAmount = payload.Commissions?.charge_amount || payload.Commissions?.product_base_price;
+  if (chargeAmount) return chargeAmount / 100; // centavos to BRL
+  return 0;
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -59,7 +81,10 @@ Deno.serve(async (req) => {
     const payload = JSON.parse(rawBody) as KiwifyPayload;
     const signature = req.headers.get("x-kiwify-signature");
 
-    logStep("Webhook received", { status: payload.order_status, email: payload.Customer?.email, product: payload.product_id });
+    const productId = extractProductId(payload);
+    const customerEmail = payload.Customer?.email?.toLowerCase();
+
+    logStep("Webhook received", { status: payload.order_status, email: customerEmail, product: productId, checkoutLink: payload.checkout_link });
 
     // --- Signature verification ---
     const kiwifySecret = Deno.env.get("KIWIFY_WEBHOOK_SECRET");

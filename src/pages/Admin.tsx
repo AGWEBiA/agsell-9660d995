@@ -300,9 +300,9 @@ export default function Admin() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{organizations.length}</div>
-                <p className="text-xs text-muted-foreground">
-                  {organizations.filter((o: any) => o.subscriptions?.[0]?.status === 'active').length} ativas
-                </p>
+                  <p className="text-xs text-muted-foreground">
+                    {organizations.filter((o: any) => getPrimarySubscription(o)?.status === 'active').length} ativas
+                  </p>
               </CardContent>
             </Card>
 

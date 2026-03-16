@@ -269,12 +269,21 @@ Deno.serve(async (req) => {
       case "tags":
         result = await handleTags(supabase, method, orgId, resourceId, req);
         break;
+      case "metrics": {
+        if (method !== "GET") {
+          result = { error: "Method not allowed" };
+          break;
+        }
+        const subResource = pathParts[2];
+        result = await handleMetrics(supabase, orgId, subResource, req);
+        break;
+      }
       default:
         return new Response(
           JSON.stringify({
             error: "Unknown resource",
             code: "NOT_FOUND",
-            available_resources: ["contacts", "companies", "deals", "tags"],
+            available_resources: ["contacts", "companies", "deals", "tags", "metrics"],
           }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );

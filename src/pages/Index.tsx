@@ -696,6 +696,18 @@ function PlansSection() {
   const [formData, setFormData] = useState({ name: '', email: '', organizationName: '', couponCode: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCouponField, setShowCouponField] = useState(false);
+  const [defaultGateway, setDefaultGateway] = useState<string>('stripe');
+
+  useEffect(() => {
+    const fetchGateway = async () => {
+      const { data } = await supabase.from('platform_settings').select('value').eq('key', 'payment_gateway').maybeSingle();
+      if (data?.value) {
+        const settings = data.value as Record<string, unknown>;
+        setDefaultGateway((settings.default_gateway as string) || 'stripe');
+      }
+    };
+    fetchGateway();
+  }, []);
 
   useEffect(() => {
     const fetchPlans = async () => {

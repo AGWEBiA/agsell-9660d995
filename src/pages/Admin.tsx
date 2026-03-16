@@ -422,9 +422,12 @@ export default function Admin() {
                     </TableHeader>
                     <TableBody>
                       {organizations.map((org: any) => {
-                        const subscription = org.subscriptions?.[0];
-                        const plan = subscription?.plans?.name || 'Free';
-                        const status = subscription?.status || 'inactive';
+                        const subscription = getPrimarySubscription(org);
+                        const fallbackPlanName = org.organization_plan?.name;
+                        const plan = subscription?.plans?.name || fallbackPlanName || 'Free';
+                        const normalizedPlan = String(plan).toLowerCase();
+                        const fallbackPaidPlan = normalizedPlan !== 'free' && normalizedPlan !== 'grátis' && normalizedPlan !== 'gratis';
+                        const status = subscription?.status || (fallbackPaidPlan ? 'active' : 'inactive');
                         const membersCount = org.organization_members?.[0]?.count || 0;
 
                         return (

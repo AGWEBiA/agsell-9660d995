@@ -107,6 +107,10 @@ export default function Integrations() {
             <FileSpreadsheet className="h-4 w-4" />
             Google
           </TabsTrigger>
+          <TabsTrigger value="agsell" className="flex items-center gap-2">
+            <Plug className="h-4 w-4" />
+            AG Sell API
+          </TabsTrigger>
           <TabsTrigger value="marketplace" className="flex items-center gap-2">
             🛒 Marketplace
           </TabsTrigger>

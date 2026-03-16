@@ -309,6 +309,41 @@ Deno.serve(async (req) => {
             billingCycle: detectBillingCycle(payload),
           });
           logStep("Subscription activated for existing user");
+
+          const hasLoggedIn = !!existingUser.last_sign_in_at;
+          const alreadyEmailed = !!existingUser.user_metadata?.credentials_emailed_at;
+          if (!hasLoggedIn && !alreadyEmailed) {
+            const customerName = existingUser.user_metadata?.full_name || payload.Customer.full_name || "Usuário";
+            const temporaryPassword = generatePassword();
+
+            const { error: passwordError } = await supabase.auth.admin.updateUserById(existingUser.id, {
+              password: temporaryPassword,
+              user_metadata: {
+                ...(existingUser.user_metadata || {}),
+                credentials_emailed_at: new Date().toISOString(),
+              },
+            });
+
+            if (passwordError) {
+              logStep("ERROR updating temporary password for existing user", passwordError.message);
+            } else {
+              const { data: organizationData } = await supabase
+                .from("organizations")
+                .select("name")
+                .eq("id", membership.organization_id)
+                .maybeSingle();
+
+              await sendWelcomeEmail(supabase, {
+                email: customerEmail,
+                name: customerName,
+                password: temporaryPassword,
+                planName: plan.name,
+                organizationName: organizationData?.name || "AG Sell",
+              });
+
+              logStep("Credentials email sent for existing user onboarding", { email: customerEmail });
+            }
+          }
         } else if (!membership && plan) {
           // Existing user without organization — create org + subscription
           logStep("Existing user without org, creating one");

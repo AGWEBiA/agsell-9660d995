@@ -376,7 +376,7 @@ async function createAccountDirectly(supabase: any, params: {
     current_period_end: new Date(Date.now() + periodDays * 24 * 60 * 60 * 1000).toISOString(),
   });
 
-  await sendWelcomeEmail({ email, name, password, planName, organizationName });
+  await sendWelcomeEmail(supabase, { email, name, password, planName, organizationName });
   return { success: true, message: "Account created" };
 }
 

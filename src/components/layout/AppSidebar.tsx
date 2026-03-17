@@ -90,7 +90,7 @@ const menuSections: MenuSection[] = [
       { label: 'Conexão API Oficial', icon: Globe, path: '/whatsapp', featureRequired: 'whatsapp' },
       { label: 'Templates API', icon: FileText, path: '/whatsapp-templates', featureRequired: 'whatsapp' },
       { label: 'Grupos Pagos', icon: Crown, path: '/paid-groups', featureRequired: 'paid_groups' },
-      { label: 'Rotador de Grupos', icon: Route, path: '/group-rotator', featureRequired: 'whatsapp' },
+      { label: 'Direcionador de Grupos', icon: Route, path: '/group-rotator', featureRequired: 'whatsapp' },
     ],
   },
   {

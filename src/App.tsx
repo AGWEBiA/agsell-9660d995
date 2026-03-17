@@ -93,6 +93,8 @@ import RevenueReporting from "./pages/RevenueReporting";
 import PaidGroups from "./pages/PaidGroups";
 import SystemStatus from "./pages/SystemStatus";
 import VoIP from "./pages/VoIP";
+import GroupRotator from "./pages/GroupRotator";
+import GroupRedirect from "./pages/GroupRedirect";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -126,6 +128,7 @@ const App = () => (
                   <Route path="/ticket" element={<TicketTracker />} />
                   <Route path="/agency-invite/:token" element={<AgencyInvite />} />
                   <Route path="/support-portal/:orgSlug" element={<SupportPortal />} />
+                  <Route path="/r/:slug" element={<GroupRedirect />} />
                   <Route path="/manual-tecnico" element={<TechnicalManual />} />
                   <Route path="/status" element={<SystemStatus />} />
                   <Route path="/subscription-expired" element={<ProtectedRoute allowExpired><SubscriptionExpired /></ProtectedRoute>} />
@@ -189,6 +192,7 @@ const App = () => (
                     <Route path="revenue-reporting" element={<RevenueReporting />} />
                     <Route path="paid-groups" element={<FeatureRequiredPage feature="paid_groups" featureLabel="Grupos Pagos"><PaidGroups /></FeatureRequiredPage>} />
                     <Route path="voip" element={<VoIP />} />
+                    <Route path="group-rotator" element={<GroupRotator />} />
                     <Route path="support" element={<SupportTickets />} />
                     <Route path="support-center" element={<SupportCenter />} />
                     <Route path="support-portal-settings" element={<FeatureRequiredPage feature="customer_support_center" featureLabel="Portal de Suporte"><SupportPortalSettingsPage /></FeatureRequiredPage>} />

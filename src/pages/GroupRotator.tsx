@@ -8,8 +8,8 @@ export default function GroupRotator() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Rotador de Grupos</h1>
-        <p className="text-muted-foreground">Distribua automaticamente usuários entre múltiplos grupos de WhatsApp com links inteligentes.</p>
+        <h1 className="text-3xl font-bold">Direcionador de Grupos</h1>
+        <p className="text-muted-foreground">Direcione automaticamente usuários para os grupos de WhatsApp certos com links inteligentes.</p>
       </div>
 
       {selectedCampaignId ? (

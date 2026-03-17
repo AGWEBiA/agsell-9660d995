@@ -259,8 +259,8 @@ export function ImportContactsDialog({ open, onOpenChange }: ImportContactsDialo
         {/* QUEUED - Background processing */}
         {step === 'queued' && queuedInfo && (
           <div className="py-8 space-y-6 text-center">
-            <div className="rounded-full bg-green-100 dark:bg-green-900/30 p-4 mx-auto w-fit">
-              <Check className="h-8 w-8 text-green-600 dark:text-green-400" />
+            <div className="rounded-full bg-primary/10 p-4 mx-auto w-fit">
+              <Check className="h-8 w-8 text-primary" />
             </div>
             <div>
               <h3 className="text-lg font-semibold">Leads inseridos na fila de processamento!</h3>

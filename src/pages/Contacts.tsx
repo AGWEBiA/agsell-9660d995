@@ -57,6 +57,7 @@ import { useContacts, useCreateContact, useUpdateContact, useDeleteContact, type
 import { PageHeader, EmptyState, FormField } from '@/components/ui/help-tooltip';
 import { useCompanies } from '@/hooks/useCompanies';
 import { ImportContactsDialog } from '@/components/contacts/ImportContactsDialog';
+import { ImportJobsList } from '@/components/contacts/ImportJobsList';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { useFeatureCheck } from '@/components/permissions/FeatureGate';
 import { usePaginatedData } from '@/hooks/usePaginatedQuery';
@@ -476,6 +477,9 @@ export default function Contacts() {
 
       {/* Import Dialog */}
       <ImportContactsDialog open={isImportOpen} onOpenChange={setIsImportOpen} />
+
+      {/* Import Jobs History */}
+      {!isImportOpen && <ImportJobsList />}
 
       {/* View Contact Detail Dialog */}
       <Dialog open={!!viewContact} onOpenChange={() => setViewContact(null)}>

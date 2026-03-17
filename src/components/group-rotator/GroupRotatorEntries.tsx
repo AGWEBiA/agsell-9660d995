@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,12 +8,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   ArrowLeft, Plus, Trash2, Pause, Play, Settings,
-  Copy, Pencil, CheckCircle2, XCircle, ChevronDown, Link as LinkIcon,
+  Copy, Pencil, CheckCircle2, XCircle, ChevronDown, Link as LinkIcon, Search, Tag,
 } from 'lucide-react';
 import { useGroupRotator } from '@/hooks/useGroupRotator';
-import { useTags } from '@/hooks/useTags';
+import { useTags, useCreateTag } from '@/hooks/useTags';
 import { toast } from 'sonner';
 
 interface Props {
@@ -24,6 +26,7 @@ interface Props {
 export function GroupRotatorEntries({ campaignId, onBack }: Props) {
   const { campaigns, createEntry, updateEntry, deleteEntry, fetchEntries, updateCampaign } = useGroupRotator();
   const { data: tags = [] } = useTags();
+  const createTag = useCreateTag();
   const campaign = campaigns.find((c: any) => c.id === campaignId);
 
   const [entries, setEntries] = useState<any[]>([]);
@@ -46,6 +49,8 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
   const [clickLimit, setClickLimit] = useState('1000');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [tagSearch, setTagSearch] = useState('');
+  const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
 
   useEffect(() => {
     if (campaign) {
@@ -148,6 +153,22 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
     );
   };
 
+  const filteredTags = useMemo(() => {
+    const available = tags.filter((t: any) => !selectedTags.includes(t.id));
+    if (!tagSearch.trim()) return available;
+    return available.filter((t: any) => t.name.toLowerCase().includes(tagSearch.toLowerCase()));
+  }, [tags, selectedTags, tagSearch]);
+
+  const handleCreateTag = () => {
+    if (!tagSearch.trim()) return;
+    createTag.mutate({ name: tagSearch.trim() }, {
+      onSuccess: (newTag: any) => {
+        setSelectedTags(prev => [...prev, newTag.id]);
+        setTagSearch('');
+      },
+    });
+  };
+
   const copyToClipboard = (text: string, label = 'Link copiado!') => {
     navigator.clipboard.writeText(text);
     toast.success(label);
@@ -205,16 +226,51 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
                     </Badge>
                   ) : null;
                 })}
-                <Select onValueChange={handleToggleTag}>
-                  <SelectTrigger className="h-6 w-6 p-0 border-none shadow-none">
-                    <Plus className="h-3.5 w-3.5 text-muted-foreground" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {tags.filter((t: any) => !selectedTags.includes(t.id)).map((t: any) => (
-                      <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={tagPopoverOpen} onOpenChange={(open) => { setTagPopoverOpen(open); if (!open) setTagSearch(''); }}>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 p-0">
+                      <Plus className="h-3.5 w-3.5 text-muted-foreground" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-2" align="start">
+                    <div className="relative mb-2">
+                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                      <Input
+                        placeholder="Buscar ou criar tag..."
+                        value={tagSearch}
+                        onChange={e => setTagSearch(e.target.value)}
+                        className="h-8 pl-7 text-xs"
+                      />
+                    </div>
+                    <ScrollArea className="max-h-40">
+                      <div className="space-y-0.5">
+                        {filteredTags.map((t: any) => (
+                          <button
+                            key={t.id}
+                            className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded text-xs hover:bg-muted transition-colors"
+                            onClick={() => { handleToggleTag(t.id); setTagPopoverOpen(false); setTagSearch(''); }}
+                          >
+                            <Tag className="h-3 w-3 text-muted-foreground shrink-0" />
+                            <span className="truncate">{t.name}</span>
+                          </button>
+                        ))}
+                        {filteredTags.length === 0 && !tagSearch.trim() && (
+                          <p className="text-xs text-muted-foreground px-2 py-1.5">Nenhuma tag disponível</p>
+                        )}
+                        {tagSearch.trim() && !tags.some((t: any) => t.name.toLowerCase() === tagSearch.toLowerCase()) && (
+                          <button
+                            className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded text-xs hover:bg-muted transition-colors text-primary"
+                            onClick={handleCreateTag}
+                            disabled={createTag.isPending}
+                          >
+                            <Plus className="h-3 w-3 shrink-0" />
+                            <span>Criar &quot;{tagSearch.trim()}&quot;</span>
+                          </button>
+                        )}
+                      </div>
+                    </ScrollArea>
+                  </PopoverContent>
+                </Popover>
               </div>
               <p className="text-[11px] text-muted-foreground">Tags aplicadas aos leads que acessam o link</p>
             </div>
@@ -236,38 +292,30 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
               {loading ? (
                 <p className="text-sm text-muted-foreground p-4">Carregando...</p>
               ) : entries.length === 0 ? (
-                <p className="text-sm text-muted-foreground p-4">Nenhum grupo adicionado. Clique em "NOVO LINK" para começar.</p>
+                <p className="text-sm text-muted-foreground p-4">Nenhum grupo adicionado. Clique em &quot;NOVO LINK&quot; para começar.</p>
               ) : (
                 entries.map((entry: any) => {
                   const isFull = (entry.max_capacity > 0 && entry.member_count >= entry.max_capacity) ||
                     (entry.max_clicks > 0 && entry.click_count >= entry.max_clicks);
                   return (
                     <div key={entry.id} className={`flex items-center gap-2.5 sm:gap-3 p-3 ${entry.is_paused || isFull ? 'opacity-50' : ''}`}>
-                      {/* Click count badge */}
                       <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-primary/10 shrink-0">
                         <span className="text-xs sm:text-sm font-bold text-primary">{entry.click_count}</span>
                       </div>
-
-                      {/* Group info */}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{entry.name}</p>
                         <p className="text-[11px] sm:text-xs text-muted-foreground truncate">{entry.invite_link}</p>
                         {isFull && <Badge variant="destructive" className="mt-1 text-[10px]">Lotado</Badge>}
                         {entry.is_paused && !isFull && <Badge variant="secondary" className="mt-1 text-[10px]">Pausado</Badge>}
                       </div>
-
-                      {/* Actions */}
                       <div className="flex items-center shrink-0">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
                           updateEntry.mutate({ id: entry.id, is_paused: !entry.is_paused }, { onSuccess: loadEntries });
                         }}>
                           {entry.is_paused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 hidden sm:inline-flex" onClick={() => openEditEntry(entry)}>
-                          <Settings className="h-3.5 w-3.5" />
-                        </Button>
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditEntry(entry)}>
-                          <Settings className="h-3.5 w-3.5 sm:hidden" />
+                          <Settings className="h-3.5 w-3.5" />
                         </Button>
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
                           deleteEntry.mutate(entry.id, { onSuccess: loadEntries });

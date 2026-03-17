@@ -20,19 +20,26 @@ export interface CreateTagData {
 
 export function useTags() {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
+  const orgId = currentOrganization?.id;
 
   return useQuery({
-    queryKey: ['tags', user?.id],
+    queryKey: ['tags', orgId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('tags')
         .select('*')
         .order('name', { ascending: true });
 
+      if (orgId) {
+        query = query.eq('organization_id', orgId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data as Tag[];
     },
-    enabled: !!user,
+    enabled: !!user && !!orgId,
   });
 }
 

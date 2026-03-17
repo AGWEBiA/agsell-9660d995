@@ -32,7 +32,7 @@ export function ImportContactsDialog({ open, onOpenChange }: ImportContactsDialo
   const [queuedInfo, setQueuedInfo] = useState<{ totalRows: number } | null>(null);
 
   const importContacts = useImportContacts();
-  const { tags: existingTags } = useTags();
+  const { data: existingTags } = useTags();
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

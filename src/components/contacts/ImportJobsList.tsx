@@ -11,7 +11,7 @@ import { useQueryClient } from '@tanstack/react-query';
 function statusBadge(status: string) {
   switch (status) {
     case 'completed':
-      return <Badge className="bg-green-600 hover:bg-green-700"><CheckCircle2 className="h-3 w-3 mr-1" />Concluída</Badge>;
+      return <Badge className="bg-primary hover:bg-primary/90"><CheckCircle2 className="h-3 w-3 mr-1" />Concluída</Badge>;
     case 'processing':
       return <Badge variant="secondary" className="gap-1"><Loader2 className="h-3 w-3 animate-spin" />Processando</Badge>;
     case 'pending':

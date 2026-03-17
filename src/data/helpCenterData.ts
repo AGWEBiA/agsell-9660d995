@@ -4516,4 +4516,65 @@ O sistema de retry é automático para todos os webhooks de saída. Parâmetros:
 
 💡 **Dica**: Se muitos webhooks estão falhando, verifique se o endpoint está retornando status 200. Qualquer outro status é tratado como falha.`,
   },
+  {
+    id: 'group-rotator',
+    categoryId: 'communication',
+    title: 'Rotador de Grupos (Smart Link)',
+    icon: LinkIcon,
+    description: 'Distribua automaticamente usuários entre múltiplos grupos de WhatsApp com um link inteligente.',
+    readTime: '6 min',
+    popular: true,
+    content: `O **Rotador de Grupos** permite criar links inteligentes que distribuem automaticamente os cliques entre vários grupos de WhatsApp usando a estratégia **round-robin**. Ideal para lançamentos, comunidades e infoprodutos que precisam gerenciar múltiplos grupos.
+
+## Como funciona
+
+1. Você cria uma **campanha** com um slug único (ex: \`curso-vip\`)
+2. Adiciona vários **grupos** com seus links de convite do WhatsApp
+3. Compartilha o link único: \`seusite.com/r/curso-vip\`
+4. Cada clique é automaticamente direcionado para o próximo grupo disponível
+
+## Criando uma Campanha
+
+1. Acesse **Rotador de Grupos** no menu WhatsApp
+2. Clique em **"Nova Campanha"**
+3. Defina um **nome** (ex: "Lançamento Produto X")
+4. Defina um **slug** (identificador no link — ex: \`produto-x\`)
+5. Clique em **"Criar Campanha"**
+
+## Adicionando Grupos
+
+1. Na lista de campanhas, clique no ícone de **engrenagem** (⚙)
+2. Clique em **"Adicionar Grupo"**
+3. Preencha:
+   - **Nome do Grupo** — Nome para identificação interna
+   - **Link de Convite** — Link completo do WhatsApp (ex: \`https://chat.whatsapp.com/ABC123\`)
+   - **Capacidade Máxima** — Número máximo de membros (0 = sem limite)
+   - **Máx. de Cliques** — Após X cliques, o grupo sai da rotação (0 = sem limite)
+
+## Critérios de Troca Automática
+
+O sistema troca automaticamente para o próximo grupo quando:
+
+- ⚡ **Limite de cliques** — O grupo atingiu o número máximo de cliques configurado
+- 👥 **Lotação** — O grupo atingiu a capacidade máxima de membros
+- ⏸️ **Pausa manual** — Você pausou o grupo na interface
+
+## Monitoramento
+
+O painel mostra em tempo real:
+- **Total de cliques** na campanha
+- **Cliques por grupo** com barra de progresso
+- **Ocupação** de cada grupo
+- **Status** (Ativo, Pausado, Lotado)
+
+## Boas Práticas
+
+- 🔗 **Sempre use links válidos** — Verifique se os links de convite do WhatsApp estão funcionando
+- 📊 **Configure limites** — Defina capacidade máxima para evitar grupos superlotados
+- ⏸️ **Pause para manutenção** — Use o botão de pausa ao invés de remover o grupo
+- 🎯 **Um link por campanha** — Cada campanha gera um link único, facilitando o rastreamento
+
+💡 **Dica**: Use o rotador para lançamentos com grande volume de leads. Ao invés de um único grupo lotado, distribua entre 5-10 grupos menores para melhor engajamento.`,
+  },
 ];
+

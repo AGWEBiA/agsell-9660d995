@@ -264,19 +264,13 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
                             disabled={createTag.isPending}
                           >
                             <Plus className="h-3 w-3 shrink-0" />
-                            <span>Criar "{tagSearch.trim()}"</span>
+                            <span>Criar &quot;{tagSearch.trim()}&quot;</span>
                           </button>
                         )}
                       </div>
                     </ScrollArea>
                   </PopoverContent>
                 </Popover>
-              </div>
-              <p className="text-[11px] text-muted-foreground">Tags aplicadas aos leads que acessam o link</p>
-            </div>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
               <p className="text-[11px] text-muted-foreground">Tags aplicadas aos leads que acessam o link</p>
             </div>
@@ -298,38 +292,30 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
               {loading ? (
                 <p className="text-sm text-muted-foreground p-4">Carregando...</p>
               ) : entries.length === 0 ? (
-                <p className="text-sm text-muted-foreground p-4">Nenhum grupo adicionado. Clique em "NOVO LINK" para começar.</p>
+                <p className="text-sm text-muted-foreground p-4">Nenhum grupo adicionado. Clique em &quot;NOVO LINK&quot; para começar.</p>
               ) : (
                 entries.map((entry: any) => {
                   const isFull = (entry.max_capacity > 0 && entry.member_count >= entry.max_capacity) ||
                     (entry.max_clicks > 0 && entry.click_count >= entry.max_clicks);
                   return (
                     <div key={entry.id} className={`flex items-center gap-2.5 sm:gap-3 p-3 ${entry.is_paused || isFull ? 'opacity-50' : ''}`}>
-                      {/* Click count badge */}
                       <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-primary/10 shrink-0">
                         <span className="text-xs sm:text-sm font-bold text-primary">{entry.click_count}</span>
                       </div>
-
-                      {/* Group info */}
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{entry.name}</p>
                         <p className="text-[11px] sm:text-xs text-muted-foreground truncate">{entry.invite_link}</p>
                         {isFull && <Badge variant="destructive" className="mt-1 text-[10px]">Lotado</Badge>}
                         {entry.is_paused && !isFull && <Badge variant="secondary" className="mt-1 text-[10px]">Pausado</Badge>}
                       </div>
-
-                      {/* Actions */}
                       <div className="flex items-center shrink-0">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
                           updateEntry.mutate({ id: entry.id, is_paused: !entry.is_paused }, { onSuccess: loadEntries });
                         }}>
                           {entry.is_paused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 hidden sm:inline-flex" onClick={() => openEditEntry(entry)}>
-                          <Settings className="h-3.5 w-3.5" />
-                        </Button>
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditEntry(entry)}>
-                          <Settings className="h-3.5 w-3.5 sm:hidden" />
+                          <Settings className="h-3.5 w-3.5" />
                         </Button>
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
                           deleteEntry.mutate(entry.id, { onSuccess: loadEntries });

@@ -4,14 +4,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import {
-  ArrowLeft, Plus, Trash2, Pause, Play, Settings, MousePointerClick,
-  Copy, Pencil, CheckCircle2, XCircle, ChevronDown, ExternalLink, Link as LinkIcon, Tag
+  ArrowLeft, Plus, Trash2, Pause, Play, Settings,
+  Copy, Pencil, CheckCircle2, XCircle, ChevronDown, Link as LinkIcon,
 } from 'lucide-react';
 import { useGroupRotator } from '@/hooks/useGroupRotator';
 import { useTags } from '@/hooks/useTags';
@@ -30,24 +29,20 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
   const [entries, setEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Dialogs
   const [addLinkOpen, setAddLinkOpen] = useState(false);
   const [slugDialogOpen, setSlugDialogOpen] = useState(false);
   const [routesDialogOpen, setRoutesDialogOpen] = useState(false);
   const [editEntryDialogOpen, setEditEntryDialogOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<any>(null);
 
-  // New link fields
   const [newName, setNewName] = useState('');
   const [newInviteLink, setNewInviteLink] = useState('');
   const [newMaxCapacity, setNewMaxCapacity] = useState('250');
 
-  // Slug editing
   const [editSlug, setEditSlug] = useState('');
   const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
   const [checkingSlug, setCheckingSlug] = useState(false);
 
-  // Campaign settings
   const [clickLimit, setClickLimit] = useState('1000');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -72,6 +67,7 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
   useEffect(() => { loadEntries(); }, [campaignId]);
 
   const publicLink = campaign ? `${window.location.origin}/r/${campaign.slug}` : '';
+  const apiLink = campaign ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/group-rotator/${campaign.slug}` : '';
 
   const handleAddLink = () => {
     if (!newName || !newInviteLink) return;
@@ -85,9 +81,7 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
     }, {
       onSuccess: () => {
         setAddLinkOpen(false);
-        setNewName('');
-        setNewInviteLink('');
-        setNewMaxCapacity('250');
+        setNewName(''); setNewInviteLink(''); setNewMaxCapacity('250');
         loadEntries();
       },
     });
@@ -114,10 +108,7 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
   const handleSaveSlug = () => {
     if (!slugAvailable || !editSlug) return;
     updateCampaign.mutate({ id: campaignId, slug: editSlug } as any, {
-      onSuccess: () => {
-        setSlugDialogOpen(false);
-        setSlugAvailable(null);
-      },
+      onSuccess: () => { setSlugDialogOpen(false); setSlugAvailable(null); },
     });
   };
 
@@ -157,50 +148,50 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
     );
   };
 
+  const copyToClipboard = (text: string, label = 'Link copiado!') => {
+    navigator.clipboard.writeText(text);
+    toast.success(label);
+  };
+
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={onBack}>
+      <div className="flex items-start gap-3">
+        <Button variant="ghost" size="icon" className="shrink-0 mt-1" onClick={onBack}>
           <ArrowLeft className="h-4 w-4" />
         </Button>
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              <LinkIcon className="h-5 w-5 text-primary" />
-              LINK || {campaign?.name || 'Campanha'}
-            </h2>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Adicione os links de todos os seus grupos de WhatsApp para serem enchidos sequencialmente baseado no total de cliques que o link recebeu para um dado grupo.
+        <div className="min-w-0">
+          <h2 className="text-lg sm:text-xl font-bold flex items-center gap-2 flex-wrap">
+            <LinkIcon className="h-5 w-5 text-primary shrink-0" />
+            <span className="truncate">LINK || {campaign?.name || 'Campanha'}</span>
+          </h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            Adicione os links de todos os seus grupos de WhatsApp para serem enchidos sequencialmente baseado no total de cliques.
           </p>
         </div>
       </div>
 
       {/* Main card */}
-      <Card className="border-border">
-        <CardContent className="pt-6 space-y-5">
+      <Card>
+        <CardContent className="pt-5 sm:pt-6 space-y-5">
           {/* Slug bar */}
-          <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-3">
-            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => { setEditSlug(campaign?.slug || ''); setSlugAvailable(null); setSlugDialogOpen(true); }}>
-              <Pencil className="h-3.5 w-3.5" />
-            </Button>
-            <code className="text-sm flex-1 truncate">/{campaign?.slug}</code>
-            <Button variant="outline" size="sm" className="gap-1.5 shrink-0" onClick={() => setRoutesDialogOpen(true)}>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-muted/50 rounded-lg p-2.5 sm:p-3">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => { setEditSlug(campaign?.slug || ''); setSlugAvailable(null); setSlugDialogOpen(true); }}>
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+              <code className="text-xs sm:text-sm flex-1 truncate">/{campaign?.slug}</code>
+            </div>
+            <Button variant="outline" size="sm" className="gap-1.5 shrink-0 w-full sm:w-auto" onClick={() => setRoutesDialogOpen(true)}>
               <Copy className="h-3.5 w-3.5" /> COPIAR LINK
             </Button>
           </div>
 
           {/* Click limit + Tags */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">Limite de Cliques</Label>
-              <Input
-                type="number"
-                value={clickLimit}
-                onChange={e => setClickLimit(e.target.value)}
-                className="h-9"
-              />
+              <Input type="number" value={clickLimit} onChange={e => setClickLimit(e.target.value)} className="h-9" />
               <p className="text-[11px] text-muted-foreground">Quantidade de cliques antes de passar para o próximo grupo</p>
             </div>
             <div className="space-y-1.5">
@@ -230,13 +221,13 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
           </div>
 
           {/* Links list */}
-          <div className="border rounded-lg">
-            <div className="flex items-center justify-between p-3 border-b">
+          <div className="border rounded-lg overflow-hidden">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 border-b">
               <div>
                 <p className="text-sm font-medium">Lista de links</p>
                 <p className="text-[11px] text-muted-foreground">As rotas que estão vinculadas ao link</p>
               </div>
-              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setAddLinkOpen(true)}>
+              <Button size="sm" variant="outline" className="gap-1.5 w-full sm:w-auto" onClick={() => setAddLinkOpen(true)}>
                 <Plus className="h-3.5 w-3.5" /> NOVO LINK
               </Button>
             </div>
@@ -247,33 +238,36 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
               ) : entries.length === 0 ? (
                 <p className="text-sm text-muted-foreground p-4">Nenhum grupo adicionado. Clique em "NOVO LINK" para começar.</p>
               ) : (
-                entries.map((entry: any, idx: number) => {
+                entries.map((entry: any) => {
                   const isFull = (entry.max_capacity > 0 && entry.member_count >= entry.max_capacity) ||
                     (entry.max_clicks > 0 && entry.click_count >= entry.max_clicks);
                   return (
-                    <div key={entry.id} className={`flex items-center gap-3 p-3 ${entry.is_paused || isFull ? 'opacity-50' : ''}`}>
+                    <div key={entry.id} className={`flex items-center gap-2.5 sm:gap-3 p-3 ${entry.is_paused || isFull ? 'opacity-50' : ''}`}>
                       {/* Click count badge */}
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 shrink-0">
-                        <span className="text-sm font-bold text-primary">{entry.click_count}</span>
+                      <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-primary/10 shrink-0">
+                        <span className="text-xs sm:text-sm font-bold text-primary">{entry.click_count}</span>
                       </div>
 
                       {/* Group info */}
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm">{entry.name}</p>
-                        <p className="text-xs text-muted-foreground truncate">{entry.invite_link}</p>
+                        <p className="font-medium text-sm truncate">{entry.name}</p>
+                        <p className="text-[11px] sm:text-xs text-muted-foreground truncate">{entry.invite_link}</p>
                         {isFull && <Badge variant="destructive" className="mt-1 text-[10px]">Lotado</Badge>}
                         {entry.is_paused && !isFull && <Badge variant="secondary" className="mt-1 text-[10px]">Pausado</Badge>}
                       </div>
 
                       {/* Actions */}
-                      <div className="flex items-center gap-0.5 shrink-0">
+                      <div className="flex items-center shrink-0">
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
                           updateEntry.mutate({ id: entry.id, is_paused: !entry.is_paused }, { onSuccess: loadEntries });
                         }}>
                           {entry.is_paused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditEntry(entry)}>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 hidden sm:inline-flex" onClick={() => openEditEntry(entry)}>
                           <Settings className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditEntry(entry)}>
+                          <Settings className="h-3.5 w-3.5 sm:hidden" />
                         </Button>
                         <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
                           deleteEntry.mutate(entry.id, { onSuccess: loadEntries });
@@ -297,8 +291,8 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="pt-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
                   <Label>Campanha ativa</Label>
                   <p className="text-xs text-muted-foreground">Desativar impede novos redirecionamentos</p>
                 </div>
@@ -323,7 +317,7 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
 
           {/* Save button */}
           <div className="flex justify-end">
-            <Button onClick={handleSaveCampaign} className="gap-1.5">
+            <Button onClick={handleSaveCampaign} className="gap-1.5 w-full sm:w-auto">
               💾 SALVAR
             </Button>
           </div>
@@ -332,7 +326,7 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
 
       {/* Slug Edit Dialog */}
       <Dialog open={slugDialogOpen} onOpenChange={setSlugDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Edição do Slug do Link</DialogTitle>
           </DialogHeader>
@@ -340,26 +334,28 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
             <div className="space-y-2">
               <Label>Slug</Label>
               <p className="text-xs text-muted-foreground">É o código do link que acompanha o domínio</p>
-              <div className="flex items-center gap-2">
-                {slugAvailable === true && <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" />}
-                {slugAvailable === false && <XCircle className="h-5 w-5 text-destructive shrink-0" />}
-                <div className="flex items-center flex-1 border rounded-md overflow-hidden">
-                  <span className="px-2 text-sm text-muted-foreground bg-muted border-r">/</span>
-                  <Input
-                    value={editSlug}
-                    onChange={e => { setEditSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-')); setSlugAvailable(null); }}
-                    className="border-0 rounded-none"
-                    placeholder="seu-slug"
-                  />
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  {slugAvailable === true && <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />}
+                  {slugAvailable === false && <XCircle className="h-5 w-5 text-destructive shrink-0" />}
+                  <div className="flex items-center flex-1 border rounded-md overflow-hidden">
+                    <span className="px-2 text-sm text-muted-foreground bg-muted border-r">/</span>
+                    <Input
+                      value={editSlug}
+                      onChange={e => { setEditSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-')); setSlugAvailable(null); }}
+                      className="border-0 rounded-none"
+                      placeholder="seu-slug"
+                    />
+                  </div>
                 </div>
-                <Button size="sm" onClick={handleCheckSlug} disabled={checkingSlug || !editSlug} className="gap-1 shrink-0">
+                <Button size="sm" onClick={handleCheckSlug} disabled={checkingSlug || !editSlug} className="gap-1 shrink-0 w-full sm:w-auto">
                   🔍 VERIFICAR
                 </Button>
               </div>
-              {slugAvailable === true && <p className="text-xs text-green-600">Slug disponível!</p>}
+              {slugAvailable === true && <p className="text-xs text-primary">Slug disponível!</p>}
               {slugAvailable === false && <p className="text-xs text-destructive">Slug já em uso. Escolha outro.</p>}
             </div>
-            <Button onClick={handleSaveSlug} disabled={!slugAvailable} className="gap-1.5">
+            <Button onClick={handleSaveSlug} disabled={!slugAvailable} className="gap-1.5 w-full sm:w-auto">
               💾 SALVAR
             </Button>
           </div>
@@ -368,39 +364,34 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
 
       {/* Routes/Copy Link Dialog */}
       <Dialog open={routesDialogOpen} onOpenChange={setRoutesDialogOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Rotas</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            {/* Primary route */}
-            <div className="border rounded-lg p-3 space-y-1">
-              <div className="flex items-center justify-between">
-                <code className="text-sm truncate flex-1">{publicLink}</code>
-                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => { navigator.clipboard.writeText(publicLink); toast.success('Link copiado!'); }}>
+            <div className="border rounded-lg p-3 space-y-2">
+              <div className="flex items-start gap-2">
+                <p className="text-xs sm:text-sm break-all flex-1 font-mono">{publicLink}</p>
+                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => copyToClipboard(publicLink)}>
                   <Copy className="h-3.5 w-3.5" />
                 </Button>
               </div>
               <div className="flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                <span className="text-[11px] text-green-600">ativo</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                <span className="text-[11px] text-primary">ativo</span>
               </div>
             </div>
 
-            {/* API route */}
-            <div className="border rounded-lg p-3 space-y-1">
-              <div className="flex items-center justify-between">
-                <code className="text-sm truncate flex-1">{import.meta.env.VITE_SUPABASE_URL}/functions/v1/group-rotator/{campaign?.slug}</code>
-                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => {
-                  navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/group-rotator/${campaign?.slug}`);
-                  toast.success('Link da API copiado!');
-                }}>
+            <div className="border rounded-lg p-3 space-y-2">
+              <div className="flex items-start gap-2">
+                <p className="text-xs sm:text-sm break-all flex-1 font-mono">{apiLink}</p>
+                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => copyToClipboard(apiLink, 'Link da API copiado!')}>
                   <Copy className="h-3.5 w-3.5" />
                 </Button>
               </div>
               <div className="flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                <span className="text-[11px] text-green-600">ativo</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                <span className="text-[11px] text-primary">ativo</span>
               </div>
             </div>
 
@@ -413,7 +404,7 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
 
       {/* Add New Link Dialog */}
       <Dialog open={addLinkOpen} onOpenChange={setAddLinkOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
           <DialogHeader><DialogTitle>Adicionar Grupo</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -438,7 +429,7 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
 
       {/* Edit Entry Dialog */}
       <Dialog open={editEntryDialogOpen} onOpenChange={setEditEntryDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
           <DialogHeader><DialogTitle>Editar Grupo</DialogTitle></DialogHeader>
           {editingEntry && (
             <div className="space-y-4">

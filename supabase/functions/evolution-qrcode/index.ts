@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
     const action = body.action || "connect";
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 15000);
+    const timeout = setTimeout(() => controller.abort(), 30000);
 
     try {
       if (action === "create") {

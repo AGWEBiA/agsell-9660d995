@@ -153,6 +153,22 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
     );
   };
 
+  const filteredTags = useMemo(() => {
+    const available = tags.filter((t: any) => !selectedTags.includes(t.id));
+    if (!tagSearch.trim()) return available;
+    return available.filter((t: any) => t.name.toLowerCase().includes(tagSearch.toLowerCase()));
+  }, [tags, selectedTags, tagSearch]);
+
+  const handleCreateTag = () => {
+    if (!tagSearch.trim()) return;
+    createTag.mutate({ name: tagSearch.trim() }, {
+      onSuccess: (newTag: any) => {
+        setSelectedTags(prev => [...prev, newTag.id]);
+        setTagSearch('');
+      },
+    });
+  };
+
   const copyToClipboard = (text: string, label = 'Link copiado!') => {
     navigator.clipboard.writeText(text);
     toast.success(label);

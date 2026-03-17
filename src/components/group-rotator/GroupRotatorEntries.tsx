@@ -50,7 +50,7 @@ export function GroupRotatorEntries({ campaignId, onBack }: Props) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [tagSearch, setTagSearch] = useState('');
-  const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
+  
 
   useEffect(() => {
     if (campaign) {

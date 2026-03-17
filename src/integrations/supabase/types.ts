@@ -2183,6 +2183,8 @@ export type Database = {
           field_mapping: Json | null
           file_name: string
           id: string
+          import_data: Json | null
+          import_tags: string[] | null
           organization_id: string | null
           processed_rows: number | null
           status: string | null
@@ -2198,6 +2200,8 @@ export type Database = {
           field_mapping?: Json | null
           file_name: string
           id?: string
+          import_data?: Json | null
+          import_tags?: string[] | null
           organization_id?: string | null
           processed_rows?: number | null
           status?: string | null
@@ -2213,6 +2217,8 @@ export type Database = {
           field_mapping?: Json | null
           file_name?: string
           id?: string
+          import_data?: Json | null
+          import_tags?: string[] | null
           organization_id?: string | null
           processed_rows?: number | null
           status?: string | null

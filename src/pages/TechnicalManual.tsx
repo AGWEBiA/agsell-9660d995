@@ -607,6 +607,50 @@ Permitir que clientes dos usuários da plataforma abram e acompanhem tickets de 
 
 ---
 
+## 4.21 Rotador de Grupos (Smart Link)
+
+### Objetivo
+Distribuir automaticamente usuários entre múltiplos grupos de WhatsApp via link único inteligente, usando round-robin com controle de capacidade e cliques.
+
+### Disponibilidade
+- Planos: Professional, Enterprise, Agência
+- Feature Gate: \\\`whatsapp\\\`
+
+### Rotas
+- \\\`/group-rotator\\\` — Gestão de campanhas e grupos (autenticado)
+- \\\`/r/:slug\\\` — Link público de redirecionamento (sem autenticação)
+
+### Tabelas
+- \\\`group_rotator_campaigns\\\` — Campanhas com slug único, estratégia round-robin, índice atual e total de cliques
+- \\\`group_rotator_entries\\\` — Grupos individuais com link de convite, capacidade máxima, limite de cliques, contadores e status (pausado/ativo)
+- \\\`group_rotator_clicks\\\` — Log de cliques com hash do IP e user agent para analytics
+
+### Edge Function
+- \\\`group-rotator\\\` — Endpoint público (GET) que processa o redirecionamento inteligente
+  - Busca campanha ativa por slug
+  - Filtra grupos disponíveis (não pausados, não lotados, dentro do limite de cliques)
+  - Aplica round-robin: \\\`current_index % available.length\\\`
+  - Incrementa contadores (click_count, total_clicks, current_index)
+  - Registra log de clique com IP hash (SHA-256 truncado) para privacidade
+  - Retorna \\\`redirect_url\\\`, \\\`group_name\\\` e \\\`campaign_name\\\`
+
+### Critérios de Troca Automática
+- **Por limite de cliques**: Quando \\\`click_count >= max_clicks\\\` (se max_clicks > 0), o grupo é excluído da rotação
+- **Por lotação**: Quando \\\`member_count >= max_capacity\\\` (se max_capacity > 0), o grupo é excluído
+- **Pausa manual**: Grupos com \\\`is_paused = true\\\` são ignorados na distribuição
+
+### Fluxo do Usuário Final
+1. Acessa link \\\`/r/meu-slug\\\`
+2. Frontend chama edge function \\\`group-rotator/meu-slug\\\`
+3. Exibe tela de carregamento → mensagem de confirmação → redirecionamento para WhatsApp
+
+### RLS
+- Campanhas: \\\`is_org_member()\\\` para CRUD autenticado + SELECT anon para campanhas ativas
+- Entries: JOIN com campaign para validação de organização + anon para SELECT/UPDATE (contadores)
+- Clicks: SELECT autenticado via JOIN + INSERT anon (log público)
+
+---
+
 # 5. SISTEMA DE AUTENTICAÇÃO
 
 

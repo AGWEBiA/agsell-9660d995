@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -7,9 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Copy, Code, Globe, Webhook, ExternalLink, Paintbrush, Check } from 'lucide-react';
+import { Copy, Code, Globe, Webhook, ExternalLink, Paintbrush, Check, Send, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { HelpTooltip } from '@/components/ui/help-tooltip';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Props {
   open: boolean;
@@ -29,6 +30,57 @@ const DEFAULT_STYLES = {
 export function FormIntegrationDialog({ open, onOpenChange, formId, formName }: Props) {
   const [copied, setCopied] = useState<string | null>(null);
   const [styles, setStyles] = useState(DEFAULT_STYLES);
+  const [webhookUrl, setWebhookUrl] = useState('');
+  const [webhookHeaders, setWebhookHeaders] = useState('');
+  const [savingWebhook, setSavingWebhook] = useState(false);
+
+  // Load existing webhook config
+  useEffect(() => {
+    if (open && formId) {
+      supabase
+        .from('forms')
+        .select('webhook_url, webhook_headers')
+        .eq('id', formId)
+        .single()
+        .then(({ data }) => {
+          if (data) {
+            setWebhookUrl(data.webhook_url || '');
+            setWebhookHeaders(data.webhook_headers ? JSON.stringify(data.webhook_headers, null, 2) : '');
+          }
+        });
+    }
+  }, [open, formId]);
+
+  const handleSaveWebhook = async () => {
+    setSavingWebhook(true);
+    try {
+      let parsedHeaders = null;
+      if (webhookHeaders.trim()) {
+        try {
+          parsedHeaders = JSON.parse(webhookHeaders);
+        } catch {
+          toast.error('Headers inválidos. Use JSON válido.');
+          setSavingWebhook(false);
+          return;
+        }
+      }
+
+      const { error } = await supabase
+        .from('forms')
+        .update({
+          webhook_url: webhookUrl.trim() || null,
+          webhook_headers: parsedHeaders,
+        })
+        .eq('id', formId);
+
+      if (error) throw error;
+      toast.success('Webhook configurado com sucesso!');
+    } catch (err: any) {
+      toast.error('Erro ao salvar webhook: ' + err.message);
+    } finally {
+      setSavingWebhook(false);
+    }
+  };
 
   const baseUrl = window.location.origin;
   const formUrl = `${baseUrl}/forms/${formId}`;
@@ -186,8 +238,11 @@ Content-Type: application/json
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="embed" className="w-full">
-          <TabsList className="grid grid-cols-5 w-full">
+        <Tabs defaultValue="webhook-out" className="w-full">
+          <TabsList className="grid grid-cols-6 w-full">
+            <TabsTrigger value="webhook-out" className="text-xs">
+              <Send className="h-3.5 w-3.5 mr-1" />Webhook
+            </TabsTrigger>
             <TabsTrigger value="embed" className="text-xs">
               <Code className="h-3.5 w-3.5 mr-1" />Embed
             </TabsTrigger>
@@ -204,6 +259,74 @@ Content-Type: application/json
               <Paintbrush className="h-3.5 w-3.5 mr-1" />Estilo
             </TabsTrigger>
           </TabsList>
+
+          {/* WEBHOOK DE SAÍDA */}
+          <TabsContent value="webhook-out" className="space-y-4 mt-4">
+            <div>
+              <h3 className="font-semibold text-sm mb-1">Webhook de Saída</h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                Configure uma URL para receber os dados de cada submissão automaticamente via POST. Ideal para integrar com ferramentas externas, n8n, Make, Zapier, ou seu próprio sistema.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Label className="text-sm flex items-center gap-1">
+                  URL do Webhook
+                  <HelpTooltip content="A cada submissão, enviaremos um POST com os dados do formulário para esta URL." />
+                </Label>
+                <Input
+                  placeholder="https://seu-sistema.com/webhook/forms"
+                  value={webhookUrl}
+                  onChange={(e) => setWebhookUrl(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-sm flex items-center gap-1">
+                  Headers customizados (JSON, opcional)
+                  <HelpTooltip content="Headers HTTP adicionais enviados junto ao webhook. Ex: {&quot;Authorization&quot;: &quot;Bearer xxx&quot;}" />
+                </Label>
+                <Textarea
+                  placeholder='{"Authorization": "Bearer seu_token"}'
+                  value={webhookHeaders}
+                  onChange={(e) => setWebhookHeaders(e.target.value)}
+                  rows={3}
+                  className="font-mono text-xs"
+                />
+              </div>
+
+              <Button onClick={handleSaveWebhook} disabled={savingWebhook} className="w-full">
+                {savingWebhook ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+                {savingWebhook ? 'Salvando...' : 'Salvar Webhook'}
+              </Button>
+            </div>
+
+            <Separator />
+
+            <div className="p-3 rounded-lg bg-muted/50 border">
+              <h4 className="font-medium text-sm mb-2">Payload enviado</h4>
+              <pre className="text-xs font-mono whitespace-pre-wrap">{`{
+  "event": "form_submission",
+  "form_id": "${formId}",
+  "form_name": "${formName}",
+  "submission_id": "uuid",
+  "contact_id": "uuid | null",
+  "data": {
+    "nome": "João Silva",
+    "email": "joao@email.com",
+    "telefone": "(11) 99999-9999"
+  },
+  "submitted_at": "2026-03-18T12:00:00Z"
+}`}</pre>
+            </div>
+
+            <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+              <p className="text-xs text-blue-700 dark:text-blue-300">
+                💡 <strong>API Pública:</strong> Ferramentas externas também podem consultar as submissões via API usando <code>GET /forms/{'{id}'}/submissions</code> com uma API Key. Veja a aba "API".
+              </p>
+            </div>
+          </TabsContent>
 
           {/* EMBED (iframe) */}
           <TabsContent value="embed" className="space-y-4 mt-4">

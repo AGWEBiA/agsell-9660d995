@@ -267,6 +267,12 @@ Deno.serve(async (req) => {
       case "tags":
         result = await handleTags(supabase, method, orgId, resourceId, req);
         break;
+      case "forms": {
+        // /forms or /forms/:id/submissions
+        const formSubResource = pathParts[3]; // "submissions" or undefined
+        result = await handleFormSubmissions(supabase, method, orgId, resourceId, formSubResource, req);
+        break;
+      }
       case "metrics": {
         if (method !== "GET") {
           result = { error: "Method not allowed" };
@@ -281,7 +287,7 @@ Deno.serve(async (req) => {
           JSON.stringify({
             error: "Unknown resource",
             code: "NOT_FOUND",
-            available_resources: ["contacts", "companies", "deals", "tags", "metrics"],
+            available_resources: ["contacts", "companies", "deals", "tags", "forms", "metrics"],
           }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
@@ -815,6 +821,87 @@ async function metricsForms(supabase: any, orgId: string, from: string, to: stri
   };
 }
 
+// --- Form Submissions via API Key (authenticated) ---
+// deno-lint-ignore no-explicit-any
+async function handleFormSubmissions(supabase: any, method: string, orgId: string, formId: string | undefined, subResource: string | undefined, req: Request) {
+  if (method !== "GET") return { error: "Method not allowed. Use GET to list form submissions." };
+
+  // GET /forms — list all forms
+  if (!formId) {
+    const { data, error, count } = await supabase
+      .from("forms")
+      .select("id, name, is_active, submissions_count, created_at, fields", { count: "exact" })
+      .eq("organization_id", orgId)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    return error ? { error: "Failed to fetch forms" } : { data, meta: { total: count } };
+  }
+
+  // GET /forms/:id — form details
+  if (!subResource) {
+    const { data, error } = await supabase
+      .from("forms")
+      .select("id, name, is_active, submissions_count, fields, created_at")
+      .eq("id", formId)
+      .eq("organization_id", orgId)
+      .single();
+    return error ? { error: "Form not found" } : { data };
+  }
+
+  // GET /forms/:id/submissions
+  if (subResource === "submissions") {
+    const url = new URL(req.url);
+    const { limit, cursor, offset } = parsePaginationParams(url);
+    const fieldFilter = url.searchParams.get("field");
+    const valueFilter = url.searchParams.get("value");
+
+    // Verify form belongs to org
+    const { data: form, error: fErr } = await supabase
+      .from("forms")
+      .select("id")
+      .eq("id", formId)
+      .eq("organization_id", orgId)
+      .single();
+    if (fErr || !form) return { error: "Form not found" };
+
+    let query = supabase
+      .from("form_submissions")
+      .select("id, form_id, data, contact_id, created_at", { count: "exact" })
+      .eq("form_id", formId)
+      .order("created_at", { ascending: false })
+      .limit(limit + 1);
+
+    if (cursor) query = query.lt("created_at", cursor);
+    else if (offset !== null) query = query.range(offset, offset + limit);
+
+    const { data: submissions, error: sErr, count } = await query;
+    if (sErr) return { error: "Failed to fetch submissions" };
+
+    let items = submissions || [];
+
+    // Filter by specific field value if requested
+    if (fieldFilter && valueFilter) {
+      items = items.filter((s: Record<string, unknown>) => {
+        const d = s.data as Record<string, unknown>;
+        if (!d) return false;
+        const val = String(d[fieldFilter] || "").toLowerCase();
+        return val.includes(valueFilter.toLowerCase());
+      });
+    }
+
+    const hasMore = items.length > limit;
+    const finalItems = hasMore ? items.slice(0, limit) : items;
+    const nextCursor = hasMore && finalItems.length > 0 ? finalItems[finalItems.length - 1].created_at : null;
+
+    return {
+      data: finalItems,
+      meta: { total: count, limit, has_more: hasMore, next_cursor: nextCursor },
+    };
+  }
+
+  return { error: "Unknown sub-resource. Use /forms/:id/submissions" };
+}
+
 // --- Public Form Submission (no API key required) ---
 // deno-lint-ignore no-explicit-any
 async function handlePublicFormSubmit(supabase: any, formId: string, req: Request) {
@@ -887,6 +974,42 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
         );
       }
     } catch {}
+
+    // Dispatch outbound webhook if configured
+    try {
+      const { data: formWithWebhook } = await supabase
+        .from("forms")
+        .select("webhook_url, webhook_headers, name")
+        .eq("id", formId)
+        .single();
+
+      if (formWithWebhook?.webhook_url) {
+        const webhookPayload = {
+          event: "form_submission",
+          form_id: formId,
+          form_name: formWithWebhook.name,
+          submission_id: submission.id,
+          contact_id: submission.contact_id || null,
+          data: body,
+          submitted_at: new Date().toISOString(),
+        };
+
+        const webhookHeaders: Record<string, string> = {
+          "Content-Type": "application/json",
+          "User-Agent": "AGSell-Webhook/1.0",
+          ...(formWithWebhook.webhook_headers || {}),
+        };
+
+        // Fire-and-forget — don't block the response
+        fetch(formWithWebhook.webhook_url, {
+          method: "POST",
+          headers: webhookHeaders,
+          body: JSON.stringify(webhookPayload),
+        }).catch((err) => console.error("Webhook dispatch failed:", err));
+      }
+    } catch (webhookErr) {
+      console.error("Webhook lookup error:", webhookErr);
+    }
 
     return new Response(
       JSON.stringify({ success: true, submission_id: submission.id }),

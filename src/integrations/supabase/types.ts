@@ -6492,6 +6492,15 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["org_role"]
       }
+      get_rotator_entries_for_campaign: {
+        Args: { _campaign_id: string }
+        Returns: {
+          entry_name: string
+          id: string
+          invite_link: string
+          sort_order: number
+        }[]
+      }
       get_ticket_by_protocol: {
         Args: { _protocol: string }
         Returns: {
@@ -6528,6 +6537,10 @@ export type Database = {
       }
       increment_automation_executions: {
         Args: { automation_id: string }
+        Returns: undefined
+      }
+      increment_rotator_entry_clicks: {
+        Args: { _entry_id: string }
         Returns: undefined
       }
       is_agency_of: {

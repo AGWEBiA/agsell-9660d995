@@ -15,7 +15,7 @@ import {
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell,
-} from 'recharts';
+} from '@/lib/recharts';
 
 interface CustomReport {
   id: string;

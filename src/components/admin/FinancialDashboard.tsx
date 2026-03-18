@@ -35,7 +35,7 @@ import {
   Pie,
   Cell,
   Legend,
-} from 'recharts';
+} from '@/lib/recharts';
 
 const fmt = (v: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { useSentimentAnalysis } from '@/hooks/useSentimentAnalysis';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from '@/lib/recharts';
 import { Brain, Smile, Frown, Meh, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
 

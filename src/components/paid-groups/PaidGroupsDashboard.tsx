@@ -6,7 +6,7 @@ import { Users2, UserPlus, UserMinus, TrendingUp, DollarSign, ShieldCheck, BarCh
 import { usePaidGroupMembers, usePaidGroups, usePaidGroupProducts } from '@/hooks/usePaidGroups';
 import { format, subDays, isAfter, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid, Legend } from '@/lib/recharts';
 
 const COLORS = [
   'hsl(var(--primary))',

@@ -9,7 +9,7 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 import { Activity, Code, Copy, Eye, MousePointer, Zap } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from '@/lib/recharts';
 
 export default function EventTracking() {
   const { currentOrganization } = useOrganization();

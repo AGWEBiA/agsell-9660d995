@@ -11,7 +11,7 @@ import {
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell,
-} from 'recharts';
+} from '@/lib/recharts';
 
 const revenueByMonth = [
   { month: 'Jan', revenue: 28500, campaigns: 3200, automations: 18700, organic: 6600 },

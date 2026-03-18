@@ -8,7 +8,7 @@ import {
   BarChart3, Clock, CheckCircle2, MessageSquare, Star, Users, TrendingUp, AlertTriangle,
 } from 'lucide-react';
 import { useInboxReports } from '@/hooks/useInboxReports';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid, LineChart, Line } from '@/lib/recharts';
 
 const CHANNEL_COLORS: Record<string, string> = {
   whatsapp: '#25d366',

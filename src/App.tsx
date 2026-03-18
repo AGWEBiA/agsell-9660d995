@@ -25,6 +25,7 @@ import PurchaseSuccess from "./pages/PurchaseSuccess";
 import SubscriptionExpired from "./pages/SubscriptionExpired";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import ApiDocs from "./pages/ApiDocs";
 
 // Dashboard Pages
 import Dashboard from "./pages/Dashboard";
@@ -129,6 +130,7 @@ const App = () => (
                   <Route path="/agency-invite/:token" element={<AgencyInvite />} />
                   <Route path="/support-portal/:orgSlug" element={<SupportPortal />} />
                   <Route path="/r/:slug" element={<GroupRedirect />} />
+                  <Route path="/api-docs" element={<ApiDocs />} />
                   <Route path="/manual-tecnico" element={<TechnicalManual />} />
                   <Route path="/status" element={<SystemStatus />} />
                   <Route path="/subscription-expired" element={<ProtectedRoute allowExpired><SubscriptionExpired /></ProtectedRoute>} />

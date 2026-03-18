@@ -25,6 +25,7 @@ import PurchaseSuccess from "./pages/PurchaseSuccess";
 import SubscriptionExpired from "./pages/SubscriptionExpired";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import ApiDocs from "./pages/ApiDocs";
 
 // Dashboard Pages
 import Dashboard from "./pages/Dashboard";

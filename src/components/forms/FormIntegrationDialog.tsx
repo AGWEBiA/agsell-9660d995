@@ -30,6 +30,57 @@ const DEFAULT_STYLES = {
 export function FormIntegrationDialog({ open, onOpenChange, formId, formName }: Props) {
   const [copied, setCopied] = useState<string | null>(null);
   const [styles, setStyles] = useState(DEFAULT_STYLES);
+  const [webhookUrl, setWebhookUrl] = useState('');
+  const [webhookHeaders, setWebhookHeaders] = useState('');
+  const [savingWebhook, setSavingWebhook] = useState(false);
+
+  // Load existing webhook config
+  useEffect(() => {
+    if (open && formId) {
+      supabase
+        .from('forms')
+        .select('webhook_url, webhook_headers')
+        .eq('id', formId)
+        .single()
+        .then(({ data }) => {
+          if (data) {
+            setWebhookUrl(data.webhook_url || '');
+            setWebhookHeaders(data.webhook_headers ? JSON.stringify(data.webhook_headers, null, 2) : '');
+          }
+        });
+    }
+  }, [open, formId]);
+
+  const handleSaveWebhook = async () => {
+    setSavingWebhook(true);
+    try {
+      let parsedHeaders = null;
+      if (webhookHeaders.trim()) {
+        try {
+          parsedHeaders = JSON.parse(webhookHeaders);
+        } catch {
+          toast.error('Headers inválidos. Use JSON válido.');
+          setSavingWebhook(false);
+          return;
+        }
+      }
+
+      const { error } = await supabase
+        .from('forms')
+        .update({
+          webhook_url: webhookUrl.trim() || null,
+          webhook_headers: parsedHeaders,
+        })
+        .eq('id', formId);
+
+      if (error) throw error;
+      toast.success('Webhook configurado com sucesso!');
+    } catch (err: any) {
+      toast.error('Erro ao salvar webhook: ' + err.message);
+    } finally {
+      setSavingWebhook(false);
+    }
+  };
 
   const baseUrl = window.location.origin;
   const formUrl = `${baseUrl}/forms/${formId}`;

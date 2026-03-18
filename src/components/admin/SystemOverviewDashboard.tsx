@@ -32,7 +32,7 @@ import {
   Pie,
   Cell,
   Legend,
-} from 'recharts';
+} from '@/lib/recharts';
 
 function StatCard({
   title,

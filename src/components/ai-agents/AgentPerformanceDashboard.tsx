@@ -6,7 +6,7 @@ import { MessageSquare, Star, UserCheck, Clock, TrendingUp, Bot } from 'lucide-r
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from '@/lib/recharts';
 
 export function AgentPerformanceDashboard() {
   const { currentOrganization } = useOrganization();

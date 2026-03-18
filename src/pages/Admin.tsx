@@ -35,7 +35,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from '@/lib/recharts';
 import { PlansManagement } from '@/components/admin/PlansManagement';
 import { EmailCostProjection } from '@/components/admin/EmailCostProjection';
 import { EmailProviderConfig } from '@/components/admin/EmailProviderConfig';

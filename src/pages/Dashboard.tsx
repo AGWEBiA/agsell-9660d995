@@ -36,7 +36,7 @@ import {
   PieChart,
   Pie,
   Cell,
-} from 'recharts';
+} from '@/lib/recharts';
 import {
   useDashboardStats,
   useLeadsByMonth,

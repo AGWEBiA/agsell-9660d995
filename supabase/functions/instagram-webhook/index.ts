@@ -53,26 +53,48 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Process messaging events (DMs)
+      // Process messaging events (DMs, story replies, referrals, ads)
       const messagingEvents = entry.messaging || [];
       for (const event of messagingEvents) {
+        // Referral (Ref URL or Ads click-to-DM)
+        if (event.referral) {
+          const refEventType = event.referral.source === "ADS" ? "ads_click" : "ref_url_click";
+          await processEvent(supabase, igAccount, refEventType, {
+            sender_id: event.sender?.id,
+            ref: event.referral.ref,
+            source: event.referral.source,
+            type: event.referral.type,
+            ad_id: event.referral.ad_id,
+            timestamp: event.timestamp,
+          });
+        }
+
         if (event.message) {
           const eventData = {
             sender_id: event.sender?.id,
             message_text: event.message?.text,
             message_id: event.message?.mid,
             timestamp: event.timestamp,
+            is_story_reply: !!event.message?.reply_to?.story,
+            story_id: event.message?.reply_to?.story?.id,
+            is_share: !!event.message?.attachments?.some((a: any) => a.type === "share"),
           };
 
           // Route DM to SAC Inbox
           await routeDmToInbox(supabase, igAccount, eventData);
 
-          // Process automations
+          // Determine specific event type
+          if (eventData.is_story_reply) {
+            await processEvent(supabase, igAccount, "story_reply_received", eventData);
+          } else if (eventData.is_share) {
+            await processEvent(supabase, igAccount, "share_dm_received", eventData);
+          }
+          // Always fire dm_received too
           await processEvent(supabase, igAccount, "dm_received", eventData);
         }
       }
 
-      // Process changes (comments, mentions)
+      // Process changes (comments, mentions, story_insights)
       const changes = entry.changes || [];
       for (const change of changes) {
         if (change.field === "comments") {
@@ -88,6 +110,12 @@ Deno.serve(async (req) => {
           await processEvent(supabase, igAccount, "mention_received", {
             media_id: change.value?.media_id,
             comment_id: change.value?.comment_id,
+            from_username: change.value?.username,
+          });
+        }
+        if (change.field === "story_insights") {
+          await processEvent(supabase, igAccount, "story_reply_received", {
+            story_id: change.value?.media_id,
           });
         }
       }

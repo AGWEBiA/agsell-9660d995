@@ -41,9 +41,12 @@ export function Logo({
 }: LogoProps) {
   // When showText is true, use the full logo with integrated text
   if (showText) {
+    // Use white version in dark mode for better contrast
+    const isDark = document.documentElement.classList.contains('dark');
+    const fullSrc = isDark ? logoFullWhite : logoFull;
     return (
       <img 
-        src={logoFull} 
+        src={fullSrc} 
         alt="AG Sell" 
         className={cn(fullLogoSizeMap[size], 'object-contain', className)}
       />

@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
 });
 
 async function resolveEvolutionConfig(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   organizationId: string | undefined,
   requestedInstanceName: string,
 ): Promise<EvolutionConfig> {
@@ -195,8 +195,7 @@ async function resolveEvolutionConfig(
     .eq("key", "evolution_api")
     .maybeSingle();
 
-  const globalValue = (globalConfig?.value || {}) as Record<string, string>;
-
+  const globalValue = ((globalConfig as Record<string, unknown> | null)?.value || {}) as Record<string, string>;
   const integrationApiUrl =
     integrationConfig?.own_api_url?.trim() ||
     integrationConfig?.api_url?.trim() ||

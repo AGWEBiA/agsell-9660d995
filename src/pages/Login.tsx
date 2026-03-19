@@ -47,7 +47,7 @@ export default function Login() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <img src="/src/assets/agsell-logo-full.png" alt="AG Sell" className="h-16 w-auto object-contain" />
+          <img src={logoFull} alt="AG Sell" className="h-16 w-auto object-contain" />
         </div>
 
         <Card>

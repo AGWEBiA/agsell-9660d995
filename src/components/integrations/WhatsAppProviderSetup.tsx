@@ -324,16 +324,23 @@ export function WhatsAppProviderSetup() {
 
   const handleTestEvolution = async (instance: WhatsAppInstance) => {
     setIsTesting(instance.id);
+    setTestResults(prev => ({ ...prev, [instance.id]: undefined as any }));
     try {
-      const { data } = await supabase.functions.invoke('evolution-qrcode', {
+      const { data, error } = await supabase.functions.invoke('evolution-qrcode', {
         body: { instance_name: instance.config.instance_name, organization_id: instance.organization_id || '', action: 'status' },
       });
+      if (error) throw error;
       if (data?.data?.instance?.state === 'open') {
+        setTestResults(prev => ({ ...prev, [instance.id]: { status: 'connected', message: 'WhatsApp conectado e funcionando!' } }));
         toast.success('Conexão ativa! WhatsApp conectado.');
       } else {
-        toast.warning(`Status: ${data?.data?.instance?.state || 'desconectado'}`);
+        const state = data?.data?.instance?.state || data?.error || 'desconectado';
+        setTestResults(prev => ({ ...prev, [instance.id]: { status: 'disconnected', message: `Status: ${state}. Reconecte via QR Code.` } }));
+        toast.warning(`Status: ${state}`);
       }
-    } catch {
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro desconhecido';
+      setTestResults(prev => ({ ...prev, [instance.id]: { status: 'error', message: msg } }));
       toast.error('Não foi possível verificar o status.');
     } finally {
       setIsTesting(null);
@@ -342,18 +349,23 @@ export function WhatsAppProviderSetup() {
 
   const handleTestBusiness = async (instance: WhatsAppInstance) => {
     setIsTesting(instance.id);
+    setTestResults(prev => ({ ...prev, [instance.id]: undefined as any }));
     try {
       const response = await fetch(`https://graph.facebook.com/v18.0/${instance.config.phone_number_id}`, {
         headers: { Authorization: `Bearer ${instance.config.access_token}` },
       });
       if (response.ok) {
         const data = await response.json();
+        setTestResults(prev => ({ ...prev, [instance.id]: { status: 'connected', message: `Conectado! Número: ${data.display_phone_number || instance.config.phone_number_id}` } }));
         toast.success(`Conectado! Número: ${data.display_phone_number || instance.config.phone_number_id}`);
       } else {
         const error = await response.json();
-        toast.error(`Erro: ${error.error?.message || 'Token inválido'}`);
+        const msg = error.error?.message || 'Token inválido ou expirado';
+        setTestResults(prev => ({ ...prev, [instance.id]: { status: 'error', message: msg } }));
+        toast.error(`Erro: ${msg}`);
       }
     } catch {
+      setTestResults(prev => ({ ...prev, [instance.id]: { status: 'error', message: 'Não foi possível conectar à API da Meta.' } }));
       toast.error('Não foi possível conectar.');
     } finally {
       setIsTesting(null);

@@ -59,6 +59,13 @@ export const nodeCategories = [
     ],
   },
   {
+    label: 'Instagram',
+    nodes: [
+      { id: 'send_instagram_dm', label: 'DM Instagram', icon: Instagram, color: 'bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300' },
+      { id: 'send_instagram_comment_reply', label: 'Responder Comentário', icon: MessageCircle, color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' },
+    ],
+  },
+  {
     label: 'E-mail',
     nodes: [
       { id: 'send_email_performance', label: 'Performance', icon: MailCheck, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },

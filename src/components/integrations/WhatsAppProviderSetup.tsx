@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   ExternalLink,
   Globe,
+  Loader2,
   Lock,
   Monitor,
   Plus,
@@ -34,7 +35,6 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { useWhatsAppInstances, WhatsAppInstance } from '@/hooks/useWhatsAppInstances';
-import { Loader2 } from 'lucide-react';
 import { usePlans } from '@/hooks/usePlans';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useNavigate } from 'react-router-dom';

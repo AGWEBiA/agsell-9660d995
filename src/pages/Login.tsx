@@ -43,11 +43,11 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-white p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <Logo variant="red" size="2xl" showText />
+          <img src="/src/assets/agsell-logo-full.png" alt="AG Sell" className="h-16 w-auto object-contain" />
         </div>
 
         <Card>

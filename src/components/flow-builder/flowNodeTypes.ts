@@ -129,6 +129,8 @@ export const triggerTypeMap: Record<string, string> = {
   instagram_story_specific: 'instagram_comment',
   instagram_new_follower: 'contact_created',
   instagram_mention: 'instagram_comment',
+  instagram_dm_keyword: 'instagram_dm',
+  instagram_comment_keyword: 'instagram_comment',
   instagram_share_dm: 'instagram_dm',
   instagram_ref_url: 'instagram_dm',
   instagram_ads: 'instagram_dm',

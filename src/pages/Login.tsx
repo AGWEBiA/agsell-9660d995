@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { Logo } from '@/components/ui/Logo';
+import logoFull from '@/assets/agsell-logo-full.png';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -43,11 +43,11 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-white p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <Logo variant="red" size="2xl" showText />
+          <img src={logoFull} alt="AG Sell" className="h-16 w-auto object-contain" />
         </div>
 
         <Card>

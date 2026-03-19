@@ -65,6 +65,7 @@ export function WhatsAppProviderSetup() {
   const [activeTab, setActiveTab] = useState<'plataforma' | 'propria' | 'oficial'>('plataforma');
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState<string | null>(null);
+  const [testResults, setTestResults] = useState<Record<string, { status: 'connected' | 'disconnected' | 'error'; message: string }>>({});
 
   // Plataforma (global Evolution) form
   const [platformInstanceName, setPlatformInstanceName] = useState('');

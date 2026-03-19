@@ -452,6 +452,12 @@ function NodeConfigDialog({ node, open, onClose, onSave }: {
         return <InstagramNodeConfig config={config} onChange={setConfig} type="dm" />;
       case 'send_instagram_comment_reply':
         return <InstagramNodeConfig config={config} onChange={setConfig} type="comment_reply" />;
+      case 'send_instagram_story_reply':
+        return <InstagramNodeConfig config={config} onChange={setConfig} type="dm" />;
+      case 'instagram_like_comment':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Curte automaticamente o comentário que acionou o gatilho.</p><div className="flex items-center gap-2"><Switch checked={config.only_keyword !== false} onCheckedChange={v => setConfig({ ...config, only_keyword: v })} /><Label>Curtir apenas comentários com palavra-chave</Label></div></div>);
+      case 'instagram_follow_back':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Segue automaticamente o usuário que interagiu com seu perfil.</p><div className="flex items-center gap-2"><Switch checked={!!config.add_tag_on_follow} onCheckedChange={v => setConfig({ ...config, add_tag_on_follow: v })} /><Label>Adicionar tag ao seguir</Label></div>{config.add_tag_on_follow && (<div><Label>Nome da Tag</Label><Input placeholder="Ex: seguido_de_volta" value={String(config.follow_tag || '')} onChange={e => setConfig({ ...config, follow_tag: e.target.value })} /></div>)}</div>);
       default:
         return <p className="text-sm text-muted-foreground">Nenhuma configuração adicional necessária.</p>;
     }

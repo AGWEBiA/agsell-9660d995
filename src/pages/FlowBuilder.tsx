@@ -42,6 +42,7 @@ import { WarmupNodeConfig } from '@/components/flow-builder/WarmupNodeConfig';
 import { EmailNodeConfig } from '@/components/flow-builder/EmailNodeConfig';
 import { TagFilterNodeConfig } from '@/components/flow-builder/TagFilterNodeConfig';
 import { WhatsAppNodeConfig } from '@/components/flow-builder/WhatsAppNodeConfig';
+import { InstagramNodeConfig } from '@/components/flow-builder/InstagramNodeConfig';
 import { ConditionalNodeConfig } from '@/components/flow-builder/ConditionalNodeConfig';
 
 import { FlowNodeAnalyticsOverlay } from '@/components/automations/FlowNodeAnalyticsOverlay';

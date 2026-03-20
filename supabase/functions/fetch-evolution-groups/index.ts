@@ -375,11 +375,28 @@ Deno.serve(async (req) => {
 
       const orgInstance = orgInstancesByNormalizedName.get(normalizeInstanceName(instanceName));
       const phoneFormatted = extractPhoneNumber(inst);
+      const ownerJid = extractOwnerJid(inst);
 
       try {
-        const groupsList = await fetchGroupsForInstance(baseUrl, apiKey, instanceName);
+        const groupsList = await fetchGroupsForInstance(baseUrl, apiKey, instanceName, !!adminOnly);
 
-        const groups = groupsList.map((g: any) => ({
+        let filteredGroups = groupsList;
+
+        // Filter to only groups where the instance is admin
+        if (adminOnly && ownerJid) {
+          filteredGroups = groupsList.filter((g: any) => {
+            const participants = g.participants || [];
+            return participants.some((p: any) => {
+              const pJid = p.id || p.jid || "";
+              const isOwnerMatch = pJid === ownerJid || pJid.replace(/@.*$/, "") === ownerJid.replace(/@.*$/, "");
+              const isAdmin = p.admin === "admin" || p.admin === "superadmin" || p.role === "admin" || p.role === "superadmin";
+              return isOwnerMatch && isAdmin;
+            });
+          });
+          console.log(`Admin filter: ${groupsList.length} -> ${filteredGroups.length} groups for ${instanceName}`);
+        }
+
+        const groups = filteredGroups.map((g: any) => ({
           id: g.id || g.jid || g.groupJid,
           subject: g.subject || g.name || g.groupName || "Sem nome",
           size: g.size || g.participants?.length || 0,

@@ -58,16 +58,49 @@ function InstanceConfigDialog({ instance, open, onOpenChange }: {
 
   if (!instance) return null;
 
-  const phone = instance.phone_number || instance.config?.instance_name || '';
+  const phone = instance.phone_number || instance.config?.phone_number || instance.config?.instance_name || '';
+  const instanceName = instance.config?.instance_name || instance.name;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
-          <div className="text-sm text-muted-foreground">{phone}</div>
-          <DialogTitle>Configurações do WhatsApp {instance.integration_type === 'whatsapp_business' ? 'OFICIAL' : ''}</DialogTitle>
+          <div className="text-lg font-semibold">{phone || instanceName}</div>
+          <DialogTitle>Configurações de WhatsApp</DialogTitle>
         </DialogHeader>
-        <div className="space-y-5 py-2">
+        <div className="space-y-5 py-2 max-h-[70vh] overflow-y-auto">
+          {/* Gerenciamento de grupos */}
+          <div className="space-y-2">
+            <h4 className="font-semibold text-sm">Gerenciamento de grupos</h4>
+            <p className="text-xs text-muted-foreground">
+              Clicando aqui, você pode configurar os seus grupos de WhatsApp, criar grupos novos, importar os leads e definir suas tags.
+            </p>
+          </div>
+
+          {/* Mais recursos - Import buttons */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                onOpenChange(false);
+                // Navigate to groups tab filtered by this instance
+                window.dispatchEvent(new CustomEvent('navigate-to-groups', { detail: { instanceName } }));
+              }}
+              className="flex flex-col items-start p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
+            >
+              <span className="font-medium text-sm">Importar todos os grupos</span>
+              <span className="text-xs text-muted-foreground mt-1">Faça a importação de todos os grupos de WhatsApp do dispositivo.</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => toast.info('Importação de contatos será disponibilizada em breve.')}
+              className="flex flex-col items-start p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
+            >
+              <span className="font-medium text-sm">Importar todos os contatos</span>
+              <span className="text-xs text-muted-foreground mt-1">Importar todos os contatos deste dispositivo para a lista de leads.</span>
+            </button>
+          </div>
+
           {/* Device Name */}
           <div className="space-y-2">
             <Label>Nome do dispositivo</Label>
@@ -153,11 +186,23 @@ export default function WhatsApp() {
   const [filterDeviceInstance, setFilterDeviceInstance] = useState<string | null>(null);
 
   const handleDeviceClick = (instance: WhatsAppInstance) => {
-    // Navigate to groups tab filtered by this device
     const instanceName = instance.config?.instance_name || instance.name;
     setFilterDeviceInstance(instanceName);
     setActiveTab('groups');
   };
+
+  // Listen for navigate-to-groups events from InstanceConfigDialog
+  React.useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.instanceName) {
+        setFilterDeviceInstance(detail.instanceName);
+        setActiveTab('groups');
+      }
+    };
+    window.addEventListener('navigate-to-groups', handler);
+    return () => window.removeEventListener('navigate-to-groups', handler);
+  }, []);
 
   return (
     <div className="space-y-6 animate-fade-in">

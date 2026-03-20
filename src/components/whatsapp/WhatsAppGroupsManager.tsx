@@ -78,7 +78,8 @@ export function WhatsAppGroupsManager() {
   const [sendMode, setSendMode] = useState<'now' | 'schedule'>('now');
   const [scheduleDate, setScheduleDate] = useState<Date>();
   const [scheduleTime, setScheduleTime] = useState('09:00');
-  const [newGroup, setNewGroup] = useState({ name: '', description: '', group_type: 'group', tags: [] as string[] });
+  const [newGroup, setNewGroup] = useState({ name: '', description: '', group_type: 'group', tags: [] as string[], instance_name: '', participants: '' });
+  const [isCreatingOnWhatsApp, setIsCreatingOnWhatsApp] = useState(false);
   const [newGroupTagInput, setNewGroupTagInput] = useState('');
   const [editLeadTags, setEditLeadTags] = useState<string[]>([]);
   const [editLeadTagInput, setEditLeadTagInput] = useState('');

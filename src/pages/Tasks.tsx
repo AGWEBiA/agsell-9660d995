@@ -33,6 +33,7 @@ import {
   Loader2,
   List,
   CalendarDays,
+  Trash2,
 } from 'lucide-react';
 import { useTasks, useCreateTask, useCompleteTask, useUncompleteTask, useDeleteTask, type CreateTaskData, type Task } from '@/hooks/useTasks';
 import { useContacts } from '@/hooks/useContacts';

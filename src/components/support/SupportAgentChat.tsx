@@ -252,7 +252,7 @@ export function SupportAgentChat() {
             'fixed z-50 bg-background border border-border rounded-xl shadow-2xl flex flex-col transition-all duration-200',
             isExpanded
               ? 'bottom-4 right-4 w-[520px] h-[680px]'
-              : 'bottom-4 right-4 w-[380px] h-[520px]',
+              : 'bottom-20 right-4 w-[380px] h-[520px]',
             'max-h-[90vh] max-w-[95vw]'
           )}
         >

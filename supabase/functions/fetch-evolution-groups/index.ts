@@ -104,7 +104,9 @@ Deno.serve(async (req) => {
     // Filter connected instances (or specific instance if requested)
     const connectedInstances = Array.isArray(instances)
       ? instances.filter((i: any) => {
-          const state = i?.instance?.state || i?.state || i?.connectionStatus?.state;
+          // connectionStatus can be a string "open" or an object { state: "open" }
+          const rawStatus = i?.connectionStatus;
+          const state = typeof rawStatus === "string" ? rawStatus : (rawStatus?.state || i?.instance?.state || i?.state);
           const instanceName = i?.instance?.instanceName || i?.instanceName || i?.name;
           const isConnected = state === "open" || state === "connected";
           console.log(`Instance "${instanceName}" state="${state}" connected=${isConnected}`);

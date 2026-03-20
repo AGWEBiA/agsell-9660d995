@@ -37,7 +37,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useTags, useCreateTag, useDeleteTag, type CreateTagData } from '@/hooks/useTags';
+import { useTags, useCreateTag, useDeleteTag, useUpdateTag, type CreateTagData, type Tag } from '@/hooks/useTags';
 
 const colorOptions = [
   '#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e',

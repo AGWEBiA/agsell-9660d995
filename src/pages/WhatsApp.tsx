@@ -149,6 +149,15 @@ export default function WhatsApp() {
   } = useWhatsAppInstances();
   const { groups } = useWhatsAppGroups();
   const [configInstance, setConfigInstance] = useState<WhatsAppInstance | null>(null);
+  const [activeTab, setActiveTab] = useState('connection');
+  const [filterDeviceInstance, setFilterDeviceInstance] = useState<string | null>(null);
+
+  const handleDeviceClick = (instance: WhatsAppInstance) => {
+    // Navigate to groups tab filtered by this device
+    const instanceName = instance.config?.instance_name || instance.name;
+    setFilterDeviceInstance(instanceName);
+    setActiveTab('groups');
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">

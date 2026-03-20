@@ -989,12 +989,10 @@ export function WhatsAppGroupsManager() {
             <div className="space-y-2">
               <Label className="font-semibold">Tag para os leads do grupo</Label>
               <p className="text-xs text-muted-foreground">O campo abaixo será responsável pelas tags que serão adicionadas aos leads do grupo do WhatsApp.</p>
-              <TagInput
-                tags={editLeadTags}
-                onAdd={handleAddLeadTag}
-                onRemove={t => setEditLeadTags(prev => prev.filter(x => x !== t))}
-                inputValue={editLeadTagInput}
-                setInputValue={setEditLeadTagInput}
+              <SearchableTagSelect
+                selectedTags={editLeadTags}
+                onTagsChange={setEditLeadTags}
+                placeholder="Buscar ou criar tag de lead..."
               />
             </div>
 

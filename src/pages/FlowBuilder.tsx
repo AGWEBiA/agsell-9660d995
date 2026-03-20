@@ -43,6 +43,7 @@ import { EmailNodeConfig } from '@/components/flow-builder/EmailNodeConfig';
 import { TagFilterNodeConfig } from '@/components/flow-builder/TagFilterNodeConfig';
 import { WhatsAppNodeConfig } from '@/components/flow-builder/WhatsAppNodeConfig';
 import { WhatsAppGroupNodeConfig } from '@/components/flow-builder/WhatsAppGroupNodeConfig';
+import { WhatsAppGroupAddNodeConfig } from '@/components/flow-builder/WhatsAppGroupAddNodeConfig';
 import { InstagramNodeConfig } from '@/components/flow-builder/InstagramNodeConfig';
 import { ConditionalNodeConfig } from '@/components/flow-builder/ConditionalNodeConfig';
 
@@ -84,6 +85,8 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter, analytics }: {
         }
         return '';
       }
+      case 'add_to_whatsapp_group':
+        return c.group_name ? `→ ${String(c.group_name)}` : '';
       default:
         return '';
     }
@@ -422,6 +425,8 @@ function NodeConfigDialog({ node, open, onClose, onSave }: {
         return <WhatsAppNodeConfig config={config} onChange={setConfig} />;
       case 'send_whatsapp_group':
         return <WhatsAppGroupNodeConfig config={config} onChange={setConfig} />;
+      case 'add_to_whatsapp_group':
+        return <WhatsAppGroupAddNodeConfig config={config} onChange={setConfig} />;
       case 'send_sms':
         return (<div className="space-y-4"><div><Label>Mensagem SMS</Label><Textarea placeholder="Digite a mensagem SMS..." rows={3} maxLength={160} value={String(config.message || '')} onChange={e => setConfig({ ...config, message: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">{String(config.message || '').length}/160 caracteres</p></div></div>);
       case 'list_tag':

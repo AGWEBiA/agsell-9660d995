@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
-    const { organization_id, instance_name: filterInstance } = await req.json();
+    const { organization_id, instance_name: filterInstance, admin_only: adminOnly } = await req.json();
     if (!organization_id) {
       return jsonResponse({ error: "organization_id required" }, 400);
     }

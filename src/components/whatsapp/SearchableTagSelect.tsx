@@ -26,8 +26,8 @@ export function SearchableTagSelect({ selectedTags, onTagsChange, placeholder = 
         setIsOpen(false);
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener('pointerdown', handler, true);
+    return () => document.removeEventListener('pointerdown', handler, true);
   }, []);
 
   const filteredTags = useMemo(() => {
@@ -90,6 +90,8 @@ export function SearchableTagSelect({ selectedTags, onTagsChange, placeholder = 
           value={search}
           onChange={e => { setSearch(e.target.value); setIsOpen(true); }}
           onFocus={() => setIsOpen(true)}
+          onMouseDown={e => e.stopPropagation()}
+          onPointerDown={e => e.stopPropagation()}
           onKeyDown={e => {
             if (e.key === 'Enter') {
               e.preventDefault();
@@ -115,7 +117,7 @@ export function SearchableTagSelect({ selectedTags, onTagsChange, placeholder = 
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 rounded-md border bg-popover shadow-md max-h-[200px] overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 rounded-md border bg-popover shadow-md max-h-[200px] overflow-y-auto" onPointerDown={e => e.stopPropagation()}>
           {filteredTags.length === 0 && !search.trim() && (
             <div className="p-3 text-center text-xs text-muted-foreground">
               Nenhuma tag cadastrada. Digite para criar.

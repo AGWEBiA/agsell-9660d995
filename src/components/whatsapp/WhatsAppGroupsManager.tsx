@@ -745,30 +745,11 @@ export function WhatsAppGroupsManager() {
                       <Label className="font-semibold">Tags do Grupo</Label>
                     </div>
                     <p className="text-xs text-muted-foreground">Tags permitem criar automações específicas e filtrar grupos.</p>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Adicionar tag..."
-                        value={newTagInput}
-                        onChange={e => setNewTagInput(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddTagToGroup(selectedGroup); } }}
-                        className="flex-1"
-                      />
-                      <Button variant="outline" size="sm" onClick={() => handleAddTagToGroup(selectedGroup)} disabled={!newTagInput.trim()}>
-                        <Plus className="h-4 w-4 mr-1" />Adicionar
-                      </Button>
-                    </div>
-                    {(selectedGroup.tags || []).length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {selectedGroup.tags.map(tag => (
-                          <Badge key={tag} variant="secondary" className="gap-1 text-xs">
-                            <Tag className="h-3 w-3" />{tag}
-                            <button onClick={() => handleRemoveTagFromGroup(selectedGroup, tag)} className="ml-0.5 hover:text-destructive"><X className="h-3 w-3" /></button>
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-muted-foreground italic">Nenhuma tag adicionada</p>
-                    )}
+                    <SearchableTagSelect
+                      selectedTags={selectedGroup.tags || []}
+                      onTagsChange={(tags) => updateGroup({ id: selectedGroup.id, tags })}
+                      placeholder="Buscar ou criar tag..."
+                    />
                   </div>
 
                   {/* Invite Link */}

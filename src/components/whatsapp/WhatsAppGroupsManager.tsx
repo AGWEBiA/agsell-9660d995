@@ -685,7 +685,7 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
 
       {/* Group Detail Dialog */}
       <Dialog open={!!selectedGroup} onOpenChange={() => setSelectedGroup(null)}>
-        <DialogContent className="max-w-3xl max-h-[80vh]">
+        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900"><Users className="h-4 w-4 text-green-600" /></div>
@@ -702,7 +702,7 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs value={detailTab} onValueChange={v => setDetailTab(v as typeof detailTab)}>
+          <Tabs value={detailTab} onValueChange={v => setDetailTab(v as typeof detailTab)} className="flex flex-col flex-1 min-h-0">
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="members" className="flex items-center gap-1 text-xs"><Users className="h-3.5 w-3.5" />Membros</TabsTrigger>
               <TabsTrigger value="events" className="flex items-center gap-1 text-xs"><Activity className="h-3.5 w-3.5" />Atividades</TabsTrigger>
@@ -712,7 +712,7 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
             </TabsList>
 
             {/* Members Tab */}
-            <TabsContent value="members" className="mt-4">
+            <TabsContent value="members" className="mt-4 max-h-[450px] overflow-y-auto">
               {isLoadingMembers ? (
                 <div className="flex items-center justify-center py-8"><RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" /></div>
               ) : groupMembers.length === 0 ? (
@@ -759,7 +759,7 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
             </TabsContent>
 
             {/* Events Tab */}
-            <TabsContent value="events" className="mt-4">
+            <TabsContent value="events" className="mt-4 max-h-[450px] overflow-y-auto">
               {isLoadingEvents ? (
                 <div className="flex items-center justify-center py-8"><RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" /></div>
               ) : groupEvents.length === 0 ? (
@@ -778,8 +778,8 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
             </TabsContent>
 
             {/* Send Message Tab */}
-            <TabsContent value="message" className="mt-4">
-              <div className="space-y-4">
+            <TabsContent value="message" className="mt-4 max-h-[450px] overflow-y-auto">
+              <div className="space-y-4 pb-2">
                 <Card className="border-green-200 bg-green-50/50 dark:border-green-800 dark:bg-green-950/30">
                   <CardContent className="pt-6">
                     <div className="flex items-start gap-3">

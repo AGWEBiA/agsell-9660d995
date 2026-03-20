@@ -403,7 +403,10 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
     const matchesSearch = g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (g.description || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTag = filterTag === 'all' || (g.tags || []).includes(filterTag);
-    return matchesSearch && matchesTag;
+    // Filter by instance if coming from device click
+    const groupInstanceName = (g.settings as Record<string, unknown>)?.instance_name as string | undefined;
+    const matchesInstance = !filterInstanceName || groupInstanceName === filterInstanceName;
+    return matchesSearch && matchesTag && matchesInstance;
   });
 
   const activeGroupsCount = groups.filter(g => g.is_active).length;

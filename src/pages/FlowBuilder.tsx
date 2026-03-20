@@ -43,6 +43,7 @@ import { EmailNodeConfig } from '@/components/flow-builder/EmailNodeConfig';
 import { TagFilterNodeConfig } from '@/components/flow-builder/TagFilterNodeConfig';
 import { WhatsAppNodeConfig } from '@/components/flow-builder/WhatsAppNodeConfig';
 import { WhatsAppGroupNodeConfig } from '@/components/flow-builder/WhatsAppGroupNodeConfig';
+import { WhatsAppGroupAddNodeConfig } from '@/components/flow-builder/WhatsAppGroupAddNodeConfig';
 import { InstagramNodeConfig } from '@/components/flow-builder/InstagramNodeConfig';
 import { ConditionalNodeConfig } from '@/components/flow-builder/ConditionalNodeConfig';
 

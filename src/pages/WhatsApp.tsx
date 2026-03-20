@@ -456,11 +456,11 @@ export default function WhatsApp() {
         </TabsContent>
 
         <TabsContent value="campaigns">
-          <WhatsAppCampaignsManager />
+          <WhatsAppCampaignsManager currentInstanceId={selectedInstanceId} />
         </TabsContent>
 
         <TabsContent value="messages">
-          <WhatsAppGroupMessages />
+          <WhatsAppGroupMessages currentInstanceId={selectedInstanceId} />
         </TabsContent>
       </Tabs>
 

@@ -55,7 +55,7 @@ import { WhatsAppMultiInstanceSelector } from './WhatsAppMultiInstanceSelector';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-export function WhatsAppCampaignsManager() {
+export function WhatsAppCampaignsManager({ currentInstanceId }: { currentInstanceId?: string | null }) {
   const {
     campaigns,
     isLoadingCampaigns,

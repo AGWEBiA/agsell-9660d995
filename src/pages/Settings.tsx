@@ -279,9 +279,19 @@ export default function Settings() {
           <Card>
             <CardHeader><CardTitle>Alterar Senha</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-2"><Label>Senha atual</Label><Input type="password" /></div>
-              <div className="grid gap-2"><Label>Nova senha</Label><Input type="password" /></div>
-              <Button>Alterar senha</Button>
+              <div className="grid gap-2">
+                <Label>Nova senha</Label>
+                <Input 
+                  type="password" 
+                  value={newPassword} 
+                  onChange={(e) => setNewPassword(e.target.value)} 
+                  placeholder="Mínimo 6 caracteres"
+                />
+              </div>
+              <Button onClick={handleChangePassword} disabled={passwordLoading || !newPassword}>
+                {passwordLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Alterar senha
+              </Button>
             </CardContent>
           </Card>
           <SecurityAlertsPanel />

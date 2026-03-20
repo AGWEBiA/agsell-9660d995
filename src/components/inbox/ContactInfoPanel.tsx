@@ -360,23 +360,29 @@ export function ContactInfoPanel({
             <DialogDescription>Escolha o membro ou departamento para receber este ticket.</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-2">
-            <Label className="text-sm">Transferir para</Label>
+            <Label className="text-sm">Membros da equipe</Label>
             <div className="space-y-1">
-              {members.map(m => (
-                <Button
-                  key={m.user_id}
-                  variant="ghost"
-                  className="w-full justify-start text-sm h-9"
-                  onClick={() => {
-                    onTransfer(m.user_id);
-                    setTransferOpen(false);
-                    toast.success('Atendimento transferido!');
-                  }}
-                >
-                  <UserCheck className="h-4 w-4 mr-2" />
-                  {(m as any).profiles?.full_name || m.user_id.slice(0, 8)}
-                </Button>
-              ))}
+              {members.length === 0 ? (
+                <p className="text-xs text-muted-foreground text-center py-2">Nenhum membro encontrado</p>
+              ) : (
+                members.map(m => (
+                  <Button
+                    key={m.user_id}
+                    variant="ghost"
+                    className="w-full justify-start text-sm h-9"
+                    onClick={() => {
+                      onTransfer(m.user_id);
+                      onUpdateConversation({ assigned_to: m.user_id, status: 'open' });
+                      setTransferOpen(false);
+                      toast.success('Atendimento transferido!');
+                    }}
+                  >
+                    <UserCheck className="h-4 w-4 mr-2" />
+                    {(m as any).profiles?.full_name || m.user_id.slice(0, 8)}
+                    <Badge variant="outline" className="ml-auto text-[10px]">{m.role}</Badge>
+                  </Button>
+                ))
+              )}
             </div>
             {agents.length > 0 && (
               <>
@@ -388,7 +394,18 @@ export function ContactInfoPanel({
                       key={a.id}
                       variant="ghost"
                       className="w-full justify-start text-sm h-9"
-                      disabled
+                      onClick={() => {
+                        // SAC agents have a user_id if linked to a member
+                        const agentUserId = (a as any).user_id;
+                        if (agentUserId) {
+                          onTransfer(agentUserId);
+                          onUpdateConversation({ assigned_to: agentUserId, status: 'open' });
+                          setTransferOpen(false);
+                          toast.success(`Transferido para ${a.name}!`);
+                        } else {
+                          toast.error('Este atendente não possui um usuário vinculado');
+                        }
+                      }}
                     >
                       <UserCheck className="h-4 w-4 mr-2" />
                       {a.name}

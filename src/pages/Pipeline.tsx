@@ -123,20 +123,33 @@ export default function Pipeline() {
     setDraggedDealId(dealId);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', dealId);
+    // Add drag image for better visual feedback
+    if (e.currentTarget instanceof HTMLElement) {
+      e.dataTransfer.setDragImage(e.currentTarget, 50, 20);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent, stageId: string) => {
     e.preventDefault();
+    e.stopPropagation();
     e.dataTransfer.dropEffect = 'move';
-    setDragOverStageId(stageId);
+    if (dragOverStageId !== stageId) {
+      setDragOverStageId(stageId);
+    }
   };
 
-  const handleDragLeave = () => {
-    setDragOverStageId(null);
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only clear if leaving the stage container entirely
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    const currentTarget = e.currentTarget as HTMLElement;
+    if (!currentTarget.contains(relatedTarget)) {
+      setDragOverStageId(null);
+    }
   };
 
   const handleDrop = async (e: React.DragEvent, stageId: string) => {
     e.preventDefault();
+    e.stopPropagation();
     setDragOverStageId(null);
     const dealId = e.dataTransfer.getData('text/plain');
     if (dealId) {
@@ -294,8 +307,10 @@ export default function Pipeline() {
               onDrop={(e) => handleDrop(e, stage.id)}
             >
               <Card className={cn(
-                'h-full transition-all duration-200',
-                dragOverStageId === stage.id && 'ring-2 ring-primary/50 bg-primary/5'
+                'h-full transition-all duration-200 border-2',
+                dragOverStageId === stage.id
+                  ? 'ring-2 ring-primary border-primary/50 bg-primary/5 shadow-lg'
+                  : 'border-transparent'
               )}>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
@@ -342,8 +357,10 @@ export default function Pipeline() {
                               onDragStart={(e) => handleDragStart(e, deal.id)}
                               onDragEnd={handleDragEnd}
                               className={cn(
-                                'cursor-grab active:cursor-grabbing hover:shadow-md transition-all',
-                                draggedDealId === deal.id && 'opacity-50 scale-95'
+                                'cursor-grab active:cursor-grabbing hover:shadow-md transition-all border-2 border-transparent',
+                                draggedDealId === deal.id
+                                  ? 'opacity-40 scale-95 border-primary/30'
+                                  : 'opacity-100'
                               )}
                             >
                               <CardContent className="p-4">

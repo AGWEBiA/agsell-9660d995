@@ -58,7 +58,7 @@ import {
   Building2,
   Loader2,
 } from 'lucide-react';
-import { useCompanies, useCreateCompany, useDeleteCompany, type CreateCompanyData } from '@/hooks/useCompanies';
+import { useCompanies, useCreateCompany, useDeleteCompany, useUpdateCompany, type CreateCompanyData, type Company } from '@/hooks/useCompanies';
 import { usePaginatedData } from '@/hooks/usePaginatedQuery';
 import { DataPagination } from '@/components/ui/data-pagination';
 

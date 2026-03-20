@@ -89,6 +89,7 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
   const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
   const [enableSelection, setEnableSelection] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [adminOnlyFilter, setAdminOnlyFilter] = useState(false);
 
   const { instances: whatsAppInstances, activeInstances } = useWhatsAppInstances();
 

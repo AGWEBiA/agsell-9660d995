@@ -405,6 +405,69 @@ export default function Companies() {
         </CardContent>
       </Card>
 
+      {/* Edit Company Dialog */}
+      <Dialog open={!!editingCompany} onOpenChange={() => setEditingCompany(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Empresa</DialogTitle>
+            <DialogDescription>Atualize os dados da empresa</DialogDescription>
+          </DialogHeader>
+          {editingCompany && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label>Nome *</Label>
+                <Input value={editingCompany.name} onChange={(e) => setEditingCompany({ ...editingCompany, name: e.target.value })} />
+              </div>
+              <div className="grid gap-2">
+                <Label>Domínio</Label>
+                <Input value={editingCompany.domain || ''} onChange={(e) => setEditingCompany({ ...editingCompany, domain: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Indústria</Label>
+                  <Select value={editingCompany.industry || ''} onValueChange={(v) => setEditingCompany({ ...editingCompany, industry: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {industries.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label>Tamanho</Label>
+                  <Select value={editingCompany.size || ''} onValueChange={(v) => setEditingCompany({ ...editingCompany, size: v })}>
+                    <SelectTrigger><SelectValue placeholder="Funcionários" /></SelectTrigger>
+                    <SelectContent>
+                      {sizes.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Telefone</Label>
+                  <Input value={editingCompany.phone || ''} onChange={(e) => setEditingCompany({ ...editingCompany, phone: e.target.value })} />
+                </div>
+                <div className="grid gap-2">
+                  <Label>Email</Label>
+                  <Input value={editingCompany.email || ''} onChange={(e) => setEditingCompany({ ...editingCompany, email: e.target.value })} />
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingCompany(null)}>Cancelar</Button>
+            <Button onClick={() => {
+              if (!editingCompany) return;
+              updateCompany.mutate({ id: editingCompany.id, name: editingCompany.name, domain: editingCompany.domain, industry: editingCompany.industry, size: editingCompany.size, phone: editingCompany.phone, email: editingCompany.email });
+              setEditingCompany(null);
+            }} disabled={updateCompany.isPending}>
+              {updateCompany.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>

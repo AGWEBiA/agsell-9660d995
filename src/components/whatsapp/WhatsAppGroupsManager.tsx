@@ -151,15 +151,9 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
     const selected = importedGroups.filter(g => g.selected);
     if (selected.length === 0) { toast.error('Selecione ao menos um grupo'); return; }
     const existingIds = new Set(groups.map(g => g.external_group_id));
-    let imported = 0;
-    for (const g of selected) {
-      if (existingIds.has(g.id)) continue;
-      createGroup({ name: g.subject, description: `Importado de ${g.instance_name}`, group_type: 'group' });
-      // Also update external_group_id after creation - we'll do a batch update
-      imported++;
-    }
-    // For external_group_id we need direct insert
+    // Direct insert with instance_name in settings and is_active = false
     if (currentOrganization?.id) {
+      let importCount = 0;
       for (const g of selected) {
         if (existingIds.has(g.id)) continue;
         await supabase.from('whatsapp_groups').insert({
@@ -168,13 +162,15 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
           external_group_id: g.id,
           member_count: g.size,
           group_type: 'group',
-          settings: {} as any,
+          is_active: false, // Groups come disabled by default
+          settings: { instance_name: g.instance_name } as any,
           tags: [],
         });
+        importCount++;
       }
       refetchGroups();
+      toast.success(`${importCount} grupo(s) importado(s)! Ative e configure as tags de cada grupo.`);
     }
-    toast.success(`${selected.length} grupo(s) importado(s) com sucesso!`);
     setIsImportDialogOpen(false);
   };
 

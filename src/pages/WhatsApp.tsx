@@ -282,6 +282,8 @@ export default function WhatsApp() {
     }
   };
 
+  const navigate = useNavigate();
+
   // Listen for navigate-to-groups events
   React.useEffect(() => {
     const handler = (e: Event) => {
@@ -294,6 +296,15 @@ export default function WhatsApp() {
     window.addEventListener('navigate-to-groups', handler);
     return () => window.removeEventListener('navigate-to-groups', handler);
   }, []);
+
+  // Listen for navigate-to-contacts-import events
+  React.useEffect(() => {
+    const handler = () => {
+      navigate('/contacts?import=true');
+    };
+    window.addEventListener('navigate-to-contacts-import', handler);
+    return () => window.removeEventListener('navigate-to-contacts-import', handler);
+  }, [navigate]);
 
   const sacInstances = instances.filter(i => i.config?.use_for_sac === true && i.is_active);
 

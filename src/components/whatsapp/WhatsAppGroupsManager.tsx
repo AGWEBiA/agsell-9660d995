@@ -39,7 +39,7 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 import { Checkbox } from '@/components/ui/checkbox';
 import { SearchableTagSelect } from './SearchableTagSelect';
 
-export function WhatsAppGroupsManager() {
+export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { filterInstanceName?: string | null; onClearFilter?: () => void }) {
   const {
     groups, isLoadingGroups, refetchGroups, allTags,
     createGroup, updateGroup, deleteGroup,

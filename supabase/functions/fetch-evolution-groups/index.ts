@@ -14,6 +14,8 @@ type OrgInstance = {
   config: IntegrationConfig;
 };
 
+const GROUP_FETCH_TIMEOUT_MS = 30000;
+
 const jsonResponse = (payload: unknown, status = 200) =>
   new Response(JSON.stringify(payload), {
     status,
@@ -74,6 +76,87 @@ const parseGroups = (payload: unknown): any[] => {
     if (Array.isArray(record.data)) return record.data;
   }
   return [];
+};
+
+const buildOrgInstanceNameIndex = (instances: OrgInstance[]) => {
+  const map = new Map<string, OrgInstance>();
+
+  for (const instance of instances) {
+    const config = (instance.config || {}) as Record<string, unknown>;
+
+    const aliases = [
+      instance.instance_name,
+      instance.name,
+      typeof config.instance_name === "string" ? config.instance_name : "",
+      typeof config.evolution_instance_name === "string" ? config.evolution_instance_name : "",
+      typeof config.instance === "string" ? config.instance : "",
+    ];
+
+    for (const alias of aliases) {
+      if (!alias || typeof alias !== "string") continue;
+      const normalized = normalizeInstanceName(alias);
+      if (!normalized) continue;
+      if (!map.has(normalized)) {
+        map.set(normalized, instance);
+      }
+    }
+  }
+
+  return map;
+};
+
+const fetchGroupsForInstance = async (
+  baseUrl: string,
+  apiKey: string,
+  instanceName: string,
+): Promise<any[]> => {
+  const encodedInstance = encodeURIComponent(instanceName);
+  const endpoints = [
+    `${baseUrl}/group/fetchAllGroups/${encodedInstance}?getParticipants=false`,
+    `${baseUrl}/group/fetchAll/${encodedInstance}?getParticipants=false`,
+  ];
+
+  let lastErrorMessage = "";
+
+  for (const endpoint of endpoints) {
+    try {
+      console.log("Fetching groups from:", endpoint);
+
+      const groupsResp = await fetch(endpoint, {
+        headers: { apikey: apiKey },
+        signal: AbortSignal.timeout(GROUP_FETCH_TIMEOUT_MS),
+      });
+
+      if (!groupsResp.ok) {
+        const errText = await groupsResp.text();
+        console.error(`Failed to fetch groups for ${instanceName} (${groupsResp.status}) from ${endpoint}:`, errText);
+        lastErrorMessage = `${groupsResp.status} ${errText || "request_failed"}`;
+        continue;
+      }
+
+      const rawText = await groupsResp.text();
+      console.log(`Groups response for ${instanceName} (first 1000 chars):`, rawText.substring(0, 1000));
+
+      let groupsData: unknown;
+      try {
+        groupsData = JSON.parse(rawText);
+      } catch {
+        console.error(`Failed to parse groups JSON for ${instanceName} from ${endpoint}`);
+        lastErrorMessage = "invalid_json_response";
+        continue;
+      }
+
+      const groups = parseGroups(groupsData);
+      console.log(`Parsed ${groups.length} groups for ${instanceName}`);
+      return groups;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(`Error fetching groups for ${instanceName} from ${endpoint}:`, error);
+      lastErrorMessage = message;
+    }
+  }
+
+  throw new Error(lastErrorMessage || "Falha ao buscar grupos na Evolution API");
 };
 
 const toOrgInstance = (row: any): OrgInstance => {
@@ -148,9 +231,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const orgInstancesByNormalizedName = new Map(
-      orgInstances.map((inst) => [normalizeInstanceName(inst.instance_name), inst])
-    );
+    const orgInstancesByNormalizedName = buildOrgInstanceNameIndex(orgInstances);
 
     let normalizedFilter: string | null = null;
     if (filterInstance) {
@@ -212,7 +293,7 @@ Deno.serve(async (req) => {
       console.log("Fetching instances from:", fetchUrl);
       const instancesResp = await fetch(fetchUrl, {
         headers: { apikey: apiKey },
-        signal: AbortSignal.timeout(15000),
+        signal: AbortSignal.timeout(GROUP_FETCH_TIMEOUT_MS),
       });
 
       if (!instancesResp.ok) {
@@ -270,68 +351,7 @@ Deno.serve(async (req) => {
       const phoneFormatted = extractPhoneNumber(inst);
 
       try {
-        const groupUrl = `${baseUrl}/group/fetchAllGroups/${instanceName}?getParticipants=false`;
-        console.log("Fetching groups from:", groupUrl);
-        const groupsResp = await fetch(groupUrl, {
-          headers: { apikey: apiKey },
-          signal: AbortSignal.timeout(15000),
-        });
-
-        if (!groupsResp.ok) {
-          const errText = await groupsResp.text();
-          console.error(`Failed to fetch groups for ${instanceName} (${groupsResp.status}):`, errText);
-
-          console.log("Trying alternative endpoint: /group/fetchAll/");
-          const altResp = await fetch(`${baseUrl}/group/fetchAll/${instanceName}?getParticipants=false`, {
-            headers: { apikey: apiKey },
-            signal: AbortSignal.timeout(15000),
-          });
-          
-          if (altResp.ok) {
-            const altData = await altResp.json();
-            console.log("Alt endpoint returned:", JSON.stringify(altData).substring(0, 1000));
-            const groups = parseGroups(altData).map((g: any) => ({
-              id: g.id || g.jid || g.groupJid,
-              subject: g.subject || g.name || g.groupName || "Sem nome",
-              size: g.size || g.participants?.length || 0,
-              creation: g.creation || 0,
-            }));
-
-            result.push({
-              instance_id: orgInstance?.id || null,
-              instance_name: orgInstance?.instance_name || instanceName,
-              instance_label: orgInstance?.name || instanceName,
-              phone_number: phoneFormatted,
-              groups,
-            });
-            continue;
-          }
-
-          result.push({
-            instance_id: orgInstance?.id || null,
-            instance_name: orgInstance?.instance_name || instanceName,
-            instance_label: orgInstance?.name || instanceName,
-            phone_number: phoneFormatted,
-            groups: [],
-          });
-          continue;
-        }
-
-        const rawText = await groupsResp.text();
-        console.log(`Groups response for ${instanceName} (first 1000 chars):`, rawText.substring(0, 1000));
-        
-        let groupsData: any;
-        try {
-          groupsData = JSON.parse(rawText);
-        } catch {
-          console.error("Failed to parse groups JSON");
-          result.push({ instance_name: instanceName, phone_number: phoneFormatted, groups: [] });
-          continue;
-        }
-
-        const groupsList = parseGroups(groupsData);
-
-        console.log(`Parsed ${groupsList.length} groups for ${instanceName}`);
+        const groupsList = await fetchGroupsForInstance(baseUrl, apiKey, instanceName);
 
         const groups = groupsList.map((g: any) => ({
           id: g.id || g.jid || g.groupJid,

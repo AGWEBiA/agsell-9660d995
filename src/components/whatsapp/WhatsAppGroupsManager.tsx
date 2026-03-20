@@ -702,7 +702,7 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs value={detailTab} onValueChange={v => setDetailTab(v as typeof detailTab)}>
+          <Tabs value={detailTab} onValueChange={v => setDetailTab(v as typeof detailTab)} className="flex flex-col flex-1 min-h-0">
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="members" className="flex items-center gap-1 text-xs"><Users className="h-3.5 w-3.5" />Membros</TabsTrigger>
               <TabsTrigger value="events" className="flex items-center gap-1 text-xs"><Activity className="h-3.5 w-3.5" />Atividades</TabsTrigger>

@@ -34,8 +34,9 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useWhatsAppGroups, WhatsAppGroupMessage } from '@/hooks/useWhatsAppGroups';
+import { WhatsAppMultiInstanceSelector } from './WhatsAppMultiInstanceSelector';
 
-export function WhatsAppGroupMessages() {
+export function WhatsAppGroupMessages({ currentInstanceId }: { currentInstanceId?: string | null }) {
   const {
     groups,
     groupMessages,
@@ -44,6 +45,9 @@ export function WhatsAppGroupMessages() {
   } = useWhatsAppGroups();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedInstanceIds, setSelectedInstanceIds] = useState<string[]>(
+    currentInstanceId ? [currentInstanceId] : []
+  );
   const [newMessage, setNewMessage] = useState<{
     name: string;
     content: string;
@@ -179,6 +183,14 @@ export function WhatsAppGroupMessages() {
                   </SelectContent>
                 </Select>
               </div>
+
+              {/* Instance selector */}
+              <WhatsAppMultiInstanceSelector
+                selectedIds={selectedInstanceIds}
+                onChange={setSelectedInstanceIds}
+                label="Instâncias para automação"
+                currentInstanceId={currentInstanceId}
+              />
 
               <div className="space-y-2">
                 <Label htmlFor="messageContent">Conteúdo da Mensagem</Label>

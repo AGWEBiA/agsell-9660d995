@@ -51,10 +51,11 @@ import {
 import { useWhatsAppCampaigns, WhatsAppCampaign } from '@/hooks/useWhatsAppCampaigns';
 import { useWhatsAppInstances } from '@/hooks/useWhatsAppInstances';
 import { WhatsAppInstanceSelector, WhatsAppInstanceBadge } from './WhatsAppInstanceSelector';
+import { WhatsAppMultiInstanceSelector } from './WhatsAppMultiInstanceSelector';
 import { formatDistanceToNow, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-export function WhatsAppCampaignsManager() {
+export function WhatsAppCampaignsManager({ currentInstanceId }: { currentInstanceId?: string | null }) {
   const {
     campaigns,
     isLoadingCampaigns,
@@ -81,6 +82,7 @@ export function WhatsAppCampaignsManager() {
     delay_between_messages: number;
     daily_limit: number;
     whatsapp_instance_id: string;
+    whatsapp_instance_ids: string[];
   }>({
     name: '',
     description: '',
@@ -91,10 +93,14 @@ export function WhatsAppCampaignsManager() {
     delay_between_messages: 3000,
     daily_limit: 1000,
     whatsapp_instance_id: defaultInstance?.id || '',
+    whatsapp_instance_ids: currentInstanceId ? [currentInstanceId] : defaultInstance?.id ? [defaultInstance.id] : [],
   });
 
   const handleCreateCampaign = () => {
-    createCampaign(newCampaign);
+    createCampaign({
+      ...newCampaign,
+      whatsapp_instance_id: newCampaign.whatsapp_instance_ids[0] || newCampaign.whatsapp_instance_id,
+    });
     setIsCreateDialogOpen(false);
     setNewCampaign({
       name: '',
@@ -106,6 +112,7 @@ export function WhatsAppCampaignsManager() {
       delay_between_messages: 3000,
       daily_limit: 1000,
       whatsapp_instance_id: defaultInstance?.id || '',
+      whatsapp_instance_ids: currentInstanceId ? [currentInstanceId] : defaultInstance?.id ? [defaultInstance.id] : [],
     });
   };
 
@@ -231,13 +238,14 @@ export function WhatsAppCampaignsManager() {
               <TabsContent value="settings" className="space-y-6 mt-4">
                 <div className="space-y-4">
                   {/* WhatsApp Instance Selector */}
-                  {activeInstances.length > 1 && (
-                    <WhatsAppInstanceSelector
-                      value={newCampaign.whatsapp_instance_id}
-                      onChange={(instanceId) =>
-                        setNewCampaign({ ...newCampaign, whatsapp_instance_id: instanceId })
+                  {activeInstances.length > 0 && (
+                    <WhatsAppMultiInstanceSelector
+                      selectedIds={newCampaign.whatsapp_instance_ids}
+                      onChange={(ids) =>
+                        setNewCampaign({ ...newCampaign, whatsapp_instance_ids: ids, whatsapp_instance_id: ids[0] || '' })
                       }
-                      label="Número/Provedor de Envio"
+                      label="Instâncias de Envio"
+                      currentInstanceId={currentInstanceId}
                     />
                   )}
 

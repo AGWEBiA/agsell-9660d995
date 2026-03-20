@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const { messages, agent_id, context } = (await req.json()) as RequestBody;
+    const { messages, agent_id, context, model: requestedModel } = (await req.json()) as RequestBody;
 
     if (!messages || !Array.isArray(messages)) {
       throw new Error("Messages array is required");

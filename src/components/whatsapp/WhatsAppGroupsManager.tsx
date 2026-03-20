@@ -23,7 +23,7 @@ import {
   Users, Plus, Trash2, UserPlus, UserMinus, MessageSquare, RefreshCw, Crown, Clock,
   Search, Settings, Copy, Shield, Activity, Eye, ToggleLeft, ToggleRight, Edit, Tag, Send, X,
   Lock, Unlock, Link2, ImageIcon, Ban, UserCog, ShieldCheck, ShieldOff, Globe, MessageCircle,
-  AlertTriangle, Info,
+  AlertTriangle, Info, Download, Loader2, CheckSquare,
 } from 'lucide-react';
 import { useWhatsAppGroups, WhatsAppGroup, WhatsAppGroupEvent, WhatsAppGroupMember } from '@/hooks/useWhatsAppGroups';
 import { useWhatsAppInstances } from '@/hooks/useWhatsAppInstances';
@@ -34,6 +34,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useOrganization } from '@/contexts/OrganizationContext';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export function WhatsAppGroupsManager() {
   const {

@@ -4639,5 +4639,116 @@ O painel mostra em tempo real:
 
 💡 **Dica**: Use o rotador para lançamentos com grande volume de leads. Ao invés de um único grupo lotado, distribua entre 5-10 grupos menores para melhor engajamento.`,
   },
+  {
+    id: 'voip',
+    categoryId: 'communication',
+    title: 'VoIP / Telefonia',
+    icon: Inbox,
+    description: 'Realize e receba ligações diretamente pela plataforma com softphone integrado e gravação.',
+    readTime: '7 min',
+    content: `O módulo de **VoIP** permite realizar e receber ligações telefônicas diretamente pelo navegador. Disponível a partir do plano **Professional**.
+
+## Softphone Integrado
+
+1. Acesse **VoIP** no menu lateral
+2. Use o teclado numérico para discar ou clique no ícone de telefone ao lado de qualquer contato
+
+### Funcionalidades
+- Discagem direta, mudo, espera e transferência
+- Gravação automática de chamadas vinculadas ao CRM
+- Transcrição com IA para registro textual
+- Dashboard com métricas: duração média, taxa de atendimento, distribuição por hora
+
+## Créditos de VoIP
+
+O VoIP funciona com sistema de créditos — compre pacotes (100, 500, 1000, 5000 minutos) e créditos são debitados conforme duração da ligação.
+
+💡 **Dica**: Grave todas as ligações de vendas para criar um banco de boas práticas e treinar novos vendedores.`,
+  },
+  {
+    id: 'migration',
+    categoryId: 'settings',
+    title: 'Migração de Plataforma',
+    icon: Settings,
+    description: 'Importe dados de outras plataformas via CSV, JSON, API ou webhooks.',
+    readTime: '5 min',
+    content: `O módulo de **Migração** facilita a transição de outras ferramentas para o AG Sell.
+
+## Métodos
+
+- **CSV** — Upload de arquivo com mapeamento de campos
+- **JSON** — Importação de dados estruturados
+- **API** — Conexão direta à API da plataforma de origem
+- **Webhook** — Sincronização contínua durante a transição
+
+## O que pode ser migrado
+
+Contatos, empresas, deals, tags — tudo com mapeamento de campos configurável.
+
+💡 **Dica**: Teste com uma amostra de 50-100 registros antes de importar a base completa.`,
+  },
+  {
+    id: 'event-tracking',
+    categoryId: 'intelligence',
+    title: 'Event Tracking (Pixel)',
+    icon: Target,
+    description: 'Snippet JavaScript para rastreamento de page views, eventos e navegação SPA.',
+    readTime: '5 min',
+    content: `O **Event Tracking** é um snippet JavaScript que rastreia visitantes, page views e eventos no seu site.
+
+## Instalação
+
+1. Acesse **Event Tracking** → copie o snippet JS
+2. Cole no \`<head>\` do seu site
+3. O rastreamento inicia automaticamente (page views, navegação SPA, visitor ID persistente)
+
+## Integração com CRM
+
+Quando identificado via formulário, sessões são vinculadas ao contato, alimentam Lead Scoring e podem disparar automações.
+
+💡 **Dica**: Instale em páginas estratégicas (pricing, checkout) e combine com automações.`,
+  },
+  {
+    id: 'whatsapp-templates-guide',
+    categoryId: 'communication',
+    title: 'Templates de WhatsApp',
+    icon: MessageSquare,
+    description: 'Gerencie templates aprovados para WhatsApp Business API com variáveis e botões.',
+    readTime: '5 min',
+    content: `**Templates de WhatsApp** são mensagens pré-aprovadas pela Meta necessárias para iniciar conversas proativas.
+
+## Criando um Template
+
+1. Acesse **WhatsApp Templates** → **"Novo Template"**
+2. Configure nome, categoria (Marketing/Utilidade/Autenticação), idioma, conteúdo com variáveis (\`{{1}}\`, \`{{2}}\`), botões e mídia
+3. Envie para aprovação
+
+## Status: ⏳ Pendente → ✅ Aprovado ou ❌ Rejeitado
+
+Templates aprovados podem ser usados em automações, campanhas, sequências e Flow Builder.
+
+💡 **Dica**: Crie templates genéricos reutilizáveis em múltiplas campanhas.`,
+  },
+  {
+    id: 'contact-preferences-guide',
+    categoryId: 'settings',
+    title: 'Preferências de Contato (Opt-out)',
+    icon: Shield,
+    description: 'Gestão de opt-out por canal e conformidade LGPD.',
+    readTime: '4 min',
+    content: `O módulo de **Preferências de Contato** gerencia opt-out por canal (WhatsApp, E-mail, SMS, Telefone).
+
+## Como funciona
+
+Quando um contato tem opt-out em um canal, automações, campanhas e sequências respeitam automaticamente a preferência. Cada alteração é registrada com data, motivo e quem realizou.
+
+## Conformidade LGPD
+
+- Respeito ao direito de revogação de consentimento
+- Registro auditável de todas as alterações
+- Bloqueio automático de envios
+
+💡 **Dica**: Inclua links de opt-out nos rodapés de e-mails e mensagens de campanha.`,
+  },
 ];
 

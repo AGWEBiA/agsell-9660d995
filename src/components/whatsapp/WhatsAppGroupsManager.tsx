@@ -113,13 +113,13 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
     return () => window.removeEventListener('navigate-to-groups', handler);
   }, [currentOrganization?.id]);
 
-  const handleFetchEvolutionGroups = async (instanceFilter?: string) => {
+  const handleFetchEvolutionGroups = async (instanceFilter?: string, adminOnly?: boolean) => {
     if (!currentOrganization?.id) return;
     setIsImporting(true);
     setImportedGroups([]);
     try {
       const { data, error } = await supabase.functions.invoke('fetch-evolution-groups', {
-        body: { organization_id: currentOrganization.id, instance_name: instanceFilter || undefined },
+        body: { organization_id: currentOrganization.id, instance_name: instanceFilter || undefined, admin_only: adminOnly ?? adminOnlyFilter },
       });
       if (error) throw error;
 

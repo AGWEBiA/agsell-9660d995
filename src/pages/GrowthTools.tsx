@@ -46,6 +46,10 @@ export default function GrowthTools() {
       const msg = tool.prefilled_message ? `&text=${encodeURIComponent(tool.prefilled_message)}` : '';
       return `https://wa.me/${tool.phone_number.replace(/\D/g, '')}${msg ? '?' + msg.slice(1) : ''}`;
     }
+    if (tool.channel === 'instagram' && tool.phone_number) {
+      // phone_number field stores the Instagram username for Instagram tools
+      return `https://ig.me/m/${tool.phone_number.replace('@', '')}`;
+    }
     return '#';
   };
 

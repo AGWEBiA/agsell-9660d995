@@ -184,6 +184,14 @@ export function WhatsAppGroupMessages({ currentInstanceId }: { currentInstanceId
                 </Select>
               </div>
 
+              {/* Instance selector */}
+              <WhatsAppMultiInstanceSelector
+                selectedIds={selectedInstanceIds}
+                onChange={setSelectedInstanceIds}
+                label="Instâncias para automação"
+                currentInstanceId={currentInstanceId}
+              />
+
               <div className="space-y-2">
                 <Label htmlFor="messageContent">Conteúdo da Mensagem</Label>
                 <Textarea

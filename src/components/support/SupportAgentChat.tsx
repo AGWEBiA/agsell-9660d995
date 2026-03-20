@@ -238,7 +238,7 @@ export function SupportAgentChat() {
       {!isOpen && (
         <button
           onClick={handleOpen}
-          className="fixed bottom-6 right-6 z-50 flex items-center justify-center h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:scale-105 transition-transform"
+          className="fixed bottom-6 right-6 z-40 flex items-center justify-center h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-lg hover:scale-105 transition-transform md:h-14 md:w-14"
           aria-label="Abrir suporte AG Sell"
         >
           <MessageCircle className="h-6 w-6" />

@@ -9,7 +9,7 @@ import { Loader2 } from 'lucide-react';
 const MANUAL_CONTENT = `# MANUAL TÉCNICO COMPLETO — AG SELL
 ## Plataforma CRM + Automação Omnichannel + IA
 
-**Versão:** 1.0  
+**Versão:** 2.0  
 **Data:** Março 2026  
 **Classificação:** Documentação Interna — Uso Técnico e Estratégico
 
@@ -1161,72 +1161,155 @@ Checkout → Stripe Session → Webhook checkout.session.completed
 
 ---
 
-# 15. CONSIDERAÇÕES FINAIS
+# 15. VoIP / TELEFONIA
 
-## 15.1 Pontos Fortes
+## 15.1 Objetivo
+Realizar e receber ligações telefônicas diretamente pela plataforma com softphone integrado ao navegador.
+
+## 15.2 Funcionalidades
+- Softphone web integrado (Softphone component)
+- Ligações de entrada e saída
+- Gravação automática de chamadas
+- Transcrição de chamadas via IA
+- Dashboard de analytics (CallAnalyticsDashboard)
+- Compra de créditos de VoIP (pacotes)
+- Vinculação automática a contatos e deals do CRM
+
+## 15.3 Tabela: \\\`calls\\\`
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| \\\`id\\\` | uuid | PK |
+| \\\`organization_id\\\` | uuid | Isolamento |
+| \\\`user_id\\\` | uuid | Quem fez/recebeu |
+| \\\`phone_number\\\` | text | Número discado/originário |
+| \\\`direction\\\` | text | inbound / outbound |
+| \\\`status\\\` | text | ringing, in_progress, completed, failed, missed |
+| \\\`duration_seconds\\\` | integer | Duração em segundos |
+| \\\`recording_url\\\` | text | URL da gravação |
+| \\\`transcript\\\` | text | Transcrição por IA |
+| \\\`credits_used\\\` | numeric | Créditos consumidos |
+| \\\`contact_id\\\` | uuid | FK contato vinculado |
+| \\\`deal_id\\\` | uuid | FK deal vinculado |
+| \\\`notes\\\` | text | Notas da ligação |
+
+## 15.4 Edge Function
+- \\\`voip-call\\\` — Inicia chamada, gerencia status e computa créditos
+- \\\`purchase-voip-credits\\\` — Compra de pacotes de créditos
+
+## 15.5 Rota
+- \\\`/voip\\\` — Feature Gate: \\\`voip\\\`
+
+---
+
+# 16. MIGRAÇÃO DE PLATAFORMA
+
+## 16.1 Objetivo
+Facilitar a migração de dados de outras plataformas (ManyChat, ActiveCampaign, RD Station, HubSpot, etc.) para o AG Sell.
+
+## 16.2 Métodos de Migração
+- **CSV Import** — Upload de arquivo CSV com mapeamento de campos
+- **JSON Import** — Importação de dados estruturados em JSON
+- **API Connect** — Conexão direta à API da plataforma de origem
+- **Webhook Guide** — Configuração de webhooks para sincronização contínua
+
+## 16.3 Edge Function
+- \\\`migrate-platform\\\` — Processa dados de migração, cria contatos, deals e tags
+
+## 16.4 Rota
+- \\\`/migration\\\` — Autenticado
+
+---
+
+# 17. CONSIDERAÇÕES FINAIS
+
+## 17.1 Pontos Fortes
 - Arquitetura multi-tenant robusta com isolamento total por RLS
 - Feature gating granular por plano
 - RBAC flexível com perfis de permissão customizáveis
-- Integração omnichannel (WhatsApp + Instagram + E-mail + SMS + Telegram)
+- Integração omnichannel (WhatsApp + Instagram + E-mail + SMS + Telegram + VoIP)
 - IA integrada sem necessidade de API key do usuário
 - Flow Builder visual estilo ManyChat
 - Enquetes com mapeamento de respostas e lógica condicional
 - Gamificação de equipes de vendas
 - Modo agência multi-tenant
 - Checkout com onboarding automático (guest checkout)
+- Grupos Pagos com 20+ gateways de pagamento
+- Rotador de Grupos com round-robin inteligente
+- Editor visual de Landing Pages com 11+ seções
+- VoIP/Telefonia integrado com softphone web
 
-## 15.2 Pontos de Atenção
-- Action \`wait\` nas automações registra mas não implementa delay real (necessita sistema de filas)
+## 17.2 Pontos de Atenção
+- Action \\\`wait\\\` nas automações registra mas não implementa delay real (necessita sistema de filas)
 - PWA não formalizado (sem manifest / service worker)
 - Crons de verificação de domínio dependem de invocação externa
 - Rate limiting de API implementado em banco, não em edge middleware
 
-## 15.3 Estrutura Preparada para Escala
+## 17.3 Estrutura Preparada para Escala
 - Todas as queries são isoladas por organização
 - Realtime seletivo (apenas tabelas críticas)
 - Edge Functions stateless e horizontalmente escaláveis
 - TanStack Query com cache e stale time configurados
-- Paginação preparada (\`usePaginatedQuery\`)
+- Paginação preparada (\\\`usePaginatedQuery\\\`)
 
-## 15.4 Edge Functions Completas
+## 17.4 Edge Functions Completas
 
 | Função | Objetivo |
 |--------|----------|
-| \`ai-chat\` | Chat IA (assistente + agentes custom) |
-| \`create-checkout\` | Checkout Stripe para usuários logados |
-| \`guest-checkout\` | Checkout para novos usuários |
-| \`stripe-webhook\` | Processa eventos Stripe |
-| \`send-email\` | Envio multi-provedor (Resend/SES/SendGrid) |
-| \`send-whatsapp\` | Envio WhatsApp |
-| \`send-sms\` | Envio SMS (Twilio/Vonage) |
-| \`send-instagram-dm\` | Envio Instagram DM |
-| \`process-automation\` | Execução de automações |
-| \`process-sequence\` | Processamento de sequências drip |
-| \`process-whatsapp-campaign\` | Processamento de campanhas WhatsApp |
-| \`instagram-oauth\` | Fluxo OAuth Instagram |
-| \`instagram-webhook\` | Webhook Instagram |
-| \`instagram-lookup\` | Busca de perfil Instagram |
-| \`whatsapp-webhook\` | Webhook WhatsApp |
-| \`telegram-webhook\` | Webhook Telegram |
-| \`email-inbound\` | Recepção de e-mails |
-| \`verify-email-domain\` | Verificação DNS de domínio |
-| \`verify-email-domains-cron\` | Verificação periódica |
-| \`transcribe-audio\` | Transcrição de áudio |
-| \`public-api\` | API pública REST |
-| \`webhook-inbound\` | Webhook genérico de entrada |
-| \`webhook-hotmart\` | Webhook Hotmart |
-| \`webhook-kiwify\` | Webhook Kiwify |
-| \`webhook-eduzz\` | Webhook Eduzz |
-| \`webhook-shopify\` | Webhook Shopify |
-| \`webhook-stripe\` | Webhook Stripe (pagamentos) |
-| \`admin-manage-users\` | Gestão de usuários (admin) |
-| \`delete-user-data\` | Exclusão de dados (LGPD) |
-| \`export-user-data\` | Exportação de dados (LGPD) |
-| \`ai-builder\` | Geração de conteúdo IA (e-mails, fluxos, brand kit, segmentos) |
-| \`analyze-sentiment\` | Análise de sentimento de mensagens via IA |
-| \`track-event\` | Rastreamento de eventos de sites (snippet JS) |
-| \`predict-win\` | Cálculo de probabilidade de fechamento de deals via IA |
-| \`send-sms\` | Envio de SMS via Twilio/Vonage |
+| \\\`ai-chat\\\` | Chat IA (assistente + agentes custom) |
+| \\\`ai-builder\\\` | Geração de conteúdo IA (e-mails, fluxos, brand kit, segmentos) |
+| \\\`analyze-sentiment\\\` | Análise de sentimento de mensagens via IA |
+| \\\`create-checkout\\\` | Checkout Stripe para usuários logados |
+| \\\`guest-checkout\\\` | Checkout para novos usuários |
+| \\\`stripe-webhook\\\` | Processa eventos Stripe |
+| \\\`create-kiwify-checkout\\\` | Checkout via Kiwify |
+| \\\`customer-portal\\\` | Portal de gerenciamento de assinatura Stripe |
+| \\\`test-stripe-connection\\\` | Teste de conexão Stripe |
+| \\\`send-email\\\` | Envio multi-provedor (Resend/SES/SendGrid) |
+| \\\`send-whatsapp\\\` | Envio WhatsApp |
+| \\\`send-sms\\\` | Envio SMS (Twilio/Vonage) |
+| \\\`send-instagram-dm\\\` | Envio Instagram DM |
+| \\\`process-automation\\\` | Execução de automações |
+| \\\`process-sequence\\\` | Processamento de sequências drip |
+| \\\`process-whatsapp-campaign\\\` | Processamento de campanhas WhatsApp |
+| \\\`process-import\\\` | Processamento de importação de contatos |
+| \\\`instagram-oauth\\\` | Fluxo OAuth Instagram |
+| \\\`instagram-webhook\\\` | Webhook Instagram |
+| \\\`instagram-lookup\\\` | Busca de perfil Instagram |
+| \\\`whatsapp-webhook\\\` | Webhook WhatsApp |
+| \\\`whatsapp-templates\\\` | Gestão de templates WhatsApp Business |
+| \\\`telegram-webhook\\\` | Webhook Telegram |
+| \\\`email-inbound\\\` | Recepção de e-mails |
+| \\\`verify-email-domain\\\` | Verificação DNS de domínio |
+| \\\`verify-email-domains-cron\\\` | Verificação periódica |
+| \\\`evolution-qrcode\\\` | QR Code para conexão WhatsApp |
+| \\\`fetch-evolution-groups\\\` | Busca grupos via Evolution API |
+| \\\`create-whatsapp-group\\\` | Criação de grupo WhatsApp |
+| \\\`sync-whatsapp-reconnect\\\` | Reconexão de instância WhatsApp |
+| \\\`subscription-whatsapp-groups\\\` | Gestão de grupos por assinatura |
+| \\\`test-evolution-api\\\` | Teste de conexão Evolution API |
+| \\\`transcribe-audio\\\` | Transcrição de áudio via IA |
+| \\\`public-api\\\` | API pública REST |
+| \\\`webhook-inbound\\\` | Webhook genérico de entrada |
+| \\\`webhook-hotmart\\\` | Webhook Hotmart |
+| \\\`webhook-kiwify\\\` | Webhook Kiwify |
+| \\\`webhook-eduzz\\\` | Webhook Eduzz |
+| \\\`webhook-shopify\\\` | Webhook Shopify |
+| \\\`webhook-stripe\\\` | Webhook Stripe (pagamentos) |
+| \\\`paid-groups-webhook\\\` | Webhook multi-gateway para grupos pagos |
+| \\\`group-rotator\\\` | Redirecionamento inteligente de grupos |
+| \\\`admin-manage-users\\\` | Gestão de usuários (admin) |
+| \\\`delete-user-data\\\` | Exclusão de dados (LGPD) |
+| \\\`export-user-data\\\` | Exportação de dados (LGPD) |
+| \\\`track-event\\\` | Rastreamento de eventos de sites (pixel JS) |
+| \\\`predict-win\\\` | Probabilidade de fechamento via IA |
+| \\\`predictive-scoring\\\` | Scoring preditivo de leads via IA |
+| \\\`voip-call\\\` | Chamadas telefônicas VoIP |
+| \\\`purchase-voip-credits\\\` | Compra de créditos VoIP |
+| \\\`purchase-sms-credits\\\` | Compra de créditos SMS |
+| \\\`migrate-platform\\\` | Migração de plataformas externas |
+| \\\`support-agent\\\` | Agente de suporte IA |
+| \\\`public-support-portal\\\` | Portal público de suporte white-label |
 
 ---
 

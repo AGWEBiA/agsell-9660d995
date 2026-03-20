@@ -6,6 +6,7 @@ import {
   Webhook, SlidersHorizontal, Instagram, ListChecks, Search,
   BookOpen, ChevronRight, Lightbulb, Bell, Globe, Lock, Database,
   HelpCircle, Megaphone, Wrench, Workflow, Vote, SplitSquareVertical, Briefcase,
+  Link as LinkIcon, Phone,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -401,10 +402,261 @@ const guideSections: GuideSection[] = [
     icon: Settings,
     description: 'Preferências do sistema, tema e configurações pessoais.',
     features: [
+      { title: 'Perfil do usuário', description: 'Atualize seu nome, e-mail e altere sua senha de acesso.' },
       { title: 'Tema claro/escuro', description: 'Alterne entre os temas claro e escuro da interface.' },
       { title: 'Notificações', description: 'Configure preferências de notificações do sistema.' },
       { title: 'Exportação de dados (LGPD)', description: 'Exporte seus dados pessoais em conformidade com a LGPD.' },
       { title: 'Exclusão de conta (LGPD)', description: 'Solicite a exclusão completa dos seus dados.' },
+    ],
+  },
+  {
+    id: 'voip',
+    title: 'VoIP / Telefonia',
+    icon: Globe,
+    badge: 'NOVO',
+    description: 'Realize e receba ligações diretamente pela plataforma com softphone integrado.',
+    features: [
+      { title: 'Softphone integrado', description: 'Faça ligações diretamente do navegador sem precisar de aplicativos externos.' },
+      { title: 'Gravação de chamadas', description: 'Grave ligações automaticamente para revisão e treinamento.' },
+      { title: 'Transcrição automática', description: 'Transcreva ligações com IA para registro e busca textual.' },
+      { title: 'Dashboard de chamadas', description: 'Métricas completas: duração média, ligações por dia, taxa de atendimento.' },
+      { title: 'Créditos de VoIP', description: 'Compre e gerencie pacotes de créditos para ligações.' },
+      { title: 'Vinculação com CRM', description: 'Associe ligações a contatos e deals automaticamente.' },
+    ],
+  },
+  {
+    id: 'paid-groups',
+    title: 'Grupos Pagos',
+    icon: Users,
+    badge: 'BETA',
+    description: 'Automatize a gestão de membros em grupos de WhatsApp com 20+ gateways de pagamento.',
+    features: [
+      { title: 'Adição automática', description: 'Comprou? Membro é adicionado ao grupo de WhatsApp automaticamente.' },
+      { title: 'Remoção automática', description: 'Cancelou, reembolsou ou expirou? Membro é removido automaticamente.' },
+      { title: '20+ Gateways', description: 'Stripe, Kiwify, Hotmart, Eduzz, Monetizze, PerfectPay, Braip, Guru e mais 12.' },
+      { title: 'Produtos e vínculos', description: 'Crie produtos internos e vincule a múltiplos grupos simultaneamente.' },
+      { title: 'Dashboard de membros', description: 'Acompanhe entradas, saídas e status de cada membro.' },
+    ],
+  },
+  {
+    id: 'group-rotator',
+    title: 'Rotador de Grupos',
+    icon: LinkIcon,
+    badge: 'NOVO',
+    description: 'Link inteligente que distribui cliques entre múltiplos grupos de WhatsApp via round-robin.',
+    features: [
+      { title: 'Campanhas com slug', description: 'Crie links únicos (ex: /r/meu-curso) para distribuição automática.' },
+      { title: 'Round-robin inteligente', description: 'Cada clique vai para o próximo grupo disponível automaticamente.' },
+      { title: 'Limites de capacidade', description: 'Defina máx. de cliques e membros por grupo para troca automática.' },
+      { title: 'Analytics de cliques', description: 'Acompanhe cliques, ocupação e status de cada grupo em tempo real.' },
+    ],
+  },
+  {
+    id: 'landing-pages',
+    title: 'Landing Pages',
+    icon: Globe,
+    badge: 'NOVO',
+    description: 'Editor visual de landing pages com 11+ seções, SEO e integração com CRM.',
+    features: [
+      { title: 'Editor visual', description: 'Monte páginas arrastando seções: Hero, Features, Testimonials, FAQ, CTA e mais.' },
+      { title: 'Propriedades editáveis', description: 'Customize títulos, textos, cores e estilos de cada seção via painel lateral.' },
+      { title: 'SEO integrado', description: 'Configure título, descrição e CSS customizado para cada página.' },
+      { title: 'Integração com CRM', description: 'Formulários de captura criam contatos e disparam automações automaticamente.' },
+    ],
+  },
+  {
+    id: 'event-tracking',
+    title: 'Event Tracking (Pixel)',
+    icon: Target,
+    badge: 'NOVO',
+    description: 'Snippet JavaScript para rastreamento de eventos e navegação em sites externos.',
+    features: [
+      { title: 'Snippet plug-and-play', description: 'Copie e cole o código no seu site para começar a rastrear automaticamente.' },
+      { title: 'Page views automáticos', description: 'Cada visualização de página é registrada com URL, título e referrer.' },
+      { title: 'Navegação SPA', description: 'Detecta navegação em aplicações de página única (pushState, popstate).' },
+      { title: 'Eventos customizados', description: 'Rastreie cliques em botões, scroll e interações específicas via API JS.' },
+      { title: 'Visitor ID persistente', description: 'Identificação única de visitantes via localStorage para sessões contínuas.' },
+    ],
+  },
+  {
+    id: 'sms-marketing',
+    title: 'SMS Marketing',
+    icon: Megaphone,
+    badge: 'NOVO',
+    description: 'Campanhas SMS em massa, automações e mensagens bidirecionais.',
+    features: [
+      { title: 'Campanhas em massa', description: 'Envie SMS para listas segmentadas com agendamento.' },
+      { title: 'Two-way messaging', description: 'Respostas de SMS aparecem no inbox para conversa bidirecional.' },
+      { title: 'Provedores múltiplos', description: 'Integre Twilio ou Vonage como provedor de SMS.' },
+      { title: 'Automações SMS', description: 'Use SMS como ação em automações, sequências e flows.' },
+    ],
+  },
+  {
+    id: 'migration',
+    title: 'Migração de Plataforma',
+    icon: Database,
+    description: 'Ferramentas para migrar dados de outras plataformas para o AG Sell.',
+    features: [
+      { title: 'Importação CSV', description: 'Importe contatos, deals e dados via arquivo CSV com mapeamento de campos.' },
+      { title: 'Importação JSON', description: 'Importe dados estruturados em formato JSON para migração programática.' },
+      { title: 'Conexão via API', description: 'Conecte à API da plataforma de origem para importação automatizada.' },
+      { title: 'Webhooks de migração', description: 'Configure webhooks para sincronização contínua durante a transição.' },
+    ],
+  },
+  {
+    id: 'support-center',
+    title: 'Suporte AG Sell',
+    icon: HelpCircle,
+    description: 'Central de suporte da plataforma para abrir chamados técnicos.',
+    features: [
+      { title: 'Abertura de tickets', description: 'Abra chamados técnicos com categorização e prioridade.' },
+      { title: 'Protocolo automático', description: 'Cada ticket recebe um protocolo único (SUP-YYYYMMDD-XXXXX).' },
+      { title: 'Acompanhamento', description: 'Consulte o status do chamado a qualquer momento.' },
+    ],
+  },
+  {
+    id: 'support-portal',
+    title: 'Portal de Suporte White-label',
+    icon: Globe,
+    badge: 'NOVO',
+    description: 'Portal público personalizável para seus clientes abrirem e acompanharem chamados.',
+    features: [
+      { title: 'Abertura sem login', description: 'Clientes abrem tickets sem precisar criar conta na plataforma.' },
+      { title: 'Acompanhamento por protocolo', description: 'Consulta por protocolo + e-mail para ver status em tempo real.' },
+      { title: 'Categorias personalizáveis', description: 'Defina categorias de chamados específicas do seu negócio.' },
+      { title: 'Chat WhatsApp integrado', description: 'Botão de chat direto via WhatsApp no portal público.' },
+      { title: 'Integração com CRM', description: 'Tickets criam contatos e vinculam ao histórico automaticamente.' },
+    ],
+  },
+  {
+    id: 'whatsapp-templates',
+    title: 'Templates de WhatsApp',
+    icon: MessageSquare,
+    description: 'Gerencie templates de mensagens para WhatsApp Business API.',
+    features: [
+      { title: 'Criação de templates', description: 'Crie templates com variáveis, botões e mídias para aprovação.' },
+      { title: 'Categorias', description: 'Organize por tipo: marketing, utilidade, autenticação.' },
+      { title: 'Status de aprovação', description: 'Acompanhe o status: pendente, aprovado, rejeitado.' },
+    ],
+  },
+  {
+    id: 'contact-preferences',
+    title: 'Preferências de Contato (Opt-out)',
+    icon: Shield,
+    description: 'Gestão de preferências de comunicação e opt-out por canal.',
+    features: [
+      { title: 'Opt-out por canal', description: 'Contatos podem optar por não receber mensagens em canais específicos.' },
+      { title: 'Histórico de preferências', description: 'Registre quando e por que o contato optou por sair.' },
+      { title: 'Conformidade LGPD', description: 'Garanta conformidade com regulamentações de privacidade de dados.' },
+    ],
+  },
+  {
+    id: 'ai-builder',
+    title: 'AI Builder',
+    icon: Brain,
+    badge: 'NOVO',
+    description: 'Gere e-mails, automações e copy com Inteligência Artificial.',
+    features: [
+      { title: 'Geração de e-mails', description: 'Descreva o objetivo e a IA cria o e-mail HTML completo.' },
+      { title: 'Geração de fluxos', description: 'Descreva a estratégia e receba um fluxo de automação pronto.' },
+      { title: 'AI Brand Kit', description: 'Extraia cores, fontes e tom de comunicação a partir da URL do seu site.' },
+      { title: 'Segmentos sugeridos', description: 'IA analisa sua base e sugere segmentações inteligentes.' },
+    ],
+  },
+  {
+    id: 'predictive-sending',
+    title: 'Envio Preditivo',
+    icon: Brain,
+    badge: 'NOVO',
+    description: 'IA analisa o histórico e determina o melhor horário de envio por contato.',
+    features: [
+      { title: 'Horário ideal', description: 'IA identifica quando cada contato tem maior engajamento.' },
+      { title: 'Canal preferido', description: 'Identifica automaticamente o canal mais responsivo de cada contato.' },
+      { title: 'Perfis de envio', description: 'Cria perfis individuais com timezone, horário ideal e canal preferido.' },
+    ],
+  },
+  {
+    id: 'sentiment',
+    title: 'Análise de Sentimento',
+    icon: Brain,
+    badge: 'NOVO',
+    description: 'IA classifica automaticamente o tom das mensagens recebidas.',
+    features: [
+      { title: 'Classificação automática', description: 'Positivo, neutro ou negativo para cada mensagem recebida.' },
+      { title: 'Palavras-chave', description: 'Extração automática de termos mais frequentes por sentimento.' },
+      { title: 'Dashboard de tendências', description: 'Gráficos de evolução do sentimento ao longo do tempo.' },
+    ],
+  },
+  {
+    id: 'sales-routing',
+    title: 'Roteamento de Vendas',
+    icon: SlidersHorizontal,
+    badge: 'NOVO',
+    description: 'Distribua leads entre vendedores com regras inteligentes.',
+    features: [
+      { title: 'Round Robin', description: 'Alternância automática entre vendedores para distribuição uniforme.' },
+      { title: 'Por carga', description: 'Distribui para o vendedor com menos leads ativos.' },
+      { title: 'Por território', description: 'Baseado na região geográfica do contato.' },
+      { title: 'Limites configuráveis', description: 'Defina máximo de leads simultâneos por vendedor.' },
+    ],
+  },
+  {
+    id: 'goals',
+    title: 'Metas de Conversão',
+    icon: Target,
+    badge: 'NOVO',
+    description: 'Defina metas de receita, contagem ou eventos e acompanhe em tempo real.',
+    features: [
+      { title: 'Tipos de meta', description: 'Receita (R$), contagem (leads, deals) ou eventos (page views, conversões).' },
+      { title: 'Progresso em tempo real', description: 'Barra de progresso atualizada automaticamente conforme ações são realizadas.' },
+      { title: 'Status automático', description: 'Meta ativa, atingida ou expirada com indicadores visuais.' },
+    ],
+  },
+  {
+    id: 'win-probability',
+    title: 'Probabilidade de Fechamento',
+    icon: Target,
+    badge: 'NOVO',
+    description: 'IA calcula a probabilidade de converter cada deal do pipeline.',
+    features: [
+      { title: 'Score 0-100%', description: 'IA analisa valor, tempo, atividades e engajamento para calcular probabilidade.' },
+      { title: 'Fatores de impacto', description: 'Lista detalhada dos fatores positivos e negativos de cada deal.' },
+      { title: 'Forecast inteligente', description: 'Receita projetada baseada em probabilidade real, não estimativas manuais.' },
+    ],
+  },
+  {
+    id: 'custom-reports',
+    title: 'Relatórios Personalizados',
+    icon: BarChart3,
+    badge: 'NOVO',
+    description: 'Dashboards customizados com widgets configuráveis de múltiplas fontes.',
+    features: [
+      { title: 'Widgets flexíveis', description: 'Barras, linhas, pizza — escolha o tipo de gráfico para cada métrica.' },
+      { title: 'Múltiplas fontes', description: 'Combine dados de CRM, E-mail, WhatsApp e Inbox no mesmo relatório.' },
+      { title: 'Filtros avançados', description: 'Período, canal, agente e outros filtros para análises profundas.' },
+    ],
+  },
+  {
+    id: 'conditional-content',
+    title: 'Conteúdo Condicional',
+    icon: Vote,
+    badge: 'NOVO',
+    description: 'Blocos dinâmicos em e-mails que mudam conforme o perfil do contato.',
+    features: [
+      { title: 'Condições por tag', description: 'Mostre conteúdo diferente para contatos com ou sem determinada tag.' },
+      { title: 'Condições por score', description: 'Adapte CTAs e ofertas conforme a pontuação do lead.' },
+      { title: 'Preview lado a lado', description: 'Visualize em tempo real o conteúdo para cada condição (verdadeiro vs falso).' },
+    ],
+  },
+  {
+    id: 'system-status',
+    title: 'Status do Sistema',
+    icon: Globe,
+    description: 'Monitore o status de todos os serviços da plataforma em tempo real.',
+    features: [
+      { title: 'Status dos serviços', description: 'Monitore API, banco de dados, autenticação, edge functions e storage.' },
+      { title: 'Uptime e latência', description: 'Acompanhe disponibilidade e tempo de resposta de cada serviço.' },
+      { title: 'Página pública', description: 'Página acessível em /status sem autenticação para transparência.' },
     ],
   },
 ];
@@ -465,7 +717,7 @@ export default function SystemGuide() {
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-2xl font-bold text-primary">5</p>
+            <p className="text-2xl font-bold text-primary">6</p>
             <p className="text-xs text-muted-foreground">Canais integrados</p>
           </CardContent>
         </Card>

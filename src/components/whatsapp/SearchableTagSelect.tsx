@@ -26,8 +26,8 @@ export function SearchableTagSelect({ selectedTags, onTagsChange, placeholder = 
         setIsOpen(false);
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener('pointerdown', handler, true);
+    return () => document.removeEventListener('pointerdown', handler, true);
   }, []);
 
   const filteredTags = useMemo(() => {

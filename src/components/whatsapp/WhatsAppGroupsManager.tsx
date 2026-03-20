@@ -412,6 +412,10 @@ export function WhatsAppGroupsManager() {
             </Select>
           )}
           <Button variant="outline" size="icon" onClick={() => refetchGroups()}><RefreshCw className="h-4 w-4" /></Button>
+          <Button variant="secondary" onClick={handleFetchEvolutionGroups} disabled={isImporting}>
+            {isImporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+            Buscar Grupos
+          </Button>
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild><Button><Plus className="h-4 w-4 mr-2" />Novo Grupo</Button></DialogTrigger>
             <DialogContent>

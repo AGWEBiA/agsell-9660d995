@@ -85,6 +85,8 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter, analytics }: {
         }
         return '';
       }
+      case 'add_to_whatsapp_group':
+        return c.group_name ? `→ ${String(c.group_name)}` : '';
       default:
         return '';
     }

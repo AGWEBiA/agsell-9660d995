@@ -84,7 +84,7 @@ function InstanceConfigDialog({ instance, open, onOpenChange }: {
               type="button"
               onClick={() => {
                 onOpenChange(false);
-                window.dispatchEvent(new CustomEvent('navigate-to-groups', { detail: { instanceName } }));
+                window.dispatchEvent(new CustomEvent('navigate-to-groups', { detail: { instanceName, autoFetch: true } }));
               }}
               className="flex flex-col items-start p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
             >
@@ -93,7 +93,10 @@ function InstanceConfigDialog({ instance, open, onOpenChange }: {
             </button>
             <button
               type="button"
-              onClick={() => toast.info('Importação de contatos será disponibilizada em breve.')}
+              onClick={() => {
+                onOpenChange(false);
+                window.dispatchEvent(new CustomEvent('navigate-to-contacts-import', { detail: { instanceName } }));
+              }}
               className="flex flex-col items-start p-3 rounded-lg border hover:bg-muted/50 transition-colors text-left"
             >
               <span className="font-medium text-sm">Importar contatos</span>

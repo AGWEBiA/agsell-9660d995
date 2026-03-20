@@ -23,7 +23,7 @@ import {
   Users, Plus, Trash2, UserPlus, UserMinus, MessageSquare, RefreshCw, Crown, Clock,
   Search, Settings, Copy, Shield, Activity, Eye, ToggleLeft, ToggleRight, Edit, Tag, Send, X,
   Lock, Unlock, Link2, ImageIcon, Ban, UserCog, ShieldCheck, ShieldOff, Globe, MessageCircle,
-  AlertTriangle, Info, Download, Loader2, CheckSquare,
+  AlertTriangle, Info, Download, Loader2, CheckSquare, Smartphone,
 } from 'lucide-react';
 import { useWhatsAppGroups, WhatsAppGroup, WhatsAppGroupEvent, WhatsAppGroupMember } from '@/hooks/useWhatsAppGroups';
 import { useWhatsAppInstances } from '@/hooks/useWhatsAppInstances';
@@ -39,7 +39,7 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 import { Checkbox } from '@/components/ui/checkbox';
 import { SearchableTagSelect } from './SearchableTagSelect';
 
-export function WhatsAppGroupsManager() {
+export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { filterInstanceName?: string | null; onClearFilter?: () => void }) {
   const {
     groups, isLoadingGroups, refetchGroups, allTags,
     createGroup, updateGroup, deleteGroup,
@@ -52,7 +52,7 @@ export function WhatsAppGroupsManager() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [importedGroups, setImportedGroups] = useState<Array<{ instance_name: string; id: string; subject: string; size: number; selected: boolean }>>([]);
+  const [importedGroups, setImportedGroups] = useState<Array<{ instance_name: string; phone_number?: string; id: string; subject: string; size: number; selected: boolean }>>([]);
   const [selectedGroup, setSelectedGroup] = useState<WhatsAppGroup | null>(null);
   const [detailTab, setDetailTab] = useState<'members' | 'events' | 'settings' | 'message' | 'admin'>('members');
   const [groupSettings, setGroupSettings] = useState({
@@ -97,21 +97,39 @@ export function WhatsAppGroupsManager() {
     }
   }, [isLoadingGroups, groups.length, activeInstances.length, currentOrganization?.id]);
 
-  const handleFetchEvolutionGroups = async () => {
+  const handleFetchEvolutionGroups = async (instanceFilter?: string) => {
     if (!currentOrganization?.id) return;
     setIsImporting(true);
     setImportedGroups([]);
     try {
       const { data, error } = await supabase.functions.invoke('fetch-evolution-groups', {
-        body: { organization_id: currentOrganization.id },
+        body: { organization_id: currentOrganization.id, instance_name: instanceFilter || undefined },
       });
       if (error) throw error;
       const allGroups: typeof importedGroups = [];
       const existingIds = new Set(groups.map(g => g.external_group_id));
+
+      // Update phone numbers on local instances
       for (const inst of data.instances || []) {
+        if (inst.phone_number) {
+          // Find the matching local instance and update its phone_number in config
+          const localInstance = whatsAppInstances.find(
+            i => (i.config?.instance_name || i.name) === inst.instance_name
+          );
+          if (localInstance && !localInstance.phone_number) {
+            await supabase
+              .from('organization_integrations')
+              .update({
+                config: { ...localInstance.config, phone_number: inst.phone_number } as any,
+              })
+              .eq('id', localInstance.id);
+          }
+        }
+
         for (const g of inst.groups || []) {
           allGroups.push({
             instance_name: inst.instance_name,
+            phone_number: inst.phone_number,
             id: g.id,
             subject: g.subject,
             size: g.size,
@@ -133,15 +151,9 @@ export function WhatsAppGroupsManager() {
     const selected = importedGroups.filter(g => g.selected);
     if (selected.length === 0) { toast.error('Selecione ao menos um grupo'); return; }
     const existingIds = new Set(groups.map(g => g.external_group_id));
-    let imported = 0;
-    for (const g of selected) {
-      if (existingIds.has(g.id)) continue;
-      createGroup({ name: g.subject, description: `Importado de ${g.instance_name}`, group_type: 'group' });
-      // Also update external_group_id after creation - we'll do a batch update
-      imported++;
-    }
-    // For external_group_id we need direct insert
+    // Direct insert with instance_name in settings and is_active = false
     if (currentOrganization?.id) {
+      let importCount = 0;
       for (const g of selected) {
         if (existingIds.has(g.id)) continue;
         await supabase.from('whatsapp_groups').insert({
@@ -150,13 +162,15 @@ export function WhatsAppGroupsManager() {
           external_group_id: g.id,
           member_count: g.size,
           group_type: 'group',
-          settings: {} as any,
+          is_active: false, // Groups come disabled by default
+          settings: { instance_name: g.instance_name } as any,
           tags: [],
         });
+        importCount++;
       }
       refetchGroups();
+      toast.success(`${importCount} grupo(s) importado(s)! Ative e configure as tags de cada grupo.`);
     }
-    toast.success(`${selected.length} grupo(s) importado(s) com sucesso!`);
     setIsImportDialogOpen(false);
   };
 
@@ -389,7 +403,10 @@ export function WhatsAppGroupsManager() {
     const matchesSearch = g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (g.description || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTag = filterTag === 'all' || (g.tags || []).includes(filterTag);
-    return matchesSearch && matchesTag;
+    // Filter by instance if coming from device click
+    const groupInstanceName = (g.settings as Record<string, unknown>)?.instance_name as string | undefined;
+    const matchesInstance = !filterInstanceName || groupInstanceName === filterInstanceName;
+    return matchesSearch && matchesTag && matchesInstance;
   });
 
   const activeGroupsCount = groups.filter(g => g.is_active).length;
@@ -399,6 +416,21 @@ export function WhatsAppGroupsManager() {
 
   return (
     <div className="space-y-6">
+      {/* Device filter banner */}
+      {filterInstanceName && (
+        <div className="flex items-center gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+          <Smartphone className="h-5 w-5 text-primary" />
+          <span className="text-sm font-medium">Filtrando grupos do dispositivo: <strong>{filterInstanceName}</strong></span>
+          <Button variant="ghost" size="sm" className="ml-auto h-7" onClick={onClearFilter}>
+            <X className="h-4 w-4 mr-1" /> Limpar filtro
+          </Button>
+          <Button variant="secondary" size="sm" className="h-7" onClick={() => handleFetchEvolutionGroups(filterInstanceName)} disabled={isImporting}>
+            {isImporting ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Download className="h-4 w-4 mr-1" />}
+            Buscar Grupos deste Dispositivo
+          </Button>
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card><CardContent className="pt-6"><div className="flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900"><Users className="h-5 w-5 text-green-600" /></div><div><p className="text-2xl font-bold">{groups.length}</p><p className="text-xs text-muted-foreground">Total de Grupos</p></div></div></CardContent></Card>
@@ -428,7 +460,7 @@ export function WhatsAppGroupsManager() {
             </Select>
           )}
           <Button variant="outline" size="icon" onClick={() => refetchGroups()}><RefreshCw className="h-4 w-4" /></Button>
-          <Button variant="secondary" onClick={handleFetchEvolutionGroups} disabled={isImporting}>
+          <Button variant="secondary" onClick={() => handleFetchEvolutionGroups()} disabled={isImporting}>
             {isImporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
             Buscar Grupos
           </Button>

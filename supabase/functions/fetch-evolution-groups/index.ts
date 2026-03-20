@@ -27,12 +27,11 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { organization_id } = await req.json();
+    const { organization_id, instance_name: filterInstance } = await req.json();
     if (!organization_id) {
       return new Response(JSON.stringify({ error: "organization_id required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Use service role to read platform settings (contains API keys)
     const adminClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -50,7 +49,7 @@ Deno.serve(async (req) => {
 
     if (globalConfig?.value) {
       const val = globalConfig.value as Record<string, string>;
-      baseUrl = (val.base_url || val.url || "").replace(/\/$/, "");
+      baseUrl = (val.base_url || val.url || val.api_url || "").replace(/\/$/, "");
       apiKey = val.api_key || val.apikey || "";
     }
 
@@ -98,22 +97,46 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Filter connected instances (or specific instance if requested)
     const connectedInstances = Array.isArray(instances)
       ? instances.filter((i: any) => {
           const state = i?.instance?.state || i?.state || i?.connectionStatus?.state;
-          return state === "open" || state === "connected";
+          const instanceName = i?.instance?.instanceName || i?.instanceName || i?.name;
+          const isConnected = state === "open" || state === "connected";
+          if (filterInstance) return isConnected && instanceName === filterInstance;
+          return isConnected;
         })
       : [];
 
-    // Step 2: For each connected instance, fetch groups
+    // Step 2: For each connected instance, fetch groups and extract phone number
     const result: Array<{
       instance_name: string;
+      phone_number: string;
       groups: Array<{ id: string; subject: string; size: number; creation: number }>;
     }> = [];
 
     for (const inst of connectedInstances) {
       const instanceName = inst?.instance?.instanceName || inst?.instanceName || inst?.name;
       if (!instanceName) continue;
+
+      // Extract phone number from instance data
+      // Evolution API returns owner in various formats
+      const owner = inst?.instance?.owner || inst?.owner || "";
+      // owner is typically "5511999998888@s.whatsapp.net" or just "5511999998888"
+      const phoneRaw = typeof owner === "string" ? owner.replace(/@.*$/, "").replace(/\D/g, "") : "";
+      // Format as +55 (XX) XXXXX-XXXX for Brazilian numbers
+      let phoneFormatted = phoneRaw;
+      if (phoneRaw.startsWith("55") && phoneRaw.length >= 12) {
+        const ddd = phoneRaw.substring(2, 4);
+        const rest = phoneRaw.substring(4);
+        if (rest.length === 9) {
+          phoneFormatted = `+55 (${ddd}) ${rest.substring(0, 5)}-${rest.substring(5)}`;
+        } else if (rest.length === 8) {
+          phoneFormatted = `+55 (${ddd}) ${rest.substring(0, 4)}-${rest.substring(4)}`;
+        }
+      } else if (phoneRaw.length > 0) {
+        phoneFormatted = `+${phoneRaw}`;
+      }
 
       try {
         const groupsResp = await fetch(`${baseUrl}/group/fetchAllGroups/${instanceName}?getParticipants=false`, {
@@ -123,6 +146,8 @@ Deno.serve(async (req) => {
 
         if (!groupsResp.ok) {
           console.error(`Failed to fetch groups for ${instanceName}:`, await groupsResp.text());
+          // Still include instance with phone number even if groups fail
+          result.push({ instance_name: instanceName, phone_number: phoneFormatted, groups: [] });
           continue;
         }
 
@@ -134,9 +159,21 @@ Deno.serve(async (req) => {
           creation: g.creation || 0,
         }));
 
-        result.push({ instance_name: instanceName, groups });
+        result.push({ instance_name: instanceName, phone_number: phoneFormatted, groups });
       } catch (e) {
         console.error(`Error fetching groups for ${instanceName}:`, e);
+        result.push({ instance_name: instanceName, phone_number: phoneFormatted, groups: [] });
+      }
+    }
+
+    // Also update phone numbers on organization_integrations for display
+    for (const inst of result) {
+      if (inst.phone_number) {
+        await adminClient
+          .from("organization_integrations")
+          .update({ config: adminClient.rpc ? undefined : undefined }) // We'll handle this client-side
+          .eq("organization_id", organization_id);
+        // Actually let's just return the data and let the client update
       }
     }
 

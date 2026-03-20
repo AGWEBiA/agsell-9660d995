@@ -95,6 +95,16 @@ export default function Contacts() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Auto-open import dialog when navigated with ?import=true
+  useEffect(() => {
+    if (searchParams.get('import') === 'true') {
+      setIsImportOpen(true);
+      searchParams.delete('import');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewContact, setViewContact] = useState<Contact | null>(null);
   const [editContact, setEditContact] = useState<Contact | null>(null);

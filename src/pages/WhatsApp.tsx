@@ -365,7 +365,7 @@ export default function WhatsApp() {
       )}
 
       {/* Main Tabs */}
-      <Tabs defaultValue="connection" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); if (v !== 'groups') setFilterDeviceInstance(null); }} className="space-y-6">
         <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
           <TabsTrigger value="connection" className="flex items-center gap-2">
             <Smartphone className="h-4 w-4" />
@@ -422,7 +422,7 @@ export default function WhatsApp() {
         </TabsContent>
 
         <TabsContent value="groups">
-          <WhatsAppGroupsManager />
+          <WhatsAppGroupsManager filterInstanceName={filterDeviceInstance} onClearFilter={() => setFilterDeviceInstance(null)} />
         </TabsContent>
 
         <TabsContent value="campaigns">

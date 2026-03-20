@@ -168,21 +168,15 @@ export function WhatsAppProviderSetup() {
     setQrError(null);
   }, [stopPolling]);
 
-  // Fetch global Evolution API config
-  const { data: globalEvolutionConfig } = useQuery({
-    queryKey: ['platform_settings', 'evolution_api'],
+  // Fetch global Evolution API config status (uses security definer RPC to avoid RLS)
+  const { data: isEvolutionGlobalConfigured = false } = useQuery({
+    queryKey: ['evolution_api_configured'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('platform_settings')
-        .select('*')
-        .eq('key', 'evolution_api')
-        .maybeSingle();
+      const { data, error } = await supabase.rpc('is_evolution_api_configured');
       if (error) throw error;
-      return data?.value as unknown as EvolutionAPIConfig | null;
+      return data === true;
     },
   });
-
-  const isEvolutionGlobalConfigured = globalEvolutionConfig?.is_configured === true;
 
   const hasWhatsAppFeature = currentPlan?.features?.includes('whatsapp') ||
     currentPlan?.slug === 'professional' ||

@@ -219,9 +219,19 @@ export default function Settings() {
           <Card>
             <CardHeader><CardTitle>Perfil</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-2"><Label>Nome</Label><Input placeholder="Seu nome" /></div>
+              <div className="grid gap-2">
+                <Label>Nome</Label>
+                <Input 
+                  placeholder="Seu nome" 
+                  value={profileName} 
+                  onChange={(e) => setProfileName(e.target.value)} 
+                />
+              </div>
               <div className="grid gap-2"><Label>Email</Label><Input type="email" placeholder="seu@email.com" value={user?.email || ''} disabled /></div>
-              <Button>Salvar</Button>
+              <Button onClick={() => saveProfileMutation.mutate()} disabled={saveProfileMutation.isPending || !profileName.trim()}>
+                {saveProfileMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Salvar
+              </Button>
             </CardContent>
           </Card>
           <Card>

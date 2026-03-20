@@ -117,7 +117,7 @@ export function SearchableTagSelect({ selectedTags, onTagsChange, placeholder = 
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute z-50 w-full mt-1 rounded-md border bg-popover shadow-md max-h-[200px] overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 rounded-md border bg-popover shadow-md max-h-[200px] overflow-y-auto" onPointerDown={e => e.stopPropagation()}>
           {filteredTags.length === 0 && !search.trim() && (
             <div className="p-3 text-center text-xs text-muted-foreground">
               Nenhuma tag cadastrada. Digite para criar.

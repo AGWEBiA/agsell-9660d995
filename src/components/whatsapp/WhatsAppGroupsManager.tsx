@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,6 +37,7 @@ import { CalendarIcon } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { Checkbox } from '@/components/ui/checkbox';
+import { SearchableTagSelect } from './SearchableTagSelect';
 
 export function WhatsAppGroupsManager() {
   const {
@@ -83,8 +84,17 @@ export function WhatsAppGroupsManager() {
   const [editLeadTagInput, setEditLeadTagInput] = useState('');
   const [editInstanceId, setEditInstanceId] = useState('');
   const [editSyncNewLeads, setEditSyncNewLeads] = useState(false);
+  const [hasAutoFetched, setHasAutoFetched] = useState(false);
 
-  const { instances: whatsAppInstances } = useWhatsAppInstances();
+  const { instances: whatsAppInstances, activeInstances } = useWhatsAppInstances();
+
+  // Auto-fetch groups from Evolution API on first load if we have active instances and no groups
+  useEffect(() => {
+    if (!hasAutoFetched && !isLoadingGroups && groups.length === 0 && activeInstances.length > 0 && currentOrganization?.id) {
+      setHasAutoFetched(true);
+      handleFetchEvolutionGroups();
+    }
+  }, [hasAutoFetched, isLoadingGroups, groups.length, activeInstances.length, currentOrganization?.id]);
 
   const handleFetchEvolutionGroups = async () => {
     if (!currentOrganization?.id) return;
@@ -348,38 +358,7 @@ export function WhatsAppGroupsManager() {
   const activeGroupsCount = groups.filter(g => g.is_active).length;
   const totalMembers = groups.reduce((sum, g) => sum + (g.member_count || 0), 0);
 
-  // Tag input component
-  const TagInput = ({ tags, onAdd, onRemove, inputValue, setInputValue, placeholder }: {
-    tags: string[]; onAdd: () => void; onRemove: (t: string) => void;
-    inputValue: string; setInputValue: (v: string) => void; placeholder?: string;
-  }) => (
-    <div className="space-y-2">
-      <div className="flex gap-2">
-        <Input
-          placeholder={placeholder || "Digite uma tag..."}
-          value={inputValue}
-          onChange={e => setInputValue(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); onAdd(); } }}
-          className="flex-1"
-        />
-        <Button type="button" variant="outline" size="sm" onClick={onAdd} disabled={!inputValue.trim()}>
-          <Plus className="h-4 w-4" />
-        </Button>
-      </div>
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {tags.map(tag => (
-            <Badge key={tag} variant="secondary" className="text-xs gap-1">
-              <Tag className="h-3 w-3" />{tag}
-              <button onClick={() => onRemove(tag)} className="ml-0.5 hover:text-destructive">
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  // SearchableTagSelect is now imported from separate component
 
   return (
     <div className="space-y-6">
@@ -444,13 +423,10 @@ export function WhatsAppGroupsManager() {
                 </div>
                 <div className="space-y-2">
                   <Label>Tags</Label>
-                  <TagInput
-                    tags={newGroup.tags}
-                    onAdd={() => handleAddTag(newGroupTagInput, 'new')}
-                    onRemove={t => handleRemoveTag(t, 'new')}
-                    inputValue={newGroupTagInput}
-                    setInputValue={setNewGroupTagInput}
-                    placeholder="Ex: vip, clientes, leads"
+                  <SearchableTagSelect
+                    selectedTags={newGroup.tags}
+                    onTagsChange={tags => setNewGroup({ ...newGroup, tags })}
+                    placeholder="Buscar ou criar tag..."
                   />
                   <p className="text-xs text-muted-foreground">Tags permitem criar automações individuais para cada grupo</p>
                 </div>
@@ -778,30 +754,11 @@ export function WhatsAppGroupsManager() {
                       <Label className="font-semibold">Tags do Grupo</Label>
                     </div>
                     <p className="text-xs text-muted-foreground">Tags permitem criar automações específicas e filtrar grupos.</p>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Adicionar tag..."
-                        value={newTagInput}
-                        onChange={e => setNewTagInput(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAddTagToGroup(selectedGroup); } }}
-                        className="flex-1"
-                      />
-                      <Button variant="outline" size="sm" onClick={() => handleAddTagToGroup(selectedGroup)} disabled={!newTagInput.trim()}>
-                        <Plus className="h-4 w-4 mr-1" />Adicionar
-                      </Button>
-                    </div>
-                    {(selectedGroup.tags || []).length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {selectedGroup.tags.map(tag => (
-                          <Badge key={tag} variant="secondary" className="gap-1 text-xs">
-                            <Tag className="h-3 w-3" />{tag}
-                            <button onClick={() => handleRemoveTagFromGroup(selectedGroup, tag)} className="ml-0.5 hover:text-destructive"><X className="h-3 w-3" /></button>
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-muted-foreground italic">Nenhuma tag adicionada</p>
-                    )}
+                    <SearchableTagSelect
+                      selectedTags={selectedGroup.tags || []}
+                      onTagsChange={(tags) => updateGroup({ id: selectedGroup.id, tags })}
+                      placeholder="Buscar ou criar tag..."
+                    />
                   </div>
 
                   {/* Invite Link */}
@@ -1011,12 +968,10 @@ export function WhatsAppGroupsManager() {
             <div className="space-y-2">
               <Label className="font-semibold">Tag do grupo</Label>
               <p className="text-xs text-muted-foreground">O campo abaixo será responsável pelas tags que serão adicionadas ao grupo do WhatsApp.</p>
-              <TagInput
-                tags={editForm.tags}
-                onAdd={() => handleAddTag(editTagInput, 'edit')}
-                onRemove={t => handleRemoveTag(t, 'edit')}
-                inputValue={editTagInput}
-                setInputValue={setEditTagInput}
+              <SearchableTagSelect
+                selectedTags={editForm.tags}
+                onTagsChange={tags => setEditForm({ ...editForm, tags })}
+                placeholder="Buscar ou criar tag..."
               />
             </div>
 
@@ -1024,12 +979,10 @@ export function WhatsAppGroupsManager() {
             <div className="space-y-2">
               <Label className="font-semibold">Tag para os leads do grupo</Label>
               <p className="text-xs text-muted-foreground">O campo abaixo será responsável pelas tags que serão adicionadas aos leads do grupo do WhatsApp.</p>
-              <TagInput
-                tags={editLeadTags}
-                onAdd={handleAddLeadTag}
-                onRemove={t => setEditLeadTags(prev => prev.filter(x => x !== t))}
-                inputValue={editLeadTagInput}
-                setInputValue={setEditLeadTagInput}
+              <SearchableTagSelect
+                selectedTags={editLeadTags}
+                onTagsChange={setEditLeadTags}
+                placeholder="Buscar ou criar tag de lead..."
               />
             </div>
 

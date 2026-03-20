@@ -1,16 +1,136 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageSquare, Smartphone, CheckCircle2, XCircle, Users, Send, Settings, Star, Server, Trash2, Power, Loader2 } from 'lucide-react';
+import { MessageSquare, Smartphone, CheckCircle2, XCircle, Users, Send, Settings, Star, Server, Trash2, Power, Loader2, Copy, Gauge, Link2, KeyRound } from 'lucide-react';
 import { WhatsAppProviderSetup } from '@/components/integrations/WhatsAppProviderSetup';
 import { WhatsAppGroupsManager } from '@/components/whatsapp/WhatsAppGroupsManager';
 import { useWhatsAppGroups } from '@/hooks/useWhatsAppGroups';
 import { WhatsAppCampaignsManager } from '@/components/whatsapp/WhatsAppCampaignsManager';
 import { WhatsAppGroupMessages } from '@/components/whatsapp/WhatsAppGroupMessages';
-import { useWhatsAppInstances } from '@/hooks/useWhatsAppInstances';
+import { useWhatsAppInstances, WhatsAppInstance } from '@/hooks/useWhatsAppInstances';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
+
+function InstanceConfigDialog({ instance, open, onOpenChange }: {
+  instance: WhatsAppInstance | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { updateInstance } = useWhatsAppInstances();
+  const [name, setName] = useState(instance?.name || '');
+  const [messagesPerMinute, setMessagesPerMinute] = useState(
+    parseInt(instance?.config?.messages_per_minute || '2000', 10)
+  );
+  const webhookUrl = `${window.location.origin}/api/whatsapp-webhook`;
+  const token = instance?.config?.webhook_token || instance?.id?.slice(0, 16) || '';
+
+  React.useEffect(() => {
+    if (instance) {
+      setName(instance.name);
+      setMessagesPerMinute(parseInt(instance.config?.messages_per_minute || '2000', 10));
+    }
+  }, [instance]);
+
+  const handleSave = () => {
+    if (!instance) return;
+    updateInstance.mutate({
+      id: instance.id,
+      name,
+      config: {
+        ...instance.config,
+        messages_per_minute: String(messagesPerMinute),
+      },
+    });
+    onOpenChange(false);
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Copiado!');
+  };
+
+  if (!instance) return null;
+
+  const phone = instance.phone_number || instance.config?.instance_name || '';
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <div className="text-sm text-muted-foreground">{phone}</div>
+          <DialogTitle>Configurações do WhatsApp {instance.integration_type === 'whatsapp_business' ? 'OFICIAL' : ''}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-5 py-2">
+          {/* Device Name */}
+          <div className="space-y-2">
+            <Label>Nome do dispositivo</Label>
+            <Input value={name} onChange={e => setName(e.target.value)} placeholder="Dê um nome para o seu dispositivo na plataforma" />
+          </div>
+
+          {/* Messages per minute */}
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2">
+              <Gauge className="h-4 w-4" /> Mensagens por minuto
+            </Label>
+            <Slider
+              value={[messagesPerMinute]}
+              onValueChange={([v]) => setMessagesPerMinute(v)}
+              min={12}
+              max={4000}
+              step={1}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>12</span>
+              <span className="font-medium text-foreground">{messagesPerMinute}</span>
+              <span>4000</span>
+            </div>
+            <div className="rounded-md border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950 p-3">
+              <p className="text-xs text-blue-700 dark:text-blue-300">
+                Ao alterar este campo, por favor, considere o <span className="font-semibold underline">limite diário de envio</span> imposto pela API Oficial do WhatsApp.
+              </p>
+            </div>
+          </div>
+
+          {/* Webhook URL */}
+          <div className="space-y-2">
+            <Label>Link do Webhook (URL de retorno de chamada)</Label>
+            <div className="flex gap-2">
+              <Input value={webhookUrl} readOnly className="font-mono text-xs" />
+              <Button variant="outline" size="sm" onClick={() => copyToClipboard(webhookUrl)}>
+                <Copy className="h-4 w-4 mr-1" /> Copiar
+              </Button>
+            </div>
+          </div>
+
+          {/* Token */}
+          <div className="space-y-2">
+            <Label>Token</Label>
+            <div className="flex gap-2">
+              <Input value={token} readOnly className="font-mono text-xs" />
+              <Button variant="outline" size="sm" onClick={() => copyToClipboard(token)}>
+                <Copy className="h-4 w-4 mr-1" /> Copiar
+              </Button>
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
+          <Button onClick={handleSave} disabled={updateInstance.isPending}>
+            {updateInstance.isPending ? 'Salvando...' : 'Salvar'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export default function WhatsApp() {
   const {
@@ -23,6 +143,8 @@ export default function WhatsApp() {
     setDefaultInstance,
   } = useWhatsAppInstances();
   const { groups } = useWhatsAppGroups();
+  const [configInstance, setConfigInstance] = useState<WhatsAppInstance | null>(null);
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -35,7 +157,7 @@ export default function WhatsApp() {
       {/* Info Card */}
       <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
         <CardContent className="pt-6">
-            <div className="flex gap-3 sm:gap-4">
+          <div className="flex gap-3 sm:gap-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900">
               <MessageSquare className="h-5 w-5 text-blue-600" />
             </div>
@@ -52,17 +174,20 @@ export default function WhatsApp() {
       {/* Meta Billing Notice */}
       <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
         <CardContent className="pt-6">
-            <div className="flex gap-3 sm:gap-4">
+          <div className="flex gap-3 sm:gap-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900">
               <Settings className="h-5 w-5 text-amber-600" />
             </div>
             <div>
               <h3 className="font-semibold text-amber-900 dark:text-amber-100">Aviso sobre cobrança de mensagens</h3>
               <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                <strong>API Oficial (Meta Cloud API):</strong> as mensagens são cobradas diretamente pela Meta ao titular da conta, conforme o volume de conversas. O AG Sell não cobra taxas adicionais por mensagem.
+                <strong>API Oficial (Meta Cloud API):</strong> as mensagens são cobradas diretamente pela Meta ao titular da conta. O AG Sell não cobra taxas adicionais.
               </p>
               <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
                 <strong>Evolution API (QR Code):</strong> não há custos por mensagem. Você precisa apenas hospedar sua própria instância da Evolution API.
+              </p>
+              <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                <strong>Nota:</strong> A API Oficial não suporta grupos — apenas mensagens individuais.
               </p>
             </div>
           </div>
@@ -125,17 +250,20 @@ export default function WhatsApp() {
         </Card>
       </div>
 
-      {/* Connected Instances Status */}
+      {/* Dispositivos (Instance Cards) - SellFlux style */}
       {instances.length > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Smartphone className="h-5 w-5" />
-              Instâncias Conectadas ({instances.length})
-            </CardTitle>
-            <CardDescription>
-              Gerencie seus números e provedores WhatsApp. Você pode ter múltiplos números conectados simultaneamente.
-            </CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Smartphone className="h-5 w-5" />
+                Dispositivos ({instances.length})
+              </CardTitle>
+              <CardDescription>
+                Configure seus telefones para o atendimento e para as automações de WhatsApp.
+                Você possui um total de {instances.length} dispositivo(s), com {activeInstances.length} conectado(s).
+              </CardDescription>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -143,67 +271,68 @@ export default function WhatsApp() {
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {instances.map((instance) => (
-                  <Card key={instance.id} className={instance.is_active ? 'border-green-200 dark:border-green-800' : ''}>
-                    <CardContent className="pt-6">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-                          instance.is_active ? 'bg-green-100 dark:bg-green-900' : 'bg-muted'
-                        }`}>
-                          {instance.integration_type === 'evolution_api' ? (
-                            <Server className={`h-5 w-5 ${instance.is_active ? 'text-green-600' : 'text-muted-foreground'}`} />
-                          ) : (
-                            <Smartphone className={`h-5 w-5 ${instance.is_active ? 'text-green-600' : 'text-muted-foreground'}`} />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{instance.name}</p>
-                          {instance.phone_number && (
-                            <p className="text-xs text-muted-foreground truncate">{instance.phone_number}</p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-1.5 mb-3">
-                        <Badge variant={instance.is_active ? 'default' : 'destructive'} className="text-xs">
-                          {instance.is_active ? (
-                            <><CheckCircle2 className="h-3 w-3 mr-1" /> Ativo</>
-                          ) : (
-                            <><XCircle className="h-3 w-3 mr-1" /> Inativo</>
-                          )}
-                        </Badge>
-                        <Badge variant="outline" className="text-xs">
-                          {instance.integration_type === 'evolution_api' ? 'Evolution API' : 'Business API'}
+              <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                {instances.map((instance) => {
+                  const isActive = instance.is_active;
+                  const phone = instance.phone_number || instance.config?.instance_name || instance.name;
+                  return (
+                    <div
+                      key={instance.id}
+                      onClick={() => setConfigInstance(instance)}
+                      className={`relative group cursor-pointer rounded-xl border-2 p-4 transition-all hover:shadow-lg ${
+                        isActive
+                          ? 'border-green-500/50 bg-green-50/30 dark:bg-green-950/20'
+                          : 'border-border bg-card opacity-75 hover:opacity-100'
+                      }`}
+                    >
+                      {/* Status indicator */}
+                      <div className={`absolute top-3 right-3 h-3 w-3 rounded-full ${
+                        isActive ? 'bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.5)]' : 'bg-muted-foreground/30'
+                      }`} />
+
+                      {/* Phone number */}
+                      <p className="font-semibold text-sm truncate pr-4">{phone}</p>
+
+                      {/* Name & status */}
+                      <p className="text-xs text-muted-foreground mt-1 truncate">
+                        {instance.name} {isActive ? '• Conectado' : '• Inativo'}
+                      </p>
+
+                      {/* Badges */}
+                      <div className="flex flex-wrap items-center gap-1 mt-2">
+                        <Badge variant={isActive ? 'default' : 'secondary'} className="text-[10px] h-5">
+                          {instance.integration_type === 'evolution_api' ? 'Evolution' : 'API Oficial'}
                         </Badge>
                         {instance.is_default && (
-                          <Badge variant="secondary" className="text-xs">
-                            <Star className="h-3 w-3 mr-1 fill-yellow-400 text-yellow-400" /> Padrão
+                          <Badge variant="outline" className="text-[10px] h-5 border-amber-400 text-amber-600">
+                            <Star className="h-2.5 w-2.5 mr-0.5 fill-amber-400" /> Padrão
                           </Badge>
                         )}
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        {!instance.is_default && instance.is_active && (
-                          <Button variant="outline" size="sm" className="text-xs h-7"
+
+                      {/* Quick actions (on hover) */}
+                      <div className="flex items-center gap-1 mt-3 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                        {!instance.is_default && isActive && (
+                          <Button variant="ghost" size="icon" className="h-7 w-7"
                             onClick={() => setDefaultInstance.mutate(instance.id)}
-                            disabled={setDefaultInstance.isPending}>
-                            <Star className="h-3 w-3 mr-1" /> Padrão
+                            title="Definir como padrão">
+                            <Star className="h-3.5 w-3.5" />
                           </Button>
                         )}
-                        <Button variant="outline" size="sm" className="text-xs h-7"
+                        <Button variant="ghost" size="icon" className="h-7 w-7"
                           onClick={() => toggleInstance.mutate({ id: instance.id, isActive: !instance.is_active })}
-                          disabled={toggleInstance.isPending}>
-                          <Power className="h-3 w-3 mr-1" />
-                          {instance.is_active ? 'Desativar' : 'Ativar'}
+                          title={isActive ? 'Desativar' : 'Ativar'}>
+                          <Power className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="outline" size="sm" className="text-xs h-7 text-destructive hover:text-destructive"
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive"
                           onClick={() => { if (confirm('Remover esta instância?')) deleteInstance.mutate(instance.id); }}
-                          disabled={deleteInstance.isPending}>
-                          <Trash2 className="h-3 w-3" />
+                          title="Remover">
+                          <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </CardContent>
@@ -234,7 +363,6 @@ export default function WhatsApp() {
         <TabsContent value="connection" className="space-y-6">
           <WhatsAppProviderSetup />
           
-          {/* Setup Steps */}
           <Card>
             <CardHeader>
               <CardTitle>Como Configurar</CardTitle>
@@ -243,36 +371,24 @@ export default function WhatsApp() {
             <CardContent>
               <div className="space-y-4">
                 <div className="flex gap-4">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
-                    1
-                  </div>
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">1</div>
                   <div>
                     <p className="font-medium">Escolha o tipo de conexão</p>
-                    <p className="text-sm text-muted-foreground">
-                      QR Code para uso pessoal ou API Business para empresas com alto volume.
-                    </p>
+                    <p className="text-sm text-muted-foreground">QR Code para uso pessoal ou API Business para empresas com alto volume.</p>
                   </div>
                 </div>
                 <div className="flex gap-4">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
-                    2
-                  </div>
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">2</div>
                   <div>
                     <p className="font-medium">Configure seus grupos</p>
-                    <p className="text-sm text-muted-foreground">
-                      Adicione grupos para monitorar entradas, saídas e enviar mensagens automáticas.
-                    </p>
+                    <p className="text-sm text-muted-foreground">Adicione grupos para monitorar entradas, saídas e enviar mensagens automáticas.</p>
                   </div>
                 </div>
                 <div className="flex gap-4">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
-                    3
-                  </div>
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">3</div>
                   <div>
                     <p className="font-medium">Crie campanhas em massa</p>
-                    <p className="text-sm text-muted-foreground">
-                      Envie mensagens 1-a-1 respeitando os limites e boas práticas do WhatsApp.
-                    </p>
+                    <p className="text-sm text-muted-foreground">Envie mensagens 1-a-1 respeitando os limites e boas práticas do WhatsApp.</p>
                   </div>
                 </div>
               </div>
@@ -292,6 +408,13 @@ export default function WhatsApp() {
           <WhatsAppGroupMessages />
         </TabsContent>
       </Tabs>
+
+      {/* Instance Config Dialog */}
+      <InstanceConfigDialog
+        instance={configInstance}
+        open={!!configInstance}
+        onOpenChange={(open) => { if (!open) setConfigInstance(null); }}
+      />
     </div>
   );
 }

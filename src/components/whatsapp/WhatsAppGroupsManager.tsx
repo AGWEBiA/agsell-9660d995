@@ -1090,6 +1090,73 @@ export function WhatsAppGroupsManager() {
         </DialogContent>
       </Dialog>
 
+      {/* Import Groups Dialog */}
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Download className="h-5 w-5" /> Importar Grupos do WhatsApp</DialogTitle>
+            <DialogDescription>
+              Selecione os grupos que deseja importar para gerenciar. Grupos já importados estão desmarcados.
+            </DialogDescription>
+          </DialogHeader>
+          {importedGroups.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Users className="h-10 w-10 mx-auto mb-3 opacity-50" />
+              <p>Nenhum grupo encontrado.</p>
+              <p className="text-xs mt-1">Verifique se suas instâncias estão conectadas.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">{importedGroups.length} grupo(s) encontrado(s)</span>
+                <Button variant="outline" size="sm" onClick={() => setImportedGroups(prev => prev.map(g => ({ ...g, selected: true })))}>
+                  <CheckSquare className="h-3.5 w-3.5 mr-1" /> Selecionar Todos
+                </Button>
+              </div>
+              <div className="max-h-[400px] overflow-y-auto border rounded-lg">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[40px]"></TableHead>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Instância</TableHead>
+                      <TableHead>Membros</TableHead>
+                      <TableHead>JID</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {importedGroups.map((group, idx) => {
+                      const alreadyImported = groups.some(g => g.external_group_id === group.id);
+                      return (
+                        <TableRow key={group.id} className={alreadyImported ? 'opacity-50' : ''}>
+                          <TableCell>
+                            <Checkbox
+                              checked={group.selected}
+                              disabled={alreadyImported}
+                              onCheckedChange={v => setImportedGroups(prev => prev.map((g, i) => i === idx ? { ...g, selected: !!v } : g))}
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">{group.subject}</TableCell>
+                          <TableCell><Badge variant="outline" className="text-xs">{group.instance_name}</Badge></TableCell>
+                          <TableCell>{group.size}</TableCell>
+                          <TableCell><code className="text-[10px] text-muted-foreground">{group.id.slice(0, 20)}...</code></TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsImportDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleImportSelected} disabled={importedGroups.filter(g => g.selected).length === 0}>
+              <Plus className="h-4 w-4 mr-2" />Importar {importedGroups.filter(g => g.selected).length} selecionado(s)
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Confirm */}
       <AlertDialog open={!!deleteConfirmGroup} onOpenChange={() => setDeleteConfirmGroup(null)}>
         <AlertDialogContent>

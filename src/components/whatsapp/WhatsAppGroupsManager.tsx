@@ -160,10 +160,46 @@ export function WhatsAppGroupsManager() {
     setIsImportDialogOpen(false);
   };
 
-  const handleCreateGroup = () => {
-    createGroup(newGroup);
+  const handleCreateGroup = async () => {
+    if (!currentOrganization?.id || !newGroup.name) return;
+
+    // If instance_name and participants are provided, create on WhatsApp
+    if (newGroup.instance_name && newGroup.participants.trim()) {
+      setIsCreatingOnWhatsApp(true);
+      try {
+        const participantsList = newGroup.participants
+          .split(/[\n,;]+/)
+          .map(p => p.trim())
+          .filter(Boolean);
+
+        const { data, error } = await supabase.functions.invoke('create-whatsapp-group', {
+          body: {
+            organization_id: currentOrganization.id,
+            instance_name: newGroup.instance_name,
+            group_name: newGroup.name,
+            description: newGroup.description,
+            participants: participantsList,
+            tags: newGroup.tags,
+          },
+        });
+
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+
+        toast.success('Grupo criado no WhatsApp com sucesso!');
+        refetchGroups();
+      } catch (err: any) {
+        toast.error('Erro ao criar grupo: ' + (err.message || 'Erro desconhecido'));
+      } finally {
+        setIsCreatingOnWhatsApp(false);
+      }
+    } else {
+      // Create only locally
+      createGroup(newGroup);
+    }
+
     setIsCreateDialogOpen(false);
-    setNewGroup({ name: '', description: '', group_type: 'group', tags: [] });
+    setNewGroup({ name: '', description: '', group_type: 'group', tags: [], instance_name: '', participants: '' });
   };
 
   const handleOpenDetail = async (group: WhatsAppGroup) => {

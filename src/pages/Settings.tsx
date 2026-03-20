@@ -102,7 +102,7 @@ export default function Settings() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['my-profile-whatsapp'] });
+      queryClient.invalidateQueries({ queryKey: ['my-profile'] });
       toast.success('Número salvo com sucesso!');
     },
     onError: (e: Error) => toast.error(e.message),

@@ -72,6 +72,16 @@ const extractPhoneNumber = (instance: any): string => {
   return formatPhone(ownerValue);
 };
 
+const extractOwnerJid = (instance: any): string => {
+  const owner =
+    instance?.ownerJid ||
+    instance?.instance?.owner ||
+    instance?.owner ||
+    instance?.instance?.ownerJid ||
+    "";
+  return typeof owner === "string" ? owner : "";
+};
+
 const parseGroups = (payload: unknown): any[] => {
   if (Array.isArray(payload)) return payload;
   if (payload && typeof payload === "object") {
@@ -113,9 +123,11 @@ const fetchGroupsForInstance = async (
   baseUrl: string,
   apiKey: string,
   instanceName: string,
+  adminOnly: boolean = false,
 ): Promise<any[]> => {
   const encodedInstance = encodeURIComponent(instanceName);
-  const endpoint = `${baseUrl}/group/fetchAllGroups/${encodedInstance}?getParticipants=false`;
+  const getParticipants = adminOnly ? "true" : "false";
+  const endpoint = `${baseUrl}/group/fetchAllGroups/${encodedInstance}?getParticipants=${getParticipants}`;
 
   let lastErrorMessage = "";
 
@@ -210,7 +222,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
-    const { organization_id, instance_name: filterInstance } = await req.json();
+    const { organization_id, instance_name: filterInstance, admin_only: adminOnly } = await req.json();
     if (!organization_id) {
       return jsonResponse({ error: "organization_id required" }, 400);
     }
@@ -363,11 +375,28 @@ Deno.serve(async (req) => {
 
       const orgInstance = orgInstancesByNormalizedName.get(normalizeInstanceName(instanceName));
       const phoneFormatted = extractPhoneNumber(inst);
+      const ownerJid = extractOwnerJid(inst);
 
       try {
-        const groupsList = await fetchGroupsForInstance(baseUrl, apiKey, instanceName);
+        const groupsList = await fetchGroupsForInstance(baseUrl, apiKey, instanceName, !!adminOnly);
 
-        const groups = groupsList.map((g: any) => ({
+        let filteredGroups = groupsList;
+
+        // Filter to only groups where the instance is admin
+        if (adminOnly && ownerJid) {
+          filteredGroups = groupsList.filter((g: any) => {
+            const participants = g.participants || [];
+            return participants.some((p: any) => {
+              const pJid = p.id || p.jid || "";
+              const isOwnerMatch = pJid === ownerJid || pJid.replace(/@.*$/, "") === ownerJid.replace(/@.*$/, "");
+              const isAdmin = p.admin === "admin" || p.admin === "superadmin" || p.role === "admin" || p.role === "superadmin";
+              return isOwnerMatch && isAdmin;
+            });
+          });
+          console.log(`Admin filter: ${groupsList.length} -> ${filteredGroups.length} groups for ${instanceName}`);
+        }
+
+        const groups = filteredGroups.map((g: any) => ({
           id: g.id || g.jid || g.groupJid,
           subject: g.subject || g.name || g.groupName || "Sem nome",
           size: g.size || g.participants?.length || 0,

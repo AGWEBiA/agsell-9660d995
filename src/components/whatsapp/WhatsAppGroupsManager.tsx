@@ -89,6 +89,7 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
   const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
   const [enableSelection, setEnableSelection] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [adminOnlyFilter, setAdminOnlyFilter] = useState(false);
 
   const { instances: whatsAppInstances, activeInstances } = useWhatsAppInstances();
 
@@ -112,13 +113,13 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
     return () => window.removeEventListener('navigate-to-groups', handler);
   }, [currentOrganization?.id]);
 
-  const handleFetchEvolutionGroups = async (instanceFilter?: string) => {
+  const handleFetchEvolutionGroups = async (instanceFilter?: string, adminOnly?: boolean) => {
     if (!currentOrganization?.id) return;
     setIsImporting(true);
     setImportedGroups([]);
     try {
       const { data, error } = await supabase.functions.invoke('fetch-evolution-groups', {
-        body: { organization_id: currentOrganization.id, instance_name: instanceFilter || undefined },
+        body: { organization_id: currentOrganization.id, instance_name: instanceFilter || undefined, admin_only: adminOnly ?? adminOnlyFilter },
       });
       if (error) throw error;
 
@@ -505,6 +506,13 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
             </Select>
           )}
           <Button variant="outline" size="icon" onClick={() => refetchGroups()}><RefreshCw className="h-4 w-4" /></Button>
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none">
+              <Checkbox checked={adminOnlyFilter} onCheckedChange={(v) => setAdminOnlyFilter(!!v)} />
+              <Shield className="h-3.5 w-3.5 text-muted-foreground" />
+              Só admin
+            </label>
+          </div>
           <Button variant="secondary" onClick={() => handleFetchEvolutionGroups()} disabled={isImporting}>
             {isImporting ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
             Buscar Grupos

@@ -129,7 +129,7 @@ Deno.serve(async (req) => {
       if (!instanceName) continue;
 
       // Extract phone number from instance data
-      const owner = inst?.instance?.owner || inst?.owner || "";
+      const owner = inst?.ownerJid || inst?.instance?.owner || inst?.owner || "";
       const phoneRaw = typeof owner === "string" ? owner.replace(/@.*$/, "").replace(/\D/g, "") : "";
       let phoneFormatted = phoneRaw;
       if (phoneRaw.startsWith("55") && phoneRaw.length >= 12) {

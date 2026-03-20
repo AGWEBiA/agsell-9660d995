@@ -397,7 +397,6 @@ export function ContactInfoPanel({
                         // SAC agents have a user_id if linked to a member
                         const agentUserId = (a as any).user_id;
                         if (agentUserId) {
-                          onTransfer(agentUserId);
                           onUpdateConversation({ assigned_to: agentUserId, status: 'open' });
                           setTransferOpen(false);
                           toast.success(`Transferido para ${a.name}!`);

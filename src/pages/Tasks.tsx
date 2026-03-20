@@ -68,6 +68,7 @@ export default function Tasks() {
   const createTask = useCreateTask();
   const completeTask = useCompleteTask();
   const uncompleteTask = useUncompleteTask();
+  const deleteTask = useDeleteTask();
 
   const pendingTasks = tasks.filter((t) => t.status === 'pending');
   const completedTasks = tasks.filter((t) => t.status === 'completed');

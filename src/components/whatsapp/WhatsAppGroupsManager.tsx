@@ -437,17 +437,50 @@ export function WhatsAppGroupsManager() {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Criar Novo Grupo</DialogTitle>
-                <DialogDescription>Adicione um grupo do WhatsApp para gerenciar</DialogDescription>
+                <DialogDescription>Crie um grupo diretamente no WhatsApp ou apenas registre localmente</DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 py-4">
+              <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
                 <div className="space-y-2">
-                  <Label>Nome do Grupo</Label>
+                  <Label>Nome do Grupo *</Label>
                   <Input placeholder="Ex: Clientes VIP" value={newGroup.name} onChange={e => setNewGroup({ ...newGroup, name: e.target.value })} />
                 </div>
                 <div className="space-y-2">
                   <Label>Descrição</Label>
                   <Textarea placeholder="Descrição do grupo..." value={newGroup.description} onChange={e => setNewGroup({ ...newGroup, description: e.target.value })} />
                 </div>
+
+                <div className="space-y-2">
+                  <Label>Instância (dispositivo)</Label>
+                  <Select value={newGroup.instance_name} onValueChange={v => setNewGroup({ ...newGroup, instance_name: v })}>
+                    <SelectTrigger><SelectValue placeholder="Selecione para criar no WhatsApp" /></SelectTrigger>
+                    <SelectContent>
+                      {activeInstances.map(inst => (
+                        <SelectItem key={inst.id} value={inst.instance_name || inst.id}>
+                          {inst.name} {inst.status === 'connected' ? '🟢' : '🔴'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {newGroup.instance_name ? 'O grupo será criado diretamente no WhatsApp' : 'Deixe vazio para registrar apenas localmente'}
+                  </p>
+                </div>
+
+                {newGroup.instance_name && (
+                  <div className="space-y-2">
+                    <Label>Participantes (números) *</Label>
+                    <Textarea
+                      placeholder={"Ex:\n5511999998888\n5521988887777\n11977776666"}
+                      value={newGroup.participants}
+                      onChange={e => setNewGroup({ ...newGroup, participants: e.target.value })}
+                      rows={4}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Um número por linha (ou separados por vírgula). O código 55 será adicionado automaticamente se necessário.
+                    </p>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label>Tipo</Label>
                   <Select value={newGroup.group_type} onValueChange={v => setNewGroup({ ...newGroup, group_type: v })}>
@@ -470,8 +503,8 @@ export function WhatsAppGroupsManager() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancelar</Button>
-                <Button onClick={handleCreateGroup} disabled={!newGroup.name || isCreatingGroup}>
-                  {isCreatingGroup ? 'Criando...' : 'Criar Grupo'}
+                <Button onClick={handleCreateGroup} disabled={!newGroup.name || isCreatingGroup || isCreatingOnWhatsApp || (!!newGroup.instance_name && !newGroup.participants.trim())}>
+                  {(isCreatingGroup || isCreatingOnWhatsApp) ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" />Criando...</> : newGroup.instance_name ? <><Send className="h-4 w-4 mr-2" />Criar no WhatsApp</> : 'Criar Grupo'}
                 </Button>
               </DialogFooter>
             </DialogContent>

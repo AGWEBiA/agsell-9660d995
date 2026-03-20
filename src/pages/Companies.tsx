@@ -82,6 +82,7 @@ export default function Companies() {
   const { data: companies = [], isLoading } = useCompanies();
   const createCompany = useCreateCompany();
   const deleteCompany = useDeleteCompany();
+  const updateCompany = useUpdateCompany();
 
   const {
     paginatedItems: paginatedCompanies,

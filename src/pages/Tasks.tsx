@@ -155,6 +155,9 @@ export default function Tasks() {
                 )}
               </div>
             </div>
+            <Button variant="ghost" size="icon" className="shrink-0 mt-1" onClick={() => deleteTask.mutate(task.id)}>
+              <Trash2 className="h-4 w-4 text-destructive" />
+            </Button>
           </div>
         </CardContent>
       </Card>

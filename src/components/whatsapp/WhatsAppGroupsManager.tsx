@@ -119,8 +119,14 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
 
       // Update phone numbers on local instances
       const phoneSyncPromises: Promise<unknown>[] = [];
+      const instanceErrors: string[] = [];
 
       for (const inst of data.instances || []) {
+        // Report per-instance fetch errors
+        if (inst.error) {
+          instanceErrors.push(`${inst.instance_label || inst.instance_name}: ${inst.error}`);
+        }
+
         if (inst.phone_number) {
           const localInstance = inst.instance_id
             ? whatsAppInstances.find(i => i.id === inst.instance_id)
@@ -157,7 +163,12 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
 
       setImportedGroups(allGroups);
       setIsImportDialogOpen(true);
-      if (allGroups.length === 0) toast.info('Nenhum grupo encontrado nas instâncias conectadas.');
+
+      if (instanceErrors.length > 0) {
+        toast.error(`Erro em ${instanceErrors.length} instância(s): ${instanceErrors[0]}`, { duration: 8000 });
+      } else if (allGroups.length === 0) {
+        toast.info('Nenhum grupo encontrado nas instâncias conectadas.');
+      }
     } catch (err: any) {
       toast.error('Erro ao buscar grupos: ' + (err.message || 'Erro desconhecido'));
     } finally {

@@ -52,7 +52,7 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [importedGroups, setImportedGroups] = useState<Array<{ instance_name: string; id: string; subject: string; size: number; selected: boolean }>>([]);
+  const [importedGroups, setImportedGroups] = useState<Array<{ instance_name: string; phone_number?: string; id: string; subject: string; size: number; selected: boolean }>>([]);
   const [selectedGroup, setSelectedGroup] = useState<WhatsAppGroup | null>(null);
   const [detailTab, setDetailTab] = useState<'members' | 'events' | 'settings' | 'message' | 'admin'>('members');
   const [groupSettings, setGroupSettings] = useState({

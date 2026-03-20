@@ -348,38 +348,7 @@ export function WhatsAppGroupsManager() {
   const activeGroupsCount = groups.filter(g => g.is_active).length;
   const totalMembers = groups.reduce((sum, g) => sum + (g.member_count || 0), 0);
 
-  // Tag input component
-  const TagInput = ({ tags, onAdd, onRemove, inputValue, setInputValue, placeholder }: {
-    tags: string[]; onAdd: () => void; onRemove: (t: string) => void;
-    inputValue: string; setInputValue: (v: string) => void; placeholder?: string;
-  }) => (
-    <div className="space-y-2">
-      <div className="flex gap-2">
-        <Input
-          placeholder={placeholder || "Digite uma tag..."}
-          value={inputValue}
-          onChange={e => setInputValue(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); onAdd(); } }}
-          className="flex-1"
-        />
-        <Button type="button" variant="outline" size="sm" onClick={onAdd} disabled={!inputValue.trim()}>
-          <Plus className="h-4 w-4" />
-        </Button>
-      </div>
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {tags.map(tag => (
-            <Badge key={tag} variant="secondary" className="text-xs gap-1">
-              <Tag className="h-3 w-3" />{tag}
-              <button onClick={() => onRemove(tag)} className="ml-0.5 hover:text-destructive">
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  // SearchableTagSelect is now imported from separate component
 
   return (
     <div className="space-y-6">

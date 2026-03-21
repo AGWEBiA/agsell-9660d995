@@ -51,7 +51,7 @@ const sectionTypes: { type: SectionType; label: string; icon: typeof Type }[] = 
 const getDefaultSectionContent = (type: SectionType): Record<string, unknown> => {
   switch (type) {
     case 'hero': return { title: 'Título Principal', subtitle: 'Subtítulo descritivo para sua landing page', buttonText: 'Saiba Mais', buttonUrl: '#', bgColor: '#1a1a2e', textColor: '#ffffff', align: 'center' };
-    case 'text': return { text: 'Adicione seu conteúdo aqui. Descreva seu produto, serviço ou oferta de forma clara e convincente.', align: 'center', fontSize: '18px' };
+    case 'text': return { text: 'Adicione seu conteúdo aqui.', align: 'center', fontSize: '18px' };
     case 'features': return { title: 'Nossos Diferenciais', items: [
       { icon: '🚀', title: 'Rápido', description: 'Resultados em minutos' },
       { icon: '🔒', title: 'Seguro', description: 'Seus dados protegidos' },
@@ -68,6 +68,9 @@ const getDefaultSectionContent = (type: SectionType): Record<string, unknown> =>
       { question: 'Tem período de teste?', answer: 'Sim, oferecemos 7 dias grátis.' },
     ]};
     case 'video': return { url: '', title: 'Veja como funciona' };
+    case 'countdown': return { title: 'Oferta por tempo limitado!', endDate: new Date(Date.now() + 86400000 * 3).toISOString().slice(0, 16), bgColor: '#EF4444', textColor: '#ffffff' };
+    case 'capture_modal': return { title: 'Antes de sair...', subtitle: 'Deixe seu e-mail para uma oferta exclusiva!', buttonText: 'Quero a Oferta', triggerType: 'exit_intent' };
+    case 'progress_bar': return { label: 'Vagas preenchidas', value: 75, color: '#10B981' };
     case 'divider': return { color: '#E5E7EB', style: 'solid' };
     case 'spacer': return { height: '40px' };
     default: return {};

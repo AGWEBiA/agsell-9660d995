@@ -23,12 +23,13 @@ import { toast } from 'sonner';
 import DOMPurify from 'dompurify';
 
 // ─── Section Types ───
-type SectionType = 'hero' | 'text' | 'features' | 'cta' | 'image' | 'testimonials' | 'faq' | 'form' | 'video' | 'divider' | 'spacer';
+type SectionType = 'hero' | 'text' | 'features' | 'cta' | 'image' | 'testimonials' | 'faq' | 'form' | 'video' | 'divider' | 'spacer' | 'countdown' | 'capture_modal' | 'progress_bar';
 
 interface Section {
   id: string;
   type: SectionType;
   content: Record<string, unknown>;
+  visibility?: 'all' | 'desktop' | 'mobile';
 }
 
 const sectionTypes: { type: SectionType; label: string; icon: typeof Type }[] = [
@@ -40,6 +41,9 @@ const sectionTypes: { type: SectionType; label: string; icon: typeof Type }[] = 
   { type: 'testimonials', label: 'Depoimentos', icon: Quote },
   { type: 'faq', label: 'FAQ', icon: List },
   { type: 'video', label: 'Vídeo', icon: Video },
+  { type: 'countdown', label: 'Contagem Regressiva', icon: Type },
+  { type: 'capture_modal', label: 'Modal de Captura', icon: Users },
+  { type: 'progress_bar', label: 'Barra Progresso', icon: Type },
   { type: 'divider', label: 'Divisor', icon: Minus },
   { type: 'spacer', label: 'Espaço', icon: Layout },
 ];

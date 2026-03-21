@@ -23,6 +23,7 @@ import {
   Tag, Star, Bell, Clock, CheckSquare, GitBranch,
   Settings, X, Play, Pause, MoreVertical,
   Workflow, Timer, Flame, MailCheck, Filter, Code,
+  Copy, Share2, StickyNote, Volume2, Split,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -87,6 +88,16 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter, analytics }: {
       }
       case 'add_to_whatsapp_group':
         return c.group_name ? `→ ${String(c.group_name)}` : '';
+      case 'voice_torpedo':
+        return c.audio_url ? 'Áudio configurado' : '';
+      case 'parallel_channels':
+        return ((c.channels as string[]) || []).join(' + ').toUpperCase() || 'WA + Email';
+      case 'edit_whatsapp_group':
+        return c.new_name ? `→ ${String(c.new_name)}` : '';
+      case 'link_split':
+        return `${((c.links as any[]) || []).length} links`;
+      case 'note':
+        return c.text ? `"${String(c.text).slice(0, 40)}..."` : '';
       default:
         return '';
     }
@@ -142,10 +153,46 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter, analytics }: {
     if (['timer', 'warmup'].includes(node.subtype)) return node.subtype === 'timer' ? 'TIMER' : 'AQUECIMENTO';
     if (['tag_filter'].includes(node.subtype)) return 'FILTRO';
     if (['send_email_marketing', 'send_email_performance'].includes(node.subtype)) return 'EMAIL';
+    if (node.subtype === 'parallel_channels') return 'PARALELO';
+    if (node.subtype === 'voice_torpedo') return 'VOZ';
+    if (node.subtype === 'link_split') return 'SPLIT';
+    if (node.subtype === 'note') return 'NOTA';
+    if (node.subtype === 'edit_whatsapp_group') return 'GRUPO';
     if (node.type === 'condition') return 'CONDIÇÃO';
     if (node.type === 'delay') return 'ESPERA';
     return 'AÇÃO';
   };
+
+  // Special rendering for note nodes
+  if (node.subtype === 'note') {
+    const noteColors: Record<string, string> = {
+      yellow: 'bg-yellow-50 border-yellow-300 dark:bg-yellow-900/20 dark:border-yellow-700',
+      blue: 'bg-blue-50 border-blue-300 dark:bg-blue-900/20 dark:border-blue-700',
+      green: 'bg-green-50 border-green-300 dark:bg-green-900/20 dark:border-green-700',
+      pink: 'bg-pink-50 border-pink-300 dark:bg-pink-900/20 dark:border-pink-700',
+    };
+    return (
+      <div className="flex flex-col items-center">
+        <div className={cn('relative w-[340px] rounded-xl border-2 p-4 cursor-pointer group transition-colors', noteColors[(node.config.color as string) || 'yellow'])} onClick={onEdit}>
+          <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+            <X className="h-3 w-3" />
+          </button>
+          <div className="flex items-center gap-2 mb-1">
+            <StickyNote className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0">NOTA</Badge>
+          </div>
+          <p className="text-xs text-foreground/80">{node.config.text ? String(node.config.text).slice(0, 120) : 'Clique para adicionar uma anotação...'}</p>
+        </div>
+        <div className="flex flex-col items-center">
+          <div className="w-0.5 h-6 bg-border" />
+          <button onClick={onAddAfter} className="flex items-center justify-center h-7 w-7 rounded-full border-2 border-dashed border-primary/40 hover:border-primary hover:bg-primary/10 transition-all group">
+            <Plus className="h-3.5 w-3.5 text-primary/60 group-hover:text-primary" />
+          </button>
+          <div className="w-0.5 h-6 bg-border" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center">
@@ -199,12 +246,13 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter, analytics }: {
 function AddStepDialog({ open, onClose, onAdd }: {
   open: boolean;
   onClose: () => void;
-  onAdd: (type: 'action' | 'condition' | 'delay' | 'timer' | 'warmup', subtype: string) => void;
+  onAdd: (type: 'action' | 'condition' | 'delay' | 'timer' | 'warmup' | 'note', subtype: string) => void;
 }) {
   const getNodeType = (id: string): FlowNode['type'] => {
     if (id === 'timer') return 'timer';
     if (id === 'warmup') return 'warmup';
     if (id === 'wait') return 'delay';
+    if (id === 'note') return 'note';
     if (id === 'conditional' || conditionOptions.some(c => c.id === id)) return 'condition';
     return 'action';
   };
@@ -261,14 +309,34 @@ function AddStepDialog({ open, onClose, onAdd }: {
   );
 }
 
-// ─── New Campaign Modal ───
-function NewCampaignModal({ open, onClose, onCreate }: {
+// ─── New Campaign Modal with Import Code support ───
+function NewCampaignModal({ open, onClose, onCreate, onImportCode }: {
   open: boolean;
   onClose: () => void;
   onCreate: (name: string, method: 'blank' | 'template' | 'code', templateId?: string) => void;
+  onImportCode?: (name: string, code: string) => void;
 }) {
   const [name, setName] = useState('');
   const [importCode, setImportCode] = useState('');
+  const [showImport, setShowImport] = useState(false);
+
+  const handleImport = () => {
+    if (!importCode.trim()) return;
+    try {
+      const decoded = JSON.parse(atob(importCode.trim()));
+      if (onImportCode) onImportCode(name || decoded.name || 'Fluxo Importado', importCode.trim());
+      onClose();
+    } catch {
+      // Try raw JSON
+      try {
+        JSON.parse(importCode.trim());
+        if (onImportCode) onImportCode(name || 'Fluxo Importado', importCode.trim());
+        onClose();
+      } catch {
+        alert('Código inválido. Verifique e tente novamente.');
+      }
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -301,6 +369,7 @@ function NewCampaignModal({ open, onClose, onCreate }: {
                 </div>
               </button>
               <button
+                onClick={() => setShowImport(!showImport)}
                 className="w-full flex items-center gap-3 p-4 rounded-lg border hover:border-primary/50 hover:bg-accent/50 transition-colors text-left"
               >
                 <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
@@ -308,26 +377,37 @@ function NewCampaignModal({ open, onClose, onCreate }: {
                 </div>
                 <div>
                   <p className="font-semibold text-sm">Via código</p>
-                  <p className="text-xs text-muted-foreground">Crie uma campanha utilizando o código de outra, mantendo as configurações originais</p>
+                  <p className="text-xs text-muted-foreground">Cole o código de outro fluxo para duplicar</p>
                 </div>
               </button>
+              {showImport && (
+                <div className="space-y-2 p-3 border rounded-lg bg-muted/30">
+                  <Label className="text-xs">Código do fluxo</Label>
+                  <Textarea rows={4} placeholder="Cole o código aqui..." value={importCode} onChange={e => setImportCode(e.target.value)} className="text-xs font-mono" />
+                  <Button size="sm" className="w-full" onClick={handleImport} disabled={!importCode.trim()}>Importar Fluxo</Button>
+                </div>
+              )}
             </TabsContent>
             <TabsContent value="templates" className="space-y-2 mt-3">
-              {flowTemplates.map(t => (
-                <button
-                  key={t.id}
-                  onClick={() => onCreate(name || t.name, 'template', t.id)}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg border hover:border-primary/50 hover:bg-accent/50 transition-colors text-left"
-                >
-                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <Zap className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.description}</p>
-                  </div>
-                </button>
-              ))}
+              <ScrollArea className="max-h-[300px]">
+                <div className="space-y-2 pr-2">
+                  {flowTemplates.map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => onCreate(name || t.name, 'template', t.id)}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg border hover:border-primary/50 hover:bg-accent/50 transition-colors text-left"
+                    >
+                      <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <Zap className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{t.name}</p>
+                        <p className="text-xs text-muted-foreground">{t.description}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
             </TabsContent>
           </Tabs>
         </div>
@@ -466,6 +546,42 @@ function NodeConfigDialog({ node, open, onClose, onSave }: {
         return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Curte automaticamente o comentário que acionou o gatilho.</p><div className="flex items-center gap-2"><Switch checked={config.only_keyword !== false} onCheckedChange={v => setConfig({ ...config, only_keyword: v })} /><Label>Curtir apenas comentários com palavra-chave</Label></div></div>);
       case 'instagram_follow_back':
         return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Segue automaticamente o usuário que interagiu com seu perfil.</p><div className="flex items-center gap-2"><Switch checked={!!config.add_tag_on_follow} onCheckedChange={v => setConfig({ ...config, add_tag_on_follow: v })} /><Label>Adicionar tag ao seguir</Label></div>{config.add_tag_on_follow && (<div><Label>Nome da Tag</Label><Input placeholder="Ex: seguido_de_volta" value={String(config.follow_tag || '')} onChange={e => setConfig({ ...config, follow_tag: e.target.value })} /></div>)}</div>);
+      // ── New node types ──
+      case 'voice_torpedo':
+        return (<div className="space-y-4"><div><Label>URL do Áudio (MP3)</Label><Input placeholder="https://cdn.seusite.com/audio.mp3" value={String(config.audio_url || '')} onChange={e => setConfig({ ...config, audio_url: e.target.value })} /></div><div><Label>Mensagem de texto (fallback)</Label><Textarea rows={2} placeholder="Caso não consiga ouvir..." value={String(config.fallback_message || '')} onChange={e => setConfig({ ...config, fallback_message: e.target.value })} /></div><div className="flex items-center gap-2"><Switch checked={!!config.wait_answer} onCheckedChange={v => setConfig({ ...config, wait_answer: v })} /><Label>Aguardar resposta do usuário</Label></div></div>);
+      case 'parallel_channels':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Dispara mensagens em múltiplos canais simultaneamente. Se um canal falhar, os outros continuam.</p>
+          <div className="space-y-2">
+            {['whatsapp', 'email', 'sms'].map(ch => (
+              <div key={ch} className="flex items-center gap-2">
+                <Switch checked={((config.channels as string[]) || ['whatsapp', 'email']).includes(ch)} onCheckedChange={v => {
+                  const current = (config.channels as string[]) || ['whatsapp', 'email'];
+                  setConfig({ ...config, channels: v ? [...current, ch] : current.filter(c => c !== ch) });
+                }} />
+                <Label className="capitalize">{ch}</Label>
+              </div>
+            ))}
+          </div>
+          <div><Label>Mensagem WhatsApp</Label><Textarea rows={2} value={String(config.whatsapp_message || '')} onChange={e => setConfig({ ...config, whatsapp_message: e.target.value })} /></div>
+          <div><Label>Assunto Email</Label><Input value={String(config.email_subject || '')} onChange={e => setConfig({ ...config, email_subject: e.target.value })} /></div>
+          <div><Label>Conteúdo Email</Label><Textarea rows={2} value={String(config.email_content || '')} onChange={e => setConfig({ ...config, email_content: e.target.value })} /></div>
+          <div><Label>Mensagem SMS</Label><Textarea rows={2} maxLength={160} value={String(config.sms_message || '')} onChange={e => setConfig({ ...config, sms_message: e.target.value })} /></div>
+        </div>);
+      case 'edit_whatsapp_group':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Edita automaticamente o nome, descrição ou foto do grupo.</p><div><Label>JID do Grupo</Label><Input placeholder="123456789@g.us" value={String(config.group_jid || '')} onChange={e => setConfig({ ...config, group_jid: e.target.value })} /></div><div><Label>Novo Nome (opcional)</Label><Input value={String(config.new_name || '')} onChange={e => setConfig({ ...config, new_name: e.target.value })} /></div><div><Label>Nova Descrição (opcional)</Label><Textarea rows={2} value={String(config.new_description || '')} onChange={e => setConfig({ ...config, new_description: e.target.value })} /></div><div><Label>URL Nova Foto (opcional)</Label><Input placeholder="https://..." value={String(config.new_photo_url || '')} onChange={e => setConfig({ ...config, new_photo_url: e.target.value })} /></div></div>);
+      case 'link_split':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Distribui tráfego entre múltiplos links por percentual.</p>
+          {((config.links as Array<{url: string; percentage: number}>) || [{url: '', percentage: 50}, {url: '', percentage: 50}]).map((link, i) => (
+            <div key={i} className="flex gap-2 items-end">
+              <div className="flex-1"><Label className="text-xs">URL {i + 1}</Label><Input value={link.url} onChange={e => { const links = [...((config.links as any[]) || [{url:'',percentage:50},{url:'',percentage:50}])]; links[i] = {...links[i], url: e.target.value}; setConfig({...config, links}); }} placeholder="https://..." /></div>
+              <div className="w-20"><Label className="text-xs">%</Label><Input type="number" min={0} max={100} value={link.percentage} onChange={e => { const links = [...((config.links as any[]) || [{url:'',percentage:50},{url:'',percentage:50}])]; links[i] = {...links[i], percentage: parseInt(e.target.value) || 0}; setConfig({...config, links}); }} /></div>
+              {i > 1 && <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { const links = ((config.links as any[]) || []).filter((_: any, j: number) => j !== i); setConfig({...config, links}); }}><X className="h-3 w-3" /></Button>}
+            </div>
+          ))}
+          <Button variant="outline" size="sm" onClick={() => setConfig({...config, links: [...((config.links as any[]) || [{url:'',percentage:50},{url:'',percentage:50}]), {url:'', percentage:0}]})}><Plus className="h-3 w-3 mr-1" />Adicionar Link</Button>
+        </div>);
+      case 'note':
+        return (<div className="space-y-4"><div><Label>Anotação da equipe</Label><Textarea rows={4} placeholder="Notas internas sobre este ponto do fluxo..." value={String(config.text || '')} onChange={e => setConfig({ ...config, text: e.target.value })} /></div><div><Label>Cor</Label><Select value={String(config.color || 'yellow')} onValueChange={v => setConfig({ ...config, color: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="yellow">Amarelo</SelectItem><SelectItem value="blue">Azul</SelectItem><SelectItem value="green">Verde</SelectItem><SelectItem value="pink">Rosa</SelectItem></SelectContent></Select></div></div>);
       default:
         return <p className="text-sm text-muted-foreground">Nenhuma configuração adicional necessária.</p>;
     }
@@ -487,6 +603,11 @@ function NodeConfigDialog({ node, open, onClose, onSave }: {
       abandonment: 'Configurar Abandono',
       conditional: 'Condicional',
       list_tag: 'Listar Tag',
+      voice_torpedo: 'Torpedo de Voz',
+      parallel_channels: 'Espinha de Peixe',
+      edit_whatsapp_group: 'Editar Grupo WhatsApp',
+      link_split: 'Link Split',
+      note: 'Anotação',
     };
     return titles[node.subtype] || `Configurar: ${node.label}`;
   };
@@ -794,6 +915,30 @@ export default function FlowBuilder() {
     setMode('editor');
   };
 
+  const handleImportCode = (name: string, code: string) => {
+    try {
+      let data: any;
+      try { data = JSON.parse(atob(code)); } catch { data = JSON.parse(code); }
+      if (data.nodes && Array.isArray(data.nodes)) {
+        setCurrentFlowId(null);
+        setFlowName(name || data.name || 'Fluxo Importado');
+        setNodes(data.nodes.map((n: any) => ({ ...n, id: crypto.randomUUID() })));
+        setIsActive(false);
+        setMode('editor');
+        toast({ title: '✅ Fluxo importado com sucesso!' });
+      }
+    } catch {
+      toast({ title: 'Erro ao importar', description: 'Código inválido', variant: 'destructive' });
+    }
+  };
+
+  const handleExportCode = () => {
+    const exportData = { name: flowName, nodes: nodes.map(n => ({ type: n.type, subtype: n.subtype, label: n.label, config: n.config })) };
+    const code = btoa(JSON.stringify(exportData));
+    navigator.clipboard.writeText(code);
+    toast({ title: '📋 Código copiado!', description: 'Cole o código para duplicar este fluxo em qualquer projeto.' });
+  };
+
   const handleEditFlow = (id: string) => {
     setCurrentFlowId(id);
     setMode('editor');
@@ -810,7 +955,7 @@ export default function FlowBuilder() {
     return (
       <>
         <FlowList onCreateNew={handleCreateNew} onEditFlow={handleEditFlow} />
-        <NewCampaignModal open={newCampaignOpen} onClose={() => setNewCampaignOpen(false)} onCreate={handleCampaignCreate} />
+        <NewCampaignModal open={newCampaignOpen} onClose={() => setNewCampaignOpen(false)} onCreate={handleCampaignCreate} onImportCode={handleImportCode} />
       </>
     );
   }
@@ -830,6 +975,11 @@ export default function FlowBuilder() {
             <span className="text-sm text-muted-foreground">{isActive ? 'Ativo' : 'Rascunho'}</span>
             <Switch checked={isActive} onCheckedChange={setIsActive} />
           </div>
+          {nodes.length > 1 && (
+            <Button variant="outline" size="sm" onClick={handleExportCode} title="Exportar código do fluxo">
+              <Copy className="h-4 w-4 mr-2" />Exportar Código
+            </Button>
+          )}
           <Button onClick={handleSave} disabled={!hasTrigger || nodes.length < 2}>
             <Save className="h-4 w-4 mr-2" />{currentFlowId ? 'Atualizar' : 'Salvar'} Fluxo
           </Button>

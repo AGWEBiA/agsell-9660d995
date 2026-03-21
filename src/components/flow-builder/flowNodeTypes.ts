@@ -5,11 +5,12 @@ import {
   Timer, Flame, MailCheck, Filter, Smartphone,
   Globe, MousePointer, LogOut, List, LayoutTemplate,
   Package, Code, AtSign, Share2, Link, Megaphone, Users,
+  Phone, StickyNote, Split, Shuffle, Volume2, Pencil,
 } from 'lucide-react';
 
 export interface FlowNode {
   id: string;
-  type: 'trigger' | 'action' | 'condition' | 'delay' | 'timer' | 'warmup';
+  type: 'trigger' | 'action' | 'condition' | 'delay' | 'timer' | 'warmup' | 'note';
   subtype: string;
   label: string;
   config: Record<string, unknown>;
@@ -42,7 +43,7 @@ export const triggerOptions = [
   { id: 'site_event', label: 'Evento no Site', icon: MousePointer, channel: 'site', color: 'from-teal-500 to-cyan-500', description: 'Quando um evento customizado é disparado no site' },
 ];
 
-// ── Node categories matching SellFlux sidebar ──
+// ── Node categories ──
 export const nodeCategories = [
   {
     label: 'Entrada',
@@ -55,6 +56,7 @@ export const nodeCategories = [
     nodes: [
       { id: 'timer', label: 'Timer', icon: Timer, color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' },
       { id: 'warmup', label: 'Aquecimento', icon: Flame, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
+      { id: 'parallel_channels', label: 'Espinha de Peixe', icon: Split, color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' },
     ],
   },
   {
@@ -63,6 +65,7 @@ export const nodeCategories = [
       { id: 'send_whatsapp', label: 'WhatsApp', icon: MessageSquare, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
       { id: 'send_whatsapp_group', label: 'WhatsApp Grupo', icon: Users, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
       { id: 'add_to_whatsapp_group', label: 'Adicionar ao Grupo', icon: UserPlus, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
+      { id: 'edit_whatsapp_group', label: 'Editar Grupo', icon: Pencil, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
       { id: 'send_whatsapp_oficial', label: 'WhatsApp Oficial', icon: MessageSquare, color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' },
     ],
   },
@@ -84,9 +87,10 @@ export const nodeCategories = [
     ],
   },
   {
-    label: 'SMS',
+    label: 'SMS / Voz',
     nodes: [
       { id: 'send_sms', label: 'SMS', icon: Smartphone, color: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300' },
+      { id: 'voice_torpedo', label: 'Torpedo de Voz', icon: Volume2, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
     ],
   },
   {
@@ -104,6 +108,8 @@ export const nodeCategories = [
       { id: 'full_page', label: 'Full Page', icon: LayoutTemplate, color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' },
       { id: 'pixel', label: 'Pixel', icon: MousePointer, color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
       { id: 'abandonment', label: 'Abandono', icon: LogOut, color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300' },
+      { id: 'link_split', label: 'Link Split', icon: Shuffle, color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' },
+      { id: 'note', label: 'Anotação', icon: StickyNote, color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' },
     ],
   },
   {
@@ -171,11 +177,18 @@ export const WEEKDAYS = [
   { key: 'sab', label: 'Sáb' },
 ];
 
-// Flow templates
+// Flow templates - expanded with strategic templates
 export const flowTemplates = [
   { id: 'welcome_whatsapp', name: 'Boas-vindas WhatsApp', description: 'Envie uma mensagem de boas-vindas quando um lead entrar', category: 'whatsapp' },
   { id: 'lead_nurture_email', name: 'Nutrição de Leads', description: 'Sequência de emails para nutrir leads frios', category: 'email' },
   { id: 'abandoned_cart', name: 'Carrinho Abandonado', description: 'Recupere vendas perdidas com lembretes automáticos', category: 'vendas' },
   { id: 'instagram_engagement', name: 'Engajamento Instagram', description: 'Responda automaticamente a comentários e DMs', category: 'instagram' },
   { id: 'onboarding', name: 'Onboarding de Cliente', description: 'Guie novos clientes com uma sequência multicanal', category: 'crm' },
+  { id: 'meteoric_launch', name: 'Lançamento Meteórico', description: 'Fluxo completo para lançamentos com antecipação, aquecimento e abertura', category: 'lançamento' },
+  { id: 'webinar_funnel', name: 'Funil de Webinar', description: 'Convite, lembrete, replay e oferta para webinários', category: 'lançamento' },
+  { id: 'upsell_downsell', name: 'Upsell / Downsell', description: 'Aumente o ticket médio com ofertas complementares pós-compra', category: 'vendas' },
+  { id: 'reactivation', name: 'Reativação de Base', description: 'Reengaje leads inativos com sequência multicanal', category: 'engajamento' },
+  { id: 'post_sale', name: 'Pós-Venda', description: 'NPS, review e fidelização após a compra', category: 'engajamento' },
+  { id: 'flash_sale', name: 'Flash Sale / Promoção', description: 'Campanha relâmpago com timer e escassez', category: 'vendas' },
+  { id: 'fishbone_recovery', name: 'Espinha de Peixe', description: 'Disparo multicanal paralelo para maximizar alcance', category: 'avançado' },
 ];

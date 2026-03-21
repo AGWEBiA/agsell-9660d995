@@ -1,16 +1,18 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import React from 'react';
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 describe('AutomationTemplates', () => {
-  it('renders strategic templates including SellFlux-inspired ones', async () => {
+  it('renders templates with strategic options', async () => {
     const { AutomationTemplates } = await import('@/components/automations/AutomationTemplates');
-    render(<AutomationTemplates onSelectTemplate={vi.fn()} />);
-    
-    // Should contain advanced strategic templates
-    const allText = document.body.textContent || '';
-    expect(allText).toMatch(/template|Template|Modelo/i);
+    const { container } = render(<AutomationTemplates onSelectTemplate={vi.fn()} />);
+    const text = container.textContent || '';
+    // Verify SellFlux-inspired templates are present
+    expect(text).toMatch(/Lançamento Meteórico/i);
+    expect(text).toMatch(/Webinar/i);
+    expect(text).toMatch(/Upsell/i);
+    expect(text).toMatch(/Reativação/i);
   });
 });

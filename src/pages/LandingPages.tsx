@@ -23,12 +23,13 @@ import { toast } from 'sonner';
 import DOMPurify from 'dompurify';
 
 // ─── Section Types ───
-type SectionType = 'hero' | 'text' | 'features' | 'cta' | 'image' | 'testimonials' | 'faq' | 'form' | 'video' | 'divider' | 'spacer';
+type SectionType = 'hero' | 'text' | 'features' | 'cta' | 'image' | 'testimonials' | 'faq' | 'form' | 'video' | 'divider' | 'spacer' | 'countdown' | 'capture_modal' | 'progress_bar';
 
 interface Section {
   id: string;
   type: SectionType;
   content: Record<string, unknown>;
+  visibility?: 'all' | 'desktop' | 'mobile';
 }
 
 const sectionTypes: { type: SectionType; label: string; icon: typeof Type }[] = [
@@ -40,6 +41,9 @@ const sectionTypes: { type: SectionType; label: string; icon: typeof Type }[] = 
   { type: 'testimonials', label: 'Depoimentos', icon: Quote },
   { type: 'faq', label: 'FAQ', icon: List },
   { type: 'video', label: 'Vídeo', icon: Video },
+  { type: 'countdown', label: 'Contagem Regressiva', icon: Type },
+  { type: 'capture_modal', label: 'Modal de Captura', icon: Users },
+  { type: 'progress_bar', label: 'Barra Progresso', icon: Type },
   { type: 'divider', label: 'Divisor', icon: Minus },
   { type: 'spacer', label: 'Espaço', icon: Layout },
 ];
@@ -47,7 +51,7 @@ const sectionTypes: { type: SectionType; label: string; icon: typeof Type }[] = 
 const getDefaultSectionContent = (type: SectionType): Record<string, unknown> => {
   switch (type) {
     case 'hero': return { title: 'Título Principal', subtitle: 'Subtítulo descritivo para sua landing page', buttonText: 'Saiba Mais', buttonUrl: '#', bgColor: '#1a1a2e', textColor: '#ffffff', align: 'center' };
-    case 'text': return { text: 'Adicione seu conteúdo aqui. Descreva seu produto, serviço ou oferta de forma clara e convincente.', align: 'center', fontSize: '18px' };
+    case 'text': return { text: 'Adicione seu conteúdo aqui.', align: 'center', fontSize: '18px' };
     case 'features': return { title: 'Nossos Diferenciais', items: [
       { icon: '🚀', title: 'Rápido', description: 'Resultados em minutos' },
       { icon: '🔒', title: 'Seguro', description: 'Seus dados protegidos' },
@@ -64,6 +68,9 @@ const getDefaultSectionContent = (type: SectionType): Record<string, unknown> =>
       { question: 'Tem período de teste?', answer: 'Sim, oferecemos 7 dias grátis.' },
     ]};
     case 'video': return { url: '', title: 'Veja como funciona' };
+    case 'countdown': return { title: 'Oferta por tempo limitado!', endDate: new Date(Date.now() + 86400000 * 3).toISOString().slice(0, 16), bgColor: '#EF4444', textColor: '#ffffff' };
+    case 'capture_modal': return { title: 'Antes de sair...', subtitle: 'Deixe seu e-mail para uma oferta exclusiva!', buttonText: 'Quero a Oferta', triggerType: 'exit_intent' };
+    case 'progress_bar': return { label: 'Vagas preenchidas', value: 75, color: '#10B981' };
     case 'divider': return { color: '#E5E7EB', style: 'solid' };
     case 'spacer': return { height: '40px' };
     default: return {};
@@ -176,6 +183,46 @@ function SectionPreview({ section }: { section: Section }) {
       return <hr style={{ borderColor: (c.color as string) || '#E5E7EB', borderStyle: (c.style as string) || 'solid', margin: '16px 0' }} />;
     case 'spacer':
       return <div style={{ height: (c.height as string) || '40px' }} />;
+    case 'countdown':
+      return (
+        <div style={{ backgroundColor: (c.bgColor as string) || '#EF4444', color: (c.textColor as string) || '#fff', padding: '24px', textAlign: 'center', borderRadius: '8px' }}>
+          <h3 style={{ fontSize: '20px', fontWeight: 'bold', marginBottom: '12px' }}>{(c.title as string) || 'Oferta limitada!'}</h3>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
+            {['Dias', 'Horas', 'Min', 'Seg'].map(u => (
+              <div key={u} style={{ backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '8px', padding: '8px 12px', minWidth: '60px' }}>
+                <div style={{ fontSize: '24px', fontWeight: 'bold' }}>00</div>
+                <div style={{ fontSize: '10px', textTransform: 'uppercase', opacity: 0.8 }}>{u}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    case 'capture_modal':
+      return (
+        <div style={{ border: '2px dashed #3B82F6', padding: '24px', textAlign: 'center', borderRadius: '8px', backgroundColor: '#f0f7ff' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '4px', color: '#1e40af' }}>{(c.title as string) || 'Modal de Captura'}</h3>
+          <p style={{ fontSize: '13px', color: '#3b82f6', marginBottom: '12px' }}>{(c.subtitle as string) || ''}</p>
+          <div style={{ maxWidth: '280px', margin: '0 auto' }}>
+            <div style={{ backgroundColor: '#fff', border: '1px solid #d1d5db', borderRadius: '6px', padding: '8px 12px', marginBottom: '8px', fontSize: '13px', color: '#9ca3af', textAlign: 'left' }}>nome@email.com</div>
+            <button style={{ backgroundColor: '#3B82F6', color: '#fff', padding: '8px 20px', borderRadius: '6px', border: 'none', fontWeight: 'bold', width: '100%', fontSize: '13px' }}>
+              {(c.buttonText as string) || 'Enviar'}
+            </button>
+          </div>
+          <p style={{ fontSize: '10px', color: '#6b7280', marginTop: '8px' }}>Gatilho: {(c.triggerType as string) === 'exit_intent' ? 'Exit Intent' : 'Timer'}</p>
+        </div>
+      );
+    case 'progress_bar':
+      return (
+        <div style={{ padding: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '14px' }}>
+            <span style={{ fontWeight: 'bold' }}>{(c.label as string) || 'Progresso'}</span>
+            <span>{(c.value as number) || 0}%</span>
+          </div>
+          <div style={{ height: '12px', borderRadius: '6px', backgroundColor: '#e5e7eb', overflow: 'hidden' }}>
+            <div style={{ height: '100%', borderRadius: '6px', backgroundColor: (c.color as string) || '#10B981', width: `${(c.value as number) || 0}%`, transition: 'width 0.5s' }} />
+          </div>
+        </div>
+      );
     default:
       return <div className="p-4 text-sm text-muted-foreground">Seção desconhecida</div>;
   }
@@ -317,6 +364,40 @@ function SectionEditor({ section, onUpdate }: { section: Section; onUpdate: (con
     case 'spacer':
       return (
         <div><Label className="text-xs">Altura</Label><Input value={(c.height as string) || '40px'} onChange={e => update({ height: e.target.value })} /></div>
+      );
+    case 'countdown':
+      return (
+        <div className="space-y-3">
+          <div><Label className="text-xs">Título</Label><Input value={(c.title as string) || ''} onChange={e => update({ title: e.target.value })} /></div>
+          <div><Label className="text-xs">Data/Hora Fim</Label><Input type="datetime-local" value={(c.endDate as string) || ''} onChange={e => update({ endDate: e.target.value })} className="h-8 text-xs" /></div>
+          <div className="grid grid-cols-2 gap-2">
+            <div><Label className="text-xs">Cor Fundo</Label><Input type="color" value={(c.bgColor as string) || '#EF4444'} onChange={e => update({ bgColor: e.target.value })} className="h-8" /></div>
+            <div><Label className="text-xs">Cor Texto</Label><Input type="color" value={(c.textColor as string) || '#ffffff'} onChange={e => update({ textColor: e.target.value })} className="h-8" /></div>
+          </div>
+        </div>
+      );
+    case 'capture_modal':
+      return (
+        <div className="space-y-3">
+          <div><Label className="text-xs">Título</Label><Input value={(c.title as string) || ''} onChange={e => update({ title: e.target.value })} /></div>
+          <div><Label className="text-xs">Subtítulo</Label><Input value={(c.subtitle as string) || ''} onChange={e => update({ subtitle: e.target.value })} /></div>
+          <div><Label className="text-xs">Texto do Botão</Label><Input value={(c.buttonText as string) || ''} onChange={e => update({ buttonText: e.target.value })} /></div>
+          <div>
+            <Label className="text-xs">Gatilho</Label>
+            <Select value={(c.triggerType as string) || 'exit_intent'} onValueChange={v => update({ triggerType: v })}>
+              <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="exit_intent">Exit Intent</SelectItem><SelectItem value="timer">Timer (segundos)</SelectItem><SelectItem value="scroll">Scroll 50%</SelectItem></SelectContent>
+            </Select>
+          </div>
+        </div>
+      );
+    case 'progress_bar':
+      return (
+        <div className="space-y-3">
+          <div><Label className="text-xs">Label</Label><Input value={(c.label as string) || ''} onChange={e => update({ label: e.target.value })} /></div>
+          <div><Label className="text-xs">Valor (%)</Label><Input type="number" min={0} max={100} value={(c.value as number) || 0} onChange={e => update({ value: Number(e.target.value) })} className="h-8 text-xs" /></div>
+          <div><Label className="text-xs">Cor</Label><Input type="color" value={(c.color as string) || '#10B981'} onChange={e => update({ color: e.target.value })} className="h-8" /></div>
+        </div>
       );
     default:
       return <p className="text-xs text-muted-foreground">Sem configurações</p>;
@@ -612,9 +693,9 @@ export default function LandingPages() {
                   <p className="text-sm text-muted-foreground line-clamp-2">{page.description}</p>
                 )}
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5" /> {page.visits_count}</span>
-                  <span className="flex items-center gap-1"><Globe className="h-3.5 w-3.5" /> {page.conversions_count}</span>
-                  <span>{page.conversion_rate}%</span>
+                  <span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5" /> {page.visits_count} visitas</span>
+                  <span className="flex items-center gap-1"><Globe className="h-3.5 w-3.5" /> {page.conversions_count} conv.</span>
+                  <span className="font-medium text-foreground">{page.conversion_rate}%</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button variant="default" size="sm" onClick={() => setEditingPage(page)}>

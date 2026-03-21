@@ -98,6 +98,10 @@ import SystemStatus from "./pages/SystemStatus";
 import VoIP from "./pages/VoIP";
 import GroupRotator from "./pages/GroupRotator";
 import GroupRedirect from "./pages/GroupRedirect";
+import ChatbotBuilder from "./pages/ChatbotBuilder";
+import FunnelPlanner from "./pages/FunnelPlanner";
+import FunnelBI from "./pages/FunnelBI";
+import AutomationMetrics from "./pages/AutomationMetrics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -198,6 +202,10 @@ const App = () => (
                     <Route path="paid-groups" element={<FeatureRequiredPage feature="paid_groups" featureLabel="Grupos Pagos"><PaidGroups /></FeatureRequiredPage>} />
                     <Route path="voip" element={<VoIP />} />
                     <Route path="group-rotator" element={<GroupRotator />} />
+                    <Route path="chatbot-builder" element={<ChatbotBuilder />} />
+                    <Route path="funnel-planner" element={<FunnelPlanner />} />
+                    <Route path="funnel-bi" element={<FunnelBI />} />
+                    <Route path="automation-metrics" element={<AutomationMetrics />} />
                     <Route path="support" element={<SupportTickets />} />
                     <Route path="support-center" element={<SupportCenter />} />
                     <Route path="support-portal-settings" element={<FeatureRequiredPage feature="customer_support_center" featureLabel="Portal de Suporte"><SupportPortalSettingsPage /></FeatureRequiredPage>} />

@@ -97,12 +97,14 @@ const menuSections: MenuSection[] = [
     icon: Megaphone,
     items: [
       { label: 'Automações', icon: Workflow, path: '/flow-builder', featureRequired: 'automacoes' },
+      { label: 'Chatbot', icon: Bot, path: '/chatbot-builder' },
       { label: 'E-mail Marketing', icon: Send, path: '/email', featureRequired: 'email_marketing' },
       { label: 'SMS Marketing', icon: Phone, path: '/sms-marketing' },
       { label: 'Testes A/B', icon: FlaskConical, path: '/ab-tests' },
       { label: 'Growth Tools', icon: Rocket, path: '/growth-tools' },
       { label: 'Formulários', icon: FileText, path: '/forms' },
       { label: 'Landing Pages', icon: Layout, path: '/landing-pages' },
+      { label: 'Planejador Funil', icon: Target, path: '/funnel-planner' },
       { label: 'Event Tracking', icon: Activity, path: '/event-tracking' },
       { label: 'Site Tracking', icon: Monitor, path: '/site-tracking' },
       { label: 'Predictive Send', icon: Clock, path: '/predictive-sending' },
@@ -116,6 +118,8 @@ const menuSections: MenuSection[] = [
     icon: BarChart3,
     items: [
       { label: 'Analytics', icon: BarChart3, path: '/analytics', featureRequired: 'analytics' },
+      { label: 'BI do Funil', icon: Target, path: '/funnel-bi' },
+      { label: 'Métricas Automação', icon: Activity, path: '/automation-metrics' },
       { label: 'Custom Reports', icon: ListChecks, path: '/custom-reports' },
       { label: 'Revenue', icon: DollarSign, path: '/revenue-reporting' },
       { label: 'Atribuição', icon: GitBranch, path: '/attribution' },

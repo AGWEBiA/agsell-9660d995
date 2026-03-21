@@ -271,14 +271,34 @@ function AddStepDialog({ open, onClose, onAdd }: {
   );
 }
 
-// ─── New Campaign Modal ───
-function NewCampaignModal({ open, onClose, onCreate }: {
+// ─── New Campaign Modal with Import Code support ───
+function NewCampaignModal({ open, onClose, onCreate, onImportCode }: {
   open: boolean;
   onClose: () => void;
   onCreate: (name: string, method: 'blank' | 'template' | 'code', templateId?: string) => void;
+  onImportCode?: (name: string, code: string) => void;
 }) {
   const [name, setName] = useState('');
   const [importCode, setImportCode] = useState('');
+  const [showImport, setShowImport] = useState(false);
+
+  const handleImport = () => {
+    if (!importCode.trim()) return;
+    try {
+      const decoded = JSON.parse(atob(importCode.trim()));
+      if (onImportCode) onImportCode(name || decoded.name || 'Fluxo Importado', importCode.trim());
+      onClose();
+    } catch {
+      // Try raw JSON
+      try {
+        JSON.parse(importCode.trim());
+        if (onImportCode) onImportCode(name || 'Fluxo Importado', importCode.trim());
+        onClose();
+      } catch {
+        alert('Código inválido. Verifique e tente novamente.');
+      }
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -311,6 +331,7 @@ function NewCampaignModal({ open, onClose, onCreate }: {
                 </div>
               </button>
               <button
+                onClick={() => setShowImport(!showImport)}
                 className="w-full flex items-center gap-3 p-4 rounded-lg border hover:border-primary/50 hover:bg-accent/50 transition-colors text-left"
               >
                 <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
@@ -318,26 +339,37 @@ function NewCampaignModal({ open, onClose, onCreate }: {
                 </div>
                 <div>
                   <p className="font-semibold text-sm">Via código</p>
-                  <p className="text-xs text-muted-foreground">Crie uma campanha utilizando o código de outra, mantendo as configurações originais</p>
+                  <p className="text-xs text-muted-foreground">Cole o código de outro fluxo para duplicar</p>
                 </div>
               </button>
+              {showImport && (
+                <div className="space-y-2 p-3 border rounded-lg bg-muted/30">
+                  <Label className="text-xs">Código do fluxo</Label>
+                  <Textarea rows={4} placeholder="Cole o código aqui..." value={importCode} onChange={e => setImportCode(e.target.value)} className="text-xs font-mono" />
+                  <Button size="sm" className="w-full" onClick={handleImport} disabled={!importCode.trim()}>Importar Fluxo</Button>
+                </div>
+              )}
             </TabsContent>
             <TabsContent value="templates" className="space-y-2 mt-3">
-              {flowTemplates.map(t => (
-                <button
-                  key={t.id}
-                  onClick={() => onCreate(name || t.name, 'template', t.id)}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg border hover:border-primary/50 hover:bg-accent/50 transition-colors text-left"
-                >
-                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <Zap className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.description}</p>
-                  </div>
-                </button>
-              ))}
+              <ScrollArea className="max-h-[300px]">
+                <div className="space-y-2 pr-2">
+                  {flowTemplates.map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => onCreate(name || t.name, 'template', t.id)}
+                      className="w-full flex items-center gap-3 p-3 rounded-lg border hover:border-primary/50 hover:bg-accent/50 transition-colors text-left"
+                    >
+                      <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <Zap className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{t.name}</p>
+                        <p className="text-xs text-muted-foreground">{t.description}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
             </TabsContent>
           </Tabs>
         </div>

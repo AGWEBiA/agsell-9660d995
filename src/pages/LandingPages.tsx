@@ -693,9 +693,9 @@ export default function LandingPages() {
                   <p className="text-sm text-muted-foreground line-clamp-2">{page.description}</p>
                 )}
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5" /> {page.visits_count}</span>
-                  <span className="flex items-center gap-1"><Globe className="h-3.5 w-3.5" /> {page.conversions_count}</span>
-                  <span>{page.conversion_rate}%</span>
+                  <span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5" /> {page.visits_count} visitas</span>
+                  <span className="flex items-center gap-1"><Globe className="h-3.5 w-3.5" /> {page.conversions_count} conv.</span>
+                  <span className="font-medium text-foreground">{page.conversion_rate}%</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button variant="default" size="sm" onClick={() => setEditingPage(page)}>

@@ -1,59 +1,69 @@
 import { describe, it, expect } from 'vitest';
-import { actionOptions, nodeCategories } from '@/components/flow-builder/flowNodeTypes';
+import { actionOptions, nodeCategories, triggerOptions, conditionOptions } from '@/components/flow-builder/flowNodeTypes';
 
 describe('Flow Node Types', () => {
   it('has all core node types defined', () => {
-    const typeIds = actionOptions.map(n => n.type);
-    expect(typeIds).toContain('whatsapp');
-    expect(typeIds).toContain('email');
-    expect(typeIds).toContain('sms');
-    expect(typeIds).toContain('timer');
-    expect(typeIds).toContain('condition');
-    expect(typeIds).toContain('tag');
-    expect(typeIds).toContain('voice_torpedo');
-    expect(typeIds).toContain('parallel');
-    expect(typeIds).toContain('note');
-    expect(typeIds).toContain('link_split');
-    expect(typeIds).toContain('whatsapp_group_edit');
+    const ids = actionOptions.map(n => n.id);
+    expect(ids).toContain('send_whatsapp');
+    expect(ids).toContain('send_email_marketing');
+    expect(ids).toContain('send_sms');
+    expect(ids).toContain('timer');
+    expect(ids).toContain('conditional');
+    expect(ids).toContain('add_tag');
+    expect(ids).toContain('voice_torpedo');
+    expect(ids).toContain('parallel_channels');
+    expect(ids).toContain('note');
+    expect(ids).toContain('link_split');
+    expect(ids).toContain('edit_whatsapp_group');
   });
 
-  it('each node has required properties', () => {
+  it('each node has id, label, icon', () => {
     for (const node of actionOptions) {
-      expect(node).toHaveProperty('type');
+      expect(node).toHaveProperty('id');
       expect(node).toHaveProperty('label');
       expect(node).toHaveProperty('icon');
-      expect(typeof node.type).toBe('string');
-      expect(typeof node.label).toBe('string');
     }
   });
 
-  it('nodeCategories are defined', () => {
-    expect(nodeCategories.length).toBeGreaterThan(0);
-    for (const cat of nodeCategories) {
-      expect(cat).toHaveProperty('label');
-      expect(cat).toHaveProperty('nodes');
-      expect(cat.nodes.length).toBeGreaterThan(0);
-    }
+  it('nodeCategories cover all expected groups', () => {
+    const labels = nodeCategories.map(c => c.label);
+    expect(labels).toContain('WhatsApp');
+    expect(labels).toContain('Instagram');
+    expect(labels).toContain('E-mail');
+    expect(labels).toContain('Avançado');
+    expect(labels).toContain('SMS / Voz');
+    expect(labels).toContain('Tags');
   });
 
-  it('voice_torpedo node is properly configured', () => {
-    const voiceNode = actionOptions.find(n => n.type === 'voice_torpedo');
-    expect(voiceNode).toBeDefined();
-    expect(voiceNode!.label).toMatch(/Torpedo|Voz/i);
+  it('triggerOptions has whatsapp and instagram triggers', () => {
+    const ids = triggerOptions.map(t => t.id);
+    expect(ids).toContain('whatsapp_received');
+    expect(ids).toContain('instagram_comment');
+    expect(ids).toContain('contact_created');
+    expect(ids).toContain('form_submitted');
+    expect(ids).toContain('page_visited');
+    expect(ids).toContain('site_event');
   });
 
-  it('parallel (fishbone) node is properly configured', () => {
-    const parallelNode = actionOptions.find(n => n.type === 'parallel');
-    expect(parallelNode).toBeDefined();
+  it('conditionOptions are defined', () => {
+    expect(conditionOptions.length).toBeGreaterThan(0);
   });
 
-  it('link_split node is properly configured', () => {
-    const splitNode = actionOptions.find(n => n.type === 'link_split');
-    expect(splitNode).toBeDefined();
+  it('voice_torpedo node exists', () => {
+    const node = actionOptions.find(n => n.id === 'voice_torpedo');
+    expect(node).toBeDefined();
+    expect(node!.label).toMatch(/Torpedo|Voz/i);
   });
 
-  it('note node is properly configured', () => {
-    const noteNode = actionOptions.find(n => n.type === 'note');
-    expect(noteNode).toBeDefined();
+  it('parallel_channels (fishbone) node exists', () => {
+    expect(actionOptions.find(n => n.id === 'parallel_channels')).toBeDefined();
+  });
+
+  it('link_split node exists', () => {
+    expect(actionOptions.find(n => n.id === 'link_split')).toBeDefined();
+  });
+
+  it('note node exists', () => {
+    expect(actionOptions.find(n => n.id === 'note')).toBeDefined();
   });
 });

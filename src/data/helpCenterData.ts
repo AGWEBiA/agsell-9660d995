@@ -2832,6 +2832,8 @@ O Assistente utiliza modelos de IA de última geração, incluindo:
     readTime: '7 min',
     content: `Agentes de IA são assistentes virtuais autônomos que podem atender seus clientes automaticamente em múltiplos canais, usando Inteligência Artificial com base de conhecimento personalizada.
 
+[video:🎬 Tutorial: Configurando Agentes de IA|/videos/tutorial-agentes-ia.mp4]
+
 ## Diferença entre Assistente IA e Agentes IA
 
 | Aspecto | Assistente IA | Agentes IA |

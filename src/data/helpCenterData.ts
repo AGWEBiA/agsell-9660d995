@@ -1959,6 +1959,8 @@ Acompanhe todas as execuções de cada automação:
     popular: true,
     content: `O Flow Builder é o construtor visual de automações do AG Sell, inspirado no ManyChat. Ele permite criar funis de automação de forma visual e intuitiva.
 
+[video:🎬 Tutorial: Como usar o Flow Builder Visual|/videos/tutorial-flow-builder.mp4]
+
 ## Diferença entre Automações e Flow Builder
 
 | Aspecto | Automações | Flow Builder |

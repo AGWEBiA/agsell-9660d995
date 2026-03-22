@@ -1040,6 +1040,8 @@ Classifique conversas por:
     popular: true,
     content: `Integre o WhatsApp ao AG Sell para comunicação direta com seus contatos, campanhas em massa e automações. O sistema suporta **múltiplos provedores simultaneamente** — incluindo a API Oficial da Meta e a Evolution API via QR Code.
 
+[video:🎬 Tutorial: Configurando WhatsApp + QR Code|/videos/tutorial-whatsapp.mp4]
+
 ## Provedores disponíveis
 
 O AG Sell oferece **quatro modalidades** de conexão WhatsApp, que podem ser usadas **simultaneamente**:
@@ -1379,6 +1381,8 @@ Para agilizar a criação:
 4. Salve seus próprios templates para reuso
 
 ## Domínio personalizado de e-mail
+
+[video:🎬 Tutorial: Configurando Domínio de E-mail|/videos/tutorial-dominio-email.mp4]
 
 Para melhor **entregabilidade** (evitar caixa de spam), configure um domínio próprio:
 
@@ -1958,6 +1962,8 @@ Acompanhe todas as execuções de cada automação:
     readTime: '10 min',
     popular: true,
     content: `O Flow Builder é o construtor visual de automações do AG Sell, inspirado no ManyChat. Ele permite criar funis de automação de forma visual e intuitiva.
+
+[video:🎬 Tutorial: Como usar o Flow Builder Visual|/videos/tutorial-flow-builder.mp4]
 
 ## Diferença entre Automações e Flow Builder
 
@@ -2827,6 +2833,8 @@ O Assistente utiliza modelos de IA de última geração, incluindo:
     description: 'Guia completo: criar agentes autônomos, base de conhecimento (RAG), canais e métricas.',
     readTime: '7 min',
     content: `Agentes de IA são assistentes virtuais autônomos que podem atender seus clientes automaticamente em múltiplos canais, usando Inteligência Artificial com base de conhecimento personalizada.
+
+[video:🎬 Tutorial: Configurando Agentes de IA|/videos/tutorial-agentes-ia.mp4]
 
 ## Diferença entre Assistente IA e Agentes IA
 
@@ -4003,6 +4011,8 @@ Formulário preenchido → Contato criado automaticamente → Tags aplicadas →
     readTime: '10 min',
     popular: true,
     content: `O módulo **Grupos Pagos** permite automatizar completamente a entrada e saída de membros em grupos de WhatsApp com base em pagamentos recebidos de plataformas digitais. Disponível a partir do plano **Professional**.
+
+[video:🎬 Tutorial: Configurando Grupos Pagos|/videos/tutorial-grupos-pagos.mp4]
 
 > 🚧 **Beta**: Esta funcionalidade está em fase beta. Novos gateways e melhorias são adicionados continuamente.
 

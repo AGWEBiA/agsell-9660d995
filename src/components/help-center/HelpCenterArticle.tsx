@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, ChevronRight, Clock, BookOpen, ExternalLink, Eye, Maximize2, X } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Clock, BookOpen, ExternalLink, Eye, Maximize2, X, PlayCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { HelpCategory, HelpArticle } from '@/data/helpCenterData';
 
@@ -186,6 +186,33 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
                 ))}
               </ol>
             );
+          }
+          // Video embed
+          if (block.startsWith('[video:')) {
+            const match = block.match(/\[video:(.*?)(?:\|(.*?))?\]/);
+            const label = match?.[1] || 'Tutorial em vídeo';
+            const videoSrc = match?.[2];
+            if (videoSrc) {
+              return (
+                <div key={idx} className="my-6 rounded-xl border overflow-hidden bg-muted/20">
+                  <div className="flex items-center gap-2 px-4 py-2.5 bg-muted/40 border-b">
+                    <PlayCircle className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">{label}</span>
+                  </div>
+                  <div className="relative aspect-video bg-black">
+                    <video
+                      src={videoSrc}
+                      controls
+                      preload="metadata"
+                      className="w-full h-full"
+                      poster=""
+                    >
+                      Seu navegador não suporta vídeos.
+                    </video>
+                  </div>
+                </div>
+              );
+            }
           }
           // Screenshot with route
           if (block.startsWith('[screenshot:')) {

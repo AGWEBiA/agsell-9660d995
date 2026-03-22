@@ -4008,6 +4008,8 @@ Formulário preenchido → Contato criado automaticamente → Tags aplicadas →
     popular: true,
     content: `O módulo **Grupos Pagos** permite automatizar completamente a entrada e saída de membros em grupos de WhatsApp com base em pagamentos recebidos de plataformas digitais. Disponível a partir do plano **Professional**.
 
+[video:🎬 Tutorial: Configurando Grupos Pagos|/videos/tutorial-grupos-pagos.mp4]
+
 > 🚧 **Beta**: Esta funcionalidade está em fase beta. Novos gateways e melhorias são adicionados continuamente.
 
 ## Como funciona?

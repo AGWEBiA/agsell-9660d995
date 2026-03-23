@@ -5,6 +5,8 @@ import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, ChevronRight, Clock, BookOpen, ExternalLink, Eye, Maximize2, X, PlayCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { HelpCategory, HelpArticle } from '@/data/helpCenterData';
+import { TutorialPresentation } from '@/components/help-center/TutorialPresentation';
+import { tutorialPresentations } from '@/data/tutorialPresentations';
 
 interface Props {
   article: HelpArticle;

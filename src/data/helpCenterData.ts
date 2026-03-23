@@ -2406,6 +2406,8 @@ O score é uma ferramenta poderosa para automações:
     readTime: '5 min',
     content: `Crie formulários personalizados para capturar leads em seu site, landing pages ou compartilhados por WhatsApp e e-mail.
 
+[presentation:forms]
+
 ## Visão geral
 
 Na página de **Formulários**, você encontra:

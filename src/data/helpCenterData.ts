@@ -2157,6 +2157,8 @@ Clique em qualquer nó para configurar seus parâmetros:
     readTime: '6 min',
     content: `As Sequências permitem criar campanhas de nutrição com envios automáticos em intervalos programados — o famoso "drip marketing".
 
+[presentation:sequences]
+
 ## O que são Sequências?
 
 São séries de mensagens (e-mail, WhatsApp, SMS) enviadas automaticamente em intervalos configuráveis. Diferente de automações que reagem a eventos, sequências seguem um **cronograma fixo** após a inscrição.

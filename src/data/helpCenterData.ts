@@ -2683,6 +2683,8 @@ Growth Tools se conectam ao ecossistema:
     readTime: '6 min',
     content: `O módulo de Analytics oferece dashboards completos para análise do seu negócio, com métricas de vendas, pipeline e performance da equipe.
 
+[presentation:analytics]
+
 ## Visão geral do Analytics
 
 [screenshot:Dashboard de Analytics|/analytics]

@@ -3711,6 +3711,8 @@ Em conformidade com a Lei Geral de Proteção de Dados (LGPD), você pode:
     readTime: '6 min',
     content: `O módulo de **SMS Marketing** permite enviar campanhas de texto em massa, criar automações baseadas em SMS e gerenciar conversas bidirecionais — tudo integrado ao CRM.
 
+[presentation:sms-marketing]
+
 ## Campanhas SMS
 
 1. Acesse **SMS Marketing** no menu lateral

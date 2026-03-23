@@ -159,7 +159,7 @@ export const tutorialPresentations: Record<string, TutorialPresentationData> = {
           'Escolha entre Round Robin, menor carga ou manual',
           'Defina **membros elegíveis** e limite de conversas simultâneas',
         ],
-        route: '/inbox/settings',
+        route: '/inbox-settings',
       },
     ],
   },

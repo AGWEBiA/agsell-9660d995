@@ -1646,6 +1646,8 @@ Conecte sua loja Shopify para sincronizar dados:
     readTime: '4 min',
     content: `Os Relatórios do SAC oferecem métricas detalhadas sobre o desempenho do atendimento da sua equipe.
 
+[presentation:inbox-reports]
+
 ## Métricas disponíveis
 
 ### Tempo de resposta

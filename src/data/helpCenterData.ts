@@ -873,6 +873,8 @@ O sistema notifica automaticamente:
     popular: true,
     content: `O Inbox é sua central de atendimento que unifica mensagens de **WhatsApp**, **E-mail**, **Instagram**, **Telegram** e **SMS** em um único painel.
 
+[presentation:inbox]
+
 ## Visão geral da interface
 
 O Inbox é dividido em três painéis:

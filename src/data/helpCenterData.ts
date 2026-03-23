@@ -1792,6 +1792,8 @@ Acompanhe o aquecimento do domínio:
     popular: true,
     content: `O motor de automações permite criar fluxos que executam ações automaticamente, eliminando tarefas repetitivas e acelerando seu processo de vendas.
 
+[presentation:automations]
+
 ## Conceitos básicos
 
 Uma automação é composta por:

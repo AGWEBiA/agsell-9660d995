@@ -79,9 +79,10 @@ function ScreenshotPreview({ label, route }: { label: string; route: string }) {
                 </Button>
               </div>
             </div>
-            <div className="flex-1 overflow-hidden">
-              <iframe src={route} className="w-full h-full border-0 pointer-events-none" title={label} />
-            </div>
+            <Link to={route} className="flex-1 flex items-center justify-center gap-3 hover:bg-muted/10 transition-colors">
+              <Eye className="h-10 w-10 text-muted-foreground/30" />
+              <p className="text-lg text-muted-foreground">Clique para navegar até {label}</p>
+            </Link>
           </div>
         </div>
       )}

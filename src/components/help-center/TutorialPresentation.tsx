@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Play, Maximize2, X, Monitor, Lightbulb, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
 
 export interface TutorialSlide {

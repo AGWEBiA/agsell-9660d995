@@ -107,7 +107,7 @@ export function TutorialPresentation({ presentation }: Props) {
         {/* Route preview */}
         {slide.route && (
           <div className="mt-5 rounded-xl border overflow-hidden bg-muted/20 shadow-sm">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/40 border-b">
+            <div className="flex items-center gap-2 px-3 py-2 bg-muted/40 border-b">
               <div className="flex gap-1">
                 <div className="w-2 h-2 rounded-full bg-destructive/40" />
                 <div className="w-2 h-2 rounded-full bg-yellow-500/40" />
@@ -116,15 +116,14 @@ export function TutorialPresentation({ presentation }: Props) {
               <Monitor className="h-3 w-3 text-muted-foreground ml-1" />
               <span className="text-[10px] text-muted-foreground font-mono">{slide.route}</span>
             </div>
-            <div className="relative h-[180px] overflow-hidden">
-              <iframe
-                src={slide.route}
-                className="w-[1366px] h-[768px] border-0 pointer-events-none"
-                style={{ transform: 'scale(0.38)', transformOrigin: 'top left' }}
-                title={slide.title}
-                loading="lazy"
-              />
-            </div>
+            <Link to={slide.route} className="flex items-center justify-center gap-3 py-8 bg-muted/5 hover:bg-muted/15 transition-colors cursor-pointer group/link">
+              <Monitor className="h-8 w-8 text-muted-foreground/40 group-hover/link:text-primary transition-colors" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground group-hover/link:text-foreground transition-colors">Abrir esta tela no sistema</p>
+                <p className="text-xs text-muted-foreground/60">{slide.route}</p>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover/link:text-primary transition-colors" />
+            </Link>
           </div>
         )}
 

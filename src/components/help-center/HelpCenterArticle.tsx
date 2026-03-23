@@ -42,15 +42,13 @@ function ScreenshotPreview({ label, route }: { label: string; route: string }) {
             </Link>
           </div>
         </div>
-        <div className="relative h-[320px] overflow-hidden bg-muted/10">
-          <iframe
-            src={route}
-            className="w-[1366px] h-[768px] border-0 pointer-events-none"
-            style={{ transform: 'scale(0.5)', transformOrigin: 'top left', width: '1366px', height: '768px' }}
-            title={label}
-            loading="lazy"
-          />
-        </div>
+        <Link to={route} className="flex items-center justify-center gap-3 py-10 bg-muted/5 hover:bg-muted/15 transition-colors cursor-pointer group/link">
+          <Eye className="h-8 w-8 text-muted-foreground/40 group-hover/link:text-primary transition-colors" />
+          <div>
+            <p className="text-sm font-medium text-muted-foreground group-hover/link:text-foreground transition-colors">Clique para abrir esta tela</p>
+            <p className="text-xs text-muted-foreground/60">{route}</p>
+          </div>
+        </Link>
         <div className="px-4 py-2 bg-muted/10 border-t">
           <p className="text-[10px] text-muted-foreground flex items-center gap-1.5">
             <Eye className="h-3 w-3" /> {label}

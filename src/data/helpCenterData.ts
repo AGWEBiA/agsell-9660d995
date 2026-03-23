@@ -3778,6 +3778,8 @@ Quando o visitante é identificado via formulário, as sessões são vinculadas 
     readTime: '6 min',
     content: `O módulo de **Atribuição** rastreia a jornada completa e atribui receita aos canais que contribuíram para a conversão.
 
+[presentation:attribution]
+
 ## Modelos
 | Modelo | Descrição |
 |--------|-----------|

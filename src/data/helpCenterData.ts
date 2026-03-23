@@ -774,6 +774,8 @@ Em todas as telas do CRM, você pode filtrar por tags:
     readTime: '5 min',
     content: `O módulo de Tarefas permite organizar as atividades da sua equipe com prazos, prioridades e visualização em calendário.
 
+[presentation:tasks]
+
 ## Visão geral
 
 Na página de **Tarefas**, você encontra:

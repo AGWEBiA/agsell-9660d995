@@ -3746,6 +3746,8 @@ Configure Twilio ou Vonage em **Canais** → **SMS** com Account SID, Auth Token
     readTime: '7 min',
     content: `O **Site Tracking** monitora visitantes do seu site em tempo real com um snippet JavaScript.
 
+[presentation:site-tracking]
+
 ## Instalação
 1. Acesse **Site Tracking** → copie o snippet JS
 2. Cole no \`<head>\` do seu site

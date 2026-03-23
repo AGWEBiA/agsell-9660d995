@@ -2313,6 +2313,8 @@ Flows podem ser integrados com automações:
     readTime: '6 min',
     content: `O Lead Scoring atribui pontos aos contatos automaticamente baseado em suas ações e engajamento, permitindo identificar os leads mais qualificados.
 
+[presentation:lead-scoring]
+
 ## Como funciona
 
 Cada ação do lead no sistema gera pontos (positivos ou negativos). A pontuação acumulada indica o **nível de interesse e engajamento** do lead.

@@ -2509,6 +2509,8 @@ Formulários se integram com todo o ecossistema:
     readTime: '4 min',
     content: `Os Testes A/B permitem comparar duas versões de uma mensagem para descobrir qual tem melhor desempenho e otimizar suas comunicações.
 
+[presentation:ab-tests]
+
 ## Como funciona
 
 1. Você cria **duas versões** (variante A e variante B) de uma mensagem

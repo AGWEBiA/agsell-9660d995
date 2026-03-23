@@ -2978,6 +2978,8 @@ Acompanhe a performance do agente:
     readTime: '4 min',
     content: `A Gamificação transforma atividades de vendas em um jogo motivacional, incentivando a equipe a bater metas e manter o CRM atualizado.
 
+[presentation:gamification]
+
 ## Como funciona
 
 Cada ação no sistema gera **pontos de experiência (XP)**:

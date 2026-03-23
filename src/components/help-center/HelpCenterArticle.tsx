@@ -216,6 +216,14 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
               );
             }
           }
+          // Presentation embed
+          if (block.startsWith('[presentation:')) {
+            const match = block.match(/\[presentation:(.*?)\]/);
+            const presId = match?.[1];
+            if (presId && tutorialPresentations[presId]) {
+              return <TutorialPresentation key={idx} presentation={tutorialPresentations[presId]} />;
+            }
+          }
           // Screenshot with route
           if (block.startsWith('[screenshot:')) {
             const match = block.match(/\[screenshot:(.*?)(?:\|(.*?))?\]/);

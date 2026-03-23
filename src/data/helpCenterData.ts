@@ -1470,6 +1470,8 @@ Cada campanha exibe métricas detalhadas:
     readTime: '5 min',
     content: `Conecte contas do Instagram para automação de interações, DMs automáticas e atendimento via Inbox.
 
+[presentation:instagram]
+
 ## Conectando sua conta
 
 1. Acesse **"Instagram"** no menu lateral

@@ -100,6 +100,38 @@ export function UsersManagement() {
   const addToOrgMutation = invokeMutation('add_to_organization', 'Usuário adicionado à organização!');
   const removeFromOrgMutation = invokeMutation('remove_from_organization', 'Usuário removido da organização!');
 
+  const { data: availablePlans = [] } = useQuery({
+    queryKey: ['admin_plans_list'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('plans').select('id, name, price_monthly').order('price_monthly', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const createOrgMutation = useMutation({
+    mutationFn: async ({ userId, orgName, planId, billingCycle }: { userId: string; orgName: string; planId: string; billingCycle: string }) => {
+      const slug = orgName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now();
+      
+      // Create org via edge function (uses service role)
+      const { data, error } = await supabase.functions.invoke('admin-manage-users', {
+        body: { action: 'create_organization_for_user', user_id: userId, org_name: orgName, org_slug: slug, plan_id: planId || null, billing_cycle: billingCycle },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin_users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin_all_organizations'] });
+      queryClient.invalidateQueries({ queryKey: ['admin_org_plans'] });
+      toast.success('Nova organização criada com sucesso!');
+      setCreateOrgUser(null);
+      setCreateOrgForm({ orgName: '', planId: '', billingCycle: 'monthly' });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
   const handleCreateUser = () => {
     if (!newUser.email || !newUser.password || !newUser.name) {
       toast.error('Preencha todos os campos obrigatórios');
@@ -128,6 +160,19 @@ export function UsersManagement() {
     addToOrgMutation.mutate({ user_id: orgUser.id, organization_id: orgForm.organization_id, org_role: orgForm.org_role });
     setOrgUser(null);
     setOrgForm({ organization_id: '', org_role: 'member' });
+  };
+
+  const handleCreateOrgForUser = () => {
+    if (!createOrgUser || !createOrgForm.orgName.trim()) {
+      toast.error('Informe o nome da organização');
+      return;
+    }
+    createOrgMutation.mutate({
+      userId: createOrgUser.id,
+      orgName: createOrgForm.orgName.trim(),
+      planId: createOrgForm.planId,
+      billingCycle: createOrgForm.billingCycle,
+    });
   };
 
   return (

@@ -38,7 +38,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Plus, Pencil, Trash2, Star, Check } from 'lucide-react';
+import { Plus, Pencil, Trash2, Star, Check, Copy } from 'lucide-react';
 
 interface Plan {
   id: string;
@@ -216,6 +216,28 @@ export function PlansManagement() {
   const handleOpenCreate = () => {
     setEditingPlan(null);
     setFormData(defaultFormData);
+    setIsDialogOpen(true);
+  };
+
+  const handleDuplicate = (plan: Plan) => {
+    setEditingPlan(null);
+    setFormData({
+      name: `${plan.name} (Cópia)`,
+      slug: `${plan.slug}-copia`,
+      description: plan.description || '',
+      price_monthly: plan.price_monthly,
+      price_yearly: plan.price_yearly,
+      max_users: plan.max_users,
+      max_contacts: plan.max_contacts,
+      max_emails_per_month: plan.max_emails_per_month,
+      max_whatsapp_messages: plan.max_whatsapp_messages,
+      max_automations: plan.max_automations,
+      max_forms: plan.max_forms,
+      max_ai_requests_per_month: plan.max_ai_requests_per_month ?? 0,
+      features: (plan.features || []).join('\n'),
+      is_active: plan.is_active,
+      is_default: false,
+    });
     setIsDialogOpen(true);
   };
 
@@ -632,6 +654,14 @@ export function PlansManagement() {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDuplicate(plan)}
+                      title="Duplicar plano"
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"

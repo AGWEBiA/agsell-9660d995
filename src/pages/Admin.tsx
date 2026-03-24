@@ -54,6 +54,7 @@ import { SupportWhatsAppConfig } from '@/components/admin/SupportWhatsAppConfig'
 import { VoipPackagesAdmin } from '@/components/admin/VoipPackagesAdmin';
 import { VoipProviderConfig } from '@/components/admin/VoipProviderConfig';
 import { SmsPackagesAdmin } from '@/components/admin/SmsPackagesAdmin';
+import { AdminDomainReport } from '@/components/admin/AdminDomainReport';
 export default function Admin() {
   const { user, isAdmin, loading: isCheckingAdmin } = useAuth();
   const [assignPlanOrg, setAssignPlanOrg] = useState<{ id: string; name: string } | null>(null);
@@ -269,6 +270,10 @@ export default function Admin() {
           <TabsTrigger value="sms-config" className="flex items-center gap-2">
             <MessageSquare className="h-4 w-4" />
             SMS
+          </TabsTrigger>
+          <TabsTrigger value="domains" className="flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            Domínios
           </TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-6">
@@ -527,6 +532,9 @@ export default function Admin() {
         </TabsContent>
         <TabsContent value="sms-config" className="space-y-6">
           <SmsPackagesAdmin />
+        </TabsContent>
+        <TabsContent value="domains">
+          <AdminDomainReport />
         </TabsContent>
       </Tabs>
 

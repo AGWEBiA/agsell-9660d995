@@ -35,6 +35,8 @@ export function UsersManagement() {
   const [orgUser, setOrgUser] = useState<AdminUser | null>(null);
   const [orgForm, setOrgForm] = useState({ organization_id: '', org_role: 'member' });
   const [planAssignOrg, setPlanAssignOrg] = useState<{ id: string; name: string } | null>(null);
+  const [createOrgUser, setCreateOrgUser] = useState<AdminUser | null>(null);
+  const [createOrgForm, setCreateOrgForm] = useState({ orgName: '', planId: '', billingCycle: 'monthly' as 'monthly' | 'yearly' });
 
   const { data: organizations = [] } = useQuery({
     queryKey: ['admin_all_organizations'],

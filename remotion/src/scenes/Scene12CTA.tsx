@@ -3,29 +3,19 @@ import { loadFont } from "@remotion/google-fonts/Inter";
 
 const { fontFamily } = loadFont("normal", { weights: ["400", "700", "900"], subsets: ["latin"] });
 
-export const Scene5CTA: React.FC = () => {
+export const Scene12CTA: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
   const mainSpring = spring({ frame: frame - 10, fps, config: { damping: 12, stiffness: 80 } });
-
-  // Pulsing button
   const buttonPulse = 1 + Math.sin(frame * 0.12) * 0.03;
   const buttonGlow = 0.3 + Math.sin(frame * 0.12) * 0.15;
-
-  // Guarantee badge
-  const badgeSpring = spring({ frame: frame - 40, fps, config: { damping: 15 } });
-
-  // Final logo
-  const logoOpacity = interpolate(frame, [160, 200], [0, 1], { extrapolateRight: "clamp" });
-  const logoScale = spring({ frame: frame - 160, fps, config: { damping: 20 } });
-
-  // Tagline
-  const tagOpacity = interpolate(frame, [200, 230], [0, 1], { extrapolateRight: "clamp" });
+  const logoOpacity = interpolate(frame, [220, 260], [0, 1], { extrapolateRight: "clamp" });
+  const logoScale = spring({ frame: frame - 220, fps, config: { damping: 20 } });
+  const tagOpacity = interpolate(frame, [280, 310], [0, 1], { extrapolateRight: "clamp" });
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#0a0a0a", fontFamily }}>
-      {/* Red ambient glow */}
       <div
         style={{
           position: "absolute",
@@ -41,33 +31,34 @@ export const Scene5CTA: React.FC = () => {
         }}
       />
 
-      {/* Main CTA text */}
       <div
         style={{
           position: "absolute",
-          top: "15%",
+          top: "12%",
           width: "100%",
           textAlign: "center",
           opacity: mainSpring,
           transform: `scale(${mainSpring})`,
         }}
       >
-        <div style={{ fontSize: 64, fontWeight: 900, color: "#fff", lineHeight: 1.2 }}>
+        <div style={{ fontSize: 60, fontWeight: 900, color: "#fff", lineHeight: 1.2 }}>
           Pare de mandar dinheiro
           <br />
           <span style={{ color: "#E63329" }}>para os EUA.</span>
         </div>
+        <div style={{ fontSize: 28, color: "rgba(255,255,255,0.4)", marginTop: 16 }}>
+          Comece a escalar sua operação no Brasil.
+        </div>
       </div>
 
-      {/* CTA Button */}
-      <Sequence from={30}>
+      <Sequence from={40}>
         <div
           style={{
             position: "absolute",
             top: "45%",
             width: "100%",
             textAlign: "center",
-            opacity: spring({ frame: frame - 30, fps, config: { damping: 15 } }),
+            opacity: spring({ frame: frame - 40, fps, config: { damping: 15 } }),
           }}
         >
           <div
@@ -89,8 +80,7 @@ export const Scene5CTA: React.FC = () => {
         </div>
       </Sequence>
 
-      {/* Guarantee badges */}
-      <Sequence from={40}>
+      <Sequence from={60}>
         <div
           style={{
             position: "absolute",
@@ -99,8 +89,7 @@ export const Scene5CTA: React.FC = () => {
             display: "flex",
             justifyContent: "center",
             gap: 40,
-            opacity: badgeSpring,
-            transform: `translateY(${interpolate(badgeSpring, [0, 1], [30, 0])}px)`,
+            opacity: spring({ frame: frame - 60, fps, config: { damping: 15 } }),
           }}
         >
           {[
@@ -129,25 +118,24 @@ export const Scene5CTA: React.FC = () => {
         </div>
       </Sequence>
 
-      {/* Final logo + tagline */}
-      <Sequence from={160}>
+      <Sequence from={220}>
         <div
           style={{
             position: "absolute",
-            bottom: "12%",
+            bottom: "14%",
             width: "100%",
             textAlign: "center",
             opacity: logoOpacity,
             transform: `scale(${logoScale})`,
           }}
         >
-          <div style={{ fontSize: 52, fontWeight: 900, color: "#fff" }}>
+          <div style={{ fontSize: 56, fontWeight: 900, color: "#fff" }}>
             AG <span style={{ color: "#E63329" }}>Sell</span>
           </div>
         </div>
       </Sequence>
 
-      <Sequence from={200}>
+      <Sequence from={280}>
         <div
           style={{
             position: "absolute",
@@ -157,7 +145,7 @@ export const Scene5CTA: React.FC = () => {
             opacity: tagOpacity,
           }}
         >
-          <span style={{ fontSize: 24, color: "rgba(255,255,255,0.4)", letterSpacing: 4 }}>
+          <span style={{ fontSize: 26, color: "rgba(255,255,255,0.4)", letterSpacing: 4 }}>
             MENOS FERRAMENTAS. MAIS VENDAS.
           </span>
         </div>

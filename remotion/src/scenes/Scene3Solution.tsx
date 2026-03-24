@@ -18,17 +18,13 @@ export const Scene3Solution: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // Logo reveal
-  const logoScale = spring({ frame: frame - 10, fps, config: { damping: 12, stiffness: 100 } });
-  const logoOpacity = interpolate(frame, [10, 30], [0, 1], { extrapolateRight: "clamp" });
-
-  // Red glow explosion
-  const glowSize = interpolate(frame, [10, 60], [0, 800], { extrapolateRight: "clamp" });
-  const glowOpacity = interpolate(frame, [10, 40, 80], [0, 0.2, 0.05], { extrapolateRight: "clamp" });
+  const logoScale = spring({ frame: frame - 15, fps, config: { damping: 12, stiffness: 100 } });
+  const logoOpacity = interpolate(frame, [15, 40], [0, 1], { extrapolateRight: "clamp" });
+  const glowSize = interpolate(frame, [15, 80], [0, 900], { extrapolateRight: "clamp" });
+  const glowOpacity = interpolate(frame, [15, 50, 100], [0, 0.2, 0.05], { extrapolateRight: "clamp" });
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#0a0a0a", fontFamily }}>
-      {/* Radial glow behind logo */}
       <div
         style={{
           position: "absolute",
@@ -45,11 +41,10 @@ export const Scene3Solution: React.FC = () => {
         }}
       />
 
-      {/* Subtitle */}
       <div
         style={{
           position: "absolute",
-          top: 100,
+          top: 80,
           width: "100%",
           textAlign: "center",
           opacity: interpolate(frame, [0, 20], [0, 1], { extrapolateRight: "clamp" }),
@@ -60,27 +55,28 @@ export const Scene3Solution: React.FC = () => {
         </span>
       </div>
 
-      {/* AG SELL Logo Text */}
       <div
         style={{
           position: "absolute",
-          top: "28%",
+          top: "25%",
           width: "100%",
           textAlign: "center",
           opacity: logoOpacity,
           transform: `scale(${logoScale})`,
         }}
       >
-        <div style={{ fontSize: 120, fontWeight: 900, color: "#fff", letterSpacing: -3 }}>
+        <div style={{ fontSize: 130, fontWeight: 900, color: "#fff", letterSpacing: -3 }}>
           AG <span style={{ color: "#E63329" }}>Sell</span>
         </div>
-        <div style={{ fontSize: 28, color: "rgba(255,255,255,0.5)", marginTop: 12, letterSpacing: 3 }}>
-          PLATAFORMA ALL-IN-ONE
+        <div style={{ fontSize: 30, color: "rgba(255,255,255,0.5)", marginTop: 14, letterSpacing: 3 }}>
+          A PRIMEIRA PLATAFORMA ALL-IN-ONE DE VERDADE
+        </div>
+        <div style={{ fontSize: 24, color: "rgba(255,255,255,0.35)", marginTop: 8 }}>
+          Construída para o empresário brasileiro
         </div>
       </div>
 
-      {/* Feature pills appearing */}
-      <Sequence from={50}>
+      <Sequence from={60}>
         <div
           style={{
             position: "absolute",
@@ -90,12 +86,12 @@ export const Scene3Solution: React.FC = () => {
             justifyContent: "center",
             gap: 16,
             flexWrap: "wrap",
-            padding: "0 200px",
+            padding: "0 180px",
           }}
         >
           {FEATURES.map((f, i) => {
-            const delay = i * 6;
-            const s = spring({ frame: frame - 50 - delay, fps, config: { damping: 15 } });
+            const delay = i * 5;
+            const s = spring({ frame: frame - 60 - delay, fps, config: { damping: 15 } });
             return (
               <div
                 key={f.label}
@@ -119,20 +115,18 @@ export const Scene3Solution: React.FC = () => {
         </div>
       </Sequence>
 
-      {/* Bottom tagline */}
-      <Sequence from={110}>
+      <Sequence from={160}>
         <div
           style={{
             position: "absolute",
             bottom: "8%",
             width: "100%",
             textAlign: "center",
-            opacity: interpolate(frame - 110, [0, 20], [0, 1], { extrapolateRight: "clamp" }),
+            opacity: interpolate(frame - 160, [0, 20], [0, 1], { extrapolateRight: "clamp" }),
           }}
         >
           <span style={{ fontSize: 32, color: "rgba(255,255,255,0.7)" }}>
-            Construída para a realidade do{" "}
-            <span style={{ color: "#4ADE80", fontWeight: 900 }}>empresário brasileiro.</span>
+            Tudo em <span style={{ color: "#4ADE80", fontWeight: 900 }}>uma única tela.</span>
           </span>
         </div>
       </Sequence>

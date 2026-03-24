@@ -457,6 +457,52 @@ export function UsersManagement() {
         open={!!planAssignOrg}
         onOpenChange={(open) => { if (!open) setPlanAssignOrg(null); }}
       />
+
+      {/* Create New Organization for User Dialog */}
+      <Dialog open={!!createOrgUser} onOpenChange={(open) => { if (!open) setCreateOrgUser(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Criar Nova Organização</DialogTitle>
+            <DialogDescription>Crie uma nova organização para {createOrgUser?.name || createOrgUser?.email} (será adicionado como Owner)</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Nome da Organização *</Label>
+              <Input value={createOrgForm.orgName} onChange={(e) => setCreateOrgForm({ ...createOrgForm, orgName: e.target.value })} placeholder="Ex: Empresa do Cliente" />
+            </div>
+            <div className="space-y-2">
+              <Label>Plano (opcional)</Label>
+              <Select value={createOrgForm.planId} onValueChange={(v) => setCreateOrgForm({ ...createOrgForm, planId: v })}>
+                <SelectTrigger><SelectValue placeholder="Sem plano (Free)" /></SelectTrigger>
+                <SelectContent>
+                  {availablePlans.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name} — R${p.price_monthly}/mês</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {createOrgForm.planId && (
+              <div className="space-y-2">
+                <Label>Ciclo de Cobrança</Label>
+                <Select value={createOrgForm.billingCycle} onValueChange={(v) => setCreateOrgForm({ ...createOrgForm, billingCycle: v as 'monthly' | 'yearly' })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Mensal</SelectItem>
+                    <SelectItem value="yearly">Anual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOrgUser(null)}>Cancelar</Button>
+            <Button onClick={handleCreateOrgForUser} disabled={createOrgMutation.isPending}>
+              {createOrgMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Criar Organização
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

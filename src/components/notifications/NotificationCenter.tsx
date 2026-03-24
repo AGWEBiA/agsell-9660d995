@@ -25,6 +25,7 @@ import {
   Zap,
   Mail,
   MessageSquare,
+  WifiOff,
 } from 'lucide-react';
 import {
   useNotifications,

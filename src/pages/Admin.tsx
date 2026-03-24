@@ -533,6 +533,9 @@ export default function Admin() {
         <TabsContent value="sms-config" className="space-y-6">
           <SmsPackagesAdmin />
         </TabsContent>
+        <TabsContent value="domains">
+          <AdminDomainReport />
+        </TabsContent>
       </Tabs>
 
       <AssignPlanDialog

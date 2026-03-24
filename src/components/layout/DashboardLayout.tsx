@@ -18,7 +18,8 @@ export function DashboardLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const { currentOrganization } = useOrganization();
+  const [showOrgPicker, setShowOrgPicker] = useState(false);
+  const { currentOrganization, organizations } = useOrganization();
   const { progress, isLoading } = useOnboarding();
   const { isUserMode, toggleViewMode, simulatedPlan, exitSimulation } = useAdminView();
   const { isPastDue } = useSubscriptionStatus();

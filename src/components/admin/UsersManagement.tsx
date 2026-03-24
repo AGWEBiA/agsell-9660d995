@@ -297,9 +297,14 @@ export function UsersManagement() {
                             <Pencil className="h-4 w-4" />
                           </Button>
 
-                          {/* Add to Org */}
-                          <Button variant="ghost" size="sm" onClick={() => { setOrgUser(u); setOrgForm({ organization_id: '', org_role: 'member' }); }}>
+                          {/* Add to Existing Org */}
+                          <Button variant="ghost" size="sm" title="Vincular a organização existente" onClick={() => { setOrgUser(u); setOrgForm({ organization_id: '', org_role: 'member' }); }}>
                             <Building2 className="h-4 w-4" />
+                          </Button>
+
+                          {/* Create New Org for User */}
+                          <Button variant="ghost" size="sm" title="Criar nova organização para este usuário" onClick={() => { setCreateOrgUser(u); setCreateOrgForm({ orgName: '', planId: '', billingCycle: 'monthly' }); }}>
+                            <Plus className="h-4 w-4" />
                           </Button>
 
                           {/* Roles */}

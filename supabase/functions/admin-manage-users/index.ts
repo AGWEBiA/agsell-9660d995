@@ -319,6 +319,63 @@ Deno.serve(async (req) => {
         );
       }
 
+      case 'create_organization_for_user': {
+        const { user_id, org_name, org_slug, plan_id, billing_cycle } = params;
+
+        if (!user_id || !org_name || !org_slug) {
+          return new Response(
+            JSON.stringify({ error: "user_id, org_name e org_slug são obrigatórios" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Create organization
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .insert({ name: org_name, slug: org_slug, plan_id: plan_id || null })
+          .select('id')
+          .single();
+
+        if (orgError) {
+          return new Response(
+            JSON.stringify({ error: `Erro ao criar organização: ${orgError.message}` }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        const newOrgId = orgData.id;
+
+        // Add user as owner
+        const { error: memberError } = await supabase
+          .from('organization_members')
+          .insert({ organization_id: newOrgId, user_id, role: 'owner', invited_by: callerUser.id });
+
+        if (memberError) {
+          return new Response(
+            JSON.stringify({ error: `Erro ao adicionar membro: ${memberError.message}` }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Create subscription if plan assigned
+        if (plan_id) {
+          const periodDays = billing_cycle === 'yearly' ? 365 : 30;
+          await supabase.from('subscriptions').insert({
+            organization_id: newOrgId,
+            plan_id,
+            status: 'active',
+            billing_cycle: billing_cycle || 'monthly',
+            current_period_start: new Date().toISOString(),
+            current_period_end: new Date(Date.now() + periodDays * 24 * 60 * 60 * 1000).toISOString(),
+          });
+        }
+
+        return new Response(
+          JSON.stringify({ success: true, organization_id: newOrgId }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       default:
         return new Response(
           JSON.stringify({ error: `Ação desconhecida: ${action}` }),

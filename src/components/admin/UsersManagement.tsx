@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { UserPlus, Shield, Trash2, Loader2, RefreshCw, Pencil, Building2, X, Crown } from 'lucide-react';
+import { UserPlus, Shield, Trash2, Loader2, RefreshCw, Pencil, Building2, X, Crown, Plus } from 'lucide-react';
 import { AssignPlanDialog } from './AssignPlanDialog';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,6 +35,8 @@ export function UsersManagement() {
   const [orgUser, setOrgUser] = useState<AdminUser | null>(null);
   const [orgForm, setOrgForm] = useState({ organization_id: '', org_role: 'member' });
   const [planAssignOrg, setPlanAssignOrg] = useState<{ id: string; name: string } | null>(null);
+  const [createOrgUser, setCreateOrgUser] = useState<AdminUser | null>(null);
+  const [createOrgForm, setCreateOrgForm] = useState({ orgName: '', planId: '', billingCycle: 'monthly' as 'monthly' | 'yearly' });
 
   const { data: organizations = [] } = useQuery({
     queryKey: ['admin_all_organizations'],
@@ -98,6 +100,38 @@ export function UsersManagement() {
   const addToOrgMutation = invokeMutation('add_to_organization', 'Usuário adicionado à organização!');
   const removeFromOrgMutation = invokeMutation('remove_from_organization', 'Usuário removido da organização!');
 
+  const { data: availablePlans = [] } = useQuery({
+    queryKey: ['admin_plans_list'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('plans').select('id, name, price_monthly').order('price_monthly', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const createOrgMutation = useMutation({
+    mutationFn: async ({ userId, orgName, planId, billingCycle }: { userId: string; orgName: string; planId: string; billingCycle: string }) => {
+      const slug = orgName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now();
+      
+      // Create org via edge function (uses service role)
+      const { data, error } = await supabase.functions.invoke('admin-manage-users', {
+        body: { action: 'create_organization_for_user', user_id: userId, org_name: orgName, org_slug: slug, plan_id: planId || null, billing_cycle: billingCycle },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin_users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin_all_organizations'] });
+      queryClient.invalidateQueries({ queryKey: ['admin_org_plans'] });
+      toast.success('Nova organização criada com sucesso!');
+      setCreateOrgUser(null);
+      setCreateOrgForm({ orgName: '', planId: '', billingCycle: 'monthly' });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
   const handleCreateUser = () => {
     if (!newUser.email || !newUser.password || !newUser.name) {
       toast.error('Preencha todos os campos obrigatórios');
@@ -126,6 +160,19 @@ export function UsersManagement() {
     addToOrgMutation.mutate({ user_id: orgUser.id, organization_id: orgForm.organization_id, org_role: orgForm.org_role });
     setOrgUser(null);
     setOrgForm({ organization_id: '', org_role: 'member' });
+  };
+
+  const handleCreateOrgForUser = () => {
+    if (!createOrgUser || !createOrgForm.orgName.trim()) {
+      toast.error('Informe o nome da organização');
+      return;
+    }
+    createOrgMutation.mutate({
+      userId: createOrgUser.id,
+      orgName: createOrgForm.orgName.trim(),
+      planId: createOrgForm.planId,
+      billingCycle: createOrgForm.billingCycle,
+    });
   };
 
   return (
@@ -250,9 +297,14 @@ export function UsersManagement() {
                             <Pencil className="h-4 w-4" />
                           </Button>
 
-                          {/* Add to Org */}
-                          <Button variant="ghost" size="sm" onClick={() => { setOrgUser(u); setOrgForm({ organization_id: '', org_role: 'member' }); }}>
+                          {/* Add to Existing Org */}
+                          <Button variant="ghost" size="sm" title="Vincular a organização existente" onClick={() => { setOrgUser(u); setOrgForm({ organization_id: '', org_role: 'member' }); }}>
                             <Building2 className="h-4 w-4" />
+                          </Button>
+
+                          {/* Create New Org for User */}
+                          <Button variant="ghost" size="sm" title="Criar nova organização para este usuário" onClick={() => { setCreateOrgUser(u); setCreateOrgForm({ orgName: '', planId: '', billingCycle: 'monthly' }); }}>
+                            <Plus className="h-4 w-4" />
                           </Button>
 
                           {/* Roles */}
@@ -405,6 +457,52 @@ export function UsersManagement() {
         open={!!planAssignOrg}
         onOpenChange={(open) => { if (!open) setPlanAssignOrg(null); }}
       />
+
+      {/* Create New Organization for User Dialog */}
+      <Dialog open={!!createOrgUser} onOpenChange={(open) => { if (!open) setCreateOrgUser(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Criar Nova Organização</DialogTitle>
+            <DialogDescription>Crie uma nova organização para {createOrgUser?.name || createOrgUser?.email} (será adicionado como Owner)</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Nome da Organização *</Label>
+              <Input value={createOrgForm.orgName} onChange={(e) => setCreateOrgForm({ ...createOrgForm, orgName: e.target.value })} placeholder="Ex: Empresa do Cliente" />
+            </div>
+            <div className="space-y-2">
+              <Label>Plano (opcional)</Label>
+              <Select value={createOrgForm.planId} onValueChange={(v) => setCreateOrgForm({ ...createOrgForm, planId: v })}>
+                <SelectTrigger><SelectValue placeholder="Sem plano (Free)" /></SelectTrigger>
+                <SelectContent>
+                  {availablePlans.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name} — R${p.price_monthly}/mês</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            {createOrgForm.planId && (
+              <div className="space-y-2">
+                <Label>Ciclo de Cobrança</Label>
+                <Select value={createOrgForm.billingCycle} onValueChange={(v) => setCreateOrgForm({ ...createOrgForm, billingCycle: v as 'monthly' | 'yearly' })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Mensal</SelectItem>
+                    <SelectItem value="yearly">Anual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOrgUser(null)}>Cancelar</Button>
+            <Button onClick={handleCreateOrgForUser} disabled={createOrgMutation.isPending}>
+              {createOrgMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Criar Organização
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

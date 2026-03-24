@@ -161,7 +161,7 @@ serve(async (req) => {
       await supabaseAdmin
         .from("instagram_accounts")
         .update({
-          access_token: longLivedToken,
+           access_token: finalToken,
           page_access_token: null,
           page_id: null,
           username: instagramAccount.username,

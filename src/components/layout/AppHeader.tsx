@@ -81,6 +81,11 @@ export function AppHeader({ sidebarCollapsed, onMenuToggle, isMobile }: HeaderPr
 
         {/* Right actions */}
         <div className="flex items-center gap-1 sm:gap-2">
+          {/* Organization switcher - hidden on mobile */}
+          <div className="hidden md:block">
+            <OrganizationSwitcher />
+          </div>
+
           {/* Agency selector - hidden on mobile */}
           <div className="hidden md:block">
             <AgencyAccountSelector />

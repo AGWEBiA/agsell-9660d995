@@ -32,6 +32,16 @@ export function DashboardLayout() {
     }
   }, [currentOrganization, progress, isLoading]);
 
+  // Show org picker when user has multiple orgs and hasn't dismissed it this session
+  useEffect(() => {
+    if (organizations.length > 1 && !isLoading) {
+      const dismissed = localStorage.getItem('orgPickerDismissed');
+      if (!dismissed) {
+        setShowOrgPicker(true);
+      }
+    }
+  }, [organizations, isLoading]);
+
   // Close mobile sidebar on route change
   useEffect(() => {
     if (isMobile) {

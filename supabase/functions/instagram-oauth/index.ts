@@ -133,8 +133,7 @@ serve(async (req) => {
       profile_picture_url: profileData.profile_picture_url || null,
     };
 
-    // Step 4: Save to DB using service role
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    // Use supabaseAdmin already created above
 
     const { data: existing } = await supabaseAdmin
       .from("instagram_accounts")

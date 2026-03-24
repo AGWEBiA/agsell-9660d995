@@ -142,6 +142,11 @@ export function DashboardLayout() {
         onComplete={() => setShowOnboarding(false)} 
       />
 
+      <OrganizationPickerDialog
+        open={showOrgPicker}
+        onClose={() => setShowOrgPicker(false)}
+      />
+
       <SupportAgentChat />
     </div>
   );

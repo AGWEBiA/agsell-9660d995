@@ -7,37 +7,32 @@ export const Scene1Hook: React.FC = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  // Dollar counter rising fast
-  const dollarValue = Math.floor(interpolate(frame, [0, 120], [0, 2400], { extrapolateRight: "clamp" }));
+  const dollarValue = Math.floor(interpolate(frame, [0, 200], [0, 2400], { extrapolateRight: "clamp" }));
   const formatted = dollarValue.toLocaleString("en-US");
+  const counterOpacity = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: "clamp" });
+  const pulse = Math.sin(frame * 0.2) * 0.04 + 1;
+  const textOpacity = interpolate(frame, [40, 70], [0, 1], { extrapolateRight: "clamp" });
+  const textY = interpolate(frame, [40, 70], [30, 0], { extrapolateRight: "clamp" });
+  const redIntensity = frame > 100 ? interpolate(frame, [100, 200], [0, 0.2], { extrapolateRight: "clamp" }) : 0;
+  const subOpacity = interpolate(frame, [140, 170], [0, 1], { extrapolateRight: "clamp" });
+  const subY = interpolate(frame, [140, 170], [20, 0], { extrapolateRight: "clamp" });
 
-  // Counter opacity
-  const counterOpacity = interpolate(frame, [0, 10], [0, 1], { extrapolateRight: "clamp" });
+  // Second part: "deletar tudo" text
+  const part2Opacity = interpolate(frame, [280, 310], [0, 1], { extrapolateRight: "clamp" });
+  const part2Y = interpolate(frame, [280, 310], [40, 0], { extrapolateRight: "clamp" });
 
-  // Pulse effect on the dollar sign
-  const pulse = Math.sin(frame * 0.3) * 0.05 + 1;
-
-  // "Você está pagando..." text
-  const textOpacity = interpolate(frame, [30, 50], [0, 1], { extrapolateRight: "clamp" });
-  const textY = interpolate(frame, [30, 50], [30, 0], { extrapolateRight: "clamp" });
-
-  // Red flash when counter hits high values
-  const redIntensity = frame > 60 ? interpolate(frame, [60, 120], [0, 0.15], { extrapolateRight: "clamp" }) : 0;
-
-  // Subtitle text
-  const subOpacity = interpolate(frame, [80, 100], [0, 1], { extrapolateRight: "clamp" });
-  const subY = interpolate(frame, [80, 100], [20, 0], { extrapolateRight: "clamp" });
+  // Economy flash
+  const economyOpacity = interpolate(frame, [340, 370], [0, 1], { extrapolateRight: "clamp" });
+  const economyScale = spring({ frame: frame - 340, fps, config: { damping: 10, stiffness: 100 } });
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#0a0a0a", fontFamily }}>
-      {/* Red danger pulse */}
       <AbsoluteFill
         style={{
           background: `radial-gradient(circle at 50% 40%, rgba(230, 51, 41, ${redIntensity}) 0%, transparent 60%)`,
         }}
       />
 
-      {/* Scanning lines effect */}
       <AbsoluteFill style={{ opacity: 0.03 }}>
         {Array.from({ length: 40 }).map((_, i) => (
           <div
@@ -53,11 +48,10 @@ export const Scene1Hook: React.FC = () => {
         ))}
       </AbsoluteFill>
 
-      {/* Dollar counter */}
       <div
         style={{
           position: "absolute",
-          top: "30%",
+          top: "25%",
           width: "100%",
           textAlign: "center",
           opacity: counterOpacity,
@@ -68,9 +62,9 @@ export const Scene1Hook: React.FC = () => {
           style={{
             fontSize: 180,
             fontWeight: 900,
-            color: frame > 90 ? "#E63329" : "#ffffff",
+            color: frame > 150 ? "#E63329" : "#ffffff",
             letterSpacing: -4,
-            textShadow: frame > 90 ? "0 0 60px rgba(230,51,41,0.5)" : "none",
+            textShadow: frame > 150 ? "0 0 60px rgba(230,51,41,0.5)" : "none",
           }}
         >
           ${formatted}
@@ -80,18 +74,17 @@ export const Scene1Hook: React.FC = () => {
         </div>
       </div>
 
-      {/* Question text */}
       <div
         style={{
           position: "absolute",
-          bottom: "18%",
+          bottom: "22%",
           width: "100%",
           textAlign: "center",
           opacity: textOpacity,
           transform: `translateY(${textY}px)`,
         }}
       >
-        <span style={{ fontSize: 48, fontWeight: 700, color: "#fff" }}>
+        <span style={{ fontSize: 46, fontWeight: 700, color: "#fff" }}>
           Você já sentiu aquela{" "}
           <span style={{ color: "#E63329" }}>pontada no peito</span>
           <br />
@@ -99,8 +92,7 @@ export const Scene1Hook: React.FC = () => {
         </span>
       </div>
 
-      {/* IOF / Dólar badges */}
-      <Sequence from={100}>
+      <Sequence from={140}>
         <div
           style={{
             position: "absolute",
@@ -113,7 +105,7 @@ export const Scene1Hook: React.FC = () => {
             transform: `translateY(${subY}px)`,
           }}
         >
-          {["IOF 6,38%", "DÓLAR A R$ 6,20", "SUPORTE EM INGLÊS"].map((t, i) => (
+          {["IOF 6,38%", "DÓLAR A R$ 6,20", "SUPORTE EM INGLÊS"].map((t) => (
             <div
               key={t}
               style={{
@@ -128,6 +120,43 @@ export const Scene1Hook: React.FC = () => {
               {t}
             </div>
           ))}
+        </div>
+      </Sequence>
+
+      {/* "Deletar tudo" overlay */}
+      <Sequence from={280}>
+        <div
+          style={{
+            position: "absolute",
+            top: "35%",
+            width: "100%",
+            textAlign: "center",
+            opacity: part2Opacity,
+            transform: `translateY(${part2Y}px)`,
+          }}
+        >
+          <span style={{ fontSize: 44, fontWeight: 700, color: "#fff" }}>
+            E se você pudesse <span style={{ color: "#4ADE80" }}>deletar tudo isso</span>
+            <br />
+            e substituir por <span style={{ color: "#4ADE80" }}>uma única plataforma?</span>
+          </span>
+        </div>
+      </Sequence>
+
+      <Sequence from={340}>
+        <div
+          style={{
+            position: "absolute",
+            bottom: "18%",
+            width: "100%",
+            textAlign: "center",
+            opacity: economyOpacity,
+            transform: `scale(${economyScale})`,
+          }}
+        >
+          <span style={{ fontSize: 80, fontWeight: 900, color: "#4ADE80", textShadow: "0 0 60px rgba(74,222,128,0.4)" }}>
+            1/10 DO PREÇO
+          </span>
         </div>
       </Sequence>
     </AbsoluteFill>

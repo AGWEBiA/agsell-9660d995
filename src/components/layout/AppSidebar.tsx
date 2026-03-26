@@ -99,7 +99,7 @@ const menuSections: MenuSection[] = [
       { label: 'E-mail Marketing', icon: Send, path: '/email', featureRequired: 'email_marketing' },
       { label: 'SMS Marketing', icon: Phone, path: '/sms-marketing' },
       { label: 'Torpedo de Voz', icon: PhoneCall, path: '/voip-campaigns' },
-      { label: 'Chatbot', icon: Bot, path: '/chatbot-builder' },
+      
       { label: 'Growth Tools', icon: Rocket, path: '/growth-tools' },
       { label: 'Formulários', icon: FileText, path: '/forms' },
       { label: 'Landing Pages', icon: Layout, path: '/landing-pages' },

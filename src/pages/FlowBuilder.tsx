@@ -48,6 +48,7 @@ import { WhatsAppGroupNodeConfig } from '@/components/flow-builder/WhatsAppGroup
 import { WhatsAppGroupAddNodeConfig } from '@/components/flow-builder/WhatsAppGroupAddNodeConfig';
 import { InstagramNodeConfig } from '@/components/flow-builder/InstagramNodeConfig';
 import { ConditionalNodeConfig } from '@/components/flow-builder/ConditionalNodeConfig';
+import { EmailTemplateEditor } from '@/components/email/EmailTemplateEditor';
 
 import { FlowNodeAnalyticsOverlay } from '@/components/automations/FlowNodeAnalyticsOverlay';
 import type { FlowNodeAnalytic } from '@/hooks/useFlowNodeAnalytics';

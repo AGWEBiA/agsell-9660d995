@@ -499,6 +499,17 @@ function NodeConfigDialog({ node, open, onClose, onSave }: {
       case 'form_submitted':
         return (<div className="space-y-4"><div><Label>Formulário *</Label><Select value={String(config.form_id || '')} onValueChange={v => { const form = forms.find(f => f.id === v); setConfig({ ...config, form_id: v, form_name: form?.name || '' }); }}><SelectTrigger><SelectValue placeholder="Selecione um formulário" /></SelectTrigger><SelectContent>{forms.map(f => (<SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>))}{forms.length === 0 && (<SelectItem value="_none" disabled>Nenhum formulário criado</SelectItem>)}</SelectContent></Select></div></div>);
 
+      // ── Payment gateway triggers ──
+      case 'gateway_purchase_approved':
+      case 'gateway_boleto_generated':
+      case 'gateway_boleto_paid':
+      case 'gateway_pix_generated':
+      case 'gateway_refund':
+      case 'gateway_chargeback':
+      case 'gateway_subscription_canceled':
+      case 'gateway_cart_abandoned':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Este gatilho é acionado automaticamente quando o evento correspondente é recebido via webhook do gateway de pagamento.</p><div><Label>Gateway</Label><Select value={String(config.gateway || 'any')} onValueChange={v => setConfig({ ...config, gateway: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="any">Qualquer gateway</SelectItem><SelectItem value="hotmart">Hotmart</SelectItem><SelectItem value="kiwify">Kiwify</SelectItem><SelectItem value="eduzz">Eduzz</SelectItem><SelectItem value="shopify">Shopify</SelectItem></SelectContent></Select></div><div><Label>Produto (opcional)</Label><Input placeholder="Nome ou ID do produto" value={String(config.product_name || '')} onChange={e => setConfig({ ...config, product_name: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Deixe vazio para qualquer produto</p></div></div>);
+
       // ── Simple actions ──
       // ── New node types ──
       case 'send_whatsapp_oficial':

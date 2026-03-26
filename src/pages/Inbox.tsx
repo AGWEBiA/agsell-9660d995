@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import {
-  Search, Send, Paperclip, Smile, Phone,
+  Search, Send, Paperclip, Smile, Phone, Settings,
   MessageSquare, Mail, CheckCheck, Plus, Bot, Image as ImageIcon,
   FileAudio, File as FileIcon, X, Loader2,
   Hash, ChevronLeft, Inbox as InboxIcon, User, Ticket,

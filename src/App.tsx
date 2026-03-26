@@ -173,7 +173,7 @@ const App = () => (
                     <Route path="permissions" element={<Permissions />} />
                     <Route path="admin" element={<Admin />} />
                     <Route path="api-keys" element={<FeatureRequiredPage feature="api" featureLabel="API Keys"><ApiKeys /></FeatureRequiredPage>} />
-                    <Route path="webhooks" element={<FeatureRequiredPage feature="api" featureLabel="Webhooks"><Webhooks /></FeatureRequiredPage>} />
+                    <Route path="webhooks" element={<Webhooks />} />
                     <Route path="email-domain" element={<FeatureRequiredPage feature="email_marketing" featureLabel="Domínio de E-mail"><EmailDomain /></FeatureRequiredPage>} />
                     <Route path="system-guide" element={<SystemGuide />} />
                     <Route path="help-center" element={<HelpCenter />} />

@@ -98,6 +98,14 @@ Deno.serve(async (req) => {
         return await getConnectionStatus(baseUrl, apiKey, instanceName, controller.signal);
       }
 
+      if (action === "logout") {
+        return await logoutInstance(baseUrl, apiKey, instanceName, controller.signal);
+      }
+
+      if (action === "delete") {
+        return await deleteInstance(baseUrl, apiKey, instanceName, controller.signal);
+      }
+
       return jsonResponse({ success: false, error: "Ação inválida" });
     } finally {
       clearTimeout(timeout);

@@ -320,28 +320,16 @@ export default function Inbox() {
 
   return (
     <div className="h-[calc(100vh-7rem)] animate-fade-in flex flex-col">
-      {/* Top Bar — Quick Navigation */}
+      {/* Top Bar */}
       <div className="flex items-center justify-between px-4 py-2 border-b bg-background shrink-0">
-        <div className="flex items-center gap-1">
-          <h1 className="text-base font-semibold mr-3">SAC</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-base font-semibold">Atendimento — Inbox Central</h1>
           <Button variant="default" size="sm" className="h-7 text-xs gap-1.5" onClick={() => setNovaConversaOpen(true)}>
             <Plus className="h-3 w-3" />
             Nova Conversa
           </Button>
         </div>
         <div className="flex items-center gap-0.5">
-          <Tooltip><TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-              <Link to="/email-inbox"><Mail className="h-4 w-4" /></Link>
-            </Button>
-          </TooltipTrigger><TooltipContent>E-mail</TooltipContent></Tooltip>
-
-          <Tooltip><TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-              <Link to="/support"><Ticket className="h-4 w-4" /></Link>
-            </Button>
-          </TooltipTrigger><TooltipContent>Tickets de Suporte</TooltipContent></Tooltip>
-
           <Tooltip><TooltipTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
               <Link to="/inbox-reports"><BarChart3 className="h-4 w-4" /></Link>
@@ -356,16 +344,42 @@ export default function Inbox() {
 
           <Tooltip><TooltipTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-              <Link to="/tasks"><Calendar className="h-4 w-4" /></Link>
+              <Link to="/inbox-settings"><Settings className="h-4 w-4" /></Link>
             </Button>
-          </TooltipTrigger><TooltipContent>Agenda</TooltipContent></Tooltip>
-
-          <Tooltip><TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-              <Link to="/contacts"><Users className="h-4 w-4" /></Link>
-            </Button>
-          </TooltipTrigger><TooltipContent>CRM</TooltipContent></Tooltip>
+          </TooltipTrigger><TooltipContent>Configurações</TooltipContent></Tooltip>
         </div>
+      </div>
+
+      {/* Channel Filter Tabs */}
+      <div className="flex items-center gap-2 px-4 py-2 border-b bg-background shrink-0 overflow-x-auto">
+        {([
+          { key: 'all' as ChannelFilter, label: 'Todos', color: 'bg-primary text-primary-foreground', icon: InboxIcon },
+          { key: 'whatsapp' as ChannelFilter, label: 'WhatsApp', color: 'bg-green-600 text-white', icon: MessageSquare },
+          { key: 'instagram' as ChannelFilter, label: 'Instagram', color: 'bg-pink-600 text-white', icon: Instagram },
+          { key: 'email' as ChannelFilter, label: 'E-mail', color: 'bg-blue-600 text-white', icon: Mail },
+          { key: 'voip' as ChannelFilter, label: 'VoIP', color: 'bg-violet-600 text-white', icon: Phone },
+          { key: 'support' as ChannelFilter, label: 'Suporte', color: 'bg-orange-600 text-white', icon: Ticket },
+        ]).map(ch => (
+          <button
+            key={ch.key}
+            onClick={() => setChannelFilter(ch.key)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+              channelFilter === ch.key
+                ? ch.color + ' shadow-sm'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            }`}
+          >
+            <ch.icon className="h-3.5 w-3.5" />
+            {ch.label}
+            {channelCounts[ch.key] > 0 && (
+              <span className={`ml-0.5 text-[10px] min-w-4 h-4 flex items-center justify-center rounded-full px-1 ${
+                channelFilter === ch.key ? 'bg-white/20' : 'bg-foreground/10'
+              }`}>
+                {channelCounts[ch.key]}
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
       {/* Main Content */}

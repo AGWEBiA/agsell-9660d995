@@ -84,6 +84,7 @@ function ConnectWizard({
   const { currentOrganization } = useOrganization();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const oauthInFlightRef = React.useRef(false);
   const OAUTH_REDIRECT_URI = 'https://site.agsell.com.br/instagram';
 
   // Listen for OAuth callback
@@ -144,6 +145,10 @@ function ConnectWizard({
       // Aguarda organização carregar antes de enviar o callback para backend
       if (!currentOrganization?.id) return;
 
+      // Evita processar o mesmo code mais de uma vez (re-render/effect duplicado)
+      if (oauthInFlightRef.current) return;
+      oauthInFlightRef.current = true;
+
       setLoading(true);
       try {
         const { data, error: fnError } = await supabase.functions.invoke('instagram-oauth', {
@@ -169,6 +174,7 @@ function ConnectWizard({
         window.history.replaceState({}, '', window.location.pathname);
         toast({ title: 'Erro ao conectar', description: err.message, variant: 'destructive' });
       } finally {
+        oauthInFlightRef.current = false;
         setLoading(false);
       }
     };

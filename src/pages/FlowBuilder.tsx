@@ -510,6 +510,54 @@ function NodeConfigDialog({ node, open, onClose, onSave }: {
       case 'gateway_cart_abandoned':
         return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Este gatilho é acionado automaticamente quando o evento correspondente é recebido via webhook do gateway de pagamento.</p><div><Label>Gateway</Label><Select value={String(config.gateway || 'any')} onValueChange={v => setConfig({ ...config, gateway: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="any">Qualquer gateway</SelectItem><SelectItem value="hotmart">Hotmart</SelectItem><SelectItem value="kiwify">Kiwify</SelectItem><SelectItem value="eduzz">Eduzz</SelectItem><SelectItem value="shopify">Shopify</SelectItem></SelectContent></Select></div><div><Label>Produto (opcional)</Label><Input placeholder="Nome ou ID do produto" value={String(config.product_name || '')} onChange={e => setConfig({ ...config, product_name: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Deixe vazio para qualquer produto</p></div></div>);
 
+      // ── Pipeline triggers ──
+      case 'deal_stage_changed':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Acionado quando um negócio muda de etapa no pipeline.</p><div><Label>Etapa de destino (opcional)</Label><Input placeholder="Nome da etapa" value={String(config.target_stage || '')} onChange={e => setConfig({ ...config, target_stage: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Deixe vazio para qualquer mudança de etapa</p></div></div>);
+      case 'deal_won':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Acionado automaticamente quando um negócio é marcado como ganho.</p><div><Label>Valor mínimo (opcional)</Label><Input type="number" placeholder="Ex: 1000" value={String(config.min_value || '')} onChange={e => setConfig({ ...config, min_value: e.target.value })} /></div></div>);
+      case 'deal_lost':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Acionado automaticamente quando um negócio é marcado como perdido.</p><div><Label>Motivo (opcional)</Label><Input placeholder="Filtrar por motivo de perda" value={String(config.loss_reason || '')} onChange={e => setConfig({ ...config, loss_reason: e.target.value })} /></div></div>);
+
+      // ── Tag/Score triggers ──
+      case 'tag_added':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Acionado quando uma tag específica é adicionada a um contato.</p><div><Label>Nome da Tag *</Label><Input placeholder="Ex: cliente_vip, comprador" value={String(config.tag_name || '')} onChange={e => setConfig({ ...config, tag_name: e.target.value })} /></div></div>);
+      case 'tag_removed':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Acionado quando uma tag é removida de um contato.</p><div><Label>Nome da Tag *</Label><Input placeholder="Ex: inadimplente" value={String(config.tag_name || '')} onChange={e => setConfig({ ...config, tag_name: e.target.value })} /></div></div>);
+      case 'score_threshold':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Acionado quando o score do contato atinge ou ultrapassa um valor.</p><div><Label>Score mínimo *</Label><Input type="number" placeholder="Ex: 80" value={String(config.min_score || '')} onChange={e => setConfig({ ...config, min_score: e.target.value })} /></div><div><Label>Direção</Label><Select value={String(config.direction || 'up')} onValueChange={v => setConfig({ ...config, direction: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="up">Subiu para o valor</SelectItem><SelectItem value="down">Desceu para o valor</SelectItem></SelectContent></Select></div></div>);
+
+      // ── Email triggers ──
+      case 'email_opened':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Acionado quando o contato abre um e-mail enviado por uma campanha ou automação.</p><div><Label>Campanha (opcional)</Label><Input placeholder="Nome ou ID da campanha" value={String(config.campaign_name || '')} onChange={e => setConfig({ ...config, campaign_name: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Deixe vazio para qualquer e-mail</p></div></div>);
+      case 'email_clicked':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Acionado quando o contato clica em um link dentro do e-mail.</p><div><Label>URL do link (opcional)</Label><Input placeholder="https://..." value={String(config.link_url || '')} onChange={e => setConfig({ ...config, link_url: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Deixe vazio para qualquer link clicado</p></div></div>);
+      case 'email_bounced':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Acionado quando um e-mail retorna como bounce (hard ou soft).</p><div><Label>Tipo de bounce</Label><Select value={String(config.bounce_type || 'any')} onValueChange={v => setConfig({ ...config, bounce_type: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="any">Qualquer bounce</SelectItem><SelectItem value="hard">Hard bounce</SelectItem><SelectItem value="soft">Soft bounce</SelectItem></SelectContent></Select></div></div>);
+
+      // ── Date/Inactivity triggers ──
+      case 'date_trigger':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Acionado em uma data específica do contato (aniversário, vencimento, etc).</p><div><Label>Campo de data *</Label><Select value={String(config.date_field || 'birthday')} onValueChange={v => setConfig({ ...config, date_field: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="birthday">Aniversário</SelectItem><SelectItem value="created_at">Data de cadastro</SelectItem><SelectItem value="custom">Campo personalizado</SelectItem></SelectContent></Select></div>{config.date_field === 'custom' && (<div><Label>Nome do campo</Label><Input placeholder="Ex: data_vencimento" value={String(config.custom_field || '')} onChange={e => setConfig({ ...config, custom_field: e.target.value })} /></div>)}<div><Label>Dias antes/depois</Label><Input type="number" placeholder="0 = no dia, -3 = 3 dias antes" value={String(config.days_offset || '0')} onChange={e => setConfig({ ...config, days_offset: e.target.value })} /></div></div>);
+      case 'inactivity_trigger':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Acionado quando o contato fica sem interação por um período definido.</p><div><Label>Dias de inatividade *</Label><Input type="number" placeholder="Ex: 30" value={String(config.inactivity_days || '')} onChange={e => setConfig({ ...config, inactivity_days: e.target.value })} /></div><div><Label>Canal de referência</Label><Select value={String(config.inactivity_channel || 'any')} onValueChange={v => setConfig({ ...config, inactivity_channel: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="any">Qualquer canal</SelectItem><SelectItem value="whatsapp">WhatsApp</SelectItem><SelectItem value="email">E-mail</SelectItem><SelectItem value="instagram">Instagram</SelectItem></SelectContent></Select></div></div>);
+
+      // ── VoIP triggers ──
+      case 'call_completed':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Acionado quando uma chamada VoIP é completada com sucesso.</p><div><Label>Duração mínima (segundos)</Label><Input type="number" placeholder="Ex: 30" value={String(config.min_duration || '')} onChange={e => setConfig({ ...config, min_duration: e.target.value })} /><p className="text-xs text-muted-foreground mt-1">Deixe vazio para qualquer duração</p></div></div>);
+      case 'call_missed':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Acionado quando uma chamada é perdida ou não atendida.</p></div>);
+
+      // ── Telegram triggers ──
+      case 'telegram_message':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Acionado quando uma mensagem é recebida no Telegram.</p></div>);
+      case 'telegram_keyword':
+        return (<div className="space-y-4"><div><Label>Palavra-chave *</Label><Input placeholder="Ex: INFO, COMPRAR" value={String(config.keyword || '')} onChange={e => setConfig({ ...config, keyword: e.target.value })} /></div><div><Label>Correspondência</Label><Select value={String(config.match_type || 'contains')} onValueChange={v => setConfig({ ...config, match_type: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="contains">Contém</SelectItem><SelectItem value="exact">Exata</SelectItem><SelectItem value="starts_with">Começa com</SelectItem></SelectContent></Select></div></div>);
+
+      // ── WhatsApp group triggers ──
+      case 'whatsapp_group_join':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Acionado quando alguém entra em um grupo do WhatsApp.</p><div><Label>Nome do grupo (opcional)</Label><Input placeholder="Filtrar por grupo específico" value={String(config.group_name || '')} onChange={e => setConfig({ ...config, group_name: e.target.value })} /></div></div>);
+      case 'whatsapp_group_leave':
+        return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Acionado quando alguém sai de um grupo do WhatsApp.</p><div><Label>Nome do grupo (opcional)</Label><Input placeholder="Filtrar por grupo específico" value={String(config.group_name || '')} onChange={e => setConfig({ ...config, group_name: e.target.value })} /></div></div>);
+
       // ── Simple actions ──
       // ── New node types ──
       case 'send_whatsapp_oficial':

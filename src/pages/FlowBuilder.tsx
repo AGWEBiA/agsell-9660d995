@@ -432,6 +432,7 @@ function NodeConfigDialog({ node, open, onClose, onSave }: {
   const [config, setConfig] = useState<Record<string, unknown>>(node?.config || {});
   const { forms } = useForms();
   const { automations } = useAutomations();
+  const { data: gatewayProducts = [] } = useGatewayProducts(String(config.gateway || 'any'));
 
   useEffect(() => { if (node) setConfig(node.config); }, [node]);
   if (!node) return null;

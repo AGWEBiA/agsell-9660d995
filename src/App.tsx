@@ -96,6 +96,7 @@ import RevenueReporting from "./pages/RevenueReporting";
 import PaidGroups from "./pages/PaidGroups";
 import SystemStatus from "./pages/SystemStatus";
 import VoIP from "./pages/VoIP";
+import VoipCampaigns from "./pages/VoipCampaigns";
 import GroupRotator from "./pages/GroupRotator";
 import GroupRedirect from "./pages/GroupRedirect";
 import ChatbotBuilder from "./pages/ChatbotBuilder";
@@ -201,6 +202,7 @@ const App = () => (
                     <Route path="revenue-reporting" element={<RevenueReporting />} />
                     <Route path="paid-groups" element={<FeatureRequiredPage feature="paid_groups" featureLabel="Grupos Pagos"><PaidGroups /></FeatureRequiredPage>} />
                     <Route path="voip" element={<VoIP />} />
+                    <Route path="voip-campaigns" element={<VoipCampaigns />} />
                     <Route path="group-rotator" element={<GroupRotator />} />
                     <Route path="chatbot-builder" element={<ChatbotBuilder />} />
                     <Route path="funnel-planner" element={<FunnelPlanner />} />

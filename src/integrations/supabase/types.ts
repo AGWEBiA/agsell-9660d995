@@ -5630,6 +5630,77 @@ export type Database = {
         }
         Relationships: []
       }
+      voip_campaigns: {
+        Row: {
+          answered_count: number
+          audio_url: string
+          completed_at: string | null
+          created_at: string
+          credits_per_call: number
+          failed_count: number
+          fallback_message: string | null
+          id: string
+          name: string
+          organization_id: string
+          scheduled_at: string | null
+          sent_count: number
+          started_at: string | null
+          status: string
+          target_count: number
+          target_tags: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answered_count?: number
+          audio_url: string
+          completed_at?: string | null
+          created_at?: string
+          credits_per_call?: number
+          failed_count?: number
+          fallback_message?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          scheduled_at?: string | null
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          target_count?: number
+          target_tags?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answered_count?: number
+          audio_url?: string
+          completed_at?: string | null
+          created_at?: string
+          credits_per_call?: number
+          failed_count?: number
+          fallback_message?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          scheduled_at?: string | null
+          sent_count?: number
+          started_at?: string | null
+          status?: string
+          target_count?: number
+          target_tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voip_campaigns_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voip_credit_packages: {
         Row: {
           created_at: string | null

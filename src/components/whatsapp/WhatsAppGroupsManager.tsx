@@ -1297,11 +1297,24 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
             </div>
           ) : (
             <div className="space-y-3">
+              <Input
+                placeholder="Buscar grupo por nome..."
+                value={importGroupSearch ?? ''}
+                onChange={e => setImportGroupSearch(e.target.value)}
+                className="w-full"
+              />
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">{importedGroups.length} grupo(s) encontrado(s)</span>
-                <Button variant="outline" size="sm" onClick={() => setImportedGroups(prev => prev.map(g => ({ ...g, selected: true })))}>
-                  <CheckSquare className="h-3.5 w-3.5 mr-1" /> Selecionar Todos
-                </Button>
+                <span className="text-sm text-muted-foreground">
+                  {importedGroups.filter(g => !importGroupSearch || g.subject.toLowerCase().includes(importGroupSearch.toLowerCase())).length} de {importedGroups.length} grupo(s)
+                </span>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setImportedGroups(prev => prev.map(g => ({ ...g, selected: false })))}>
+                    <Square className="h-3.5 w-3.5 mr-1" /> Desmarcar Todos
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setImportedGroups(prev => prev.map(g => ({ ...g, selected: true })))}>
+                    <CheckSquare className="h-3.5 w-3.5 mr-1" /> Selecionar Todos
+                  </Button>
+                </div>
               </div>
               <div className="max-h-[400px] overflow-y-auto border rounded-lg">
                 <Table>
@@ -1315,7 +1328,10 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {importedGroups.map((group, idx) => {
+                    {importedGroups
+                      .filter(g => !importGroupSearch || g.subject.toLowerCase().includes(importGroupSearch.toLowerCase()))
+                      .map((group) => {
+                      const idx = importedGroups.findIndex(g => g.id === group.id);
                       const alreadyImported = groups.some(g => g.external_group_id === group.id);
                       return (
                         <TableRow key={group.id} className={alreadyImported ? 'opacity-50' : ''}>

@@ -157,6 +157,7 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter, analytics }: {
     if (['send_email_marketing', 'send_email_performance'].includes(node.subtype)) return 'EMAIL';
     if (node.subtype === 'parallel_channels') return 'PARALELO';
     if (node.subtype === 'voice_torpedo') return 'VOZ';
+    if (node.subtype === 'send_voip_call') return 'VOIP';
     if (node.subtype === 'link_split') return 'SPLIT';
     if (node.subtype === 'note') return 'NOTA';
     if (node.subtype === 'edit_whatsapp_group') return 'GRUPO';

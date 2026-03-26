@@ -8,6 +8,123 @@ const corsHeaders = {
 };
 
 const INSTAGRAM_APP_ID = "1231864369151883";
+const GRAPH_API_VERSION = "v21.0";
+
+type ResolvedInstagramProfile = {
+  instagram_user_id: string;
+  username: string;
+  full_name: string | null;
+  profile_picture_url: string | null;
+  page_id: string | null;
+  page_access_token: string | null;
+};
+
+function safeJsonParse(text: string): any {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+async function fetchProfileViaInstagramGraph(accessToken: string): Promise<{ profile?: ResolvedInstagramProfile; error?: string }> {
+  const response = await fetch(
+    `https://graph.instagram.com/me?fields=id,username,name,profile_picture_url,account_type&access_token=${encodeURIComponent(accessToken)}`
+  );
+  const raw = await response.text();
+  const data = safeJsonParse(raw);
+
+  if (!response.ok || data?.error) {
+    return {
+      error: data?.error?.message || data?.message || "Erro ao buscar perfil no graph.instagram.com",
+    };
+  }
+
+  if (!data?.id || !data?.username) {
+    return {
+      error: "Resposta inválida ao buscar perfil no graph.instagram.com",
+    };
+  }
+
+  return {
+    profile: {
+      instagram_user_id: String(data.id),
+      username: data.username,
+      full_name: data.name || null,
+      profile_picture_url: data.profile_picture_url || null,
+      page_id: null,
+      page_access_token: null,
+    },
+  };
+}
+
+async function fetchProfileViaFacebookGraph(accessToken: string): Promise<{ profile?: ResolvedInstagramProfile; error?: string }> {
+  const response = await fetch(
+    `https://graph.facebook.com/${GRAPH_API_VERSION}/me/accounts?fields=id,name,access_token,instagram_business_account{id,username,name,profile_picture_url}&access_token=${encodeURIComponent(accessToken)}`
+  );
+  const raw = await response.text();
+  const data = safeJsonParse(raw);
+
+  if (!response.ok || data?.error) {
+    return {
+      error: data?.error?.message || data?.message || "Erro ao buscar páginas no graph.facebook.com",
+    };
+  }
+
+  const pages = Array.isArray(data?.data) ? data.data : [];
+  const pageWithInstagram = pages.find((page: any) => page?.instagram_business_account?.id && page?.instagram_business_account?.username);
+
+  if (!pageWithInstagram) {
+    return {
+      error: "Nenhuma Página do Facebook com Instagram Business/Creator vinculada foi encontrada.",
+    };
+  }
+
+  return {
+    profile: {
+      instagram_user_id: String(pageWithInstagram.instagram_business_account.id),
+      username: pageWithInstagram.instagram_business_account.username,
+      full_name:
+        pageWithInstagram.instagram_business_account.name ||
+        pageWithInstagram.name ||
+        null,
+      profile_picture_url: pageWithInstagram.instagram_business_account.profile_picture_url || null,
+      page_id: pageWithInstagram.id || null,
+      page_access_token: pageWithInstagram.access_token || null,
+    },
+  };
+}
+
+async function resolveInstagramProfile(primaryToken: string, fallbackToken?: string): Promise<{ profile?: ResolvedInstagramProfile; error?: string }> {
+  const attempts = [primaryToken, fallbackToken].filter((token, index, arr): token is string => !!token && arr.indexOf(token) === index);
+  const errors: string[] = [];
+
+  for (const token of attempts) {
+    const viaInstagram = await fetchProfileViaInstagramGraph(token);
+    if (viaInstagram.profile) {
+      return viaInstagram;
+    }
+    if (viaInstagram.error) {
+      errors.push(viaInstagram.error);
+      console.warn("[INSTAGRAM-OAUTH] graph.instagram.com profile lookup failed", { error: viaInstagram.error });
+    }
+
+    const viaFacebook = await fetchProfileViaFacebookGraph(token);
+    if (viaFacebook.profile) {
+      return viaFacebook;
+    }
+    if (viaFacebook.error) {
+      errors.push(viaFacebook.error);
+      console.warn("[INSTAGRAM-OAUTH] graph.facebook.com profile lookup failed", { error: viaFacebook.error });
+    }
+  }
+
+  return {
+    error:
+      errors[errors.length - 1] ||
+      "Não foi possível identificar o perfil do Instagram com os tokens retornados.",
+  };
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -126,16 +243,20 @@ serve(async (req) => {
       // Fallback attempt for token types that require Facebook exchange endpoint
       try {
         console.log("[INSTAGRAM-OAUTH] Step 2b: Trying Facebook token exchange fallback");
-        const fbExchangeUrl = `https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${encodeURIComponent(INSTAGRAM_APP_ID)}&client_secret=${encodeURIComponent(INSTAGRAM_APP_SECRET)}&fb_exchange_token=${encodeURIComponent(shortLivedToken)}`;
+        const fbExchangeUrl = `https://graph.facebook.com/${GRAPH_API_VERSION}/oauth/access_token?grant_type=fb_exchange_token&client_id=${encodeURIComponent(INSTAGRAM_APP_ID)}&client_secret=${encodeURIComponent(INSTAGRAM_APP_SECRET)}&fb_exchange_token=${encodeURIComponent(shortLivedToken)}`;
         const fbExchangeRes = await fetch(fbExchangeUrl);
         const fbExchangeText = await fbExchangeRes.text();
-        const fbExchangeData = JSON.parse(fbExchangeText);
+        const fbExchangeData = safeJsonParse(fbExchangeText);
 
-        if (fbExchangeData?.access_token) {
+        if (fbExchangeData?.access_token && fbExchangeRes.ok) {
           finalToken = fbExchangeData.access_token;
           expiresIn = fbExchangeData.expires_in || expiresIn;
           console.log("[INSTAGRAM-OAUTH] Step 2b OK: Facebook exchange succeeded");
         } else {
+          console.error("[INSTAGRAM-OAUTH] Step 2b failed response", {
+            status: fbExchangeRes.status,
+            body: fbExchangeData || fbExchangeText,
+          });
           console.log("[INSTAGRAM-OAUTH] Step 2b failed, using short-lived token fallback");
         }
       } catch (fallbackError) {
@@ -145,35 +266,22 @@ serve(async (req) => {
     }
 
     console.log("[INSTAGRAM-OAUTH] Step 3: Fetching profile");
-    const profileRes = await fetch(
-      `https://graph.instagram.com/me?fields=id,username,name,profile_picture_url,account_type&access_token=${encodeURIComponent(finalToken)}`
-    );
-    const profileText = await profileRes.text();
+    const resolvedProfile = await resolveInstagramProfile(finalToken, shortLivedToken);
 
-    let profileData;
-    try {
-      profileData = JSON.parse(profileText);
-    } catch {
-      console.error("[INSTAGRAM-OAUTH] Profile response parse error");
+    if (!resolvedProfile.profile) {
       return new Response(
-        JSON.stringify({ error: "Resposta inválida ao buscar perfil do Instagram" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    if (profileData.error) {
-      console.error("Profile fetch error:", profileData.error);
-      return new Response(
-        JSON.stringify({ error: profileData.error.message || "Erro ao buscar perfil do Instagram" }),
+        JSON.stringify({ error: resolvedProfile.error || "Erro ao buscar perfil do Instagram" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const instagramAccount = {
-      instagram_user_id: String(profileData.id || igUserId),
-      username: profileData.username,
-      full_name: profileData.name || null,
-      profile_picture_url: profileData.profile_picture_url || null,
+      instagram_user_id: String(resolvedProfile.profile.instagram_user_id || igUserId),
+      username: resolvedProfile.profile.username,
+      full_name: resolvedProfile.profile.full_name || null,
+      profile_picture_url: resolvedProfile.profile.profile_picture_url || null,
+      page_id: resolvedProfile.profile.page_id,
+      page_access_token: resolvedProfile.profile.page_access_token,
     };
 
     // Use supabaseAdmin already created above
@@ -190,8 +298,8 @@ serve(async (req) => {
         .from("instagram_accounts")
         .update({
            access_token: finalToken,
-          page_access_token: null,
-          page_id: null,
+          page_access_token: instagramAccount.page_access_token,
+          page_id: instagramAccount.page_id,
           username: instagramAccount.username,
           full_name: instagramAccount.full_name,
           profile_picture_url: instagramAccount.profile_picture_url,
@@ -215,6 +323,8 @@ serve(async (req) => {
       .insert({
         organization_id,
         access_token: finalToken,
+        page_access_token: instagramAccount.page_access_token,
+        page_id: instagramAccount.page_id,
         instagram_user_id: instagramAccount.instagram_user_id,
         username: instagramAccount.username,
         full_name: instagramAccount.full_name,

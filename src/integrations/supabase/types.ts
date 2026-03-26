@@ -6572,6 +6572,7 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["org_role"]
       }
+      get_paid_groups_config_safe: { Args: { _org_id: string }; Returns: Json }
       get_rotator_campaign_by_slug: {
         Args: { _slug: string }
         Returns: {

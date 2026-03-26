@@ -26,12 +26,12 @@ export function PaidGroupsConfig() {
   useEffect(() => {
     if (config) {
       setUrl(config.evolution_api_url || '');
-      setApiKey(config.evolution_api_key || '');
+      // Don't overwrite apiKey with masked value - only show placeholder
       setIsActive(config.is_active ?? true);
     }
   }, [config]);
 
-  const hasConfig = !!(config?.evolution_api_url && config?.evolution_api_key);
+  const hasConfig = !!(config?.evolution_api_url && config?.evolution_api_key_set);
 
   return (
     <div className="space-y-6">
@@ -48,7 +48,7 @@ export function PaidGroupsConfig() {
           <div className="space-y-2">
             <Label>API Key</Label>
             <div className="flex gap-2">
-              <Input type={showKey ? 'text' : 'password'} placeholder="Sua API Key" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
+              <Input type={showKey ? 'text' : 'password'} placeholder={config?.evolution_api_key_masked || 'Sua API Key'} value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
               <Button variant="outline" size="icon" onClick={() => setShowKey(!showKey)}>
                 {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
@@ -58,7 +58,14 @@ export function PaidGroupsConfig() {
             <Switch checked={isActive} onCheckedChange={setIsActive} />
             <Label>Ativo</Label>
           </div>
-          <Button onClick={() => upsertConfig.mutate({ evolution_api_url: url, evolution_api_key: apiKey, is_active: isActive })} disabled={upsertConfig.isPending}>
+          <Button onClick={() => {
+            if (!apiKey && config?.evolution_api_key_set) {
+              // If no new key entered but key already set, only update url and is_active
+              upsertConfig.mutate({ evolution_api_url: url, evolution_api_key: '', is_active: isActive });
+              return;
+            }
+            upsertConfig.mutate({ evolution_api_url: url, evolution_api_key: apiKey, is_active: isActive });
+          }} disabled={upsertConfig.isPending}>
             Salvar Configuração
           </Button>
         </CardContent>

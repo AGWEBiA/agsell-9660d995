@@ -31,11 +31,20 @@ export function usePaidGroupsConfig() {
 
   const upsertConfig = useMutation({
     mutationFn: async (values: { evolution_api_url: string; evolution_api_key: string; is_active: boolean }) => {
-      const { error } = await supabase.from('paid_groups_config').upsert({
+      const payload: Record<string, unknown> = {
         organization_id: orgId!,
-        ...values,
+        evolution_api_url: values.evolution_api_url,
+        is_active: values.is_active,
         updated_at: new Date().toISOString(),
-      }, { onConflict: 'organization_id' });
+      };
+      // Only include api_key if user entered a new one
+      if (values.evolution_api_key) {
+        payload.evolution_api_key = values.evolution_api_key;
+      }
+      const { error } = await supabase.from('paid_groups_config').upsert(
+        payload as any,
+        { onConflict: 'organization_id' }
+      );
       if (error) throw error;
     },
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['paid-groups-config'] }); toast.success('Configuração salva!'); },

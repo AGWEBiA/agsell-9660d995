@@ -13,7 +13,7 @@ import {
   FileAudio, File as FileIcon, X, Loader2,
   Hash, ChevronLeft, Inbox as InboxIcon, User, Ticket,
   BarChart3, Brain, Calendar, Users, CheckCircle2,
-  ArrowDownToLine,
+  ArrowDownToLine, Instagram,
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useInbox } from '@/hooks/useInbox';
@@ -56,6 +56,7 @@ const channelIcons: Record<string, typeof MessageSquare> = {
 };
 
 type QueueTab = 'fila' | 'meus' | 'todos';
+type ChannelFilter = 'all' | 'whatsapp' | 'instagram' | 'email' | 'voip' | 'support';
 type NcStep = 'search' | 'new' | 'device';
 
 export default function Inbox() {
@@ -78,7 +79,7 @@ export default function Inbox() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [queueTab, setQueueTab] = useState<QueueTab>('fila');
-
+  const [channelFilter, setChannelFilter] = useState<ChannelFilter>('all');
   // Nova Conversa dialog state
   const [novaConversaOpen, setNovaConversaOpen] = useState(false);
   const [ncStep, setNcStep] = useState<NcStep>('search');

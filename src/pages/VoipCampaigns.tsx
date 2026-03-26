@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,7 @@ import { Progress } from '@/components/ui/progress';
 import {
   Volume2, Plus, Play, Pause, Trash2, Clock, Users, Phone,
   CheckCircle2, XCircle, Loader2, Calendar, Tag, Upload, BarChart3,
+  FileAudio, X,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';

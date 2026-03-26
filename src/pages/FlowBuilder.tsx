@@ -661,6 +661,47 @@ function NodeConfigDialog({ node, open, onClose, onSave }: {
             </div>
           </div>
         );
+      case 'send_voip_call':
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">Realiza uma ligação VoIP para o contato do fluxo. Requer créditos VoIP.</p>
+            <div>
+              <Label>Ação ao atender</Label>
+              <Select value={String(config.on_answer || 'play_audio')} onValueChange={v => setConfig({ ...config, on_answer: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="play_audio">Reproduzir áudio</SelectItem>
+                  <SelectItem value="connect_agent">Conectar ao atendente</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {(config.on_answer || 'play_audio') === 'play_audio' && (
+              <div>
+                <Label>URL do Áudio (MP3)</Label>
+                <Input placeholder="https://cdn.seusite.com/audio.mp3" value={String(config.audio_url || '')} onChange={e => setConfig({ ...config, audio_url: e.target.value })} />
+              </div>
+            )}
+            <div>
+              <Label>Créditos por chamada</Label>
+              <Select value={String(config.credits_per_call || '1')} onValueChange={v => setConfig({ ...config, credits_per_call: Number(v) })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 crédito</SelectItem>
+                  <SelectItem value="2">2 créditos</SelectItem>
+                  <SelectItem value="3">3 créditos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch checked={!!config.record_call} onCheckedChange={v => setConfig({ ...config, record_call: v })} />
+              <Label>Gravar chamada</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch checked={!!config.create_task_on_miss} onCheckedChange={v => setConfig({ ...config, create_task_on_miss: v })} />
+              <Label>Criar tarefa se não atender</Label>
+            </div>
+          </div>
+        );
       case 'parallel_channels':
         return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Dispara mensagens em múltiplos canais simultaneamente. Se um canal falhar, os outros continuam.</p>
           <div className="space-y-2">

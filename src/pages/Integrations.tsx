@@ -74,12 +74,7 @@ export default function Integrations() {
 
   const connectedCount = getConnectedIntegrations().length;
 
-  // Group by category
-  const groupedIntegrations = integrations.reduce((acc, int) => {
-    if (!acc[int.category]) acc[int.category] = [];
-    acc[int.category].push(int);
-    return acc;
-  }, {} as Record<string, Integration[]>);
+
 
   return (
     <div className="space-y-6 animate-fade-in">

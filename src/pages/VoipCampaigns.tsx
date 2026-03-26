@@ -378,15 +378,77 @@ const VoipCampaigns = () => {
             </div>
 
             <div>
-              <Label>URL do Áudio (MP3) *</Label>
-              <Input
-                placeholder="https://cdn.seusite.com/audio-campanha.mp3"
-                value={campaignForm.audio_url}
-                onChange={e => setCampaignForm(f => ({ ...f, audio_url: e.target.value }))}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Cole a URL de um arquivo MP3 hospedado. Recomendamos até 60 segundos de duração.
-              </p>
+              <Label>Áudio da Campanha *</Label>
+              
+              {/* Upload Section */}
+              <div className="mt-2 space-y-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="audio/mpeg,audio/mp3,audio/wav,audio/ogg,audio/mp4,audio/x-m4a"
+                  className="hidden"
+                  onChange={handleAudioUpload}
+                />
+                
+                {campaignForm.audio_url ? (
+                  <div className="flex items-center gap-2 p-3 rounded-lg border bg-accent/30">
+                    <FileAudio className="h-5 w-5 text-primary shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {audioFileName || 'Áudio selecionado'}
+                      </p>
+                      <audio controls className="w-full mt-1 h-8" src={campaignForm.audio_url}>
+                        <track kind="captions" />
+                      </audio>
+                    </div>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      className="shrink-0 h-7 w-7"
+                      onClick={() => {
+                        setCampaignForm(f => ({ ...f, audio_url: '' }));
+                        setAudioFileName('');
+                      }}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full h-20 border-dashed"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                  >
+                    {uploading ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span>Enviando...</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-1">
+                        <Upload className="h-6 w-6 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          Clique para enviar áudio (MP3, WAV, OGG — até 20MB)
+                        </span>
+                      </div>
+                    )}
+                  </Button>
+                )}
+
+                {/* Manual URL option */}
+                {!campaignForm.audio_url && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Ou cole uma URL diretamente:</p>
+                    <Input
+                      placeholder="https://cdn.seusite.com/audio-campanha.mp3"
+                      onChange={e => setCampaignForm(f => ({ ...f, audio_url: e.target.value }))}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div>

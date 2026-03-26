@@ -9,7 +9,7 @@ const corsHeaders = {
 interface QRCodeRequest {
   organization_id?: string;
   instance_name: string;
-  action?: "create" | "connect" | "status" | "qrcode";
+  action?: "create" | "connect" | "status" | "qrcode" | "logout" | "delete";
 }
 
 interface EvolutionConfig {
@@ -96,6 +96,14 @@ Deno.serve(async (req) => {
 
       if (action === "status") {
         return await getConnectionStatus(baseUrl, apiKey, instanceName, controller.signal);
+      }
+
+      if (action === "logout") {
+        return await logoutInstance(baseUrl, apiKey, instanceName, controller.signal);
+      }
+
+      if (action === "delete") {
+        return await deleteInstance(baseUrl, apiKey, instanceName, controller.signal);
       }
 
       return jsonResponse({ success: false, error: "Ação inválida" });
@@ -218,6 +226,117 @@ async function getConnectionStatus(
     error: lastError ? `Erro ao consultar status: ${lastError.status}` : "Instância não encontrada",
     data: lastError?.details || null,
     instance_name: lastError?.instance || requestedInstanceName,
+    instance_candidates: candidates,
+  });
+}
+
+async function logoutInstance(
+  baseUrl: string,
+  apiKey: string,
+  requestedInstanceName: string,
+  signal: AbortSignal,
+) {
+  const candidates = await resolveInstanceCandidates(baseUrl, apiKey, requestedInstanceName, signal);
+
+  for (const candidate of candidates) {
+    try {
+      const logoutRes = await fetch(
+        `${baseUrl}/instance/logout/${encodeURIComponent(candidate)}`,
+        {
+          method: "DELETE",
+          headers: { apikey: apiKey },
+          signal,
+        },
+      );
+
+      const raw = await logoutRes.text();
+      const data = parseUnknown(raw);
+
+      if (logoutRes.ok) {
+        return jsonResponse({
+          success: true,
+          action: "logout",
+          message: `Instância ${candidate} desconectada com sucesso`,
+          instance_name: candidate,
+          details: data,
+        });
+      }
+
+      if (!isInstanceNotFound(logoutRes.status, data)) {
+        return jsonResponse({
+          success: false,
+          error: `Erro ao desconectar: ${logoutRes.status}`,
+          details: data,
+          instance_name: candidate,
+        });
+      }
+    } catch (e) {
+      console.error(`Logout failed for ${candidate}:`, e);
+    }
+  }
+
+  return jsonResponse({
+    success: false,
+    error: "Instância não encontrada para desconectar",
+    instance_candidates: candidates,
+  });
+}
+
+async function deleteInstance(
+  baseUrl: string,
+  apiKey: string,
+  requestedInstanceName: string,
+  signal: AbortSignal,
+) {
+  const candidates = await resolveInstanceCandidates(baseUrl, apiKey, requestedInstanceName, signal);
+
+  // Try logout first, then delete
+  for (const candidate of candidates) {
+    try {
+      // Logout first (ignore errors)
+      await fetch(
+        `${baseUrl}/instance/logout/${encodeURIComponent(candidate)}`,
+        { method: "DELETE", headers: { apikey: apiKey }, signal },
+      ).catch(() => {});
+
+      const deleteRes = await fetch(
+        `${baseUrl}/instance/delete/${encodeURIComponent(candidate)}`,
+        {
+          method: "DELETE",
+          headers: { apikey: apiKey },
+          signal,
+        },
+      );
+
+      const raw = await deleteRes.text();
+      const data = parseUnknown(raw);
+
+      if (deleteRes.ok) {
+        return jsonResponse({
+          success: true,
+          action: "deleted",
+          message: `Instância ${candidate} removida com sucesso`,
+          instance_name: candidate,
+          details: data,
+        });
+      }
+
+      if (!isInstanceNotFound(deleteRes.status, data)) {
+        return jsonResponse({
+          success: false,
+          error: `Erro ao remover instância: ${deleteRes.status}`,
+          details: data,
+          instance_name: candidate,
+        });
+      }
+    } catch (e) {
+      console.error(`Delete failed for ${candidate}:`, e);
+    }
+  }
+
+  return jsonResponse({
+    success: false,
+    error: "Instância não encontrada para remover",
     instance_candidates: candidates,
   });
 }

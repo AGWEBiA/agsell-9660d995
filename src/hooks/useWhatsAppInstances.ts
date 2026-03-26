@@ -255,9 +255,30 @@ export function useWhatsAppInstances() {
     },
   });
 
-  // Delete an instance
+  // Delete an instance (logout from Evolution API first, then remove from DB)
   const deleteInstance = useMutation({
     mutationFn: async (id: string) => {
+      // Find the instance to get its name for Evolution API logout
+      const instance = instances.find(i => i.id === id);
+      const instanceName = instance?.instance_name || 
+        (instance?.config as Record<string, unknown>)?.instance_name as string;
+
+      // Try to logout/delete from Evolution API first (best effort)
+      if (instanceName && currentOrganization?.id) {
+        try {
+          await supabase.functions.invoke('evolution-qrcode', {
+            body: {
+              organization_id: currentOrganization.id,
+              instance_name: instanceName,
+              action: 'delete',
+            },
+          });
+        } catch (e) {
+          console.warn('Evolution API delete failed (continuing with DB removal):', e);
+        }
+      }
+
+      // Remove from database
       const { error } = await supabase
         .from('organization_integrations')
         .delete()
@@ -268,7 +289,7 @@ export function useWhatsAppInstances() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['whatsapp_instances'] });
       queryClient.invalidateQueries({ queryKey: ['organization_integrations'] });
-      toast.success('Instância removida!');
+      toast.success('Instância desconectada e removida!');
     },
     onError: (error) => {
       toast.error('Erro ao remover instância: ' + error.message);

@@ -9,7 +9,7 @@ const corsHeaders = {
 interface QRCodeRequest {
   organization_id?: string;
   instance_name: string;
-  action?: "create" | "connect" | "status" | "qrcode";
+  action?: "create" | "connect" | "status" | "qrcode" | "logout" | "delete";
 }
 
 interface EvolutionConfig {

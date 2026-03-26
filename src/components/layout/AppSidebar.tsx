@@ -92,11 +92,22 @@ const menuSections: MenuSection[] = [
     ],
   },
   {
+    id: 'automations',
+    label: 'Automações',
+    icon: Workflow,
+    items: [
+      { label: 'E-mail', icon: Mail, path: '/flow-builder?channel=email', featureRequired: 'automacoes' },
+      { label: 'WhatsApp Individual', icon: Smartphone, path: '/flow-builder?channel=whatsapp', featureRequired: 'automacoes' },
+      { label: 'Grupos', icon: Users, path: '/flow-builder?channel=groups', featureRequired: 'automacoes' },
+      { label: 'Instagram', icon: Instagram, path: '/flow-builder?channel=instagram', featureRequired: 'automacoes' },
+      { label: 'Telegram', icon: Send, path: '/flow-builder?channel=telegram', featureRequired: 'automacoes' },
+    ],
+  },
+  {
     id: 'marketing',
     label: 'Marketing',
     icon: Megaphone,
     items: [
-      { label: 'Automações', icon: Workflow, path: '/flow-builder', featureRequired: 'automacoes' },
       { label: 'Chatbot', icon: Bot, path: '/chatbot-builder' },
       { label: 'E-mail Marketing', icon: Send, path: '/email', featureRequired: 'email_marketing' },
       { label: 'SMS Marketing', icon: Phone, path: '/sms-marketing' },

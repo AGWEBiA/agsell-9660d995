@@ -252,6 +252,65 @@ export default function Dashboard() {
         </Card>
       </div>
 
+      {/* Saldos de Créditos */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Saldo SMS
+            </CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {(smsCredits?.balance ?? 0).toLocaleString('pt-BR')}
+            </div>
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-xs text-muted-foreground">
+                Comprados: {(smsCredits?.total_purchased ?? 0).toLocaleString('pt-BR')}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                Usados: {(smsCredits?.total_used ?? 0).toLocaleString('pt-BR')}
+              </span>
+            </div>
+            {(smsCredits?.total_purchased ?? 0) > 0 && (
+              <Progress
+                value={((smsCredits?.balance ?? 0) / (smsCredits?.total_purchased ?? 1)) * 100}
+                className="h-1.5 mt-2"
+              />
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Saldo VoIP
+            </CardTitle>
+            <PhoneCall className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {(voipCredits?.balance ?? 0).toLocaleString('pt-BR')}
+            </div>
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-xs text-muted-foreground">
+                Comprados: {(voipCredits?.total_purchased ?? 0).toLocaleString('pt-BR')}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                Usados: {(voipCredits?.total_used ?? 0).toLocaleString('pt-BR')}
+              </span>
+            </div>
+            {(voipCredits?.total_purchased ?? 0) > 0 && (
+              <Progress
+                value={((voipCredits?.balance ?? 0) / (voipCredits?.total_purchased ?? 1)) * 100}
+                className="h-1.5 mt-2"
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Charts Row */}
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
         {/* Leads Chart */}

@@ -341,6 +341,7 @@ async function deleteInstance(
   });
 }
 
+async function registerSyncWebhook(
   baseUrl: string,
   apiKey: string,
   instanceName: string,

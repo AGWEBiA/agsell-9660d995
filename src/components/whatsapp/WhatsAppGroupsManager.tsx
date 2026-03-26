@@ -23,7 +23,7 @@ import {
   Users, Plus, Trash2, UserPlus, UserMinus, MessageSquare, RefreshCw, Crown, Clock,
   Search, Settings, Copy, Shield, Activity, Eye, ToggleLeft, ToggleRight, Edit, Tag, Send, X,
   Lock, Unlock, Link2, ImageIcon, Ban, UserCog, ShieldCheck, ShieldOff, Globe, MessageCircle,
-  AlertTriangle, Info, Download, Loader2, CheckSquare, Smartphone,
+  AlertTriangle, Info, Download, Loader2, CheckSquare, Square, Smartphone,
 } from 'lucide-react';
 import { useWhatsAppGroups, WhatsAppGroup, WhatsAppGroupEvent, WhatsAppGroupMember } from '@/hooks/useWhatsAppGroups';
 import { useWhatsAppInstances } from '@/hooks/useWhatsAppInstances';
@@ -53,6 +53,7 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [importedGroups, setImportedGroups] = useState<Array<{ instance_id?: string; instance_name: string; phone_number?: string; id: string; subject: string; size: number; selected: boolean }>>([]);
+  const [importGroupSearch, setImportGroupSearch] = useState('');
   const [selectedGroup, setSelectedGroup] = useState<WhatsAppGroup | null>(null);
   const [detailTab, setDetailTab] = useState<'members' | 'events' | 'settings' | 'message' | 'admin'>('members');
   const [groupSettings, setGroupSettings] = useState({

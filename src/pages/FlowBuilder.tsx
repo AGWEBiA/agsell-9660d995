@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAutomations } from '@/hooks/useAutomations';
 import { useFlowNodeAnalytics } from '@/hooks/useFlowNodeAnalytics';
 import { useForms } from '@/hooks/useForms';
+import { useGatewayProducts } from '@/hooks/useGatewayProducts';
 import { cn } from '@/lib/utils';
 import type { Json } from '@/integrations/supabase/types';
 import {

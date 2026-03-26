@@ -51,42 +51,6 @@ const defaultIntegrations: Integration[] = [
     ],
   },
 ];
-  {
-    id: 'google_analytics',
-    name: 'Google Analytics',
-    description: 'Análise de tráfego e comportamento',
-    icon: '📊',
-    category: 'analytics',
-    status: 'disconnected',
-    configFields: [
-      { key: 'measurement_id', label: 'Measurement ID', type: 'text', placeholder: 'G-XXXXXXXXXX', required: true },
-    ],
-  },
-  {
-    id: 'meta_pixel',
-    name: 'Meta Pixel',
-    description: 'Rastreamento de conversões Facebook/Instagram',
-    icon: '📈',
-    category: 'analytics',
-    status: 'disconnected',
-    configFields: [
-      { key: 'pixel_id', label: 'Pixel ID', type: 'text', placeholder: 'Seu Pixel ID', required: true },
-      { key: 'access_token', label: 'Access Token (CAPI)', type: 'password', placeholder: 'Token para Conversions API' },
-    ],
-  },
-  {
-    id: 'n8n',
-    name: 'n8n',
-    description: 'Automação de workflows',
-    icon: '🔗',
-    category: 'crm',
-    status: 'disconnected',
-    configFields: [
-      { key: 'webhook_url', label: 'Webhook URL', type: 'text', placeholder: 'https://n8n.example.com/webhook/xxx', required: true },
-      { key: 'api_key', label: 'API Key', type: 'password', placeholder: 'Sua API Key' },
-    ],
-  },
-];
 
 export function useIntegrations() {
   const [integrations, setIntegrations] = useState<Integration[]>(defaultIntegrations);

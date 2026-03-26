@@ -987,8 +987,16 @@ export default function FlowBuilder() {
         trigger_config: triggerConfig,
         actions,
         is_active: isActive,
+      }, {
+        onSuccess: () => {
+          toast({ title: '✅ Fluxo criado!' });
+          setMode('list');
+          setCurrentFlowId(null);
+          setNodes([]);
+          setSearchParams({});
+        },
       });
-      toast({ title: '✅ Fluxo criado!' });
+      return;
     }
 
     setMode('list');

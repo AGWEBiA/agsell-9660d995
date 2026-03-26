@@ -293,8 +293,10 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, isMobile, onClose 
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     menuSections.forEach((section) => {
-      const hasActive = section.items.some((item) => location.pathname === item.path);
-      initial[section.id] = hasActive || section.id === 'overview';
+      const hasActive = section.items.some((item) => {
+        const itemPath = item.path.split('?')[0];
+        return location.pathname === itemPath;
+      });
     });
     return initial;
   });

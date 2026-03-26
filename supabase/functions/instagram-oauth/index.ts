@@ -33,7 +33,6 @@ serve(async (req) => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
@@ -99,13 +98,13 @@ serve(async (req) => {
     const igUserId = tokenData.user_id;
     console.log("[INSTAGRAM-OAUTH] Step 1 OK: Got short-lived token", { igUserId });
 
-    // Step 2: Exchange for long-lived token
+    // Step 2: Exchange for long-lived token (Instagram endpoint)
     const longLivedUrl = `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(INSTAGRAM_APP_SECRET)}&access_token=${encodeURIComponent(shortLivedToken)}`;
     
     console.log("[INSTAGRAM-OAUTH] Step 2: Exchanging for long-lived token");
     const longLivedRes = await fetch(longLivedUrl);
     const longLivedText = await longLivedRes.text();
-    console.log("[INSTAGRAM-OAUTH] Step 2 response:", longLivedText);
+    console.log("[INSTAGRAM-OAUTH] Step 2 response received", { status: longLivedRes.status });
 
     let longLivedData;
     try {
@@ -118,31 +117,60 @@ serve(async (req) => {
       );
     }
 
+    let finalToken = longLivedData.access_token || shortLivedToken;
+    let expiresIn = longLivedData.expires_in || 3600;
+
     if (longLivedData.error) {
       console.error("[INSTAGRAM-OAUTH] Long-lived token error:", JSON.stringify(longLivedData.error));
-      // Fallback: use short-lived token (valid ~1h) 
-      console.log("[INSTAGRAM-OAUTH] Falling back to short-lived token");
-    }
 
-    const finalToken = longLivedData.access_token || shortLivedToken;
-    const expiresIn = longLivedData.expires_in || 3600;
+      // Fallback attempt for token types that require Facebook exchange endpoint
+      try {
+        console.log("[INSTAGRAM-OAUTH] Step 2b: Trying Facebook token exchange fallback");
+        const fbExchangeUrl = `https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${encodeURIComponent(INSTAGRAM_APP_ID)}&client_secret=${encodeURIComponent(INSTAGRAM_APP_SECRET)}&fb_exchange_token=${encodeURIComponent(shortLivedToken)}`;
+        const fbExchangeRes = await fetch(fbExchangeUrl);
+        const fbExchangeText = await fbExchangeRes.text();
+        const fbExchangeData = JSON.parse(fbExchangeText);
+
+        if (fbExchangeData?.access_token) {
+          finalToken = fbExchangeData.access_token;
+          expiresIn = fbExchangeData.expires_in || expiresIn;
+          console.log("[INSTAGRAM-OAUTH] Step 2b OK: Facebook exchange succeeded");
+        } else {
+          console.log("[INSTAGRAM-OAUTH] Step 2b failed, using short-lived token fallback");
+        }
+      } catch (fallbackError) {
+        console.error("[INSTAGRAM-OAUTH] Step 2b fallback error:", fallbackError);
+        console.log("[INSTAGRAM-OAUTH] Falling back to short-lived token");
+      }
+    }
 
     console.log("[INSTAGRAM-OAUTH] Step 3: Fetching profile");
     const profileRes = await fetch(
-      `https://graph.instagram.com/v21.0/me?fields=user_id,username,name,profile_picture_url,account_type&access_token=${encodeURIComponent(finalToken)}`
+      `https://graph.instagram.com/me?fields=id,username,name,profile_picture_url,account_type&access_token=${encodeURIComponent(finalToken)}`
     );
-    const profileData = await profileRes.json();
+    const profileText = await profileRes.text();
+
+    let profileData;
+    try {
+      profileData = JSON.parse(profileText);
+    } catch {
+      console.error("[INSTAGRAM-OAUTH] Profile response parse error");
+      return new Response(
+        JSON.stringify({ error: "Resposta inválida ao buscar perfil do Instagram" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     if (profileData.error) {
       console.error("Profile fetch error:", profileData.error);
       return new Response(
-        JSON.stringify({ error: "Erro ao buscar perfil do Instagram" }),
+        JSON.stringify({ error: profileData.error.message || "Erro ao buscar perfil do Instagram" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const instagramAccount = {
-      instagram_user_id: String(profileData.user_id || igUserId),
+      instagram_user_id: String(profileData.id || igUserId),
       username: profileData.username,
       full_name: profileData.name || null,
       profile_picture_url: profileData.profile_picture_url || null,

@@ -159,6 +159,19 @@ Deno.serve(async (req) => {
       throw webhookError;
     }
 
+    // Upsert gateway product for automation triggers
+    if (organizationId && payload.pro_name) {
+      await supabase.from("gateway_products").upsert({
+        organization_id: organizationId,
+        gateway: "eduzz",
+        external_product_id: String(payload.pro_cod || ""),
+        product_name: payload.pro_name,
+        price: payload.trans_value || null,
+        currency: payload.trans_currency || "BRL",
+        last_seen_at: new Date().toISOString(),
+      }, { onConflict: "organization_id,gateway,external_product_id" });
+    }
+
     // Process approved purchases (status 3)
     if (payload.trans_status === 3 && organizationId) {
       const nameParts = payload.cus_name.split(" ");

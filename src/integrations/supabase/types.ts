@@ -2056,6 +2056,56 @@ export type Database = {
           },
         ]
       }
+      gateway_products: {
+        Row: {
+          created_at: string | null
+          currency: string | null
+          external_product_id: string | null
+          gateway: string
+          id: string
+          last_seen_at: string | null
+          metadata: Json | null
+          organization_id: string
+          price: number | null
+          product_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string | null
+          external_product_id?: string | null
+          gateway: string
+          id?: string
+          last_seen_at?: string | null
+          metadata?: Json | null
+          organization_id: string
+          price?: number | null
+          product_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string | null
+          external_product_id?: string | null
+          gateway?: string
+          id?: string
+          last_seen_at?: string | null
+          metadata?: Json | null
+          organization_id?: string
+          price?: number | null
+          product_name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gateway_products_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       goal_conversions: {
         Row: {
           contact_id: string | null

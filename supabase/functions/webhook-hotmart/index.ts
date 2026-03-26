@@ -160,6 +160,19 @@ Deno.serve(async (req) => {
       throw webhookError;
     }
 
+    // Upsert gateway product for automation triggers
+    if (organizationId && payload.prod_name) {
+      await supabase.from("gateway_products").upsert({
+        organization_id: organizationId,
+        gateway: "hotmart",
+        external_product_id: String(payload.prod || ""),
+        product_name: payload.prod_name,
+        price: payload.price?.value || null,
+        currency: payload.price?.currency_value || "BRL",
+        last_seen_at: new Date().toISOString(),
+      }, { onConflict: "organization_id,gateway,external_product_id" });
+    }
+
     // Process based on event type
     if (payload.status === "approved" && organizationId) {
       // Get the organization owner's user_id for proper FK reference

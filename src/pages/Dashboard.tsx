@@ -72,26 +72,12 @@ export default function Dashboard() {
   const { stats: gamificationStats, getLevelTitle } = useGamification();
   const { currentOrganization } = useOrganization();
 
-  const { data: smsCredits } = useQuery({
-    queryKey: ['sms-credits', currentOrganization?.id],
+  const { data: commCredits } = useQuery({
+    queryKey: ['communication-credits', currentOrganization?.id],
     queryFn: async () => {
       if (!currentOrganization?.id) return null;
       const { data } = await supabase
-        .from('sms_credits')
-        .select('balance, total_purchased, total_used')
-        .eq('organization_id', currentOrganization.id)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!currentOrganization?.id,
-  });
-
-  const { data: voipCredits } = useQuery({
-    queryKey: ['voip-credits', currentOrganization?.id],
-    queryFn: async () => {
-      if (!currentOrganization?.id) return null;
-      const { data } = await supabase
-        .from('voip_credits')
+        .from('communication_credits')
         .select('balance, total_purchased, total_used')
         .eq('organization_id', currentOrganization.id)
         .maybeSingle();

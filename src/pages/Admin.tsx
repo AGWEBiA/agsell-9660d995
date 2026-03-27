@@ -51,9 +51,8 @@ import { SalesRecoveryDashboard } from '@/components/admin/SalesRecoveryDashboar
 import { PlanWhatsAppGroupsManager } from '@/components/admin/PlanWhatsAppGroupsManager';
 import { PlatformSupportDashboard } from '@/components/admin/PlatformSupportDashboard';
 import { SupportWhatsAppConfig } from '@/components/admin/SupportWhatsAppConfig';
-import { VoipPackagesAdmin } from '@/components/admin/VoipPackagesAdmin';
 import { VoipProviderConfig } from '@/components/admin/VoipProviderConfig';
-import { SmsPackagesAdmin } from '@/components/admin/SmsPackagesAdmin';
+import { CommunicationPackagesAdmin } from '@/components/admin/CommunicationPackagesAdmin';
 import { AdminDomainReport } from '@/components/admin/AdminDomainReport';
 export default function Admin() {
   const { user, isAdmin, loading: isCheckingAdmin } = useAuth();
@@ -263,13 +262,9 @@ export default function Admin() {
             <Ticket className="h-4 w-4" />
             Suporte
           </TabsTrigger>
-          <TabsTrigger value="voip-config" className="flex items-center gap-2">
+          <TabsTrigger value="comm-config" className="flex items-center gap-2">
             <Activity className="h-4 w-4" />
-            VoIP
-          </TabsTrigger>
-          <TabsTrigger value="sms-config" className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4" />
-            SMS
+            Comunicação (SMS/VoIP)
           </TabsTrigger>
           <TabsTrigger value="domains" className="flex items-center gap-2">
             <Mail className="h-4 w-4" />
@@ -526,12 +521,9 @@ export default function Admin() {
             </div>
           </div>
         </TabsContent>
-        <TabsContent value="voip-config" className="space-y-6">
+        <TabsContent value="comm-config" className="space-y-6">
           <VoipProviderConfig />
-          <VoipPackagesAdmin />
-        </TabsContent>
-        <TabsContent value="sms-config" className="space-y-6">
-          <SmsPackagesAdmin />
+          <CommunicationPackagesAdmin />
         </TabsContent>
         <TabsContent value="domains">
           <AdminDomainReport />

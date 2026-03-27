@@ -139,9 +139,13 @@ const VoipCampaigns = () => {
   });
 
   // Create campaign
+  const estimatedCredits = contactCount * campaignForm.credits_per_call;
+  const hasEnoughCredits = (credits?.balance ?? 0) >= estimatedCredits;
+
   const createCampaign = useMutation({
     mutationFn: async () => {
       if (!user || !orgId) throw new Error('Não autenticado');
+      if (!hasEnoughCredits) throw new Error(`Saldo insuficiente. Necessário: ${estimatedCredits} créditos, disponível: ${credits?.balance ?? 0}`);
       const { data, error } = await supabase
         .from('voip_campaigns')
         .insert({
@@ -534,7 +538,7 @@ const VoipCampaigns = () => {
             <Button variant="outline" onClick={() => setShowCreateDialog(false)}>Cancelar</Button>
             <Button
               onClick={() => createCampaign.mutate()}
-              disabled={!campaignForm.name || !campaignForm.audio_url || campaignForm.target_tags.length === 0 || createCampaign.isPending}
+              disabled={!campaignForm.name || !campaignForm.audio_url || campaignForm.target_tags.length === 0 || createCampaign.isPending || (estimatedCredits > 0 && !hasEnoughCredits)}
             >
               {createCampaign.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />

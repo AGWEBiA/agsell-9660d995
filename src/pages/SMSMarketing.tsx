@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { useCommunicationCredits } from '@/hooks/useCommunicationCredits';
 import { useSms } from '@/hooks/useSms';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -22,14 +22,19 @@ import {
 } from 'lucide-react';
 
 export default function SMSMarketing() {
-  const { packages, credits, transactions, campaigns, isLoading, createCampaign } = useSms();
+  const { packages, credits, transactions, isLoading: creditsLoading, purchaseCredits } = useCommunicationCredits();
+  const { campaigns, isLoading: smsLoading, createCampaign } = useSms();
   const [newOpen, setNewOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [newMessage, setNewMessage] = useState('');
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
 
+  const isLoading = creditsLoading || smsLoading;
   const charCount = newMessage.length;
   const smsCount = Math.ceil(charCount / 160) || 1;
+
+  // Filter transactions for SMS channel
+  const smsTransactions = transactions.filter(t => t.channel === 'sms' || !t.channel);
 
   const handleCreate = () => {
     if (!newName.trim() || !newMessage.trim()) return toast.error('Preencha todos os campos');
@@ -45,15 +50,7 @@ export default function SMSMarketing() {
   const handlePurchase = async (packageId: string) => {
     try {
       setPurchasingId(packageId);
-      const { data, error } = await supabase.functions.invoke('purchase-sms-credits', {
-        body: { packageId },
-      });
-      if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, '_blank');
-      } else {
-        throw new Error('Nenhuma URL de checkout retornada');
-      }
+      await purchaseCredits(packageId);
     } catch (err: any) {
       toast.error(err.message || 'Erro ao iniciar compra');
     } finally {
@@ -91,7 +88,7 @@ export default function SMSMarketing() {
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Phone className="h-6 w-6 text-primary" /> SMS Marketing
           </h1>
-          <p className="text-muted-foreground mt-1">Campanhas, créditos pré-pagos e mensagens bidirecionais</p>
+          <p className="text-muted-foreground mt-1">Campanhas, créditos unificados e mensagens bidirecionais</p>
         </div>
         <Dialog open={newOpen} onOpenChange={setNewOpen}>
           <DialogTrigger asChild>
@@ -127,12 +124,12 @@ export default function SMSMarketing() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Saldo SMS</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Saldo Unificado</CardTitle>
             <Wallet className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-foreground">{credits?.balance?.toLocaleString('pt-BR') ?? '0'}</div>
-            <p className="text-xs text-muted-foreground mt-1">créditos disponíveis</p>
+            <p className="text-xs text-muted-foreground mt-1">créditos (SMS + VoIP)</p>
           </CardContent>
         </Card>
         <Card>
@@ -170,7 +167,7 @@ export default function SMSMarketing() {
       <Tabs defaultValue="packages" className="space-y-4">
         <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="packages" className="gap-1.5">
-            <Package className="h-4 w-4" /> Pacotes de Créditos
+            <Package className="h-4 w-4" /> Comprar Créditos
           </TabsTrigger>
           <TabsTrigger value="campaigns" className="gap-1.5">
             <Send className="h-4 w-4" /> Campanhas
@@ -190,8 +187,8 @@ export default function SMSMarketing() {
         <TabsContent value="packages">
           <Card>
             <CardHeader>
-              <CardTitle>Comprar Créditos SMS</CardTitle>
-              <CardDescription>1 crédito = 1 SMS. Quanto maior o pacote, menor o custo por mensagem.</CardDescription>
+              <CardTitle>Comprar Créditos de Comunicação</CardTitle>
+              <CardDescription>Créditos unificados para SMS e VoIP. Quanto maior o pacote, menor o custo.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -207,13 +204,13 @@ export default function SMSMarketing() {
                       )}
                       <CardHeader className="text-center pb-2">
                         <CardTitle className="text-lg">{pkg.credits.toLocaleString('pt-BR')}</CardTitle>
-                        <CardDescription>créditos SMS</CardDescription>
+                        <CardDescription>créditos</CardDescription>
                       </CardHeader>
                       <CardContent className="text-center space-y-3">
                         <div>
                           <span className="text-2xl font-bold text-foreground">{formatCurrency(pkg.price_cents)}</span>
                         </div>
-                        <p className="text-xs text-muted-foreground">{formatPricePerCredit(pkg.price_per_credit_cents)} por SMS</p>
+                        <p className="text-xs text-muted-foreground">{formatPricePerCredit(pkg.price_per_credit_cents)} por crédito</p>
                         <Button
                           className="w-full"
                           variant={isPopular ? 'default' : 'outline'}
@@ -233,12 +230,12 @@ export default function SMSMarketing() {
                 })}
               </div>
               <div className="mt-6 p-4 rounded-lg bg-muted/50 border">
-                <h4 className="font-medium text-foreground text-sm mb-2">💡 Como funciona?</h4>
+                <h4 className="font-medium text-foreground text-sm mb-2">💡 Créditos Unificados</h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Cada crédito equivale a 1 SMS enviado</li>
+                  <li>• Os créditos são <strong>compartilhados entre SMS e VoIP</strong></li>
+                  <li>• 1 crédito = 1 SMS enviado ou 1 minuto de ligação</li>
                   <li>• Os créditos não expiram e ficam vinculados à sua organização</li>
-                  <li>• O provedor SMS (Twilio, Vonage ou Zenvia) é configurado pelo administrador</li>
-                  <li>• Suporte a variáveis personalizadas nas mensagens: {'{nome}'}, {'{email}'}, {'{link}'}</li>
+                  <li>• Suporte a variáveis personalizadas: {'{nome}'}, {'{email}'}, {'{link}'}</li>
                 </ul>
               </div>
             </CardContent>
@@ -340,15 +337,15 @@ export default function SMSMarketing() {
         <TabsContent value="history">
           <Card>
             <CardHeader>
-              <CardTitle>Histórico de Transações SMS</CardTitle>
-              <CardDescription>Todas as compras e consumos de créditos SMS</CardDescription>
+              <CardTitle>Histórico de Transações</CardTitle>
+              <CardDescription>Todas as compras e consumos de créditos de comunicação</CardDescription>
             </CardHeader>
             <CardContent>
-              {transactions.length === 0 ? (
+              {smsTransactions.length === 0 ? (
                 <div className="text-center py-12">
                   <Wallet className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
                   <p className="text-muted-foreground">Nenhuma transação encontrada</p>
-                  <p className="text-sm text-muted-foreground/70 mt-1">Compre seu primeiro pacote de créditos SMS para começar</p>
+                  <p className="text-sm text-muted-foreground/70 mt-1">Compre seu primeiro pacote de créditos para começar</p>
                 </div>
               ) : (
                 <Table>
@@ -356,12 +353,13 @@ export default function SMSMarketing() {
                     <TableRow>
                       <TableHead>Data</TableHead>
                       <TableHead>Tipo</TableHead>
+                      <TableHead>Canal</TableHead>
                       <TableHead>Descrição</TableHead>
                       <TableHead className="text-right">Créditos</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {transactions.map((tx) => (
+                    {smsTransactions.map((tx) => (
                       <TableRow key={tx.id}>
                         <TableCell className="text-sm">
                           {format(new Date(tx.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
@@ -369,6 +367,11 @@ export default function SMSMarketing() {
                         <TableCell>
                           <Badge variant={tx.type === 'purchase' ? 'default' : 'secondary'}>
                             {tx.type === 'purchase' ? 'Compra' : tx.type === 'purchase_pending' ? 'Pendente' : 'Consumo'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {tx.channel === 'sms' ? 'SMS' : tx.channel === 'voip' ? 'VoIP' : 'Geral'}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">{tx.description || '-'}</TableCell>

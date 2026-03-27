@@ -5,18 +5,21 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Phone, PhoneCall, CreditCard, History, TrendingUp, Wallet, Package, Clock, Loader2, BarChart3 } from 'lucide-react';
+import { useCommunicationCredits } from '@/hooks/useCommunicationCredits';
 import { useVoip } from '@/hooks/useVoip';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Softphone } from '@/components/voip/Softphone';
 import { CallAnalyticsDashboard } from '@/components/voip/CallAnalyticsDashboard';
 
 const VoIP = () => {
-  const { packages, credits, transactions, calls, isLoading } = useVoip();
+  const { packages, credits, transactions, isLoading: creditsLoading, purchaseCredits } = useCommunicationCredits();
+  const { calls, isLoading: voipLoading, makeCall, registerCall } = useVoip();
   const [purchasingId, setPurchasingId] = useState<string | null>(null);
+
+  const isLoading = creditsLoading || voipLoading;
 
   const formatCurrency = (cents: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100);
@@ -25,15 +28,7 @@ const VoIP = () => {
   const handlePurchase = async (packageId: string) => {
     try {
       setPurchasingId(packageId);
-      const { data, error } = await supabase.functions.invoke('purchase-voip-credits', {
-        body: { packageId },
-      });
-      if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, '_blank');
-      } else {
-        throw new Error('Nenhuma URL de checkout retornada');
-      }
+      await purchaseCredits(packageId);
     } catch (err: any) {
       toast.error(err.message || 'Erro ao iniciar compra');
     } finally {
@@ -67,7 +62,7 @@ const VoIP = () => {
           VoIP & Ligações
         </h1>
         <p className="text-muted-foreground mt-1">
-          Gerencie seus créditos de ligação e acompanhe o histórico de chamadas
+          Gerencie ligações e acompanhe o histórico — créditos compartilhados com SMS
         </p>
       </div>
 
@@ -75,14 +70,14 @@ const VoIP = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Saldo Atual</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Saldo Unificado</CardTitle>
             <Wallet className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-foreground">
               {credits?.balance?.toLocaleString('pt-BR') ?? '0'}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">créditos disponíveis</p>
+            <p className="text-xs text-muted-foreground mt-1">créditos (SMS + VoIP)</p>
           </CardContent>
         </Card>
 
@@ -121,7 +116,7 @@ const VoIP = () => {
           </TabsTrigger>
           <TabsTrigger value="packages" className="gap-1.5">
             <Package className="h-4 w-4" />
-            Pacotes de Créditos
+            Comprar Créditos
           </TabsTrigger>
           <TabsTrigger value="analytics" className="gap-1.5">
             <BarChart3 className="h-4 w-4" />
@@ -129,7 +124,7 @@ const VoIP = () => {
           </TabsTrigger>
           <TabsTrigger value="history" className="gap-1.5">
             <History className="h-4 w-4" />
-            Histórico de Compras
+            Transações
           </TabsTrigger>
           <TabsTrigger value="calls" className="gap-1.5">
             <PhoneCall className="h-4 w-4" />
@@ -165,9 +160,9 @@ const VoIP = () => {
         <TabsContent value="packages">
           <Card>
             <CardHeader>
-              <CardTitle>Comprar Créditos de Voz</CardTitle>
+              <CardTitle>Comprar Créditos de Comunicação</CardTitle>
               <CardDescription>
-                Escolha o pacote ideal para sua operação. Quanto maior o pacote, menor o custo por crédito.
+                Créditos unificados para SMS e VoIP. Quanto maior o pacote, menor o custo.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -219,24 +214,24 @@ const VoIP = () => {
               </div>
 
               <div className="mt-6 p-4 rounded-lg bg-muted/50 border">
-                <h4 className="font-medium text-foreground text-sm mb-2">💡 Como funciona?</h4>
+                <h4 className="font-medium text-foreground text-sm mb-2">💡 Créditos Unificados</h4>
                 <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• Cada crédito equivale a 1 minuto de ligação ou 1 torpedo de voz</li>
+                  <li>• Os créditos são <strong>compartilhados entre SMS e VoIP</strong></li>
+                  <li>• 1 crédito = 1 minuto de ligação ou 1 torpedo de voz</li>
                   <li>• Os créditos não expiram e ficam vinculados à sua organização</li>
                   <li>• Na <strong>Fase 2</strong>, você poderá ligar diretamente do sistema via WebRTC</li>
-                  <li>• Atualmente, o botão "Ligar" abre o discador nativo do seu dispositivo</li>
                 </ul>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Histórico de Compras */}
+        {/* Histórico de Transações */}
         <TabsContent value="history">
           <Card>
             <CardHeader>
               <CardTitle>Histórico de Transações</CardTitle>
-              <CardDescription>Todas as compras e consumos de créditos</CardDescription>
+              <CardDescription>Todas as compras e consumos de créditos de comunicação</CardDescription>
             </CardHeader>
             <CardContent>
               {transactions.length === 0 ? (
@@ -253,6 +248,7 @@ const VoIP = () => {
                     <TableRow>
                       <TableHead>Data</TableHead>
                       <TableHead>Tipo</TableHead>
+                      <TableHead>Canal</TableHead>
                       <TableHead>Descrição</TableHead>
                       <TableHead className="text-right">Créditos</TableHead>
                     </TableRow>
@@ -266,6 +262,11 @@ const VoIP = () => {
                         <TableCell>
                           <Badge variant={tx.type === 'purchase' ? 'default' : 'secondary'}>
                             {tx.type === 'purchase' ? 'Compra' : 'Consumo'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">
+                            {tx.channel === 'sms' ? 'SMS' : tx.channel === 'voip' ? 'VoIP' : 'Geral'}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">

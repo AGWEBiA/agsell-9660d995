@@ -9,6 +9,7 @@ import {
   CreditCard, Receipt, Ban, FileText, ShoppingCart, RotateCcw,
   TrendingUp, TrendingDown, ArrowRightLeft, CalendarDays, UserX,
   PhoneOff, PhoneIncoming, MailOpen, MousePointerClick, MailX,
+  Repeat, Radio, Inbox, RefreshCw,
 } from 'lucide-react';
 
 export interface FlowNode {

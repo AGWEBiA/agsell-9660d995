@@ -139,9 +139,13 @@ const VoipCampaigns = () => {
   });
 
   // Create campaign
+  const estimatedCredits = contactCount * campaignForm.credits_per_call;
+  const hasEnoughCredits = (credits?.balance ?? 0) >= estimatedCredits;
+
   const createCampaign = useMutation({
     mutationFn: async () => {
       if (!user || !orgId) throw new Error('Não autenticado');
+      if (!hasEnoughCredits) throw new Error(`Saldo insuficiente. Necessário: ${estimatedCredits} créditos, disponível: ${credits?.balance ?? 0}`);
       const { data, error } = await supabase
         .from('voip_campaigns')
         .insert({

@@ -38,6 +38,9 @@ export default function SMSMarketing() {
 
   const handleCreate = () => {
     if (!newName.trim() || !newMessage.trim()) return toast.error('Preencha todos os campos');
+    if (!credits || credits.balance <= 0) {
+      return toast.error('Saldo de créditos insuficiente. Adquira créditos antes de criar campanhas.');
+    }
     createCampaign.mutate({ name: newName, message: newMessage }, {
       onSuccess: () => {
         setNewOpen(false);

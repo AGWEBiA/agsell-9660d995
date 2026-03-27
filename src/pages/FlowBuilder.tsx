@@ -993,6 +993,40 @@ export default function FlowBuilder() {
   const [editingNode, setEditingNode] = useState<FlowNode | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [newCampaignOpen, setNewCampaignOpen] = useState(false);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  const handleDragStart = (e: React.DragEvent, nodeType: string, subtype: string) => {
+    e.dataTransfer.setData('application/flow-node', JSON.stringify({ nodeType, subtype }));
+    e.dataTransfer.effectAllowed = 'copy';
+  };
+
+  const handleDrop = (e: React.DragEvent, afterIndex: number) => {
+    e.preventDefault();
+    setDragOverIndex(null);
+    const raw = e.dataTransfer.getData('application/flow-node');
+    if (!raw) return;
+    try {
+      const { nodeType, subtype } = JSON.parse(raw);
+      const info = [...actionOptions, ...conditionOptions].find(a => a.id === subtype);
+      if (!info) return;
+      const newNode: FlowNode = { id: crypto.randomUUID(), type: nodeType, subtype, label: info.label, config: {} };
+      setNodes(prev => {
+        const copy = [...prev];
+        copy.splice(afterIndex + 1, 0, newNode);
+        return copy;
+      });
+    } catch {}
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    setDragOverIndex(index);
+  };
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null);
+  };
 
   useEffect(() => {
     if (currentFlowId && automations.length > 0) {

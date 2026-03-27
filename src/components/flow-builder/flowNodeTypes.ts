@@ -80,39 +80,54 @@ export const triggerOptions = [
   { id: 'whatsapp_group_leave', label: 'Saiu do Grupo', icon: LogOut, channel: 'whatsapp', color: 'from-red-400 to-orange-400', description: 'Quando alguém sai de um grupo do WhatsApp' },
 ];
 
-// ── Node categories ──
+// ── Node categories (SellFlux-style sidebar layout) ──
 export const nodeCategories = [
   {
-    label: 'Entrada',
-    nodes: [
-      { id: 'tag_filter', label: 'Filtro de Tag', icon: Filter, color: 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300' },
-    ],
-  },
-  {
-    label: 'Controle',
+    label: 'Controladores',
     nodes: [
       { id: 'timer', label: 'Timer', icon: Timer, color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' },
       { id: 'warmup', label: 'Aquecimento', icon: Flame, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
-      { id: 'parallel_channels', label: 'Espinha de Peixe', icon: Split, color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' },
+    ],
+  },
+  {
+    label: 'Disparos',
+    nodes: [
+      { id: 'send_whatsapp', label: 'WhatsApp', icon: MessageSquare, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
+      { id: 'send_whatsapp_oficial', label: 'WhatsApp Oficial', icon: MessageSquare, color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' },
+      { id: 'send_whatsapp_group', label: 'WhatsApp p/ sessão', icon: Users, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
+      { id: 'send_sms', label: 'SMS', icon: Smartphone, color: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300' },
+      { id: 'send_email_performance', label: 'Performance', icon: MailCheck, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
+      { id: 'send_email_marketing', label: 'Marketing', icon: Mail, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
+      { id: 'voice_torpedo', label: 'Torp. de Voz', icon: Volume2, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
+      { id: 'send_voip_call', label: 'Ligação VoIP', icon: Phone, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
+    ],
+  },
+  {
+    label: 'Ações',
+    nodes: [
+      { id: 'add_tag', label: 'Add Tag', icon: Tag, color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' },
+      { id: 'remove_tag', label: 'Remover Tag', icon: Tag, color: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
+      { id: 'update_score', label: 'Atualizar Score', icon: Star, color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' },
+      { id: 'send_notification', label: 'Notificar Equipe', icon: Bell, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
+      { id: 'create_task', label: 'Criar Tarefa', icon: CheckSquare, color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' },
+      { id: 'wait', label: 'Aguardar', icon: Clock, color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
+    ],
+  },
+  {
+    label: 'Condições',
+    nodes: [
+      { id: 'conditional', label: 'Condicional', icon: GitBranch, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
+      { id: 'tag_filter', label: 'Tag', icon: Filter, color: 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300' },
+      { id: 'list_tag', label: 'Listar Tag', icon: List, color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
     ],
   },
   {
     label: 'Sequências',
     nodes: [
       { id: 'sequence_lead', label: 'Sequência Lead', icon: Repeat, color: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
-      { id: 'sequence_transaction', label: 'Sequência Transação', icon: Receipt, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
-      { id: 'sequence_rewarming', label: 'Sequência Reaquecimento', icon: RefreshCw, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
-      { id: 'sequence_optin', label: 'Sequência Opt-in', icon: Inbox, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
-    ],
-  },
-  {
-    label: 'WhatsApp',
-    nodes: [
-      { id: 'send_whatsapp', label: 'WhatsApp', icon: MessageSquare, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
-      { id: 'send_whatsapp_group', label: 'WhatsApp Grupo', icon: Users, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
-      { id: 'add_to_whatsapp_group', label: 'Adicionar ao Grupo', icon: UserPlus, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
-      { id: 'edit_whatsapp_group', label: 'Editar Grupo', icon: Pencil, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
-      { id: 'send_whatsapp_oficial', label: 'WhatsApp Oficial', icon: MessageSquare, color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' },
+      { id: 'sequence_transaction', label: 'Seq. Transação', icon: Receipt, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
+      { id: 'sequence_rewarming', label: 'Seq. Reaquecimento', icon: RefreshCw, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
+      { id: 'sequence_optin', label: 'Seq. Opt-in', icon: Inbox, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
     ],
   },
   {
@@ -126,46 +141,21 @@ export const nodeCategories = [
     ],
   },
   {
-    label: 'E-mail',
+    label: 'Integrar',
     nodes: [
-      { id: 'send_email_performance', label: 'Performance', icon: MailCheck, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
-      { id: 'send_email_marketing', label: 'Marketing', icon: Mail, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
-    ],
-  },
-  {
-    label: 'SMS / Voz',
-    nodes: [
-      { id: 'send_sms', label: 'SMS', icon: Smartphone, color: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300' },
-      { id: 'voice_torpedo', label: 'Torpedo de Voz', icon: Volume2, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
-      { id: 'send_voip_call', label: 'Ligação VoIP', icon: Phone, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
-    ],
-  },
-  {
-    label: 'Tags',
-    nodes: [
-      { id: 'add_tag', label: 'Add Tag', icon: Tag, color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' },
-      { id: 'remove_tag', label: 'Remover Tag', icon: Tag, color: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
-      { id: 'list_tag', label: 'Listar Tag', icon: List, color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
-    ],
-  },
-  {
-    label: 'Avançado',
-    nodes: [
-      { id: 'conditional', label: 'Condicional', icon: GitBranch, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
+      { id: 'add_to_whatsapp_group', label: 'Adicionar ao Grupo', icon: UserPlus, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
+      { id: 'edit_whatsapp_group', label: 'Editar Grupo', icon: Pencil, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
       { id: 'full_page', label: 'Full Page', icon: LayoutTemplate, color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' },
       { id: 'pixel', label: 'Pixel', icon: MousePointer, color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
-      { id: 'abandonment', label: 'Abandono', icon: LogOut, color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300' },
-      { id: 'link_split', label: 'Link Split', icon: Shuffle, color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' },
-      { id: 'note', label: 'Anotação', icon: StickyNote, color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' },
+      { id: 'parallel_channels', label: 'Espinha de Peixe', icon: Split, color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' },
     ],
   },
   {
-    label: 'CRM/E-mail',
+    label: 'Extras',
     nodes: [
-      { id: 'update_score', label: 'Atualizar Score', icon: Star, color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' },
-      { id: 'send_notification', label: 'Notificar Equipe', icon: Bell, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
-      { id: 'create_task', label: 'Criar Tarefa', icon: CheckSquare, color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' },
-      { id: 'wait', label: 'Aguardar', icon: Clock, color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
+      { id: 'note', label: 'Nota', icon: StickyNote, color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' },
+      { id: 'link_split', label: 'Link Split', icon: Shuffle, color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' },
+      { id: 'abandonment', label: 'Abandono', icon: LogOut, color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300' },
     ],
   },
 ];

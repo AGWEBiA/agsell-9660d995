@@ -171,6 +171,10 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter, analytics }: {
     if (node.subtype === 'link_split') return 'SPLIT';
     if (node.subtype === 'note') return 'NOTA';
     if (node.subtype === 'edit_whatsapp_group') return 'GRUPO';
+    if (node.subtype === 'sequence_lead') return 'SEQ. LEAD';
+    if (node.subtype === 'sequence_transaction') return 'SEQ. TRANSAÇÃO';
+    if (node.subtype === 'sequence_rewarming') return 'SEQ. REAQUECIMENTO';
+    if (node.subtype === 'sequence_optin') return 'SEQ. OPT-IN';
     if (node.type === 'condition') return 'CONDIÇÃO';
     if (node.type === 'delay') return 'ESPERA';
     return 'AÇÃO';

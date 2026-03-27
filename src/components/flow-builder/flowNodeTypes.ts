@@ -14,7 +14,7 @@ import {
 
 export interface FlowNode {
   id: string;
-  type: 'trigger' | 'action' | 'condition' | 'delay' | 'timer' | 'warmup' | 'note';
+  type: 'trigger' | 'action' | 'condition' | 'delay' | 'timer' | 'warmup' | 'note' | 'sequence';
   subtype: string;
   label: string;
   config: Record<string, unknown>;

@@ -1260,11 +1260,13 @@ export default function FlowBuilder() {
                       return (
                         <button
                           key={opt.id}
+                          draggable
+                          onDragStart={e => handleDragStart(e, getNodeType(opt.id), opt.id)}
                           onClick={() => {
                             setAddAfterIndex(nodes.length - 1);
                             handleAddStep(getNodeType(opt.id) as any, opt.id);
                           }}
-                          className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-pointer group"
+                          className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group"
                           title={opt.label}
                         >
                           <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0', opt.color)}>
@@ -1281,21 +1283,23 @@ export default function FlowBuilder() {
               <div className="mb-3">
                 <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">Condições</p>
                 <div className="grid grid-cols-2 gap-1">
-                  {conditionOptions.map(opt => (
-                    <button
-                      key={opt.id}
-                      onClick={() => {
-                        setAddAfterIndex(nodes.length - 1);
-                        handleAddStep('condition', opt.id);
-                      }}
-                      className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-pointer group"
-                      title={opt.label}
-                    >
-                      <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0', opt.color)}>
-                        <opt.icon className="h-3.5 w-3.5" />
-                      </div>
-                      <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full">{opt.label}</span>
-                    </button>
+                   {conditionOptions.map(opt => (
+                     <button
+                       key={opt.id}
+                       draggable
+                       onDragStart={e => handleDragStart(e, 'condition', opt.id)}
+                       onClick={() => {
+                         setAddAfterIndex(nodes.length - 1);
+                         handleAddStep('condition', opt.id);
+                       }}
+                       className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group"
+                       title={opt.label}
+                     >
+                       <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0', opt.color)}>
+                         <opt.icon className="h-3.5 w-3.5" />
+                       </div>
+                       <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full">{opt.label}</span>
+                     </button>
                   ))}
                 </div>
               </div>

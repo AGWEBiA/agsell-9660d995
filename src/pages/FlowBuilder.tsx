@@ -125,32 +125,40 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter, analytics }: {
           className={cn('relative w-full max-w-[340px] rounded-2xl p-[2px] cursor-pointer group', `bg-gradient-to-r ${info.color}`)}
           onClick={onEdit}
         >
-          <div className="bg-card rounded-[14px] p-4">
+          <div className="bg-[#222240] rounded-[14px] p-4">
             <div className="flex items-center gap-3">
-              <div className={cn('flex items-center justify-center h-11 w-11 rounded-xl bg-gradient-to-br text-white', info.color)}>
+              <div className={cn('flex items-center justify-center h-12 w-12 rounded-full bg-gradient-to-br text-white shadow-lg', info.color)}>
                 <Icon className="h-5 w-5" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0">GATILHO</Badge>
-                  <span className="text-xs text-muted-foreground">{info.channel.toUpperCase()}</span>
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-white/20 text-white/70">GATILHO</Badge>
+                  <span className="text-xs text-white/50">{info.channel.toUpperCase()}</span>
                 </div>
-                <p className="font-semibold text-sm mt-0.5">{info.label}</p>
-                {node.config.keyword && <p className="text-xs text-muted-foreground mt-0.5">Palavra: "{String(node.config.keyword)}"</p>}
-                {node.config.post_url && <p className="text-xs text-muted-foreground mt-0.5 truncate">Post: {String(node.config.post_url)}</p>}
-                {node.config.story_url && <p className="text-xs text-muted-foreground mt-0.5 truncate">Story: {String(node.config.story_url)}</p>}
-                {node.config.form_name && <p className="text-xs text-muted-foreground mt-0.5">Formulário: {String(node.config.form_name)}</p>}
+                <p className="font-semibold text-sm mt-0.5 text-white">{info.label}</p>
+                {node.config.keyword && <p className="text-xs text-white/50 mt-0.5">Palavra: "{String(node.config.keyword)}"</p>}
+                {node.config.post_url && <p className="text-xs text-white/50 mt-0.5 truncate">Post: {String(node.config.post_url)}</p>}
+                {node.config.story_url && <p className="text-xs text-white/50 mt-0.5 truncate">Story: {String(node.config.story_url)}</p>}
+                {node.config.form_name && <p className="text-xs text-white/50 mt-0.5">Formulário: {String(node.config.form_name)}</p>}
               </div>
-              <Settings className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Settings className="h-4 w-4 text-white/30 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
+            {/* Metric badges */}
+            {analytics && (
+              <div className="flex gap-1 mt-2">
+                <Badge className="text-[9px] px-1.5 py-0 bg-green-500/20 text-green-400 border-green-500/30">{analytics.entries_count}</Badge>
+                <Badge className="text-[9px] px-1.5 py-0 bg-yellow-500/20 text-yellow-400 border-yellow-500/30">{analytics.conversions_count}</Badge>
+                <Badge className="text-[9px] px-1.5 py-0 bg-red-500/20 text-red-400 border-red-500/30">{analytics.errors_count}</Badge>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex flex-col items-center">
-          <div className="w-0.5 h-6 bg-border" />
-          <button onClick={onAddAfter} className="flex items-center justify-center h-7 w-7 rounded-full border-2 border-dashed border-primary/40 hover:border-primary hover:bg-primary/10 transition-all group">
-            <Plus className="h-3.5 w-3.5 text-primary/60 group-hover:text-primary" />
+          <div className="w-0.5 h-6 bg-white/10" />
+          <button onClick={onAddAfter} className="flex items-center justify-center h-7 w-7 rounded-full border-2 border-dashed border-white/20 hover:border-white/50 hover:bg-white/5 transition-all group">
+            <Plus className="h-3.5 w-3.5 text-white/40 group-hover:text-white/70" />
           </button>
-          <div className="w-0.5 h-6 bg-border" />
+          <div className="w-0.5 h-6 bg-white/10" />
         </div>
       </div>
     );

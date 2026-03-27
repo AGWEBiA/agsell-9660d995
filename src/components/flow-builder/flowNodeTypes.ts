@@ -97,6 +97,15 @@ export const nodeCategories = [
     ],
   },
   {
+    label: 'Sequências',
+    nodes: [
+      { id: 'sequence_lead', label: 'Sequência Lead', icon: Repeat, color: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
+      { id: 'sequence_transaction', label: 'Sequência Transação', icon: Receipt, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
+      { id: 'sequence_rewarming', label: 'Sequência Reaquecimento', icon: RefreshCw, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
+      { id: 'sequence_optin', label: 'Sequência Opt-in', icon: Inbox, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
+    ],
+  },
+  {
     label: 'WhatsApp',
     nodes: [
       { id: 'send_whatsapp', label: 'WhatsApp', icon: MessageSquare, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },

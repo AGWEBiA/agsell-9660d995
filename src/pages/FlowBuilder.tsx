@@ -263,13 +263,14 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter, analytics }: {
 function AddStepDialog({ open, onClose, onAdd }: {
   open: boolean;
   onClose: () => void;
-  onAdd: (type: 'action' | 'condition' | 'delay' | 'timer' | 'warmup' | 'note', subtype: string) => void;
+  onAdd: (type: 'action' | 'condition' | 'delay' | 'timer' | 'warmup' | 'note' | 'sequence', subtype: string) => void;
 }) {
   const getNodeType = (id: string): FlowNode['type'] => {
     if (id === 'timer') return 'timer';
     if (id === 'warmup') return 'warmup';
     if (id === 'wait') return 'delay';
     if (id === 'note') return 'note';
+    if (id.startsWith('sequence_')) return 'sequence';
     if (id === 'conditional' || conditionOptions.some(c => c.id === id)) return 'condition';
     return 'action';
   };

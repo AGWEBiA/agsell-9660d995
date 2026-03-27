@@ -102,6 +102,14 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter, analytics }: {
         return `${((c.links as any[]) || []).length} links`;
       case 'note':
         return c.text ? `"${String(c.text).slice(0, 40)}..."` : '';
+      case 'sequence_lead':
+        return c.steps ? `${(c.steps as any[]).length} msgs` : '0 lead';
+      case 'sequence_transaction':
+        return c.steps ? `${(c.steps as any[]).length} msgs` : '0 lead';
+      case 'sequence_rewarming':
+        return c.interval ? `${c.interval}min intervalo` : '0 lead';
+      case 'sequence_optin':
+        return c.steps ? `${(c.steps as any[]).length} msgs` : '0 lead';
       default:
         return '';
     }

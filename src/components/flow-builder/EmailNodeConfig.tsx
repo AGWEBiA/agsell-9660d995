@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Info, Clock, AlertCircle, Mail, ChevronDown, Shield, Flame, ExternalLink, Eye } from 'lucide-react';
+import { Info, Clock, AlertCircle, Mail, ChevronDown, Shield, Flame, ExternalLink, Eye, Plus } from 'lucide-react';
 import { TEMPLATE_VARIABLES } from './flowNodeTypes';
 import { useEmailMailboxes } from '@/hooks/useEmailMailboxes';
 import { useNavigate } from 'react-router-dom';
@@ -260,14 +260,29 @@ export function EmailNodeConfig({ config, onChange, mode }: EmailNodeConfigProps
 
       {/* Edit Email Button (marketing) */}
       {mode === 'marketing' && (
-        <Button
-          variant="default"
-          className="w-full bg-primary hover:bg-primary/90"
-          onClick={() => onChange({ ...config, _editing_template: true })}
-        >
-          <ExternalLink className="h-4 w-4 mr-2" />
-          CLIQUE AQUI PARA EDITAR SEU E-MAIL
-        </Button>
+        <div className="space-y-3">
+          <Button
+            variant="default"
+            className="w-full bg-primary hover:bg-primary/90"
+            onClick={() => onChange({ ...config, _editing_template: true })}
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            CLIQUE AQUI PARA EDITAR SEU E-MAIL
+          </Button>
+          <div className="rounded-lg border-2 border-dashed border-muted-foreground/20 p-6 text-center">
+            <Button
+              variant="outline"
+              onClick={() => onChange({ ...config, _editing_template: true })}
+              className="gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              ADICIONAR BLOCO
+            </Button>
+            <p className="text-xs text-muted-foreground mt-2">
+              Monte seu e-mail com blocos visuais como no WordPress
+            </p>
+          </div>
+        </div>
       )}
 
       {/* Email Preview */}

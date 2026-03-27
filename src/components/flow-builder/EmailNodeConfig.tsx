@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Info, Clock, AlertCircle, Mail, ChevronDown, Shield, Flame, ExternalLink, Eye } from 'lucide-react';
+import { Info, Clock, AlertCircle, Mail, ChevronDown, Shield, Flame, ExternalLink, Eye, Plus } from 'lucide-react';
 import { TEMPLATE_VARIABLES } from './flowNodeTypes';
 import { useEmailMailboxes } from '@/hooks/useEmailMailboxes';
 import { useNavigate } from 'react-router-dom';

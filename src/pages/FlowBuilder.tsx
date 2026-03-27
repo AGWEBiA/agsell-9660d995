@@ -102,6 +102,14 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter, analytics }: {
         return `${((c.links as any[]) || []).length} links`;
       case 'note':
         return c.text ? `"${String(c.text).slice(0, 40)}..."` : '';
+      case 'sequence_lead':
+        return c.steps ? `${(c.steps as any[]).length} msgs` : '0 lead';
+      case 'sequence_transaction':
+        return c.steps ? `${(c.steps as any[]).length} msgs` : '0 lead';
+      case 'sequence_rewarming':
+        return c.interval ? `${c.interval}min intervalo` : '0 lead';
+      case 'sequence_optin':
+        return c.steps ? `${(c.steps as any[]).length} msgs` : '0 lead';
       default:
         return '';
     }
@@ -117,32 +125,40 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter, analytics }: {
           className={cn('relative w-full max-w-[340px] rounded-2xl p-[2px] cursor-pointer group', `bg-gradient-to-r ${info.color}`)}
           onClick={onEdit}
         >
-          <div className="bg-card rounded-[14px] p-4">
+          <div className="bg-[#222240] rounded-[14px] p-4">
             <div className="flex items-center gap-3">
-              <div className={cn('flex items-center justify-center h-11 w-11 rounded-xl bg-gradient-to-br text-white', info.color)}>
+              <div className={cn('flex items-center justify-center h-12 w-12 rounded-full bg-gradient-to-br text-white shadow-lg', info.color)}>
                 <Icon className="h-5 w-5" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0">GATILHO</Badge>
-                  <span className="text-xs text-muted-foreground">{info.channel.toUpperCase()}</span>
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-white/20 text-white/70">GATILHO</Badge>
+                  <span className="text-xs text-white/50">{info.channel.toUpperCase()}</span>
                 </div>
-                <p className="font-semibold text-sm mt-0.5">{info.label}</p>
-                {node.config.keyword && <p className="text-xs text-muted-foreground mt-0.5">Palavra: "{String(node.config.keyword)}"</p>}
-                {node.config.post_url && <p className="text-xs text-muted-foreground mt-0.5 truncate">Post: {String(node.config.post_url)}</p>}
-                {node.config.story_url && <p className="text-xs text-muted-foreground mt-0.5 truncate">Story: {String(node.config.story_url)}</p>}
-                {node.config.form_name && <p className="text-xs text-muted-foreground mt-0.5">Formulário: {String(node.config.form_name)}</p>}
+                <p className="font-semibold text-sm mt-0.5 text-white">{info.label}</p>
+                {node.config.keyword && <p className="text-xs text-white/50 mt-0.5">Palavra: "{String(node.config.keyword)}"</p>}
+                {node.config.post_url && <p className="text-xs text-white/50 mt-0.5 truncate">Post: {String(node.config.post_url)}</p>}
+                {node.config.story_url && <p className="text-xs text-white/50 mt-0.5 truncate">Story: {String(node.config.story_url)}</p>}
+                {node.config.form_name && <p className="text-xs text-white/50 mt-0.5">Formulário: {String(node.config.form_name)}</p>}
               </div>
-              <Settings className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+              <Settings className="h-4 w-4 text-white/30 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
+            {/* Metric badges */}
+            {analytics && (
+              <div className="flex gap-1 mt-2">
+                <Badge className="text-[9px] px-1.5 py-0 bg-green-500/20 text-green-400 border-green-500/30">{analytics.entries_count}</Badge>
+                <Badge className="text-[9px] px-1.5 py-0 bg-yellow-500/20 text-yellow-400 border-yellow-500/30">{analytics.conversions_count}</Badge>
+                <Badge className="text-[9px] px-1.5 py-0 bg-red-500/20 text-red-400 border-red-500/30">{analytics.errors_count}</Badge>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex flex-col items-center">
-          <div className="w-0.5 h-6 bg-border" />
-          <button onClick={onAddAfter} className="flex items-center justify-center h-7 w-7 rounded-full border-2 border-dashed border-primary/40 hover:border-primary hover:bg-primary/10 transition-all group">
-            <Plus className="h-3.5 w-3.5 text-primary/60 group-hover:text-primary" />
+          <div className="w-0.5 h-6 bg-white/10" />
+          <button onClick={onAddAfter} className="flex items-center justify-center h-7 w-7 rounded-full border-2 border-dashed border-white/20 hover:border-white/50 hover:bg-white/5 transition-all group">
+            <Plus className="h-3.5 w-3.5 text-white/40 group-hover:text-white/70" />
           </button>
-          <div className="w-0.5 h-6 bg-border" />
+          <div className="w-0.5 h-6 bg-white/10" />
         </div>
       </div>
     );
@@ -163,6 +179,10 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter, analytics }: {
     if (node.subtype === 'link_split') return 'SPLIT';
     if (node.subtype === 'note') return 'NOTA';
     if (node.subtype === 'edit_whatsapp_group') return 'GRUPO';
+    if (node.subtype === 'sequence_lead') return 'SEQ. LEAD';
+    if (node.subtype === 'sequence_transaction') return 'SEQ. TRANSAÇÃO';
+    if (node.subtype === 'sequence_rewarming') return 'SEQ. REAQUECIMENTO';
+    if (node.subtype === 'sequence_optin') return 'SEQ. OPT-IN';
     if (node.type === 'condition') return 'CONDIÇÃO';
     if (node.type === 'delay') return 'ESPERA';
     return 'AÇÃO';
@@ -171,10 +191,10 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter, analytics }: {
   // Special rendering for note nodes
   if (node.subtype === 'note') {
     const noteColors: Record<string, string> = {
-      yellow: 'bg-yellow-50 border-yellow-300 dark:bg-yellow-900/20 dark:border-yellow-700',
-      blue: 'bg-blue-50 border-blue-300 dark:bg-blue-900/20 dark:border-blue-700',
-      green: 'bg-green-50 border-green-300 dark:bg-green-900/20 dark:border-green-700',
-      pink: 'bg-pink-50 border-pink-300 dark:bg-pink-900/20 dark:border-pink-700',
+      yellow: 'bg-yellow-900/30 border-yellow-700/50',
+      blue: 'bg-blue-900/30 border-blue-700/50',
+      green: 'bg-green-900/30 border-green-700/50',
+      pink: 'bg-pink-900/30 border-pink-700/50',
     };
     return (
       <div className="flex flex-col items-center">
@@ -183,17 +203,17 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter, analytics }: {
             <X className="h-3 w-3" />
           </button>
           <div className="flex items-center gap-2 mb-1">
-            <StickyNote className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0">NOTA</Badge>
+            <StickyNote className="h-4 w-4 text-yellow-400" />
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-white/20 text-white/60">NOTA</Badge>
           </div>
-          <p className="text-xs text-foreground/80">{node.config.text ? String(node.config.text).slice(0, 120) : 'Clique para adicionar uma anotação...'}</p>
+          <p className="text-xs text-white/70">{node.config.text ? String(node.config.text).slice(0, 120) : 'Clique para adicionar uma anotação...'}</p>
         </div>
         <div className="flex flex-col items-center">
-          <div className="w-0.5 h-6 bg-border" />
-          <button onClick={onAddAfter} className="flex items-center justify-center h-7 w-7 rounded-full border-2 border-dashed border-primary/40 hover:border-primary hover:bg-primary/10 transition-all group">
-            <Plus className="h-3.5 w-3.5 text-primary/60 group-hover:text-primary" />
+          <div className="w-0.5 h-6 bg-white/10" />
+          <button onClick={onAddAfter} className="flex items-center justify-center h-7 w-7 rounded-full border-2 border-dashed border-white/20 hover:border-white/50 hover:bg-white/5 transition-all group">
+            <Plus className="h-3.5 w-3.5 text-white/40 group-hover:text-white/70" />
           </button>
-          <div className="w-0.5 h-6 bg-border" />
+          <div className="w-0.5 h-6 bg-white/10" />
         </div>
       </div>
     );
@@ -201,47 +221,54 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter, analytics }: {
 
   return (
     <div className="flex flex-col items-center">
-      <div className="relative w-[340px] rounded-xl border-2 border-border hover:border-primary/40 bg-card p-4 cursor-pointer group transition-colors" onClick={onEdit}>
+      <div className="relative w-[340px] rounded-xl border border-white/10 hover:border-white/25 bg-[#222240] p-4 cursor-pointer group transition-colors shadow-lg" onClick={onEdit}>
         <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
           <X className="h-3 w-3" />
         </button>
         <div className="flex items-center gap-3">
-          <div className={cn('flex items-center justify-center h-10 w-10 rounded-lg', info.color)}>
-            <Icon className="h-4 w-4" />
+          <div className={cn('flex items-center justify-center h-12 w-12 rounded-full shadow-lg', info.color)}>
+            <Icon className="h-5 w-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0">{getTypeLabel()}</Badge>
-            <p className="font-medium text-sm mt-0.5">{info.label}</p>
-            {summary && <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[240px]">{summary}</p>}
-            {!summary && node.config.message && <p className="text-xs text-muted-foreground mt-0.5 truncate max-w-[240px]">"{String(node.config.message)}"</p>}
-            {node.config.tag_name && <p className="text-xs text-muted-foreground mt-0.5">Tag: {String(node.config.tag_name)}</p>}
-            {node.config.duration && !['timer', 'warmup'].includes(node.subtype) && <p className="text-xs text-muted-foreground mt-0.5">{String(node.config.duration)} {node.config.unit === 'minutes' ? 'min' : node.config.unit === 'hours' ? 'h' : 'dias'}</p>}
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-white/20 text-white/60">{getTypeLabel()}</Badge>
+            <p className="font-medium text-sm mt-0.5 text-white">{info.label}</p>
+            {summary && <p className="text-xs text-white/50 mt-0.5 truncate max-w-[240px]">{summary}</p>}
+            {!summary && node.config.message && <p className="text-xs text-white/50 mt-0.5 truncate max-w-[240px]">"{String(node.config.message)}"</p>}
+            {node.config.tag_name && <p className="text-xs text-white/50 mt-0.5">Tag: {String(node.config.tag_name)}</p>}
+            {node.config.duration && !['timer', 'warmup'].includes(node.subtype) && <p className="text-xs text-white/50 mt-0.5">{String(node.config.duration)} {node.config.unit === 'minutes' ? 'min' : node.config.unit === 'hours' ? 'h' : 'dias'}</p>}
             {/* Timer weekday badges */}
             {node.subtype === 'timer' && node.config.has_weekday_filter && (
               <div className="flex gap-0.5 mt-1">
                 {WEEKDAYS.map(d => {
                   const selected = ((node.config.selected_days as string[]) || WEEKDAYS.map(w => w.key)).includes(d.key);
-                  return <Badge key={d.key} variant={selected ? 'default' : 'outline'} className="text-[9px] px-1 py-0">{d.label}</Badge>;
+                  return <Badge key={d.key} variant={selected ? 'default' : 'outline'} className={cn("text-[9px] px-1 py-0", !selected && "border-white/20 text-white/40")}>{d.label}</Badge>;
                 })}
               </div>
             )}
           </div>
-          <Settings className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+          <Settings className="h-4 w-4 text-white/30 opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
         {node.type === 'condition' && (
           <div className="mt-3 flex gap-2 text-xs">
-            <div className="flex-1 rounded-md bg-green-50 dark:bg-green-900/20 p-2 text-center text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">✅ Sim</div>
-            <div className="flex-1 rounded-md bg-red-50 dark:bg-red-900/20 p-2 text-center text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">❌ Não</div>
+            <div className="flex-1 rounded-md bg-green-900/30 p-2 text-center text-green-400 border border-green-700/30">✅ Sim</div>
+            <div className="flex-1 rounded-md bg-red-900/30 p-2 text-center text-red-400 border border-red-700/30">❌ Não</div>
           </div>
         )}
-        <FlowNodeAnalyticsOverlay analytics={analytics} />
+        {/* Metric badges - SellFlux style */}
+        {analytics && (
+          <div className="flex gap-1 mt-2">
+            <Badge className="text-[9px] px-1.5 py-0 bg-green-500/20 text-green-400 border-green-500/30">{analytics.entries_count}</Badge>
+            <Badge className="text-[9px] px-1.5 py-0 bg-yellow-500/20 text-yellow-400 border-yellow-500/30">{analytics.conversions_count}</Badge>
+            <Badge className="text-[9px] px-1.5 py-0 bg-red-500/20 text-red-400 border-red-500/30">{analytics.errors_count}</Badge>
+          </div>
+        )}
       </div>
       <div className="flex flex-col items-center">
-        <div className="w-0.5 h-6 bg-border" />
-        <button onClick={onAddAfter} className="flex items-center justify-center h-7 w-7 rounded-full border-2 border-dashed border-primary/40 hover:border-primary hover:bg-primary/10 transition-all group">
-          <Plus className="h-3.5 w-3.5 text-primary/60 group-hover:text-primary" />
+        <div className="w-0.5 h-6 bg-white/10" />
+        <button onClick={onAddAfter} className="flex items-center justify-center h-7 w-7 rounded-full border-2 border-dashed border-white/20 hover:border-white/50 hover:bg-white/5 transition-all group">
+          <Plus className="h-3.5 w-3.5 text-white/40 group-hover:text-white/70" />
         </button>
-        <div className="w-0.5 h-6 bg-border" />
+        <div className="w-0.5 h-6 bg-white/10" />
       </div>
     </div>
   );
@@ -251,13 +278,14 @@ function FlowNodeCard({ node, onEdit, onDelete, onAddAfter, analytics }: {
 function AddStepDialog({ open, onClose, onAdd }: {
   open: boolean;
   onClose: () => void;
-  onAdd: (type: 'action' | 'condition' | 'delay' | 'timer' | 'warmup' | 'note', subtype: string) => void;
+  onAdd: (type: 'action' | 'condition' | 'delay' | 'timer' | 'warmup' | 'note' | 'sequence', subtype: string) => void;
 }) {
   const getNodeType = (id: string): FlowNode['type'] => {
     if (id === 'timer') return 'timer';
     if (id === 'warmup') return 'warmup';
     if (id === 'wait') return 'delay';
     if (id === 'note') return 'note';
+    if (id.startsWith('sequence_')) return 'sequence';
     if (id === 'conditional' || conditionOptions.some(c => c.id === id)) return 'condition';
     return 'action';
   };
@@ -1176,7 +1204,7 @@ export default function FlowBuilder() {
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="flex flex-col items-center py-10 px-4 min-h-[60vh]">
+        <div className="flex flex-col items-center py-10 px-4 min-h-[60vh] bg-[#1a1a2e] dark:bg-[#0d0d1a] rounded-lg mx-2 mb-2" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(255,255,255,0.05) 1px, transparent 0)', backgroundSize: '24px 24px' }}>
           {!hasTrigger ? (
             <TriggerSelector onSelect={handleSelectTrigger} />
           ) : (
@@ -1192,8 +1220,8 @@ export default function FlowBuilder() {
                 />
               ))}
               <div className="flex flex-col items-center">
-                <div className="h-12 w-12 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
-                  <span className="text-xs text-muted-foreground font-medium">FIM</span>
+                <div className="h-12 w-12 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center">
+                  <span className="text-xs text-white/40 font-medium">FIM</span>
                 </div>
               </div>
             </>

@@ -9,11 +9,12 @@ import {
   CreditCard, Receipt, Ban, FileText, ShoppingCart, RotateCcw,
   TrendingUp, TrendingDown, ArrowRightLeft, CalendarDays, UserX,
   PhoneOff, PhoneIncoming, MailOpen, MousePointerClick, MailX,
+  Repeat, Radio, Inbox, RefreshCw,
 } from 'lucide-react';
 
 export interface FlowNode {
   id: string;
-  type: 'trigger' | 'action' | 'condition' | 'delay' | 'timer' | 'warmup' | 'note';
+  type: 'trigger' | 'action' | 'condition' | 'delay' | 'timer' | 'warmup' | 'note' | 'sequence';
   subtype: string;
   label: string;
   config: Record<string, unknown>;
@@ -93,6 +94,15 @@ export const nodeCategories = [
       { id: 'timer', label: 'Timer', icon: Timer, color: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300' },
       { id: 'warmup', label: 'Aquecimento', icon: Flame, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' },
       { id: 'parallel_channels', label: 'Espinha de Peixe', icon: Split, color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' },
+    ],
+  },
+  {
+    label: 'Sequências',
+    nodes: [
+      { id: 'sequence_lead', label: 'Sequência Lead', icon: Repeat, color: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' },
+      { id: 'sequence_transaction', label: 'Sequência Transação', icon: Receipt, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
+      { id: 'sequence_rewarming', label: 'Sequência Reaquecimento', icon: RefreshCw, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
+      { id: 'sequence_optin', label: 'Sequência Opt-in', icon: Inbox, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
     ],
   },
   {

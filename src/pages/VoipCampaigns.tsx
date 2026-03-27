@@ -21,7 +21,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useTags } from '@/hooks/useTags';
-import { useVoip } from '@/hooks/useVoip';
+import { useCommunicationCredits } from '@/hooks/useCommunicationCredits';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -51,7 +51,7 @@ const VoipCampaigns = () => {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const { tags } = useTags();
-  const { credits } = useVoip();
+  const { credits } = useCommunicationCredits();
   const queryClient = useQueryClient();
   const orgId = currentOrganization?.id;
 

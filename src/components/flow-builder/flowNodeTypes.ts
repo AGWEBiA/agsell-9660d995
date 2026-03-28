@@ -12,12 +12,25 @@ import {
   Repeat, Radio, Inbox, RefreshCw,
 } from 'lucide-react';
 
+export interface FlowNodePosition {
+  x: number;
+  y: number;
+}
+
+export interface FlowConnection {
+  id: string;
+  from: string;
+  to: string;
+  fromPort: 'default' | 'yes' | 'no';
+}
+
 export interface FlowNode {
   id: string;
   type: 'trigger' | 'action' | 'condition' | 'delay' | 'timer' | 'warmup' | 'note' | 'sequence';
   subtype: string;
   label: string;
   config: Record<string, unknown>;
+  position?: FlowNodePosition;
   children?: string[];
   conditionTrue?: string;
   conditionFalse?: string;

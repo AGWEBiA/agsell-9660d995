@@ -1,0 +1,231 @@
+import React from 'react';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Settings, X, StickyNote } from 'lucide-react';
+import type { FlowNode } from './flowNodeTypes';
+import { triggerOptions, actionOptions, conditionOptions, WEEKDAYS } from './flowNodeTypes';
+
+interface CanvasNodeProps {
+  node: FlowNode;
+  onMouseDown: (e: React.MouseEvent) => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onPortMouseDown: (port: 'default' | 'yes' | 'no', e: React.MouseEvent) => void;
+  onInputMouseUp: () => void;
+  isConnecting: boolean;
+  analytics?: { entries_count: number; conversions_count: number; errors_count: number };
+}
+
+export function CanvasNode({
+  node,
+  onMouseDown,
+  onEdit,
+  onDelete,
+  onPortMouseDown,
+  onInputMouseUp,
+  isConnecting,
+  analytics,
+}: CanvasNodeProps) {
+  if (!node.position) return null;
+
+  const getTriggerInfo = () => triggerOptions.find(t => t.id === node.subtype);
+  const getActionInfo = () => [...actionOptions, ...conditionOptions].find(a => a.id === node.subtype);
+
+  const getTypeLabel = () => {
+    if (node.type === 'trigger') return 'GATILHO';
+    if (['timer', 'warmup'].includes(node.subtype)) return node.subtype === 'timer' ? 'TIMER' : 'AQUECIMENTO';
+    if (['tag_filter'].includes(node.subtype)) return 'FILTRO';
+    if (['send_email_marketing', 'send_email_performance'].includes(node.subtype)) return 'EMAIL';
+    if (node.subtype === 'parallel_channels') return 'PARALELO';
+    if (node.subtype === 'voice_torpedo') return 'VOZ';
+    if (node.subtype === 'send_voip_call') return 'VOIP';
+    if (node.subtype === 'link_split') return 'SPLIT';
+    if (node.subtype === 'note') return 'NOTA';
+    if (node.type === 'condition') return 'CONDIÇÃO';
+    if (node.type === 'delay') return 'ESPERA';
+    return 'AÇÃO';
+  };
+
+  const getNodeSummary = () => {
+    const c = node.config;
+    switch (node.subtype) {
+      case 'timer':
+        if (c.timer_mode === 'specific_date' && c.specific_date) return `Data: ${String(c.specific_date)}`;
+        return `${c.duration || 1} ${c.unit === 'hours' ? 'h' : c.unit === 'days' ? 'dias' : 'min'}`;
+      case 'warmup': return `${c.leads_per_minute || 1} leads/min`;
+      case 'send_email_marketing':
+      case 'send_email_performance':
+        return c.subject ? `"${String(c.subject)}"` : '';
+      default:
+        if (c.message) return `"${String(c.message).slice(0, 30)}..."`;
+        if (c.tag_name) return `Tag: ${String(c.tag_name)}`;
+        return '';
+    }
+  };
+
+  const info = node.type === 'trigger' ? getTriggerInfo() : getActionInfo();
+  if (!info) return null;
+  const Icon = info.icon;
+  const summary = getNodeSummary();
+  const colorClass = node.type === 'trigger' ? `bg-gradient-to-br ${(info as any).color}` : (info as any).color;
+  const isCondition = node.type === 'condition';
+  const NODE_WIDTH = 320;
+
+  // Note node special rendering
+  if (node.subtype === 'note') {
+    const noteColors: Record<string, string> = {
+      yellow: 'bg-yellow-900/30 border-yellow-700/50',
+      blue: 'bg-blue-900/30 border-blue-700/50',
+      green: 'bg-green-900/30 border-green-700/50',
+      pink: 'bg-pink-900/30 border-pink-700/50',
+    };
+    return (
+      <div
+        className="absolute select-none"
+        style={{ left: node.position.x, top: node.position.y, width: NODE_WIDTH }}
+      >
+        {/* Input port */}
+        <div
+          className={cn("absolute -top-3 left-1/2 -translate-x-1/2 h-6 w-6 rounded-full border-2 flex items-center justify-center z-10 transition-all",
+            isConnecting ? "border-primary bg-primary/30 scale-125 cursor-crosshair" : "border-white/20 bg-[#1a1a2e]"
+          )}
+          onMouseUp={onInputMouseUp}
+        >
+          <div className="h-2 w-2 rounded-full bg-white/40" />
+        </div>
+        <div
+          className={cn('rounded-xl border-2 p-4 cursor-move group transition-colors', noteColors[(node.config.color as string) || 'yellow'])}
+          onMouseDown={onMouseDown}
+          onDoubleClick={onEdit}
+        >
+          <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-20">
+            <X className="h-3 w-3" />
+          </button>
+          <div className="flex items-center gap-2 mb-1">
+            <StickyNote className="h-4 w-4 text-yellow-400" />
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-white/20 text-white/60">NOTA</Badge>
+          </div>
+          <p className="text-xs text-white/70">{node.config.text ? String(node.config.text).slice(0, 120) : 'Duplo clique para editar...'}</p>
+        </div>
+        {/* Output port */}
+        <div className="flex justify-center mt-1">
+          <div
+            className="h-5 w-5 rounded-full border-2 border-white/20 bg-[#1a1a2e] flex items-center justify-center cursor-crosshair hover:border-primary hover:bg-primary/20 transition-all"
+            onMouseDown={(e) => onPortMouseDown('default', e)}
+          >
+            <div className="h-1.5 w-1.5 rounded-full bg-white/40" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="absolute select-none"
+      style={{ left: node.position.x, top: node.position.y, width: NODE_WIDTH }}
+    >
+      {/* Input port */}
+      <div
+        className={cn("absolute -top-3 left-1/2 -translate-x-1/2 h-6 w-6 rounded-full border-2 flex items-center justify-center z-10 transition-all",
+          isConnecting ? "border-primary bg-primary/30 scale-125 cursor-crosshair" : "border-white/20 bg-[#1a1a2e]"
+        )}
+        onMouseUp={onInputMouseUp}
+      >
+        <div className="h-2 w-2 rounded-full bg-white/40" />
+      </div>
+
+      {/* Node body */}
+      <div
+        className={cn(
+          'rounded-xl border hover:border-white/25 bg-[#222240] p-4 cursor-move group transition-colors shadow-lg',
+          node.type === 'trigger' ? 'border-2 p-[2px]' : 'border-white/10',
+          node.type === 'trigger' && `bg-gradient-to-r ${(info as any).color}`
+        )}
+        onMouseDown={onMouseDown}
+        onDoubleClick={onEdit}
+      >
+        {node.type === 'trigger' ? (
+          <div className="bg-[#222240] rounded-[10px] p-4">
+            <InnerContent />
+          </div>
+        ) : (
+          <InnerContent />
+        )}
+      </div>
+
+      {/* Output ports */}
+      {isCondition ? (
+        <div className="flex justify-between px-8 mt-1">
+          <div
+            className="flex flex-col items-center gap-0.5 cursor-crosshair"
+            onMouseDown={(e) => onPortMouseDown('yes', e)}
+          >
+            <div className="h-5 w-5 rounded-full border-2 border-green-500/50 bg-[#1a1a2e] flex items-center justify-center hover:border-green-400 hover:bg-green-500/20 transition-all">
+              <div className="h-1.5 w-1.5 rounded-full bg-green-400" />
+            </div>
+            <span className="text-[9px] text-green-400/70">Sim</span>
+          </div>
+          <div
+            className="flex flex-col items-center gap-0.5 cursor-crosshair"
+            onMouseDown={(e) => onPortMouseDown('no', e)}
+          >
+            <div className="h-5 w-5 rounded-full border-2 border-red-500/50 bg-[#1a1a2e] flex items-center justify-center hover:border-red-400 hover:bg-red-500/20 transition-all">
+              <div className="h-1.5 w-1.5 rounded-full bg-red-400" />
+            </div>
+            <span className="text-[9px] text-red-400/70">Não</span>
+          </div>
+        </div>
+      ) : (
+        <div className="flex justify-center mt-1">
+          <div
+            className="h-5 w-5 rounded-full border-2 border-white/20 bg-[#1a1a2e] flex items-center justify-center cursor-crosshair hover:border-primary hover:bg-primary/20 transition-all"
+            onMouseDown={(e) => onPortMouseDown('default', e)}
+          >
+            <div className="h-1.5 w-1.5 rounded-full bg-white/40" />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  function InnerContent() {
+    return (
+      <>
+        <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-20">
+          <X className="h-3 w-3" />
+        </button>
+        <div className="flex items-center gap-3">
+          <div className={cn('flex items-center justify-center h-12 w-12 rounded-full shadow-lg shrink-0', node.type === 'trigger' ? `bg-gradient-to-br text-white ${(info as any).color}` : colorClass)}>
+            <Icon className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-white/20 text-white/60">{getTypeLabel()}</Badge>
+              {node.type === 'trigger' && (info as any).channel && (
+                <span className="text-xs text-white/50">{String((info as any).channel).toUpperCase()}</span>
+              )}
+            </div>
+            <p className="font-semibold text-sm mt-0.5 text-white">{info.label}</p>
+            {summary && <p className="text-xs text-white/50 mt-0.5 truncate max-w-[200px]">{summary}</p>}
+            {node.config.keyword && <p className="text-xs text-white/50 mt-0.5">Palavra: "{String(node.config.keyword)}"</p>}
+          </div>
+          <Settings className="h-4 w-4 text-white/30 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+        </div>
+        {isCondition && (
+          <div className="mt-3 flex gap-2 text-xs">
+            <div className="flex-1 rounded-md bg-green-900/30 p-2 text-center text-green-400 border border-green-700/30">✅ Sim</div>
+            <div className="flex-1 rounded-md bg-red-900/30 p-2 text-center text-red-400 border border-red-700/30">❌ Não</div>
+          </div>
+        )}
+        {analytics && (
+          <div className="flex gap-1 mt-2">
+            <Badge className="text-[9px] px-1.5 py-0 bg-green-500/20 text-green-400 border-green-500/30">{analytics.entries_count}</Badge>
+            <Badge className="text-[9px] px-1.5 py-0 bg-yellow-500/20 text-yellow-400 border-yellow-500/30">{analytics.conversions_count}</Badge>
+            <Badge className="text-[9px] px-1.5 py-0 bg-red-500/20 text-red-400 border-red-500/30">{analytics.errors_count}</Badge>
+          </div>
+        )}
+      </>
+    );
+  }
+}

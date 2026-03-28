@@ -41,6 +41,7 @@ export function CanvasNode({
     if (node.subtype === 'send_voip_call') return 'VOIP';
     if (node.subtype === 'link_split') return 'SPLIT';
     if (node.subtype === 'note') return 'NOTA';
+    if (['sequence_transaction', 'sequence_lead', 'sequence_rewarming', 'sequence_optin'].includes(node.subtype)) return 'SEQUÊNCIA';
     if (node.type === 'condition') return 'CONDIÇÃO';
     if (node.type === 'delay') return 'ESPERA';
     return 'AÇÃO';
@@ -48,6 +49,12 @@ export function CanvasNode({
 
   const getNodeSummary = () => {
     const c = node.config;
+    const statusLabels: Record<string, string> = {
+      cart_abandoned: 'Abandonou carrinho', purchase_approved: 'Compra aprovada',
+      purchase_completed: 'Compra realizada', boleto_generated: 'Boleto gerado',
+      refund: 'Reembolso', new: 'Novo lead', engaged: 'Engajado',
+      qualified: 'Qualificado', customer: 'Cliente', inactive: 'Inativo',
+    };
     switch (node.subtype) {
       case 'timer':
         if (c.timer_mode === 'specific_date' && c.specific_date) return `Data: ${String(c.specific_date)}`;
@@ -56,6 +63,20 @@ export function CanvasNode({
       case 'send_email_marketing':
       case 'send_email_performance':
         return c.subject ? `"${String(c.subject)}"` : '';
+      case 'sequence_transaction':
+        if (c.entry_status || c.exit_status) {
+          const entry = statusLabels[String(c.entry_status)] || String(c.entry_status || '');
+          const exit = statusLabels[String(c.exit_status)] || String(c.exit_status || '');
+          return `${entry} → ${exit}`;
+        }
+        return '';
+      case 'sequence_lead':
+        if (c.entry_status) return `${statusLabels[String(c.entry_status)] || String(c.entry_status)} → ${statusLabels[String(c.exit_status)] || String(c.exit_status || '')}`;
+        return '';
+      case 'sequence_rewarming':
+        return c.inactivity_days ? `${c.inactivity_days} dias inativo` : '';
+      case 'sequence_optin':
+        return c.optin_type === 'double' ? 'Double Opt-in' : 'Single Opt-in';
       default:
         if (c.message) return `"${String(c.message).slice(0, 30)}..."`;
         if (c.tag_name) return `Tag: ${String(c.tag_name)}`;

@@ -778,6 +778,77 @@ export type Database = {
           },
         ]
       }
+      automation_scheduled_steps: {
+        Row: {
+          actions: Json
+          auth_token: string | null
+          automation_id: string
+          contact_id: string | null
+          created_at: string
+          current_step: number
+          execution_id: string
+          id: string
+          organization_id: string | null
+          scheduled_at: string
+          status: string
+        }
+        Insert: {
+          actions?: Json
+          auth_token?: string | null
+          automation_id: string
+          contact_id?: string | null
+          created_at?: string
+          current_step?: number
+          execution_id: string
+          id?: string
+          organization_id?: string | null
+          scheduled_at: string
+          status?: string
+        }
+        Update: {
+          actions?: Json
+          auth_token?: string | null
+          automation_id?: string
+          contact_id?: string | null
+          created_at?: string
+          current_step?: number
+          execution_id?: string
+          id?: string
+          organization_id?: string | null
+          scheduled_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automation_scheduled_steps_automation_id_fkey"
+            columns: ["automation_id"]
+            isOneToOne: false
+            referencedRelation: "automations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_scheduled_steps_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_scheduled_steps_execution_id_fkey"
+            columns: ["execution_id"]
+            isOneToOne: false
+            referencedRelation: "automation_executions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_scheduled_steps_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       automations: {
         Row: {
           actions: Json | null
@@ -975,6 +1046,13 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkout_leads_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans_public"
             referencedColumns: ["id"]
           },
         ]
@@ -3459,6 +3537,13 @@ export type Database = {
             referencedRelation: "plans"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "organizations_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       paid_group_members: {
@@ -3810,6 +3895,13 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_whatsapp_group_links_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans_public"
             referencedColumns: ["id"]
           },
         ]
@@ -5036,6 +5128,13 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans_public"
             referencedColumns: ["id"]
           },
         ]
@@ -6717,6 +6816,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      plans_public: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          features: Json | null
+          id: string | null
+          is_active: boolean | null
+          is_default: boolean | null
+          max_ai_requests_per_month: number | null
+          max_automations: number | null
+          max_contacts: number | null
+          max_email_domains: number | null
+          max_emails_per_month: number | null
+          max_forms: number | null
+          max_instagram_accounts: number | null
+          max_users: number | null
+          max_whatsapp_messages: number | null
+          name: string | null
+          price_monthly: number | null
+          price_yearly: number | null
+          slug: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string | null
+          is_active?: boolean | null
+          is_default?: boolean | null
+          max_ai_requests_per_month?: number | null
+          max_automations?: number | null
+          max_contacts?: number | null
+          max_email_domains?: number | null
+          max_emails_per_month?: number | null
+          max_forms?: number | null
+          max_instagram_accounts?: number | null
+          max_users?: number | null
+          max_whatsapp_messages?: number | null
+          name?: string | null
+          price_monthly?: number | null
+          price_yearly?: number | null
+          slug?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string | null
+          is_active?: boolean | null
+          is_default?: boolean | null
+          max_ai_requests_per_month?: number | null
+          max_automations?: number | null
+          max_contacts?: number | null
+          max_email_domains?: number | null
+          max_emails_per_month?: number | null
+          max_forms?: number | null
+          max_instagram_accounts?: number | null
+          max_users?: number | null
+          max_whatsapp_messages?: number | null
+          name?: string | null
+          price_monthly?: number | null
+          price_yearly?: number | null
+          slug?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {

@@ -4808,5 +4808,321 @@ Quando um contato tem opt-out em um canal, automações, campanhas e sequências
 
 💡 **Dica**: Inclua links de opt-out nos rodapés de e-mails e mensagens de campanha.`,
   },
+  {
+    id: 'chatbot-builder',
+    categoryId: 'marketing',
+    title: 'Chatbot Builder',
+    icon: Bot,
+    description: 'Crie chatbots inteligentes com fluxo visual, menus, IA e transferência para humanos.',
+    readTime: '8 min',
+    content: `O **Chatbot Builder** permite criar chatbots personalizados que respondem automaticamente em canais como WhatsApp, Instagram e Telegram — sem necessidade de programação.
+
+## Conceito
+
+Um chatbot é composto por **nós** (blocos de ação) conectados em sequência. Cada nó executa uma ação específica: enviar mensagem, exibir menu, coletar dados, aplicar tags ou transferir para um agente humano.
+
+## Criando um Chatbot
+
+1. Acesse **Chatbot Builder** no menu lateral
+2. Clique em **"Novo Chatbot"**
+3. Defina o **nome** e a **descrição**
+4. Adicione nós ao fluxo arrastando da barra lateral
+
+## Tipos de Nós
+
+### Mensagens
+- **Boas-vindas** — Mensagem inicial quando o chatbot é ativado
+- **Texto** — Envia uma mensagem de texto simples
+- **Menu** — Exibe opções numeradas para o usuário escolher
+
+### Coleta de Dados
+- **Pedir Input** — Solicita informação do usuário (nome, e-mail, telefone)
+- **Condição** — Avalia uma regra (tag, score, resposta) e bifurca o fluxo
+
+### Ações
+- **Adicionar Tag** — Aplica uma tag ao contato
+- **Remover Tag** — Remove uma tag do contato
+- **Webhook** — Chama uma URL externa
+- **Delay** — Aguarda um tempo antes de continuar
+
+### IA
+- **Resposta IA** — Usa inteligência artificial para gerar uma resposta contextual
+- **Missão IA** — IA executa uma tarefa específica (qualificar, agendar, etc.)
+
+### Transferência
+- **Transferir Departamento** — Redireciona para um departamento específico
+- **Transferir Agente** — Redireciona para um agente específico
+- **Transferir Humano** — Encaminha para atendimento humano
+- **Encerrar Conversa** — Finaliza a interação
+- **Sem Interação** — Ação executada quando não há resposta do usuário
+
+## Regras de Ativação
+
+Cada chatbot pode ter **regras** que determinam quando ele é ativado:
+
+- **Departamentos** — Ativa apenas para conversas de departamentos específicos
+- **Horário de Funcionamento** — Ativa apenas dentro/fora do horário comercial
+- **Tags de Inclusão** — Ativa apenas para contatos com tags específicas
+- **Tags de Exclusão** — Não ativa para contatos com determinadas tags
+- **Canais** — Ativa apenas em canais específicos (WhatsApp, Instagram, etc.)
+
+## Boas Práticas
+
+- 🤖 **Comece simples** — Um menu de opções + transferência já resolve 80% dos casos
+- 📝 **Colete dados** — Use nós de input para capturar informações antes de transferir
+- 🏷️ **Use tags** — Marque contatos conforme o caminho percorrido no chatbot
+- ⏰ **Configure horários** — Ative chatbots diferentes dentro e fora do expediente
+- 🧠 **Use IA com moderação** — Respostas de IA são poderosas mas devem ter fallback humano
+
+💡 **Dica**: Combine o Chatbot Builder com as Automações para criar jornadas completas — o chatbot qualifica e a automação nutre o lead.`,
+  },
+  {
+    id: 'funnel-planner',
+    categoryId: 'marketing',
+    title: 'Planejador de Funil',
+    icon: Workflow,
+    description: 'Planeje e organize seus funis de marketing e vendas com etapas visuais e métricas.',
+    readTime: '5 min',
+    content: `O **Planejador de Funil** permite criar e organizar visualmente seus funis de marketing e vendas, desde a captação de tráfego até a conversão final.
+
+## Como funciona
+
+1. Acesse **Planejador de Funil** no menu lateral
+2. Clique em **"Novo Funil"**
+3. Defina nome e descrição do funil
+4. Adicione etapas ao funil
+
+## Tipos de Etapas
+
+| Tipo | Cor | Descrição |
+|------|-----|-----------|
+| 🔵 Tráfego | Azul | Fonte de visitantes (anúncios, orgânico, etc.) |
+| 🟣 Landing Page | Roxo | Página de captura |
+| 🟡 Automação | Amarelo | Fluxo automatizado de nutrição |
+| 🟢 Conversão | Verde | Ponto de venda/conversão |
+| ⚫ Personalizado | Cinza | Etapa customizada |
+
+## Para cada etapa, defina
+
+- **Nome** e **descrição**
+- **Métricas** — KPIs relevantes (visitantes, leads, taxa de conversão)
+- **Links** — URLs das páginas, ferramentas ou dashboards associados
+
+## Boas Práticas
+
+- 📊 **Defina métricas claras** para cada etapa do funil
+- 🔗 **Vincule links** às ferramentas reais usadas em cada etapa
+- 🎯 **Identifique gargalos** — onde a conversão cai mais?
+
+💡 **Dica**: Use o Planejador de Funil em conjunto com o BI do Funil para planejar e depois medir os resultados reais.`,
+  },
+  {
+    id: 'funnel-bi',
+    categoryId: 'intelligence',
+    title: 'BI do Funil',
+    icon: BarChart3,
+    description: 'Dashboard visual com taxas de conversão, drop-off e performance por canal.',
+    readTime: '5 min',
+    content: `O **BI do Funil** é um dashboard analítico que mostra a performance real do seu funil de vendas com taxas de conversão e drop-off por etapa.
+
+## Métricas Principais
+
+- **Conversão Total** — Percentual de visitantes que se tornaram clientes
+- **Drop-off por Etapa** — Onde você perde mais leads no funil
+- **Performance por Canal** — Comparativo de WhatsApp, E-mail, Instagram e SMS
+
+## Visualizações
+
+### Funil Visual
+Gráfico de barras decrescente mostrando o volume em cada etapa:
+- Visitantes → Leads → Qualificados → Oportunidades → Clientes
+
+### Drop-off
+Para cada transição entre etapas, veja:
+- **Taxa de conversão** — % que avançou
+- **Drop-off** — % que saiu do funil
+
+### Performance por Canal
+Tabela comparativa com leads gerados, conversões e taxa de conversão por canal.
+
+## Filtros
+
+Filtre por período: últimos 7 dias, 30 dias ou 90 dias.
+
+💡 **Dica**: Foque nos pontos de maior drop-off para otimizar seu funil de vendas.`,
+  },
+  {
+    id: 'campaign-code-share',
+    categoryId: 'marketing',
+    title: 'Compartilhar Automação por Código',
+    icon: Zap,
+    description: 'Exporte e importe automações completas entre contas usando um código único.',
+    readTime: '3 min',
+    content: `O recurso de **Compartilhamento por Código** permite exportar e importar automações completas entre contas do AG Sell.
+
+## Exportando uma Automação
+
+1. Acesse a página de **Automações**
+2. Clique no botão **"Exportar/Importar"** no topo
+3. A automação selecionada será codificada em um **código único**
+4. Clique em **"Copiar"** para copiar o código para a área de transferência
+
+## Importando uma Automação
+
+1. Na página de **Automações**, clique em **"Exportar/Importar"**
+2. Selecione a aba **"Importar"**
+3. Cole o **código** recebido no campo de texto
+4. Clique em **"Importar"**
+5. A automação será criada automaticamente na sua conta
+
+## O que é transferido
+
+- ✅ Nome da automação
+- ✅ Tipo de gatilho e configuração
+- ✅ Todas as ações e suas configurações
+- ❌ Dados específicos (contatos, tags, IDs internos)
+
+⚠️ **Importante**: Após importar, revise as ações para ajustar IDs de tags, formulários e configurações específicas da sua conta.
+
+💡 **Dica**: Use este recurso para compartilhar automações de sucesso entre membros da equipe ou entre organizações de uma agência.`,
+  },
+  {
+    id: 'working-hours',
+    categoryId: 'communication',
+    title: 'Jornada de Trabalho (SAC)',
+    icon: Inbox,
+    description: 'Configure horários de atendimento, mensagem offline e fusos horários do SAC.',
+    readTime: '4 min',
+    content: `A configuração de **Jornada de Trabalho** define quando sua equipe está disponível para atendimento no SAC. Fora do horário, uma mensagem automática é exibida ao cliente.
+
+## Acessando a Configuração
+
+1. Acesse **Configurações do SAC** (menu lateral → SAC → ícone de engrenagem)
+2. Clique na aba **"Horários"**
+
+## Modos de Operação
+
+| Modo | Descrição |
+|------|-----------|
+| **Sempre Online** | O SAC está disponível 24/7, sem mensagem offline |
+| **Horário Comercial** | Ativo nos dias e horários configurados |
+| **Personalizado** | Configuração livre por dia da semana |
+
+## Configurando Horários
+
+Para cada dia da semana, defina:
+
+- **Ativo/Inativo** — Se o atendimento funciona neste dia
+- **Horário de Início** — Ex: 09:00
+- **Horário de Fim** — Ex: 18:00
+
+### Atalho: Aplicar a Todos
+
+Defina um horário e clique em **"Aplicar a todos os dias"** para replicar rapidamente.
+
+## Mensagem Offline
+
+Configure a mensagem que o cliente recebe quando entra em contato fora do horário:
+
+> Exemplo: "Nosso horário de atendimento é de segunda a sexta, das 09:00 às 18:00. Deixe sua mensagem que retornaremos assim que possível!"
+
+## Fuso Horário
+
+Selecione o fuso horário da sua equipe (ex: America/Sao_Paulo) para garantir que os horários sejam calculados corretamente.
+
+💡 **Dica**: Configure horários diferentes para sábado e domingo. Mesmo que a equipe não atenda, a mensagem offline mantém o cliente informado.`,
+  },
+  {
+    id: 'automation-metrics',
+    categoryId: 'marketing',
+    title: 'Métricas de Automação',
+    icon: Zap,
+    description: 'Dashboard granular com sucesso/falha por canal, etapa e automação.',
+    readTime: '5 min',
+    content: `O dashboard de **Métricas de Automação** mostra a performance detalhada de cada automação, com dados granulares por canal e etapa.
+
+## Visão Geral
+
+Na tela principal, você encontra:
+
+- **Seletor de automação** — Filtre por automação específica ou veja todas
+- **Cards de resumo** — Total de execuções, sucesso, falhas e taxa geral
+- **Gráfico por canal** — Comparativo de performance entre WhatsApp, E-mail e SMS
+
+## Métricas por Etapa
+
+A tabela detalha cada etapa da automação:
+
+| Métrica | Descrição |
+|---------|-----------|
+| Enviados | Total de execuções da etapa |
+| Entregues | Entregas bem-sucedidas |
+| Falhados | Entregas que falharam |
+| Abertos | Mensagens/e-mails abertos |
+| Clicados | Links clicados |
+| Taxa de Sucesso | Percentual de entregas bem-sucedidas |
+
+## Métricas por Canal
+
+Resumo agregado por canal de comunicação:
+- 💚 **WhatsApp** — Taxa de entrega, aberturas
+- 📧 **E-mail** — Taxa de entrega, aberturas, cliques
+- 📱 **SMS** — Taxa de entrega
+
+## Gráfico de Distribuição
+
+Gráfico de pizza mostrando a proporção entre execuções com sucesso, falha e pendentes.
+
+💡 **Dica**: Monitore as taxas de falha regularmente. Falhas frequentes em WhatsApp podem indicar problemas na instância conectada.`,
+  },
+  {
+    id: 'communication-campaigns',
+    categoryId: 'communication',
+    title: 'Central de Campanhas',
+    icon: Megaphone,
+    description: 'Gerencie campanhas de VoIP, SMS e comunicação unificada em um só lugar.',
+    readTime: '6 min',
+    content: `A **Central de Campanhas** unifica a gestão de campanhas de VoIP, SMS e comunicação em uma única interface com créditos compartilhados.
+
+## Campanhas de VoIP
+
+Crie campanhas de ligação em massa com áudio pré-gravado:
+
+1. Clique em **"Nova Campanha de VoIP"**
+2. Defina o **nome** e faça upload do **áudio** (MP3 ou WAV)
+3. Selecione as **tags** dos contatos que receberão a ligação
+4. Opcionalmente, defina uma **mensagem de fallback** (enviada por WhatsApp se a ligação não for atendida)
+5. **Agende** ou envie imediatamente
+
+### Métricas de VoIP
+- Total de chamadas, atendidas, não atendidas, falhadas
+- Créditos consumidos por campanha
+
+## Campanhas de SMS
+
+Envie SMS em massa para segmentos de contatos:
+
+1. Clique em **"Nova Campanha de SMS"**
+2. Escreva a **mensagem** (até 160 caracteres)
+3. Selecione as **tags** dos destinatários
+4. Envie ou agende
+
+## Créditos de Comunicação
+
+Todas as campanhas consomem **créditos de comunicação**:
+
+- Compre pacotes na aba **"Créditos"**
+- Veja o histórico de transações
+- Monitore o saldo em tempo real
+
+## Boas Práticas
+
+- 📊 **Monitore créditos** antes de campanhas grandes
+- 🎯 **Segmente por tags** para campanhas mais relevantes
+- ⏰ **Agende campanhas** para horários de maior engajamento
+- 📱 **Use fallback** no VoIP para garantir que a mensagem chegue
+
+💡 **Dica**: Combine campanhas de VoIP + SMS para máximo alcance: ligue primeiro, envie SMS para quem não atendeu.`,
+  },
 ];
 

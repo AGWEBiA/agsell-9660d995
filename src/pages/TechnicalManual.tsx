@@ -1569,10 +1569,167 @@ Calcular probabilidade de conversão de leads usando IA, baseado em comportament
 
 ---
 
+# 18. CHATBOT BUILDER
+
+## 18.1 Objetivo
+Criar chatbots visuais com fluxo de nós para atendimento automatizado multicanal (WhatsApp, Instagram, Telegram).
+
+## 18.2 Tipos de Nós
+
+| Nó | Tipo | Descrição |
+|-----|------|-----------|
+| \\\`welcome\\\` | Mensagem | Mensagem de boas-vindas |
+| \\\`text_message\\\` | Mensagem | Texto livre |
+| \\\`menu\\\` | Mensagem | Menu de opções numeradas |
+| \\\`ask_input\\\` | Coleta | Solicita dados do usuário |
+| \\\`condition\\\` | Lógica | Avalia regras e bifurca o fluxo |
+| \\\`add_tag\\\` / \\\`remove_tag\\\` | Ação | Gerencia tags do contato |
+| \\\`webhook\\\` | Ação | Chamada HTTP externa |
+| \\\`delay\\\` | Ação | Aguarda tempo antes de continuar |
+| \\\`ai_response\\\` | IA | Resposta gerada por IA |
+| \\\`ai_mission\\\` | IA | IA executa tarefa específica |
+| \\\`transfer_department\\\` | Transferência | Redireciona para departamento |
+| \\\`transfer_agent\\\` | Transferência | Redireciona para agente específico |
+| \\\`transfer_human\\\` | Transferência | Encaminha para atendimento humano |
+| \\\`close_conversation\\\` | Transferência | Finaliza a conversa |
+| \\\`no_interaction\\\` | Fallback | Ação quando não há resposta |
+
+## 18.3 Regras de Ativação (ChatbotRule)
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| \\\`name\\\` | text | Nome da regra |
+| \\\`departments\\\` | string[] | Departamentos aplicáveis |
+| \\\`officeHours\\\` | object | Horário de ativação (enabled, start, end, days) |
+| \\\`includeTags\\\` | string[] | Tags necessárias para ativar |
+| \\\`excludeTags\\\` | string[] | Tags que impedem ativação |
+| \\\`channels\\\` | string[] | Canais aplicáveis |
+| \\\`isActive\\\` | boolean | Regra ativa/inativa |
+
+## 18.4 Rota
+- \\\`/chatbot-builder\\\` — Autenticado
+
+---
+
+# 19. PLANEJADOR DE FUNIL E BI
+
+## 19.1 Planejador de Funil (\\\`/funnel-planner\\\`)
+Criação visual de funis de marketing/vendas com etapas tipadas.
+
+### Tipos de Etapa
+- \\\`traffic\\\` — Fontes de tráfego
+- \\\`landing_page\\\` — Páginas de captura
+- \\\`automation\\\` — Fluxos de nutrição
+- \\\`conversion\\\` — Pontos de venda
+- \\\`custom\\\` — Etapas personalizadas
+
+### Campos da Etapa
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| \\\`name\\\` | text | Nome da etapa |
+| \\\`type\\\` | text | Tipo (traffic, landing_page, etc.) |
+| \\\`description\\\` | text | Descrição |
+| \\\`metrics\\\` | array | KPIs (label + value) |
+| \\\`links\\\` | array | URLs associadas |
+
+## 19.2 BI do Funil (\\\`/funnel-bi\\\`)
+Dashboard analítico com funil visual, taxas de conversão, drop-off por etapa e performance por canal.
+
+### Métricas
+- Conversão total (visitantes → clientes)
+- Drop-off por transição de etapa
+- Performance comparativa por canal (WhatsApp, E-mail, Instagram, SMS)
+
+---
+
+# 20. CENTRAL DE CAMPANHAS UNIFICADA
+
+## 20.1 Objetivo
+Unificar campanhas de VoIP e SMS em uma única interface com créditos de comunicação compartilhados.
+
+## 20.2 Rota
+- \\\`/communication-campaigns\\\` — Autenticado
+
+## 20.3 Campanhas VoIP
+- Upload de áudio (MP3/WAV)
+- Segmentação por tags
+- Fallback por WhatsApp
+- Agendamento
+- Métricas: chamadas realizadas, atendidas, falhadas, créditos consumidos
+
+## 20.4 Campanhas SMS
+- Mensagem de texto (até 160 caracteres)
+- Segmentação por tags
+- Agendamento
+
+## 20.5 Créditos de Comunicação
+- Saldo unificado para VoIP e SMS
+- Pacotes de créditos via Stripe/Kiwify
+- Histórico de transações
+
+---
+
+# 21. MÉTRICAS DE AUTOMAÇÃO
+
+## 21.1 Rota
+- \\\`/automation-metrics\\\` — Autenticado
+
+## 21.2 Dashboard
+- Filtro por automação específica
+- Métricas granulares por etapa: enviados, entregues, falhados, abertos, clicados, taxa de sucesso
+- Resumo por canal (WhatsApp, E-mail, SMS)
+- Gráfico de distribuição (sucesso/falha/pendente)
+
+---
+
+# 22. COMPARTILHAMENTO DE AUTOMAÇÕES POR CÓDIGO
+
+## 22.1 Componente: \\\`CampaignCodeShare\\\`
+
+### Exportação
+- Serializa automação em JSON → Base64
+- Versão do formato: \\\`v: 1\\\`
+- Campos exportados: name, trigger_type, trigger_config, actions
+
+### Importação
+- Decodifica Base64 → JSON
+- Valida estrutura (versão, campos obrigatórios)
+- Cria nova automação na conta do usuário
+- IDs internos (tags, formulários) precisam ser ajustados manualmente
+
+---
+
+# 23. JORNADA DE TRABALHO DO SAC
+
+## 23.1 Componente: \\\`WorkingHoursConfig\\\`
+
+### Modos
+| Modo | Descrição |
+|------|-----------|
+| \\\`always\\\` | SAC disponível 24/7 |
+| \\\`business_hours\\\` | Horário comercial padrão |
+| \\\`custom\\\` | Configuração livre por dia |
+
+### Configuração por Dia
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| \\\`enabled\\\` | boolean | Dia ativo/inativo |
+| \\\`start\\\` | string | Horário de início (HH:MM) |
+| \\\`end\\\` | string | Horário de fim (HH:MM) |
+
+### Campos Adicionais
+- \\\`timezone\\\` — Fuso horário (ex: America/Sao_Paulo)
+- \\\`offlineMessage\\\` — Mensagem exibida fora do horário
+
+### Rota
+- Disponível em \\\`/inbox-settings\\\` → aba "Horários"
+
+---
+
 **FIM DO DOCUMENTO**
 
 *Este manual reflete o estado atual do sistema AG Sell em produção (Março 2026). Atualizações devem ser versionadas e registradas neste documento.*
-`;
+\`;
 
 export default function TechnicalManual() {
   const navigate = useNavigate();

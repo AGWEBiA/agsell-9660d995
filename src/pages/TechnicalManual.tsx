@@ -1772,18 +1772,18 @@ export default function TechnicalManual() {
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(new RegExp('\x60\x60\x60(\\w*)\\n([\\s\\S]*?)\x60\x60\x60', 'g'), '<pre class="bg-muted rounded-lg p-4 my-4 overflow-x-auto text-sm font-mono border border-border"><code>$2</code></pre>')
       .replace(new RegExp('\x60([^\x60]+)\x60', 'g'), '<code class="bg-muted px-1.5 py-0.5 rounded text-sm font-mono text-primary">$1</code>')
-      .replace(/^\| (.+) \|$/gm, (match) => {
-        const cells = match.split('|').filter(c => c.trim());
-        const isHeader = cells.some(c => /^[-]+$/.test(c.trim()));
+      .replace(/^\| (.+) \|$/gm, function(match) {
+        var cells = match.split('|').filter(function(c) { return c.trim(); });
+        var isHeader = cells.some(function(c) { return /^[-]+$/.test(c.trim()); });
         if (isHeader) return '';
-        const tag = 'td';
-        return `<tr>${cells.map(c => `<${tag} class="border border-border px-3 py-2 text-sm">${c.trim()}</${tag}>`).join('')}</tr>`;
+        var cellsHtml = cells.map(function(c) { return '<td class="border border-border px-3 py-2 text-sm">' + c.trim() + '</td>'; }).join('');
+        return '<tr>' + cellsHtml + '</tr>';
       })
-      .replace(/(<tr>[\s\S]*?<\/tr>\n?)+/g, (match) => {
-        const rows = match.trim().split('\n').filter(r => r.trim());
+      .replace(/(<tr>[\s\S]*?<\/tr>\n?)+/g, function(match) {
+        var rows = match.trim().split('\n').filter(function(r) { return r.trim(); });
         if (rows.length === 0) return match;
-        const firstRow = rows[0].replace(/td/g, 'th').replace(/text-sm/g, 'text-sm font-semibold bg-muted/50');
-        return `<table class="w-full border-collapse border border-border my-4 rounded-lg overflow-hidden">${firstRow}${rows.slice(1).join('\n')}</table>`;
+        var firstRow = rows[0].replace(/td/g, 'th').replace(/text-sm/g, 'text-sm font-semibold bg-muted/50');
+        return '<table class="w-full border-collapse border border-border my-4 rounded-lg overflow-hidden">' + firstRow + rows.slice(1).join('\n') + '</table>';
       })
       .replace(/^- (.*$)/gm, '<li class="ml-4 text-sm text-muted-foreground list-disc">$1</li>')
       .replace(/^---$/gm, '<hr class="my-8 border-border" />')

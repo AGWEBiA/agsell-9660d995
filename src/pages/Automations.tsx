@@ -48,6 +48,7 @@ import { useAutomations } from '@/hooks/useAutomations';
 import { useForms } from '@/hooks/useForms';
 import { AutomationActionsEditor, Action } from '@/components/automations/AutomationActionsEditor';
 import { AutomationTemplates, automationTemplates, type AutomationTemplate } from '@/components/automations/AutomationTemplates';
+import { CampaignCodeShare } from '@/components/automations/CampaignCodeShare';
 import { PageHeader, EmptyState, FormField } from '@/components/ui/help-tooltip';
 import type { Json } from '@/integrations/supabase/types';
 

@@ -54,10 +54,10 @@ export function usePlans() {
   const plansQuery = useQuery({
     queryKey: ['plans'],
     queryFn: async () => {
+      // Use the safe public view that excludes Stripe/Kiwify internal IDs
       const { data, error } = await supabase
-        .from('plans')
+        .from('plans_public' as any)
         .select('*')
-        .eq('is_active', true)
         .order('price_monthly', { ascending: true });
 
       if (error) throw error;

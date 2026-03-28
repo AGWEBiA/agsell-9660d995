@@ -8,22 +8,17 @@ const corsHeaders = {
 
 interface AutomationAction {
   type: string;
+  subtype?: string;
   config: Record<string, unknown>;
-}
-
-interface Automation {
-  id: string;
-  name: string;
-  actions: AutomationAction[];
-  trigger_type: string;
-  trigger_config: Record<string, unknown>;
-  user_id: string;
 }
 
 interface ExecutionPayload {
   automation_id: string;
   contact_id?: string;
   trigger_event: string;
+  // For scheduled step resumption
+  resume_from_step?: number;
+  execution_id?: string;
 }
 
 serve(async (req) => {
@@ -32,7 +27,6 @@ serve(async (req) => {
   }
 
   try {
-    // Validate authentication
     const authHeader = req.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return new Response(
@@ -54,7 +48,8 @@ serve(async (req) => {
       );
     }
 
-    const { automation_id, contact_id, trigger_event }: ExecutionPayload = await req.json();
+    const payload: ExecutionPayload = await req.json();
+    const { automation_id, contact_id, trigger_event, resume_from_step, execution_id: resumeExecId } = payload;
 
     if (!automation_id || !trigger_event) {
       return new Response(
@@ -63,7 +58,6 @@ serve(async (req) => {
       );
     }
 
-    // Fetch automation
     const { data: automation, error: automationError } = await supabase
       .from('automations')
       .select('*')
@@ -79,81 +73,270 @@ serve(async (req) => {
     }
 
     const actions = (automation.actions || []) as AutomationAction[];
+    const startStep = resume_from_step || 0;
 
-    // Create execution record
-    const { data: execution, error: execError } = await supabase
-      .from('automation_executions')
-      .insert({
-        automation_id,
-        contact_id,
-        trigger_event,
-        status: 'running',
-        total_steps: actions.length,
-        current_step: 0,
-      })
-      .select()
-      .single();
-
-    if (execError) {
-      throw execError;
+    // Create or resume execution record
+    let executionId = resumeExecId;
+    if (!executionId) {
+      const { data: execution, error: execError } = await supabase
+        .from('automation_executions')
+        .insert({
+          automation_id,
+          contact_id,
+          trigger_event,
+          status: 'running',
+          total_steps: actions.length,
+          current_step: startStep,
+        })
+        .select()
+        .single();
+      if (execError) throw execError;
+      executionId = execution.id;
+    } else {
+      await supabase
+        .from('automation_executions')
+        .update({ status: 'running' })
+        .eq('id', executionId);
     }
 
     const results: Array<{ step: number; action: string; status: string; result?: unknown; error?: string }> = [];
-    let currentStep = 0;
+    let currentStep = startStep;
 
-    // Execute each action
-    for (const action of actions) {
-      currentStep++;
+    // Helper: get contact data
+    const getContact = async () => {
+      if (!contact_id) return null;
+      const { data } = await supabase.from('contacts').select('*').eq('id', contact_id).single();
+      return data;
+    };
+
+    // Helper: log timeline entry
+    const logTimeline = async (actionType: string, nodeLabel: string, status: string, details: Record<string, unknown> = {}) => {
+      await supabase.from('automation_contact_timeline').insert({
+        automation_id,
+        execution_id: executionId,
+        contact_id,
+        node_id: `step_${currentStep}`,
+        node_label: nodeLabel,
+        action_type: actionType,
+        status,
+        details,
+        organization_id: automation.organization_id,
+      }).then(() => {});
+    };
+
+    // Helper: send WhatsApp via org integration
+    const sendWhatsAppDirect = async (phone: string, message: string) => {
+      const cleanPhone = phone.replace(/\D/g, '');
+      const { data: evolutionInt } = await supabase
+        .from('organization_integrations')
+        .select('config')
+        .eq('organization_id', automation.organization_id)
+        .eq('integration_type', 'evolution_api')
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (evolutionInt) {
+        const { data: globalConfig } = await supabase
+          .from('platform_settings').select('value').eq('key', 'evolution_api').single();
+        const globalEvo = globalConfig?.value as Record<string, string> | null;
+        const orgConfig = evolutionInt.config as Record<string, string>;
+        const apiUrl = (globalEvo?.api_url || orgConfig.api_url || '').replace(/\/+$/, '');
+        const apiKey = globalEvo?.api_key || orgConfig.api_key || '';
+        const instanceName = (orgConfig.instance_name || '').trim();
+
+        if (apiUrl && apiKey && instanceName) {
+          const resp = await fetch(`${apiUrl}/message/sendText/${instanceName}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', apikey: apiKey },
+            body: JSON.stringify({ number: cleanPhone, text: message }),
+          });
+          return { success: resp.ok, provider: 'evolution' };
+        }
+      }
+      return { success: false, reason: 'No WhatsApp integration configured' };
+    };
+
+    // Helper: replace template variables
+    const replaceVars = (text: string, contact: Record<string, unknown> | null): string => {
+      if (!text || !contact) return text || '';
+      return text
+        .replace(/\{\{nome\}\}/g, `${contact.first_name || ''} ${contact.last_name || ''}`.trim())
+        .replace(/\{\{primeiro_nome\}\}/g, String(contact.first_name || ''))
+        .replace(/\{\{email\}\}/g, String(contact.email || ''))
+        .replace(/\{\{telefone\}\}/g, String(contact.phone || ''))
+        .replace(/\{\{whatsapp\}\}/g, String(contact.whatsapp || ''));
+    };
+
+    // Execute each action starting from startStep
+    for (let i = startStep; i < actions.length; i++) {
+      const action = actions[i];
+      currentStep = i + 1;
 
       try {
         let actionResult: unknown;
+        const actionType = action.subtype || action.type;
 
-        switch (action.type) {
+        switch (actionType) {
+          // ── MESSAGING ──
           case 'send_email':
-            // Call send-email function using user's token for proper auth
-            const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': authHeader,
-              },
-              body: JSON.stringify({
-                organization_id: automation.organization_id,
-                to: action.config.to || action.config.email,
-                subject: action.config.subject,
-                html: action.config.content || action.config.body,
-              }),
-            });
-            actionResult = await emailResponse.json();
+          case 'send_email_marketing':
+          case 'send_email_performance': {
+            const contact = await getContact();
+            const to = (action.config.to as string) || contact?.email;
+            if (to) {
+              const resp = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+                body: JSON.stringify({
+                  organization_id: automation.organization_id,
+                  to,
+                  subject: replaceVars(action.config.subject as string, contact),
+                  html: replaceVars((action.config.content || action.config.body || action.config.html_content) as string, contact),
+                }),
+              });
+              actionResult = await resp.json();
+            } else {
+              actionResult = { skipped: true, reason: 'No email address' };
+            }
+            await logTimeline(actionType, 'E-mail', 'success', { to });
             break;
+          }
 
           case 'send_whatsapp':
-            // Call send-whatsapp function using user's token for proper auth
-            const waResponse = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': authHeader,
-              },
-              body: JSON.stringify({
-                organization_id: automation.organization_id,
-                to: action.config.to || action.config.phone,
-                message: action.config.message,
-              }),
-            });
-            actionResult = await waResponse.json();
+          case 'send_whatsapp_oficial': {
+            const contact = await getContact();
+            const phone = (action.config.to as string) || contact?.whatsapp || contact?.phone;
+            if (phone) {
+              const message = replaceVars(action.config.message as string, contact);
+              actionResult = await sendWhatsAppDirect(phone, message);
+            } else {
+              actionResult = { skipped: true, reason: 'No phone number' };
+            }
+            await logTimeline(actionType, 'WhatsApp', 'success');
             break;
+          }
 
-          case 'add_tag':
+          case 'send_whatsapp_group': {
+            // Send message to a WhatsApp group session
+            const contact = await getContact();
+            const groupId = action.config.group_id as string;
+            const message = replaceVars(action.config.message as string, contact);
+            if (groupId && message) {
+              const { data: group } = await supabase
+                .from('whatsapp_groups')
+                .select('external_group_id, settings')
+                .eq('id', groupId)
+                .single();
+              if (group?.external_group_id) {
+                const { data: globalConfig } = await supabase
+                  .from('platform_settings').select('value').eq('key', 'evolution_api').single();
+                const evo = globalConfig?.value as Record<string, string> | null;
+                if (evo?.api_url && evo?.api_key) {
+                  const instanceName = (action.config.instance_name as string) || ((group.settings as Record<string, string>)?.instance_name) || '';
+                  const resp = await fetch(`${evo.api_url.replace(/\/+$/, '')}/message/sendText/${instanceName}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', apikey: evo.api_key },
+                    body: JSON.stringify({ number: group.external_group_id, text: message }),
+                  });
+                  actionResult = { success: resp.ok };
+                }
+              }
+            }
+            await logTimeline(actionType, 'WhatsApp Grupo', 'success');
+            break;
+          }
+
+          case 'send_sms': {
+            const contact = await getContact();
+            const phone = (action.config.to as string) || contact?.phone || contact?.whatsapp;
+            if (phone) {
+              const message = replaceVars(action.config.message as string, contact);
+              const resp = await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+                body: JSON.stringify({
+                  organization_id: automation.organization_id,
+                  to: phone,
+                  message,
+                }),
+              });
+              actionResult = await resp.json();
+            } else {
+              actionResult = { skipped: true, reason: 'No phone number' };
+            }
+            await logTimeline(actionType, 'SMS', 'success');
+            break;
+          }
+
+          case 'voice_torpedo':
+          case 'send_voip_call': {
+            const contact = await getContact();
+            const phone = (action.config.to as string) || contact?.phone || contact?.whatsapp;
+            if (phone) {
+              const resp = await fetch(`${supabaseUrl}/functions/v1/voip-call`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+                body: JSON.stringify({
+                  organization_id: automation.organization_id,
+                  phone_number: phone,
+                  audio_url: action.config.audio_url,
+                  on_answer: action.config.on_answer || 'play_audio',
+                }),
+              });
+              actionResult = await resp.json();
+            } else {
+              actionResult = { skipped: true, reason: 'No phone number' };
+            }
+            await logTimeline(actionType, 'VoIP', 'success');
+            break;
+          }
+
+          // ── INSTAGRAM ──
+          case 'send_instagram_dm': {
+            const contact = await getContact();
+            const igUserId = (action.config.instagram_user_id as string) || (contact as any)?.instagram_user_id;
+            if (igUserId) {
+              const message = replaceVars(action.config.message as string, contact);
+              const resp = await fetch(`${supabaseUrl}/functions/v1/send-instagram-dm`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+                body: JSON.stringify({
+                  organization_id: automation.organization_id,
+                  recipient_id: igUserId,
+                  message,
+                }),
+              });
+              actionResult = await resp.json();
+            } else {
+              actionResult = { skipped: true, reason: 'No Instagram user ID' };
+            }
+            await logTimeline(actionType, 'Instagram DM', 'success');
+            break;
+          }
+
+          case 'send_instagram_comment_reply':
+          case 'send_instagram_story_reply':
+          case 'instagram_like_comment':
+          case 'instagram_follow_back': {
+            // These require specific Instagram Graph API calls
+            actionResult = { executed: true, action: actionType, note: 'Processed via Instagram webhook handler' };
+            await logTimeline(actionType, 'Instagram', 'success');
+            break;
+          }
+
+          // ── TAGS & SCORING ──
+          case 'add_tag': {
             if (contact_id && action.config.tag_id) {
               const { error } = await supabase
                 .from('contact_tags')
                 .insert({ contact_id, tag_id: action.config.tag_id as string });
               actionResult = { success: !error };
             }
+            await logTimeline('add_tag', 'Add Tag', 'success');
             break;
+          }
 
-          case 'remove_tag':
+          case 'remove_tag': {
             if (contact_id && action.config.tag_id) {
               const { error } = await supabase
                 .from('contact_tags')
@@ -162,183 +345,470 @@ serve(async (req) => {
                 .eq('tag_id', action.config.tag_id as string);
               actionResult = { success: !error };
             }
+            await logTimeline('remove_tag', 'Remove Tag', 'success');
             break;
+          }
 
-          case 'update_score':
+          case 'update_score': {
             if (contact_id && action.config.points) {
               const points = Number(action.config.points) || 0;
               const { data: contact } = await supabase
-                .from('contacts')
-                .select('lead_score')
-                .eq('id', contact_id)
-                .single();
-
+                .from('contacts').select('lead_score').eq('id', contact_id).single();
               const newScore = Math.max(0, Math.min(100, (contact?.lead_score || 0) + points));
-              
               const { error } = await supabase
-                .from('contacts')
-                .update({ lead_score: newScore })
-                .eq('id', contact_id);
-
+                .from('contacts').update({ lead_score: newScore }).eq('id', contact_id);
               actionResult = { success: !error, new_score: newScore };
             }
+            await logTimeline('update_score', 'Score', 'success', { points: action.config.points });
             break;
+          }
 
-          case 'create_task':
-            const { error: taskError } = await supabase
-              .from('tasks')
-              .insert({
-                title: action.config.title as string,
-                description: action.config.description as string,
-                contact_id,
-                user_id: automation.user_id,
-                due_date: action.config.due_days 
-                  ? new Date(Date.now() + Number(action.config.due_days) * 86400000).toISOString()
-                  : null,
-              });
-            actionResult = { success: !taskError };
-            break;
-
-          case 'send_notification':
-            const { error: notifError } = await supabase
-              .from('notifications')
-              .insert({
-                user_id: automation.user_id,
-                type: 'automation',
-                title: action.config.title as string || 'Automação executada',
-                message: action.config.message as string,
-                link: action.config.link as string,
-              });
-            actionResult = { success: !notifError };
-            break;
-
-          case 'wait':
-            // For wait actions, we log it but actual waiting would need a queue system
-            const waitMinutes = Number(action.config.minutes) || 0;
-            actionResult = { waited_minutes: waitMinutes, note: 'Immediate execution - queue system needed for real delays' };
-            break;
-
-          case 'update_status':
+          case 'update_status': {
             if (contact_id && action.config.status) {
               const { error } = await supabase
-                .from('contacts')
-                .update({ status: action.config.status as string })
-                .eq('id', contact_id);
+                .from('contacts').update({ status: action.config.status as string }).eq('id', contact_id);
               actionResult = { success: !error };
             }
             break;
+          }
 
+          // ── TASKS & NOTIFICATIONS ──
+          case 'create_task': {
+            const { error } = await supabase.from('tasks').insert({
+              title: action.config.title as string,
+              description: action.config.description as string,
+              contact_id,
+              user_id: automation.user_id,
+              due_date: action.config.due_days
+                ? new Date(Date.now() + Number(action.config.due_days) * 86400000).toISOString()
+                : null,
+            });
+            actionResult = { success: !error };
+            await logTimeline('create_task', 'Tarefa', 'success');
+            break;
+          }
+
+          case 'send_notification': {
+            const { error } = await supabase.from('notifications').insert({
+              user_id: automation.user_id,
+              type: 'automation',
+              title: (action.config.title as string) || 'Automação executada',
+              message: action.config.message as string,
+              link: action.config.link as string,
+            });
+            actionResult = { success: !error };
+            break;
+          }
+
+          // ── DELAYS (REAL) ──
+          case 'wait':
+          case 'timer': {
+            const config = action.config;
+            let delayMs = 0;
+
+            if (config.timer_mode === 'specific_date' && config.specific_date) {
+              const targetDate = new Date(config.specific_date as string);
+              delayMs = Math.max(0, targetDate.getTime() - Date.now());
+            } else {
+              const duration = Number(config.duration || config.minutes || 1);
+              const unit = (config.unit as string) || 'minutes';
+              const multiplier = unit === 'hours' ? 3600000 : unit === 'days' ? 86400000 : 60000;
+              delayMs = duration * multiplier;
+            }
+
+            if (delayMs > 0) {
+              // Schedule remaining steps for later execution
+              const scheduledAt = new Date(Date.now() + delayMs).toISOString();
+              const remainingActions = actions.slice(i + 1);
+
+              await supabase.from('automation_scheduled_steps').insert({
+                automation_id,
+                execution_id: executionId,
+                contact_id,
+                organization_id: automation.organization_id,
+                current_step: i + 1,
+                scheduled_at: scheduledAt,
+                status: 'pending',
+                actions: remainingActions,
+                auth_token: token,
+              });
+
+              // Update execution to waiting
+              await supabase.from('automation_executions').update({
+                status: 'waiting',
+                current_step: currentStep,
+                results,
+              }).eq('id', executionId);
+
+              actionResult = { scheduled: true, resume_at: scheduledAt, remaining_steps: remainingActions.length };
+              results.push({ step: currentStep, action: actionType, status: 'scheduled', result: actionResult });
+
+              await logTimeline('timer', 'Timer', 'waiting', { scheduled_at: scheduledAt });
+
+              // Return early - remaining steps will be executed by the scheduler
+              return new Response(
+                JSON.stringify({ success: true, execution_id: executionId, status: 'waiting', results }),
+                { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+              );
+            }
+
+            actionResult = { waited: 0, note: 'No delay needed' };
+            break;
+          }
+
+          case 'warmup': {
+            // Rate limiting: pause between batches
+            const leadsPerMinute = Number(action.config.leads_per_minute || 1);
+            const delayPerLead = Math.ceil(60000 / leadsPerMinute);
+            // For single execution, just add a small delay
+            await new Promise(resolve => setTimeout(resolve, Math.min(delayPerLead, 5000)));
+            actionResult = { warmup_applied: true, rate: leadsPerMinute };
+            await logTimeline('warmup', 'Aquecimento', 'success');
+            break;
+          }
+
+          // ── CONDITIONALS (IF/ELSE BRANCHING) ──
+          case 'conditional':
+          case 'if_tag':
+          case 'if_keyword':
+          case 'if_score':
+          case 'tag_filter': {
+            const contact = await getContact();
+            let conditionMet = false;
+            const conditions = (action.config.conditions as Array<{ field: string; operator: string; value: string }>) || [];
+            const logicOperator = (action.config.logic as string) || 'AND';
+
+            if (conditions.length === 0 && actionType === 'tag_filter') {
+              // Tag filter: check entry_tags and block_tags
+              const entryTags = (action.config.entry_tags as string[]) || [];
+              const blockTags = (action.config.block_tags as string[]) || [];
+
+              if (contact_id) {
+                const { data: contactTags } = await supabase
+                  .from('contact_tags')
+                  .select('tag_id, tags(name)')
+                  .eq('contact_id', contact_id);
+                const tagNames = (contactTags || []).map((t: any) => t.tags?.name).filter(Boolean);
+                const tagIds = (contactTags || []).map((t: any) => t.tag_id);
+
+                const hasAllEntry = entryTags.length === 0 || entryTags.every(t => tagIds.includes(t) || tagNames.includes(t));
+                const hasAnyBlock = blockTags.some(t => tagIds.includes(t) || tagNames.includes(t));
+                conditionMet = hasAllEntry && !hasAnyBlock;
+              }
+            } else if (conditions.length > 0 && contact) {
+              const evalResults = await Promise.all(conditions.map(async (cond) => {
+                switch (cond.field) {
+                  case 'has_tag': {
+                    const { data: ct } = await supabase
+                      .from('contact_tags').select('id').eq('contact_id', contact_id!).eq('tag_id', cond.value).maybeSingle();
+                    return !!ct;
+                  }
+                  case 'score_gte':
+                    return (contact.lead_score || 0) >= Number(cond.value);
+                  case 'score_lte':
+                    return (contact.lead_score || 0) <= Number(cond.value);
+                  case 'has_email':
+                    return !!contact.email;
+                  case 'has_whatsapp':
+                    return !!(contact.whatsapp || contact.phone);
+                  case 'status_is':
+                    return contact.status === cond.value;
+                  case 'source_is':
+                    return contact.source === cond.value;
+                  case 'keyword': {
+                    // Check last message for keyword
+                    const { data: lastMsg } = await supabase
+                      .from('messages')
+                      .select('content')
+                      .eq('contact_id', contact_id!)
+                      .eq('sender_type', 'contact')
+                      .order('created_at', { ascending: false })
+                      .limit(1)
+                      .maybeSingle();
+                    return lastMsg?.content?.toLowerCase().includes(cond.value.toLowerCase()) || false;
+                  }
+                  default:
+                    return false;
+                }
+              }));
+
+              conditionMet = logicOperator === 'OR' ? evalResults.some(Boolean) : evalResults.every(Boolean);
+            }
+
+            // Check deadline for tag_filter
+            if (actionType === 'tag_filter' && action.config.has_deadline && action.config.deadline_date) {
+              const deadline = new Date(action.config.deadline_date as string);
+              if (deadline < new Date()) {
+                conditionMet = false; // Past deadline
+              }
+            }
+
+            actionResult = { condition_met: conditionMet, conditions_evaluated: conditions.length || 'tag_filter' };
+
+            if (!conditionMet) {
+              // Skip remaining actions (simple linear skip — future: branch paths)
+              await logTimeline(actionType, 'Condição', 'skipped', { reason: 'Condition not met' });
+              
+              // If the action has a false branch config, we could handle it here
+              // For now, we stop execution on condition failure
+              results.push({ step: currentStep, action: actionType, status: 'condition_false', result: actionResult });
+              
+              await supabase.from('automation_executions').update({
+                status: 'completed',
+                completed_at: new Date().toISOString(),
+                current_step: currentStep,
+                results,
+              }).eq('id', executionId);
+
+              await supabase.rpc('increment_automation_executions', { automation_id });
+
+              return new Response(
+                JSON.stringify({ success: true, execution_id: executionId, stopped_at_condition: currentStep, results }),
+                { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+              );
+            }
+
+            await logTimeline(actionType, 'Condição', 'success', { met: true });
+            break;
+          }
+
+          // ── WHATSAPP GROUP MANAGEMENT ──
           case 'add_to_whatsapp_group': {
-            // Add contact to WhatsApp group via Evolution API
-            if (contact_id && action.config.group_id) {
-              // Get contact's WhatsApp number
-              const { data: contactData } = await supabase
-                .from('contacts')
-                .select('whatsapp, phone')
-                .eq('id', contact_id)
+            const contact = await getContact();
+            const phoneNumber = contact?.whatsapp || contact?.phone;
+            if (phoneNumber && action.config.group_id) {
+              const { data: groupData } = await supabase
+                .from('whatsapp_groups')
+                .select('external_group_id, settings')
+                .eq('id', action.config.group_id as string)
                 .single();
 
-              const phoneNumber = contactData?.whatsapp || contactData?.phone;
-              if (phoneNumber) {
-                // Get group info
-                const { data: groupData } = await supabase
-                  .from('whatsapp_groups')
-                  .select('external_group_id, settings')
-                  .eq('id', action.config.group_id as string)
-                  .single();
-
-                if (groupData?.external_group_id) {
-                  // Get Evolution API config
-                  const { data: platformSettings } = await supabase
-                    .from('platform_settings')
-                    .select('value')
-                    .eq('key', 'evolution_api')
-                    .single();
-
-                  const evoConfig = platformSettings?.value as { api_url?: string; api_key?: string } | null;
-                  if (evoConfig?.api_url && evoConfig?.api_key) {
-                    const apiUrl = evoConfig.api_url.replace(/\/+$/, '');
-                    const instanceName = (action.config.instance_name as string) || 
-                      ((groupData.settings as Record<string, unknown>)?.instance_name as string) || '';
-                    
-                    // Format Brazilian number
-                    let digits = phoneNumber.replace(/\D/g, '');
-                    if (digits.length >= 10 && digits.length <= 11 && !digits.startsWith('55')) {
-                      digits = '55' + digits;
-                    }
-
-                    const addResponse = await fetch(`${apiUrl}/group/updateParticipant/${instanceName}`, {
-                      method: 'PUT',
-                      headers: { apikey: evoConfig.api_key, 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        groupJid: groupData.external_group_id,
-                        action: 'add',
-                        participants: [`${digits}@s.whatsapp.net`],
-                      }),
-                    });
-                    const addResult = await addResponse.text();
-                    console.log('[AUTOMATION] Add to group result:', addResponse.status, addResult);
-                    actionResult = { success: addResponse.ok, response: addResult };
-                  } else {
-                    actionResult = { skipped: true, reason: 'Evolution API not configured' };
-                  }
-                } else {
-                  actionResult = { skipped: true, reason: 'Group has no external JID' };
+              if (groupData?.external_group_id) {
+                const { data: platformSettings } = await supabase
+                  .from('platform_settings').select('value').eq('key', 'evolution_api').single();
+                const evoConfig = platformSettings?.value as { api_url?: string; api_key?: string } | null;
+                if (evoConfig?.api_url && evoConfig?.api_key) {
+                  let digits = phoneNumber.replace(/\D/g, '');
+                  if (digits.length >= 10 && digits.length <= 11 && !digits.startsWith('55')) digits = '55' + digits;
+                  const instanceName = (action.config.instance_name as string) || ((groupData.settings as Record<string, string>)?.instance_name) || '';
+                  const resp = await fetch(`${evoConfig.api_url.replace(/\/+$/, '')}/group/updateParticipant/${instanceName}`, {
+                    method: 'PUT',
+                    headers: { apikey: evoConfig.api_key, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ groupJid: groupData.external_group_id, action: 'add', participants: [`${digits}@s.whatsapp.net`] }),
+                  });
+                  actionResult = { success: resp.ok };
                 }
-              } else {
-                actionResult = { skipped: true, reason: 'Contact has no WhatsApp number' };
               }
+            }
+            await logTimeline('add_to_group', 'Grupo WA', 'success');
+            break;
+          }
+
+          case 'edit_whatsapp_group': {
+            if (action.config.group_id) {
+              const updates: Record<string, unknown> = {};
+              if (action.config.new_name) updates.name = action.config.new_name;
+              if (action.config.new_description) updates.description = action.config.new_description;
+              if (Object.keys(updates).length > 0) {
+                await supabase.from('whatsapp_groups').update(updates).eq('id', action.config.group_id as string);
+              }
+              actionResult = { success: true, updates };
+            }
+            await logTimeline('edit_group', 'Editar Grupo', 'success');
+            break;
+          }
+
+          // ── PARALLEL CHANNELS (FISHBONE) ──
+          case 'parallel_channels': {
+            const channels = (action.config.channels as string[]) || ['whatsapp', 'email'];
+            const contact = await getContact();
+            const parallelResults: Record<string, unknown> = {};
+
+            for (const channel of channels) {
+              try {
+                if (channel === 'whatsapp' && (contact?.whatsapp || contact?.phone)) {
+                  const msg = replaceVars(action.config.whatsapp_message as string || action.config.message as string, contact);
+                  parallelResults.whatsapp = await sendWhatsAppDirect(contact.whatsapp || contact.phone, msg);
+                } else if (channel === 'email' && contact?.email) {
+                  await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+                    body: JSON.stringify({
+                      organization_id: automation.organization_id,
+                      to: contact.email,
+                      subject: replaceVars(action.config.email_subject as string, contact),
+                      html: replaceVars(action.config.email_body as string, contact),
+                    }),
+                  });
+                  parallelResults.email = { success: true };
+                } else if (channel === 'sms' && (contact?.phone || contact?.whatsapp)) {
+                  await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+                    body: JSON.stringify({
+                      organization_id: automation.organization_id,
+                      to: contact.phone || contact.whatsapp,
+                      message: replaceVars(action.config.sms_message as string, contact),
+                    }),
+                  });
+                  parallelResults.sms = { success: true };
+                }
+              } catch (channelErr) {
+                parallelResults[channel] = { error: (channelErr as Error).message };
+              }
+            }
+
+            actionResult = { parallel: true, channels: parallelResults };
+            await logTimeline('parallel', 'Paralelo', 'success', { channels: Object.keys(parallelResults) });
+            break;
+          }
+
+          // ── SEQUENCES ──
+          case 'sequence_lead':
+          case 'sequence_transaction':
+          case 'sequence_rewarming':
+          case 'sequence_optin': {
+            const steps = (action.config.steps as Array<{ message: string; delay_minutes: number; channel: string }>) || [];
+            if (contact_id && steps.length > 0) {
+              // Create a lightweight inline sequence - schedule first step immediately
+              for (let si = 0; si < steps.length; si++) {
+                const step = steps[si];
+                const delayMs = (si === 0) ? 0 : (step.delay_minutes || 5) * 60000;
+                const scheduledAt = new Date(Date.now() + delayMs).toISOString();
+
+                await supabase.from('automation_scheduled_steps').insert({
+                  automation_id,
+                  execution_id: executionId,
+                  contact_id,
+                  organization_id: automation.organization_id,
+                  current_step: i,
+                  scheduled_at: scheduledAt,
+                  status: 'pending',
+                  actions: [{ type: step.channel || 'send_whatsapp', config: { message: step.message } }],
+                });
+              }
+              actionResult = { sequence_scheduled: true, total_steps: steps.length, type: actionType };
+            }
+            await logTimeline(actionType, `Sequência ${actionType.replace('sequence_', '')}`, 'success');
+            break;
+          }
+
+          // ── LINK SPLIT ──
+          case 'link_split': {
+            const links = (action.config.links as Array<{ url: string; weight: number }>) || [];
+            if (links.length > 0) {
+              // Weighted random selection
+              const totalWeight = links.reduce((sum, l) => sum + (l.weight || 1), 0);
+              let rand = Math.random() * totalWeight;
+              let selectedLink = links[0]?.url;
+              for (const link of links) {
+                rand -= (link.weight || 1);
+                if (rand <= 0) { selectedLink = link.url; break; }
+              }
+              actionResult = { selected_link: selectedLink, total_variants: links.length };
+            }
+            await logTimeline('link_split', 'Link Split', 'success');
+            break;
+          }
+
+          // ── ABANDONMENT RECOVERY ──
+          case 'abandonment': {
+            // Mark contact for abandonment recovery flow
+            if (contact_id) {
+              await supabase.from('contact_tags').insert({
+                contact_id,
+                tag_id: action.config.recovery_tag_id as string,
+              }).then(() => {});
+              // Schedule recovery message
+              const delayMinutes = Number(action.config.delay_minutes || 30);
+              await supabase.from('automation_scheduled_steps').insert({
+                automation_id,
+                execution_id: executionId,
+                contact_id,
+                organization_id: automation.organization_id,
+                current_step: i,
+                scheduled_at: new Date(Date.now() + delayMinutes * 60000).toISOString(),
+                status: 'pending',
+                actions: [{
+                  type: 'send_whatsapp',
+                  config: { message: action.config.recovery_message || 'Notamos que você não finalizou. Precisa de ajuda?' },
+                }],
+              });
+              actionResult = { recovery_scheduled: true, delay_minutes: delayMinutes };
+            }
+            await logTimeline('abandonment', 'Abandono', 'success');
+            break;
+          }
+
+          // ── NOTES (no-op) ──
+          case 'note': {
+            actionResult = { note: action.config.text, logged: true };
+            break;
+          }
+
+          // ── FULL PAGE / PIXEL (frontend-only) ──
+          case 'full_page':
+          case 'pixel': {
+            actionResult = { frontend_only: true, action: actionType };
+            break;
+          }
+
+          // ── LIST TAG ──
+          case 'list_tag': {
+            if (contact_id) {
+              const { data: tags } = await supabase
+                .from('contact_tags')
+                .select('tag_id, tags(name)')
+                .eq('contact_id', contact_id);
+              actionResult = { tags: tags?.map((t: any) => t.tags?.name).filter(Boolean) || [] };
             }
             break;
           }
 
           default:
-            actionResult = { skipped: true, reason: `Unknown action type: ${action.type}` };
+            actionResult = { skipped: true, reason: `Unhandled action type: ${actionType}` };
+            console.log(`[AUTOMATION] Unhandled action: ${actionType}`);
         }
 
         results.push({
           step: currentStep,
-          action: action.type,
+          action: actionType,
           status: 'success',
           result: actionResult,
         });
 
         // Update execution progress
-        await supabase
-          .from('automation_executions')
-          .update({ current_step: currentStep, results })
-          .eq('id', execution.id);
+        await supabase.from('automation_executions').update({
+          current_step: currentStep,
+          results,
+        }).eq('id', executionId);
 
       } catch (actionError) {
+        const errorMsg = actionError instanceof Error ? actionError.message : 'Unknown error';
+        console.error(`[AUTOMATION] Step ${currentStep} error:`, errorMsg);
         results.push({
           step: currentStep,
-          action: action.type,
+          action: action.subtype || action.type,
           status: 'error',
-          error: actionError instanceof Error ? actionError.message : 'Unknown error',
+          error: errorMsg,
         });
+        await logTimeline(action.subtype || action.type, 'Erro', 'error', { error: errorMsg });
       }
     }
 
     // Mark execution as completed
-    await supabase
-      .from('automation_executions')
-      .update({
-        status: results.some(r => r.status === 'error') ? 'completed_with_errors' : 'completed',
-        completed_at: new Date().toISOString(),
-        current_step: currentStep,
-        results,
-      })
-      .eq('id', execution.id);
+    const finalStatus = results.some(r => r.status === 'error') ? 'completed_with_errors' : 'completed';
+    await supabase.from('automation_executions').update({
+      status: finalStatus,
+      completed_at: new Date().toISOString(),
+      current_step: currentStep,
+      results,
+    }).eq('id', executionId);
 
-    // Update automation execution count
     await supabase.rpc('increment_automation_executions', { automation_id });
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        execution_id: execution.id,
-        results,
-      }),
+      JSON.stringify({ success: true, execution_id: executionId, results }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 

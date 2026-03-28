@@ -15,7 +15,7 @@ import {
   Bot, Plus, Trash2, Settings, MessageSquare, ArrowRight, GitBranch,
   Phone, Mail, Tag, Clock, Users, Shield, X, ChevronDown, ChevronUp,
   Copy, Save, Loader2, PlayCircle, PauseCircle, GripVertical,
-  MessageCircle, UserPlus, PhoneForwarded, XCircle, Zap,
+  MessageCircle, UserPlus, PhoneForwarded, XCircle, Zap, Brain,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -24,7 +24,8 @@ type ChatbotNodeType =
   | 'welcome' | 'text_message' | 'menu' | 'ask_input'
   | 'condition' | 'transfer_department' | 'transfer_agent'
   | 'add_tag' | 'remove_tag' | 'close_conversation'
-  | 'webhook' | 'delay' | 'ai_response';
+  | 'webhook' | 'delay' | 'ai_response'
+  | 'ai_mission' | 'no_interaction' | 'transfer_human';
 
 interface ChatbotNode {
   id: string;
@@ -57,14 +58,17 @@ interface Chatbot {
 
 const nodeTypes: { type: ChatbotNodeType; label: string; icon: typeof Bot; color: string; category: string }[] = [
   { type: 'welcome', label: 'Boas-vindas', icon: MessageCircle, color: 'bg-green-500', category: 'Mensagens' },
-  { type: 'text_message', label: 'Enviar Texto', icon: MessageSquare, color: 'bg-blue-500', category: 'Mensagens' },
+  { type: 'text_message', label: 'Mensagem Pré-definida', icon: MessageSquare, color: 'bg-blue-500', category: 'Mensagens' },
   { type: 'menu', label: 'Menu de Opções', icon: GitBranch, color: 'bg-purple-500', category: 'Mensagens' },
   { type: 'ask_input', label: 'Solicitar Dados', icon: UserPlus, color: 'bg-cyan-500', category: 'Mensagens' },
-  { type: 'ai_response', label: 'Resposta IA', icon: Bot, color: 'bg-amber-500', category: 'Mensagens' },
+  { type: 'no_interaction', label: 'Mensagem sem Interação', icon: MessageSquare, color: 'bg-slate-500', category: 'Mensagens' },
+  { type: 'ai_response', label: 'Resposta IA (Simples)', icon: Bot, color: 'bg-amber-500', category: 'IA' },
+  { type: 'ai_mission', label: 'Mensagem por IA', icon: Brain, color: 'bg-violet-500', category: 'IA' },
   { type: 'condition', label: 'Condição', icon: GitBranch, color: 'bg-yellow-500', category: 'Lógica' },
   { type: 'delay', label: 'Aguardar', icon: Clock, color: 'bg-orange-500', category: 'Lógica' },
   { type: 'transfer_department', label: 'Transferir Depto', icon: Users, color: 'bg-indigo-500', category: 'Ações' },
   { type: 'transfer_agent', label: 'Transferir Agente', icon: PhoneForwarded, color: 'bg-teal-500', category: 'Ações' },
+  { type: 'transfer_human', label: 'Transferir p/ Humano', icon: Phone, color: 'bg-blue-600', category: 'Ações' },
   { type: 'add_tag', label: 'Adicionar Tag', icon: Tag, color: 'bg-pink-500', category: 'Ações' },
   { type: 'remove_tag', label: 'Remover Tag', icon: Tag, color: 'bg-rose-500', category: 'Ações' },
   { type: 'close_conversation', label: 'Encerrar', icon: XCircle, color: 'bg-red-500', category: 'Ações' },
@@ -73,15 +77,26 @@ const nodeTypes: { type: ChatbotNodeType; label: string; icon: typeof Bot; color
 
 const defaultNodeConfig = (type: ChatbotNodeType): Record<string, unknown> => {
   switch (type) {
-    case 'welcome': return { message: 'Olá! 👋 Como posso ajudá-lo hoje?', afterHoursMessage: 'No momento estamos fora do horário de atendimento.' };
-    case 'text_message': return { message: '' };
-    case 'menu': return { message: 'Escolha uma opção:', options: [{ label: 'Opção 1', value: '1' }, { label: 'Opção 2', value: '2' }] };
+    case 'welcome': return { message: 'Olá! 👋 Como posso ajudá-lo hoje?', afterHoursMessage: 'No momento estamos fora do horário de atendimento.', delay_ms: 0 };
+    case 'text_message': return { message: '', delay_ms: 1500, buttons: [] };
+    case 'no_interaction': return { message: '', delay_ms: 0 };
+    case 'menu': return { message: 'Escolha uma opção:', options: [{ label: 'Opção 1', value: '1' }, { label: 'Opção 2', value: '2' }], fallback_message: 'Não entendi. Por favor, escolha uma das opções.' };
     case 'ask_input': return { field: 'name', prompt: 'Qual seu nome?', validation: 'text' };
     case 'ai_response': return { systemPrompt: '', maxTokens: 500 };
+    case 'ai_mission': return {
+      mission: '',
+      validation_prompt: '',
+      repeat_validation: 3,
+      block_context: '',
+      voice_response: false,
+      voice_word_limit: 100,
+      next_block_default: null,
+    };
     case 'condition': return { field: 'keyword', operator: 'contains', value: '' };
     case 'delay': return { seconds: 5 };
     case 'transfer_department': return { department: '' };
     case 'transfer_agent': return { agentId: '' };
+    case 'transfer_human': return { message: 'Transferindo para um atendente humano...' };
     case 'add_tag': return { tagName: '' };
     case 'remove_tag': return { tagName: '' };
     case 'close_conversation': return { message: 'Obrigado pelo contato! 😊' };
@@ -232,6 +247,64 @@ function NodeConfigEditor({ node, onUpdate, allNodes }: { node: ChatbotNode; onU
             <Input type="number" value={(c.maxTokens as number) || 500} onChange={e => updateConfig({ maxTokens: Number(e.target.value) })} className="h-8 text-xs" />
           </div>
         </>
+      )}
+
+      {node.type === 'ai_mission' && (
+        <div className="space-y-3">
+          <div>
+            <Label className="text-xs font-medium text-violet-600">Missão do Assistente *</Label>
+            <Textarea rows={3} value={(c.mission as string) || ''} onChange={e => updateConfig({ mission: e.target.value })} className="text-xs" placeholder="Ex: Dê boas-vindas ao cliente e apresente-se como assistente virtual..." />
+            <p className="text-[10px] text-muted-foreground mt-1">O que o assistente deve executar neste bloco</p>
+          </div>
+          <div>
+            <Label className="text-xs">Prompt de Validação</Label>
+            <Textarea rows={2} value={(c.validation_prompt as string) || ''} onChange={e => updateConfig({ validation_prompt: e.target.value })} className="text-xs" placeholder="Ex: O cliente já foi recebido com boas-vindas?" />
+            <p className="text-[10px] text-muted-foreground mt-1">Pergunta SIM/NÃO para validar se a missão foi cumprida</p>
+          </div>
+          <div>
+            <Label className="text-xs">Repetir Validação (tentativas)</Label>
+            <Input type="number" min={1} max={10} value={(c.repeat_validation as number) || 3} onChange={e => updateConfig({ repeat_validation: Number(e.target.value) })} className="h-8 text-xs" />
+          </div>
+          <div>
+            <Label className="text-xs">Contexto do Bloco (opcional)</Label>
+            <Textarea rows={2} value={(c.block_context as string) || ''} onChange={e => updateConfig({ block_context: e.target.value })} className="text-xs" placeholder="Informações específicas deste bloco..." />
+          </div>
+          <div className="flex items-center justify-between">
+            <Label className="text-xs">Enviar resposta como áudio</Label>
+            <Switch checked={(c.voice_response as boolean) || false} onCheckedChange={v => updateConfig({ voice_response: v })} />
+          </div>
+          {(c.voice_response as boolean) && (
+            <div>
+              <Label className="text-xs">Limite de palavras</Label>
+              <Input type="number" value={(c.voice_word_limit as number) || 100} onChange={e => updateConfig({ voice_word_limit: Number(e.target.value) })} className="h-8 text-xs" />
+            </div>
+          )}
+        </div>
+      )}
+
+      {node.type === 'no_interaction' && (
+        <div>
+          <Label className="text-xs">Mensagem (sem esperar resposta)</Label>
+          <Textarea rows={3} value={(c.message as string) || ''} onChange={e => updateConfig({ message: e.target.value })} className="text-xs" placeholder="Mensagem enviada sem aguardar interação do lead..." />
+          <p className="text-[10px] text-muted-foreground mt-1">O fluxo avança automaticamente após o envio</p>
+        </div>
+      )}
+
+      {node.type === 'transfer_human' && (
+        <div>
+          <Label className="text-xs">Mensagem de Transferência</Label>
+          <Input value={(c.message as string) || ''} onChange={e => updateConfig({ message: e.target.value })} className="h-8 text-xs" placeholder="Transferindo para atendente..." />
+        </div>
+      )}
+
+      {(node.type === 'text_message') && (
+        <div className="space-y-2">
+          <div>
+            <Label className="text-xs">Delay entre blocos (ms)</Label>
+            <Input type="number" value={(c.delay_ms as number) || 0} onChange={e => updateConfig({ delay_ms: Number(e.target.value) })} className="h-8 text-xs" />
+            <p className="text-[10px] text-muted-foreground mt-1">Simula tempo de digitação</p>
+          </div>
+        </div>
       )}
 
       {node.type === 'webhook' && (

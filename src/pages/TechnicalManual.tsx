@@ -1729,7 +1729,7 @@ Unificar campanhas de VoIP e SMS em uma única interface com créditos de comuni
 **FIM DO DOCUMENTO**
 
 *Este manual reflete o estado atual do sistema AG Sell em produção (Março 2026). Atualizações devem ser versionadas e registradas neste documento.*
-\`;
+`;
 
 export default function TechnicalManual() {
   const navigate = useNavigate();

@@ -188,6 +188,22 @@ export default function Automations() {
           <Workflow className="h-4 w-4 mr-2" />
           Flow Builder
         </Button>
+        <CampaignCodeShare
+          onImport={(imported) => {
+            const actionsJson = imported.actions.map((a: any) => ({
+              id: a.id,
+              type: a.type,
+              config: a.config,
+            })) as Json;
+            createAutomation.mutate({
+              name: imported.name + ' (importada)',
+              trigger_type: imported.trigger_type,
+              trigger_config: imported.trigger_config as Record<string, Json>,
+              actions: actionsJson,
+              is_active: false,
+            });
+          }}
+        />
         <Button variant="outline" size="sm" onClick={() => setIsTemplatesOpen(true)}>
           <Sparkles className="h-4 w-4 mr-2" />
           Templates

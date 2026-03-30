@@ -28,7 +28,7 @@ export function AdminIntegrationsConfig() {
     app_id: '',
     app_secret: '',
     redirect_uri: 'https://site.agsell.com.br/instagram',
-    scopes: 'instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,pages_show_list,pages_read_engagement,business_management',
+    scopes: 'instagram_basic,instagram_manage_messages,instagram_manage_comments,pages_show_list,pages_read_engagement,business_management',
   });
   const [metaEditing, setMetaEditing] = useState(false);
 

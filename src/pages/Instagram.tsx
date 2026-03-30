@@ -88,6 +88,22 @@ function ConnectWizard({
   const oauthInFlightRef = React.useRef(false);
   const OAUTH_REDIRECT_URI = `${window.location.origin}/instagram`;
 
+  // Load Meta App config from platform_settings
+  const { data: metaAppConfig } = useQuery({
+    queryKey: ['platform_settings', 'meta_app'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('platform_settings')
+        .select('value')
+        .eq('key', 'meta_app')
+        .maybeSingle();
+      return data?.value as { app_id?: string; redirect_uri?: string; scopes?: string } | null;
+    },
+  });
+
+  const INSTAGRAM_APP_ID = metaAppConfig?.app_id || INSTAGRAM_APP_ID_FALLBACK;
+  const INSTAGRAM_SCOPES = metaAppConfig?.scopes || INSTAGRAM_SCOPES_FALLBACK;
+
   // Listen for OAuth callback
   React.useEffect(() => {
     const handleOAuthCallback = async () => {

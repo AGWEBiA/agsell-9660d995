@@ -153,6 +153,7 @@ const App = () => (
                   <Route path="/pitch" element={<SalesPitch />} />
                   <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                   <Route path="/terms-of-service" element={<TermsOfService />} />
+                  <Route path="/data-deletion" element={<DataDeletion />} />
                   <Route path="/purchase-success" element={<PurchaseSuccess />} />
                   <Route path="/forms/:formId" element={<FormView />} />
                   <Route path="/ticket/:protocol" element={<TicketTracker />} />

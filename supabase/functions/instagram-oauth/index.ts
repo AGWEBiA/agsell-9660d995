@@ -7,7 +7,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const INSTAGRAM_APP_ID = "912565888176650";
+const INSTAGRAM_APP_ID_FALLBACK = "912565888176650";
 const GRAPH_API_VERSION = "v25.0";
 const GRAPH_API_VERSIONS = ["v25.0", "v24.0", "v23.0", "v22.0", "v21.0"] as const;
 
@@ -384,6 +384,22 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Load Meta App ID from platform_settings (fallback to hardcoded)
+    let INSTAGRAM_APP_ID = INSTAGRAM_APP_ID_FALLBACK;
+    try {
+      const { data: metaSettings } = await supabaseAdmin
+        .from("platform_settings")
+        .select("value")
+        .eq("key", "meta_app")
+        .maybeSingle();
+      if (metaSettings?.value && (metaSettings.value as any).app_id) {
+        INSTAGRAM_APP_ID = (metaSettings.value as any).app_id;
+        console.log("[INSTAGRAM-OAUTH] Using App ID from platform_settings:", INSTAGRAM_APP_ID);
+      }
+    } catch (e) {
+      console.warn("[INSTAGRAM-OAUTH] Could not load meta_app settings, using fallback");
+    }
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);

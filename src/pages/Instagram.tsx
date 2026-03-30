@@ -66,9 +66,9 @@ const automationCategories: { value: AutomationCategory; label: string }[] = [
   { value: 'story', label: 'Stories' },
 ];
 
-const INSTAGRAM_APP_ID = "912565888176650";
+const INSTAGRAM_APP_ID_FALLBACK = "912565888176650";
 const META_OAUTH_VERSION = "v25.0";
-const INSTAGRAM_SCOPES = "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,pages_show_list,pages_read_engagement,business_management";
+const INSTAGRAM_SCOPES_FALLBACK = "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,pages_show_list,pages_read_engagement,business_management";
 
 /* ─── Wizard de Conexão via Facebook Login ─── */
 function ConnectWizard({ 
@@ -87,6 +87,22 @@ function ConnectWizard({
   const [loading, setLoading] = useState(false);
   const oauthInFlightRef = React.useRef(false);
   const OAUTH_REDIRECT_URI = `${window.location.origin}/instagram`;
+
+  // Load Meta App config from platform_settings
+  const { data: metaAppConfig } = useQuery({
+    queryKey: ['platform_settings', 'meta_app'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('platform_settings')
+        .select('value')
+        .eq('key', 'meta_app')
+        .maybeSingle();
+      return data?.value as { app_id?: string; redirect_uri?: string; scopes?: string } | null;
+    },
+  });
+
+  const INSTAGRAM_APP_ID = metaAppConfig?.app_id || INSTAGRAM_APP_ID_FALLBACK;
+  const INSTAGRAM_SCOPES = metaAppConfig?.scopes || INSTAGRAM_SCOPES_FALLBACK;
 
   // Listen for OAuth callback
   React.useEffect(() => {

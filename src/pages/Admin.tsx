@@ -533,6 +533,9 @@ export default function Admin() {
         <TabsContent value="domains">
           <AdminDomainReport />
         </TabsContent>
+        <TabsContent value="integrations">
+          <AdminIntegrationsConfig />
+        </TabsContent>
       </Tabs>
 
       <AssignPlanDialog

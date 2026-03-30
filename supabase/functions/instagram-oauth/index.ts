@@ -385,6 +385,22 @@ serve(async (req) => {
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Load Meta App ID from platform_settings (fallback to hardcoded)
+    let INSTAGRAM_APP_ID = INSTAGRAM_APP_ID_FALLBACK;
+    try {
+      const { data: metaSettings } = await supabaseAdmin
+        .from("platform_settings")
+        .select("value")
+        .eq("key", "meta_app")
+        .maybeSingle();
+      if (metaSettings?.value && (metaSettings.value as any).app_id) {
+        INSTAGRAM_APP_ID = (metaSettings.value as any).app_id;
+        console.log("[INSTAGRAM-OAUTH] Using App ID from platform_settings:", INSTAGRAM_APP_ID);
+      }
+    } catch (e) {
+      console.warn("[INSTAGRAM-OAUTH] Could not load meta_app settings, using fallback");
+    }
+
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
     if (userError || !userData?.user) {

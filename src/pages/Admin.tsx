@@ -271,6 +271,10 @@ export default function Admin() {
             <Mail className="h-4 w-4" />
             Domínios
           </TabsTrigger>
+          <TabsTrigger value="integrations" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            Integrações
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-6">
           {/* KPIs */}

@@ -679,6 +679,7 @@ export default function FlowBuilder() {
   const [showTriggerSelector, setShowTriggerSelector] = useState(false);
 
   const hasTrigger = nodes.some(n => n.type === 'trigger');
+  const isGroupsChannel = channelFilter === 'groups';
 
   // Drag from sidebar
   const handleDragStart = (e: React.DragEvent, nodeType: string, subtype: string) => {

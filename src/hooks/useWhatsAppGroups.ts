@@ -189,6 +189,36 @@ export function useWhatsAppGroups() {
     onError: (error: Error) => { toast.error(`Erro ao criar mensagem: ${error.message}`); },
   });
 
+  const updateGroupMessageMutation = useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string; name?: string; content?: string; is_active?: boolean; trigger_event?: string; target_groups?: string[] }) => {
+      const { data, error } = await supabase
+        .from('whatsapp_group_messages')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['whatsapp-group-messages', orgId] });
+      toast.success('Mensagem atualizada!');
+    },
+    onError: (error: Error) => { toast.error(`Erro ao atualizar mensagem: ${error.message}`); },
+  });
+
+  const deleteGroupMessageMutation = useMutation({
+    mutationFn: async (messageId: string) => {
+      const { error } = await supabase.from('whatsapp_group_messages').delete().eq('id', messageId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['whatsapp-group-messages', orgId] });
+      toast.success('Mensagem removida!');
+    },
+    onError: (error: Error) => { toast.error(`Erro ao remover mensagem: ${error.message}`); },
+  });
+
   const fetchGroupMembers = useCallback(async (groupId: string) => {
     const { data, error } = await supabase
       .from('whatsapp_group_members')
@@ -224,6 +254,8 @@ export function useWhatsAppGroups() {
     updateGroup: updateGroupMutation.mutate,
     deleteGroup: deleteGroupMutation.mutate,
     createGroupMessage: createGroupMessageMutation.mutate,
+    updateGroupMessage: updateGroupMessageMutation.mutate,
+    deleteGroupMessage: deleteGroupMessageMutation.mutate,
     fetchGroupMembers,
     fetchGroupEvents,
     isCreatingGroup: createGroupMutation.isPending,

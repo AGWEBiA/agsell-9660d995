@@ -387,18 +387,106 @@ function NodeConfigDialog({ node, open, onClose, onSave }: {
   );
 }
 
+// ─── Channel-specific config ───
+const channelConfig: Record<string, {
+  triggerChannels: string[];
+  triggerIds?: string[];
+  allowedActions?: string[];
+  title: string;
+  subtitle: string;
+}> = {
+  whatsapp: {
+    triggerChannels: ['whatsapp', 'crm', 'pagamento', 'site'],
+    title: 'Fluxos Individuais',
+    subtitle: 'Automações de mensagem no privado (WhatsApp, CRM, Pagamento)',
+    allowedActions: [
+      'timer', 'warmup', 'send_whatsapp', 'send_whatsapp_oficial', 'send_sms', 'send_email_performance', 'send_email_marketing', 'voice_torpedo', 'send_voip_call',
+      'add_tag', 'remove_tag', 'update_score', 'send_notification', 'create_task', 'wait',
+      'conditional', 'tag_filter', 'list_tag',
+      'sequence_lead', 'sequence_transaction', 'sequence_rewarming', 'sequence_optin',
+      'add_to_whatsapp_group', 'edit_whatsapp_group', 'full_page', 'pixel', 'parallel_channels',
+      'note', 'link_split', 'abandonment',
+    ],
+  },
+  groups: {
+    triggerChannels: [],
+    triggerIds: ['whatsapp_group_join', 'whatsapp_group_leave'],
+    title: 'Fluxos de Grupo',
+    subtitle: 'Automações para grupos de WhatsApp',
+    allowedActions: [
+      'timer', 'send_whatsapp_group', 'add_tag', 'remove_tag', 'wait', 'conditional', 'tag_filter',
+      'note', 'send_notification', 'create_task', 'add_to_whatsapp_group', 'edit_whatsapp_group',
+    ],
+  },
+  email: {
+    triggerChannels: ['email', 'crm', 'pagamento', 'site'],
+    title: 'Fluxos de E-mail',
+    subtitle: 'Automações baseadas em gatilhos de e-mail e CRM',
+    allowedActions: [
+      'timer', 'warmup', 'send_email_performance', 'send_email_marketing',
+      'add_tag', 'remove_tag', 'update_score', 'send_notification', 'create_task', 'wait',
+      'conditional', 'tag_filter', 'list_tag',
+      'sequence_lead', 'sequence_transaction', 'sequence_rewarming', 'sequence_optin',
+      'full_page', 'pixel', 'note', 'link_split', 'abandonment',
+    ],
+  },
+  instagram: {
+    triggerChannels: ['instagram'],
+    title: 'Fluxos de Instagram',
+    subtitle: 'Automações para Instagram (DMs, comentários, stories)',
+    allowedActions: [
+      'timer', 'send_instagram_dm', 'send_instagram_comment_reply', 'send_instagram_story_reply',
+      'instagram_like_comment', 'instagram_follow_back',
+      'send_whatsapp', 'send_email_performance', 'send_email_marketing',
+      'add_tag', 'remove_tag', 'update_score', 'send_notification', 'create_task', 'wait',
+      'conditional', 'tag_filter', 'list_tag',
+      'note', 'link_split', 'parallel_channels',
+    ],
+  },
+  telegram: {
+    triggerChannels: ['telegram'],
+    title: 'Fluxos de Telegram',
+    subtitle: 'Automações para Telegram',
+    allowedActions: [
+      'timer', 'send_whatsapp', 'send_email_performance', 'send_email_marketing',
+      'add_tag', 'remove_tag', 'update_score', 'send_notification', 'create_task', 'wait',
+      'conditional', 'tag_filter', 'list_tag',
+      'note', 'link_split',
+    ],
+  },
+};
+
+function getChannelTriggers(channelFilter: string | null): typeof triggerOptions {
+  if (!channelFilter || !channelConfig[channelFilter]) return triggerOptions;
+  const cfg = channelConfig[channelFilter];
+  if (cfg.triggerIds) return triggerOptions.filter(t => cfg.triggerIds!.includes(t.id));
+  return triggerOptions.filter(t => cfg.triggerChannels.includes(t.channel));
+}
+
+function getChannelTitle(channelFilter: string | null): { title: string; subtitle: string } {
+  if (channelFilter && channelConfig[channelFilter]) {
+    return { title: channelConfig[channelFilter].title, subtitle: channelConfig[channelFilter].subtitle };
+  }
+  return { title: 'Meus Fluxos', subtitle: 'Gerencie seus fluxos de automação visual' };
+}
+
+function getChannelTriggerChannels(channelFilter: string | null): string[] {
+  if (!channelFilter || !channelConfig[channelFilter]) return [];
+  const cfg = channelConfig[channelFilter];
+  if (cfg.triggerIds) {
+    // Get channels from the specific trigger IDs
+    return [...new Set(triggerOptions.filter(t => cfg.triggerIds!.includes(t.id)).map(t => t.channel))];
+  }
+  return cfg.triggerChannels;
+}
+
 // ─── Trigger Selection (shown when canvas has no trigger) ───
 function TriggerSelector({ onSelect, channelFilter }: { onSelect: (triggerId: string) => void; channelFilter?: string | null }) {
   const [filter, setFilter] = useState<string>('all');
   const tagTriggerIds = ['tag_added', 'tag_removed'];
+  const cfg = channelFilter ? channelConfig[channelFilter] : null;
 
-  // Group-only mode
-  const isGroupMode = channelFilter === 'groups';
-  const groupTriggerIds = ['whatsapp_group_join', 'whatsapp_group_leave'];
-
-  const availableTriggers = isGroupMode
-    ? triggerOptions.filter(t => groupTriggerIds.includes(t.id))
-    : triggerOptions;
+  const availableTriggers = getChannelTriggers(channelFilter);
 
   const filtered = availableTriggers.filter(t => {
     if (filter === 'all') return true;
@@ -406,20 +494,24 @@ function TriggerSelector({ onSelect, channelFilter }: { onSelect: (triggerId: st
     return t.channel === filter;
   });
 
-  const filterTabs = isGroupMode
+  // Build filter tabs from available trigger channels
+  const availableChannels = [...new Set(availableTriggers.map(t => t.channel))];
+  const channelLabelMap: Record<string, string> = {
+    instagram: '📸 Instagram', whatsapp: '💬 WhatsApp', crm: '👤 CRM',
+    pagamento: '💳 Pagamentos', email: '📧 E-mail', site: '🌐 Site',
+    voip: '📞 VoIP', telegram: '✈️ Telegram',
+  };
+  const filterTabs = availableChannels.length <= 1
     ? [{ key: 'all', label: 'Todos' }]
     : [
         { key: 'all', label: 'Todos' },
-        { key: 'tags', label: '🏷️ Tags' },
-        { key: 'instagram', label: '📸 Instagram' },
-        { key: 'whatsapp', label: '💬 WhatsApp' },
-        { key: 'crm', label: '👤 CRM' },
-        { key: 'pagamento', label: '💳 Pagamentos' },
-        { key: 'email', label: '📧 E-mail' },
-        { key: 'site', label: '🌐 Site' },
-        { key: 'voip', label: '📞 VoIP' },
-        { key: 'telegram', label: '✈️ Telegram' },
+        ...(availableTriggers.some(t => tagTriggerIds.includes(t.id)) ? [{ key: 'tags', label: '🏷️ Tags' }] : []),
+        ...availableChannels.map(ch => ({ key: ch, label: channelLabelMap[ch] || ch })),
       ];
+
+  const { title: selectorTitle, subtitle: selectorSubtitle } = cfg
+    ? { title: 'Como o fluxo começa?', subtitle: `Escolha o gatilho para ${cfg.title.toLowerCase()}` }
+    : { title: 'Como o fluxo começa?', subtitle: 'Escolha o gatilho que vai iniciar sua automação' };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in">
@@ -427,8 +519,8 @@ function TriggerSelector({ onSelect, channelFilter }: { onSelect: (triggerId: st
         <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 mb-4">
           <Zap className="h-8 w-8 text-primary-foreground" />
         </div>
-        <h2 className="text-2xl font-bold">{isGroupMode ? 'Como o fluxo de grupo começa?' : 'Como o fluxo começa?'}</h2>
-        <p className="text-muted-foreground mt-1">{isGroupMode ? 'Escolha o gatilho de grupo para iniciar' : 'Escolha o gatilho que vai iniciar sua automação'}</p>
+        <h2 className="text-2xl font-bold">{selectorTitle}</h2>
+        <p className="text-muted-foreground mt-1">{selectorSubtitle}</p>
       </div>
       {filterTabs.length > 1 && (
         <div className="flex gap-2 mb-6 flex-wrap justify-center">

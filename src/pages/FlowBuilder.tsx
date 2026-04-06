@@ -387,18 +387,106 @@ function NodeConfigDialog({ node, open, onClose, onSave }: {
   );
 }
 
+// ─── Channel-specific config ───
+const channelConfig: Record<string, {
+  triggerChannels: string[];
+  triggerIds?: string[];
+  allowedActions?: string[];
+  title: string;
+  subtitle: string;
+}> = {
+  whatsapp: {
+    triggerChannels: ['whatsapp', 'crm', 'pagamento', 'site'],
+    title: 'Fluxos Individuais',
+    subtitle: 'Automações de mensagem no privado (WhatsApp, CRM, Pagamento)',
+    allowedActions: [
+      'timer', 'warmup', 'send_whatsapp', 'send_whatsapp_oficial', 'send_sms', 'send_email_performance', 'send_email_marketing', 'voice_torpedo', 'send_voip_call',
+      'add_tag', 'remove_tag', 'update_score', 'send_notification', 'create_task', 'wait',
+      'conditional', 'tag_filter', 'list_tag',
+      'sequence_lead', 'sequence_transaction', 'sequence_rewarming', 'sequence_optin',
+      'add_to_whatsapp_group', 'edit_whatsapp_group', 'full_page', 'pixel', 'parallel_channels',
+      'note', 'link_split', 'abandonment',
+    ],
+  },
+  groups: {
+    triggerChannels: [],
+    triggerIds: ['whatsapp_group_join', 'whatsapp_group_leave'],
+    title: 'Fluxos de Grupo',
+    subtitle: 'Automações para grupos de WhatsApp',
+    allowedActions: [
+      'timer', 'send_whatsapp_group', 'add_tag', 'remove_tag', 'wait', 'conditional', 'tag_filter',
+      'note', 'send_notification', 'create_task', 'add_to_whatsapp_group', 'edit_whatsapp_group',
+    ],
+  },
+  email: {
+    triggerChannels: ['email', 'crm', 'pagamento', 'site'],
+    title: 'Fluxos de E-mail',
+    subtitle: 'Automações baseadas em gatilhos de e-mail e CRM',
+    allowedActions: [
+      'timer', 'warmup', 'send_email_performance', 'send_email_marketing',
+      'add_tag', 'remove_tag', 'update_score', 'send_notification', 'create_task', 'wait',
+      'conditional', 'tag_filter', 'list_tag',
+      'sequence_lead', 'sequence_transaction', 'sequence_rewarming', 'sequence_optin',
+      'full_page', 'pixel', 'note', 'link_split', 'abandonment',
+    ],
+  },
+  instagram: {
+    triggerChannels: ['instagram'],
+    title: 'Fluxos de Instagram',
+    subtitle: 'Automações para Instagram (DMs, comentários, stories)',
+    allowedActions: [
+      'timer', 'send_instagram_dm', 'send_instagram_comment_reply', 'send_instagram_story_reply',
+      'instagram_like_comment', 'instagram_follow_back',
+      'send_whatsapp', 'send_email_performance', 'send_email_marketing',
+      'add_tag', 'remove_tag', 'update_score', 'send_notification', 'create_task', 'wait',
+      'conditional', 'tag_filter', 'list_tag',
+      'note', 'link_split', 'parallel_channels',
+    ],
+  },
+  telegram: {
+    triggerChannels: ['telegram'],
+    title: 'Fluxos de Telegram',
+    subtitle: 'Automações para Telegram',
+    allowedActions: [
+      'timer', 'send_whatsapp', 'send_email_performance', 'send_email_marketing',
+      'add_tag', 'remove_tag', 'update_score', 'send_notification', 'create_task', 'wait',
+      'conditional', 'tag_filter', 'list_tag',
+      'note', 'link_split',
+    ],
+  },
+};
+
+function getChannelTriggers(channelFilter: string | null): typeof triggerOptions {
+  if (!channelFilter || !channelConfig[channelFilter]) return triggerOptions;
+  const cfg = channelConfig[channelFilter];
+  if (cfg.triggerIds) return triggerOptions.filter(t => cfg.triggerIds!.includes(t.id));
+  return triggerOptions.filter(t => cfg.triggerChannels.includes(t.channel));
+}
+
+function getChannelTitle(channelFilter: string | null): { title: string; subtitle: string } {
+  if (channelFilter && channelConfig[channelFilter]) {
+    return { title: channelConfig[channelFilter].title, subtitle: channelConfig[channelFilter].subtitle };
+  }
+  return { title: 'Meus Fluxos', subtitle: 'Gerencie seus fluxos de automação visual' };
+}
+
+function getChannelTriggerChannels(channelFilter: string | null): string[] {
+  if (!channelFilter || !channelConfig[channelFilter]) return [];
+  const cfg = channelConfig[channelFilter];
+  if (cfg.triggerIds) {
+    // Get channels from the specific trigger IDs
+    return [...new Set(triggerOptions.filter(t => cfg.triggerIds!.includes(t.id)).map(t => t.channel))];
+  }
+  return cfg.triggerChannels;
+}
+
 // ─── Trigger Selection (shown when canvas has no trigger) ───
 function TriggerSelector({ onSelect, channelFilter }: { onSelect: (triggerId: string) => void; channelFilter?: string | null }) {
   const [filter, setFilter] = useState<string>('all');
   const tagTriggerIds = ['tag_added', 'tag_removed'];
+  const cfg = channelFilter ? channelConfig[channelFilter] : null;
 
-  // Group-only mode
-  const isGroupMode = channelFilter === 'groups';
-  const groupTriggerIds = ['whatsapp_group_join', 'whatsapp_group_leave'];
-
-  const availableTriggers = isGroupMode
-    ? triggerOptions.filter(t => groupTriggerIds.includes(t.id))
-    : triggerOptions;
+  const availableTriggers = getChannelTriggers(channelFilter);
 
   const filtered = availableTriggers.filter(t => {
     if (filter === 'all') return true;
@@ -406,20 +494,24 @@ function TriggerSelector({ onSelect, channelFilter }: { onSelect: (triggerId: st
     return t.channel === filter;
   });
 
-  const filterTabs = isGroupMode
+  // Build filter tabs from available trigger channels
+  const availableChannels = [...new Set(availableTriggers.map(t => t.channel))];
+  const channelLabelMap: Record<string, string> = {
+    instagram: '📸 Instagram', whatsapp: '💬 WhatsApp', crm: '👤 CRM',
+    pagamento: '💳 Pagamentos', email: '📧 E-mail', site: '🌐 Site',
+    voip: '📞 VoIP', telegram: '✈️ Telegram',
+  };
+  const filterTabs = availableChannels.length <= 1
     ? [{ key: 'all', label: 'Todos' }]
     : [
         { key: 'all', label: 'Todos' },
-        { key: 'tags', label: '🏷️ Tags' },
-        { key: 'instagram', label: '📸 Instagram' },
-        { key: 'whatsapp', label: '💬 WhatsApp' },
-        { key: 'crm', label: '👤 CRM' },
-        { key: 'pagamento', label: '💳 Pagamentos' },
-        { key: 'email', label: '📧 E-mail' },
-        { key: 'site', label: '🌐 Site' },
-        { key: 'voip', label: '📞 VoIP' },
-        { key: 'telegram', label: '✈️ Telegram' },
+        ...(availableTriggers.some(t => tagTriggerIds.includes(t.id)) ? [{ key: 'tags', label: '🏷️ Tags' }] : []),
+        ...availableChannels.map(ch => ({ key: ch, label: channelLabelMap[ch] || ch })),
       ];
+
+  const { title: selectorTitle, subtitle: selectorSubtitle } = cfg
+    ? { title: 'Como o fluxo começa?', subtitle: `Escolha o gatilho para ${cfg.title.toLowerCase()}` }
+    : { title: 'Como o fluxo começa?', subtitle: 'Escolha o gatilho que vai iniciar sua automação' };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in">
@@ -427,8 +519,8 @@ function TriggerSelector({ onSelect, channelFilter }: { onSelect: (triggerId: st
         <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 mb-4">
           <Zap className="h-8 w-8 text-primary-foreground" />
         </div>
-        <h2 className="text-2xl font-bold">{isGroupMode ? 'Como o fluxo de grupo começa?' : 'Como o fluxo começa?'}</h2>
-        <p className="text-muted-foreground mt-1">{isGroupMode ? 'Escolha o gatilho de grupo para iniciar' : 'Escolha o gatilho que vai iniciar sua automação'}</p>
+        <h2 className="text-2xl font-bold">{selectorTitle}</h2>
+        <p className="text-muted-foreground mt-1">{selectorSubtitle}</p>
       </div>
       {filterTabs.length > 1 && (
         <div className="flex gap-2 mb-6 flex-wrap justify-center">
@@ -466,15 +558,17 @@ function FlowList({ onCreateNew, onEditFlow, channelFilter }: {
   channelFilter?: string | null;
 }) {
   const { automations, isLoading, toggleAutomation, deleteAutomation } = useAutomations();
-  const isGroupMode = channelFilter === 'groups';
-  const groupTriggerIds = ['whatsapp_group_join', 'whatsapp_group_leave'];
+  const cfg = channelFilter ? channelConfig[channelFilter] : null;
+  const allowedTriggers = getChannelTriggers(channelFilter);
+  const allowedTriggerIds = new Set(allowedTriggers.map(t => t.id));
+  const { title, subtitle } = getChannelTitle(channelFilter);
 
   const flows = automations.filter(a => {
     const tc = a.trigger_config as Record<string, unknown> | null;
     if (tc?.flow_builder !== true) return false;
-    if (isGroupMode) {
+    if (channelFilter) {
       const originalTrigger = tc?.original_trigger as string | undefined;
-      return originalTrigger ? groupTriggerIds.includes(originalTrigger) : false;
+      return originalTrigger ? allowedTriggerIds.has(originalTrigger) : false;
     }
     return true;
   });
@@ -495,9 +589,9 @@ function FlowList({ onCreateNew, onEditFlow, channelFilter }: {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-3">
-            <Workflow className="h-7 w-7 text-primary" />{isGroupMode ? 'Fluxos de Grupo' : 'Meus Fluxos'}
+            <Workflow className="h-7 w-7 text-primary" />{title}
           </h1>
-          <p className="text-muted-foreground mt-1">{isGroupMode ? 'Gerencie fluxos de automação para grupos WhatsApp' : 'Gerencie seus fluxos de automação visual'}</p>
+          <p className="text-muted-foreground mt-1">{subtitle}</p>
         </div>
         <Button onClick={onCreateNew} size="lg"><Plus className="h-5 w-5 mr-2" />Novo Fluxo</Button>
       </div>
@@ -567,7 +661,7 @@ export default function FlowBuilder() {
   const editId = searchParams.get('id');
   const isNew = searchParams.get('new') === '1';
   const channelFilter = searchParams.get('channel');
-  const isGroupMode = channelFilter === 'groups';
+  
   const { data: nodeAnalytics } = useFlowNodeAnalytics(editId || undefined);
 
   const [mode, setMode] = useState<'list' | 'editor'>(editId || isNew ? 'editor' : 'list');
@@ -860,10 +954,8 @@ export default function FlowBuilder() {
 
             {/* Triggers grouped by channel */}
             {(() => {
-              const groupTriggerIds = ['whatsapp_group_join', 'whatsapp_group_leave'];
-              const availableTriggers = isGroupMode
-                ? triggerOptions.filter(t => groupTriggerIds.includes(t.id))
-                : triggerOptions;
+              const availableTriggers = getChannelTriggers(channelFilter);
+              const cfg = channelFilter ? channelConfig[channelFilter] : null;
 
               const channelGroups: Record<string, typeof triggerOptions> = {};
               const channelLabels: Record<string, string> = {
@@ -884,7 +976,7 @@ export default function FlowBuilder() {
               return Object.entries(channelGroups).map(([channel, opts]) => (
                 <div key={channel} className="mb-3">
                   <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">
-                    {isGroupMode ? '💬 Gatilhos de Grupo' : (channelLabels[channel] || channel)}
+                    {cfg?.triggerIds ? `🔔 ${cfg.title}` : (channelLabels[channel] || channel)}
                   </p>
                   <div className="grid grid-cols-2 gap-1">
                     {opts.map(opt => (
@@ -912,11 +1004,12 @@ export default function FlowBuilder() {
 
             {/* Action categories */}
             {(() => {
-              const groupAllowedNodes = ['timer', 'send_whatsapp_group', 'add_tag', 'remove_tag', 'wait', 'conditional', 'tag_filter', 'note', 'send_notification', 'create_task', 'add_to_whatsapp_group', 'edit_whatsapp_group'];
-              const filteredCategories = isGroupMode
+              const cfg = channelFilter ? channelConfig[channelFilter] : null;
+              const allowedActions = cfg?.allowedActions ? new Set(cfg.allowedActions) : null;
+              const filteredCategories = allowedActions
                 ? nodeCategories.map(cat => ({
                     ...cat,
-                    nodes: cat.nodes.filter(n => groupAllowedNodes.includes(n.id)),
+                    nodes: cat.nodes.filter(n => allowedActions.has(n.id)),
                   })).filter(cat => cat.nodes.length > 0)
                 : nodeCategories;
 
@@ -946,31 +1039,39 @@ export default function FlowBuilder() {
               ));
             })()}
 
-            {/* Conditions (hidden in group mode as they're in nodeCategories) */}
-            {!isGroupMode && (
-              <div className="mb-3">
-                <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">Condições</p>
-                <div className="grid grid-cols-2 gap-1">
-                  {conditionOptions.map(opt => (
-                    <div
-                      key={opt.id}
-                      draggable="true"
-                      unselectable="on"
-                      onDragStart={e => handleDragStart(e, 'condition', opt.id)}
-                      className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
-                      title={opt.label}
-                      role="button"
-                      tabIndex={0}
-                    >
-                      <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0 pointer-events-none', opt.color)}>
-                        <opt.icon className="h-3.5 w-3.5" />
+            {/* Conditions */}
+            {(() => {
+              const cfg = channelFilter ? channelConfig[channelFilter] : null;
+              const allowedActions = cfg?.allowedActions ? new Set(cfg.allowedActions) : null;
+              const filteredConditions = allowedActions
+                ? conditionOptions.filter(c => allowedActions.has(c.id))
+                : conditionOptions;
+              if (filteredConditions.length === 0) return null;
+              return (
+                <div className="mb-3">
+                  <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">Condições</p>
+                  <div className="grid grid-cols-2 gap-1">
+                    {filteredConditions.map(opt => (
+                      <div
+                        key={opt.id}
+                        draggable="true"
+                        unselectable="on"
+                        onDragStart={e => handleDragStart(e, 'condition', opt.id)}
+                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
+                        title={opt.label}
+                        role="button"
+                        tabIndex={0}
+                      >
+                        <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0 pointer-events-none', opt.color)}>
+                          <opt.icon className="h-3.5 w-3.5" />
+                        </div>
+                        <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full pointer-events-none">{opt.label}</span>
                       </div>
-                      <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full pointer-events-none">{opt.label}</span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </div>
 

@@ -397,6 +397,7 @@ const channelConfig: Record<string, {
 }> = {
   whatsapp: {
     triggerChannels: ['whatsapp', 'crm', 'pagamento', 'site'],
+    triggerIds: undefined,
     title: 'Fluxos Individuais',
     subtitle: 'Automações de mensagem no privado (WhatsApp, CRM, Pagamento)',
     allowedActions: [
@@ -409,13 +410,13 @@ const channelConfig: Record<string, {
     ],
   },
   groups: {
-    triggerChannels: [],
-    triggerIds: ['tag_added', 'tag_removed', 'whatsapp_group_join', 'whatsapp_group_leave'],
+    triggerChannels: ['whatsapp', 'crm', 'pagamento', 'site', 'email'],
     title: 'Fluxos de Grupo',
-    subtitle: 'Automações para grupos de WhatsApp (inicie sempre com uma Tag)',
+    subtitle: 'Crie fluxos com qualquer gatilho → adicione tags → insira leads em grupos',
     allowedActions: [
       'timer', 'send_whatsapp_group', 'add_tag', 'remove_tag', 'wait', 'conditional', 'tag_filter',
       'note', 'send_notification', 'create_task', 'add_to_whatsapp_group', 'edit_whatsapp_group',
+      'send_whatsapp', 'send_email_performance', 'send_email_marketing',
     ],
   },
   email: {

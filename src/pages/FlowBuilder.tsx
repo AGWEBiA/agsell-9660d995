@@ -1082,7 +1082,7 @@ export default function FlowBuilder() {
                 </div>
 
                 <p className="text-[7px] text-white/20 text-center mt-3 px-1 leading-tight">
-                  Clique em Eventos<br/>no topo superior<br/>direito do objeto<br/>para ver todas as<br/>ações disponíveis
+                  Clique nos ícones<br/>para adicionar nós<br/>ao canvas ou arraste
                 </p>
               </>
             ) : (

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { flushSync } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -683,10 +684,13 @@ export default function FlowBuilder() {
 
   // Drag from sidebar
   const handleDragStart = (e: React.DragEvent, nodeType: string, subtype: string) => {
+    if (showTriggerSelector) {
+      flushSync(() => setShowTriggerSelector(false));
+    }
+
+    e.dataTransfer.clearData();
     e.dataTransfer.setData('application/flow-node', JSON.stringify({ nodeType, subtype }));
     e.dataTransfer.effectAllowed = 'copy';
-    // Hide trigger selector overlay so canvas is visible for drop
-    if (showTriggerSelector) setShowTriggerSelector(false);
   };
 
   // Load existing flow

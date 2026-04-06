@@ -247,6 +247,119 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Handle Evolution API group participant events (join/leave)
+    if (body.event === "group-participants.update" || body.event === "GROUP_PARTICIPANTS_UPDATE") {
+      const data = body.data || body;
+      const instanceName = (body.instance || data.instance || "").trim();
+      const action = data.action || data.event || ""; // "add" or "remove"
+      const groupJid = data.id || data.groupJid || data.jid || "";
+      const participants = data.participants || [];
+
+      console.log(`Group event: ${action} in ${groupJid}, participants: ${JSON.stringify(participants)}`);
+
+      const normalizeInstanceName = (value: string) => value.toLowerCase().replace(/[\s_-]+/g, "");
+      const normalizedIncoming = normalizeInstanceName(instanceName);
+
+      const { data: activeIntegrations } = await supabase
+        .from("organization_integrations")
+        .select("organization_id, config")
+        .eq("integration_type", "evolution_api")
+        .eq("is_active", true);
+
+      const integration = (activeIntegrations || []).find((item) => {
+        const config = (item.config || {}) as Record<string, unknown>;
+        const configuredInstance = typeof config.instance_name === "string" ? config.instance_name : "";
+        return normalizeInstanceName(configuredInstance) === normalizedIncoming;
+      });
+
+      if (integration) {
+        const orgId = integration.organization_id;
+        const triggerEvent = (action === "add" || action === "join") ? "on_join" : "on_leave";
+
+        // Find active group messages matching this trigger
+        const { data: messages } = await supabase
+          .from("whatsapp_group_messages")
+          .select("*")
+          .eq("organization_id", orgId)
+          .eq("trigger_event", triggerEvent)
+          .eq("is_active", true);
+
+        if (messages && messages.length > 0) {
+          // Get Evolution API config
+          let evoUrl = "";
+          let evoApiKey = "";
+          const integrationConfig = (integration.config || {}) as Record<string, string>;
+          const evoInstance = integrationConfig.instance_name || instanceName;
+
+          evoUrl = integrationConfig.server_url || integrationConfig.api_url || "";
+          evoApiKey = integrationConfig.api_key || integrationConfig.global_api_key || "";
+
+          if (!evoUrl || !evoApiKey) {
+            const { data: globalEvoSetting } = await supabase
+              .from("platform_settings")
+              .select("value")
+              .eq("key", "evolution_api")
+              .maybeSingle();
+            const globalEvoValue = (globalEvoSetting?.value || {}) as Record<string, unknown>;
+            if (!evoUrl && typeof globalEvoValue.api_url === "string") evoUrl = globalEvoValue.api_url;
+            if (!evoApiKey && typeof globalEvoValue.api_key === "string") evoApiKey = globalEvoValue.api_key;
+          }
+
+          if (evoUrl && evoApiKey) {
+            for (const msg of messages) {
+              // Check if this message targets this group (or all groups if empty)
+              const targetGroups = (msg.target_groups || []) as string[];
+              if (targetGroups.length > 0 && !targetGroups.includes(groupJid)) continue;
+
+              // Replace variables in content
+              for (const participant of participants) {
+                const phone = String(participant).replace("@s.whatsapp.net", "").replace("@c.us", "");
+                let content = msg.content as string;
+                content = content.replace(/\{\{nome\}\}/g, phone);
+                content = content.replace(/\{\{grupo\}\}/g, groupJid.split("@")[0]);
+                content = content.replace(/\{\{data\}\}/g, new Date().toLocaleDateString("pt-BR"));
+
+                try {
+                  const baseUrl = evoUrl.replace(/\/+$/, "");
+                  const sendUrl = `${baseUrl}/message/sendText/${encodeURIComponent(evoInstance)}`;
+                  const resp = await fetch(sendUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "apikey": evoApiKey },
+                    body: JSON.stringify({ number: groupJid, text: content }),
+                  });
+                  const respData = await resp.json();
+                  console.log(`Group message sent: ${msg.name} -> ${groupJid}`, resp.status, JSON.stringify(respData).slice(0, 200));
+                } catch (sendErr) {
+                  console.error(`Failed to send group message ${msg.name}:`, sendErr);
+                }
+              }
+            }
+          }
+        }
+
+        // Also record group events in whatsapp_group_events
+        for (const participant of participants) {
+          const phone = String(participant).replace("@s.whatsapp.net", "").replace("@c.us", "");
+          // Find group by external_group_id
+          const { data: group } = await supabase
+            .from("whatsapp_groups")
+            .select("id")
+            .eq("organization_id", orgId)
+            .eq("external_group_id", groupJid)
+            .maybeSingle();
+
+          if (group) {
+            await supabase.from("whatsapp_group_events").insert({
+              group_id: group.id,
+              phone_number: phone,
+              event_type: triggerEvent === "on_join" ? "join" : "leave",
+              event_data: { instance: instanceName, action } as any,
+            });
+          }
+        }
+      }
+    }
+
     // Handle Evolution API format (webhook events)
     if (body.event === "messages.upsert" || body.event === "message" || body.event === "MESSAGES_UPSERT") {
       const data = body.data || body;

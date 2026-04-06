@@ -51,6 +51,7 @@ import { ConditionalNodeConfig } from '@/components/flow-builder/ConditionalNode
 import { SequenceNodeConfig } from '@/components/flow-builder/SequenceNodeConfig';
 import { EmailTemplateEditor } from '@/components/email/EmailTemplateEditor';
 import { FlowCanvas } from '@/components/flow-builder/FlowCanvas';
+import { SearchableTagSelect } from '@/components/whatsapp/SearchableTagSelect';
 
 import { FlowNodeAnalyticsOverlay } from '@/components/automations/FlowNodeAnalyticsOverlay';
 import type { FlowNodeAnalytic } from '@/hooks/useFlowNodeAnalytics';
@@ -677,6 +678,14 @@ export default function FlowBuilder() {
       ...triggerNode.config,
     } as Record<string, Json>;
 
+    const navigateToList = () => {
+      setMode('list');
+      setCurrentFlowId(null);
+      setNodes([]);
+      setConnections([]);
+      setSearchParams({});
+    };
+
     if (currentFlowId) {
       updateAutomation.mutate({
         id: currentFlowId,
@@ -685,8 +694,12 @@ export default function FlowBuilder() {
         trigger_config: triggerConfig,
         actions,
         is_active: isActive,
+      }, {
+        onSuccess: () => {
+          toast({ title: '✅ Fluxo atualizado!' });
+          navigateToList();
+        },
       });
-      toast({ title: '✅ Fluxo atualizado!' });
     } else {
       createAutomation.mutate({
         name: flowName,
@@ -697,21 +710,10 @@ export default function FlowBuilder() {
       }, {
         onSuccess: () => {
           toast({ title: '✅ Fluxo criado!' });
-          setMode('list');
-          setCurrentFlowId(null);
-          setNodes([]);
-          setConnections([]);
-          setSearchParams({});
+          navigateToList();
         },
       });
-      return;
     }
-
-    setMode('list');
-    setCurrentFlowId(null);
-    setNodes([]);
-    setConnections([]);
-    setSearchParams({});
   };
 
   const handleCreateNew = () => { setNewCampaignOpen(true); };

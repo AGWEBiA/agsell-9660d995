@@ -51,6 +51,7 @@ export function WhatsAppGroupMessages({ currentInstanceId }: { currentInstanceId
   } = useWhatsAppGroups();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [groupSearch, setGroupSearch] = useState('');
   const [sendingMessageId, setSendingMessageId] = useState<string | null>(null);
   const [selectedInstanceIds, setSelectedInstanceIds] = useState<string[]>(
     currentInstanceId ? [currentInstanceId] : []

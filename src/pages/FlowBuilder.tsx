@@ -1004,11 +1004,12 @@ export default function FlowBuilder() {
 
             {/* Action categories */}
             {(() => {
-              const groupAllowedNodes = ['timer', 'send_whatsapp_group', 'add_tag', 'remove_tag', 'wait', 'conditional', 'tag_filter', 'note', 'send_notification', 'create_task', 'add_to_whatsapp_group', 'edit_whatsapp_group'];
-              const filteredCategories = isGroupMode
+              const cfg = channelFilter ? channelConfig[channelFilter] : null;
+              const allowedActions = cfg?.allowedActions ? new Set(cfg.allowedActions) : null;
+              const filteredCategories = allowedActions
                 ? nodeCategories.map(cat => ({
                     ...cat,
-                    nodes: cat.nodes.filter(n => groupAllowedNodes.includes(n.id)),
+                    nodes: cat.nodes.filter(n => allowedActions.has(n.id)),
                   })).filter(cat => cat.nodes.length > 0)
                 : nodeCategories;
 
@@ -1038,31 +1039,39 @@ export default function FlowBuilder() {
               ));
             })()}
 
-            {/* Conditions (hidden in group mode as they're in nodeCategories) */}
-            {!isGroupMode && (
-              <div className="mb-3">
-                <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">Condições</p>
-                <div className="grid grid-cols-2 gap-1">
-                  {conditionOptions.map(opt => (
-                    <div
-                      key={opt.id}
-                      draggable="true"
-                      unselectable="on"
-                      onDragStart={e => handleDragStart(e, 'condition', opt.id)}
-                      className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
-                      title={opt.label}
-                      role="button"
-                      tabIndex={0}
-                    >
-                      <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0 pointer-events-none', opt.color)}>
-                        <opt.icon className="h-3.5 w-3.5" />
+            {/* Conditions */}
+            {(() => {
+              const cfg = channelFilter ? channelConfig[channelFilter] : null;
+              const allowedActions = cfg?.allowedActions ? new Set(cfg.allowedActions) : null;
+              const filteredConditions = allowedActions
+                ? conditionOptions.filter(c => allowedActions.has(c.id))
+                : conditionOptions;
+              if (filteredConditions.length === 0) return null;
+              return (
+                <div className="mb-3">
+                  <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">Condições</p>
+                  <div className="grid grid-cols-2 gap-1">
+                    {filteredConditions.map(opt => (
+                      <div
+                        key={opt.id}
+                        draggable="true"
+                        unselectable="on"
+                        onDragStart={e => handleDragStart(e, 'condition', opt.id)}
+                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
+                        title={opt.label}
+                        role="button"
+                        tabIndex={0}
+                      >
+                        <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0 pointer-events-none', opt.color)}>
+                          <opt.icon className="h-3.5 w-3.5" />
+                        </div>
+                        <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full pointer-events-none">{opt.label}</span>
                       </div>
-                      <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full pointer-events-none">{opt.label}</span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </div>
 

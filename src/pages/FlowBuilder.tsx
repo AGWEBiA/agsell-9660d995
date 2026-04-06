@@ -994,8 +994,9 @@ export default function FlowBuilder() {
                       draggable="true"
                       unselectable="on"
                       onDragStart={e => handleDragStart(e, 'trigger', 'tag_added')}
+                      onClick={() => handleClickToAdd('trigger', 'tag_added')}
                       className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-grab active:cursor-grabbing group select-none"
-                      title="Tag — Gatilho inicial do fluxo de grupo"
+                      title="Tag — Clique ou arraste para adicionar"
                     >
                       <div className="flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-gradient-to-br from-emerald-500 to-green-600 text-white pointer-events-none">
                         <Tag className="h-4 w-4" />

@@ -911,30 +911,40 @@ export default function FlowBuilder() {
             })()}
 
             {/* Action categories */}
-            {nodeCategories.map(cat => (
-              <div key={cat.label} className="mb-3">
-                <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">{cat.label}</p>
-                <div className="grid grid-cols-2 gap-1">
-                  {cat.nodes.map(opt => (
-                    <div
-                      key={opt.id}
-                      draggable="true"
-                      unselectable="on"
-                      onDragStart={e => handleDragStart(e, getNodeType(opt.id), opt.id)}
-                      className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
-                      title={opt.label}
-                      role="button"
-                      tabIndex={0}
-                    >
-                      <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0 pointer-events-none', opt.color)}>
-                        <opt.icon className="h-3.5 w-3.5" />
+            {(() => {
+              const groupAllowedNodes = ['timer', 'send_whatsapp_group', 'add_tag', 'remove_tag', 'wait', 'conditional', 'tag_filter', 'note', 'send_notification', 'create_task', 'add_to_whatsapp_group', 'edit_whatsapp_group'];
+              const filteredCategories = isGroupMode
+                ? nodeCategories.map(cat => ({
+                    ...cat,
+                    nodes: cat.nodes.filter(n => groupAllowedNodes.includes(n.id)),
+                  })).filter(cat => cat.nodes.length > 0)
+                : nodeCategories;
+
+              return filteredCategories.map(cat => (
+                <div key={cat.label} className="mb-3">
+                  <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">{cat.label}</p>
+                  <div className="grid grid-cols-2 gap-1">
+                    {cat.nodes.map(opt => (
+                      <div
+                        key={opt.id}
+                        draggable="true"
+                        unselectable="on"
+                        onDragStart={e => handleDragStart(e, getNodeType(opt.id), opt.id)}
+                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
+                        title={opt.label}
+                        role="button"
+                        tabIndex={0}
+                      >
+                        <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0 pointer-events-none', opt.color)}>
+                          <opt.icon className="h-3.5 w-3.5" />
+                        </div>
+                        <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full pointer-events-none">{opt.label}</span>
                       </div>
-                      <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full pointer-events-none">{opt.label}</span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ));
+            })()}
 
             {/* Conditions */}
             <div className="mb-3">

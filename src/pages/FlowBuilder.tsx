@@ -855,19 +855,22 @@ export default function FlowBuilder() {
                   </p>
                   <div className="grid grid-cols-2 gap-1">
                     {opts.map(opt => (
-                      <button
+                      <div
                         key={opt.id}
-                        draggable
+                        draggable="true"
+                        unselectable="on"
                         onDragStart={e => handleDragStart(e, 'trigger', opt.id)}
                         onClick={() => handleSelectTrigger(opt.id)}
-                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group"
+                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
                         title={opt.description || opt.label}
+                        role="button"
+                        tabIndex={0}
                       >
-                        <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-gradient-to-br text-white', opt.color)}>
+                        <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-gradient-to-br text-white pointer-events-none', opt.color)}>
                           <opt.icon className="h-3.5 w-3.5" />
                         </div>
-                        <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full">{opt.label}</span>
-                      </button>
+                        <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full pointer-events-none">{opt.label}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -880,18 +883,21 @@ export default function FlowBuilder() {
                 <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">{cat.label}</p>
                 <div className="grid grid-cols-2 gap-1">
                   {cat.nodes.map(opt => (
-                    <button
+                    <div
                       key={opt.id}
-                      draggable
+                      draggable="true"
+                      unselectable="on"
                       onDragStart={e => handleDragStart(e, getNodeType(opt.id), opt.id)}
-                      className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group"
+                      className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
                       title={opt.label}
+                      role="button"
+                      tabIndex={0}
                     >
-                      <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0', opt.color)}>
+                      <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0 pointer-events-none', opt.color)}>
                         <opt.icon className="h-3.5 w-3.5" />
                       </div>
-                      <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full">{opt.label}</span>
-                    </button>
+                      <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full pointer-events-none">{opt.label}</span>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -902,18 +908,21 @@ export default function FlowBuilder() {
               <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">Condições</p>
               <div className="grid grid-cols-2 gap-1">
                 {conditionOptions.map(opt => (
-                  <button
+                  <div
                     key={opt.id}
-                    draggable
+                    draggable="true"
+                    unselectable="on"
                     onDragStart={e => handleDragStart(e, 'condition', opt.id)}
-                    className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group"
+                    className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
                     title={opt.label}
+                    role="button"
+                    tabIndex={0}
                   >
-                    <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0', opt.color)}>
+                    <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0 pointer-events-none', opt.color)}>
                       <opt.icon className="h-3.5 w-3.5" />
                     </div>
-                    <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full">{opt.label}</span>
-                  </button>
+                    <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full pointer-events-none">{opt.label}</span>
+                  </div>
                 ))}
               </div>
             </div>

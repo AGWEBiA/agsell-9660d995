@@ -681,6 +681,8 @@ export default function FlowBuilder() {
   const handleDragStart = (e: React.DragEvent, nodeType: string, subtype: string) => {
     e.dataTransfer.setData('application/flow-node', JSON.stringify({ nodeType, subtype }));
     e.dataTransfer.effectAllowed = 'copy';
+    // Hide trigger selector overlay so canvas is visible for drop
+    if (showTriggerSelector) setShowTriggerSelector(false);
   };
 
   // Load existing flow

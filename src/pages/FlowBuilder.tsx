@@ -678,6 +678,7 @@ export default function FlowBuilder() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [newCampaignOpen, setNewCampaignOpen] = useState(false);
   const [showTriggerSelector, setShowTriggerSelector] = useState(false);
+  const [sidebarDragPayload, setSidebarDragPayload] = useState<{ nodeType: FlowNode['type']; subtype: string } | null>(null);
 
   const hasTrigger = nodes.some(n => n.type === 'trigger');
   const isGroupsChannel = channelFilter === 'groups';
@@ -688,8 +689,11 @@ export default function FlowBuilder() {
       flushSync(() => setShowTriggerSelector(false));
     }
 
+    const payload = { nodeType: nodeType as FlowNode['type'], subtype };
+    setSidebarDragPayload(payload);
     e.dataTransfer.clearData();
-    e.dataTransfer.setData('application/flow-node', JSON.stringify({ nodeType, subtype }));
+    e.dataTransfer.setData('application/flow-node', JSON.stringify(payload));
+    e.dataTransfer.setData('text/plain', JSON.stringify(payload));
     e.dataTransfer.effectAllowed = 'copy';
   };
 
@@ -832,6 +836,7 @@ export default function FlowBuilder() {
       setCurrentFlowId(null);
       setNodes([]);
       setConnections([]);
+      setSidebarDragPayload(null);
       setSearchParams(channelFilter ? { channel: channelFilter } : {});
     };
 
@@ -876,6 +881,7 @@ export default function FlowBuilder() {
     setIsActive(false);
     setMode('editor');
     setShowTriggerSelector(false);
+    setSidebarDragPayload(null);
   };
 
   const handleImportCode = (name: string, code: string) => {
@@ -895,6 +901,7 @@ export default function FlowBuilder() {
         setIsActive(false);
         setMode('editor');
         setShowTriggerSelector(false);
+        setSidebarDragPayload(null);
         toast({ title: '✅ Fluxo importado com sucesso!' });
       }
     } catch {
@@ -924,6 +931,7 @@ export default function FlowBuilder() {
     setCurrentFlowId(null);
     setNodes([]);
     setConnections([]);
+    setSidebarDragPayload(null);
     setSearchParams(channelFilter ? { channel: channelFilter } : {});
   };
 
@@ -1227,6 +1235,8 @@ export default function FlowBuilder() {
             onEditNode={handleEditNode}
             onDeleteNode={handleDeleteNode}
             analytics={nodeAnalytics}
+            sidebarDragPayload={sidebarDragPayload}
+            onSidebarDragConsume={() => setSidebarDragPayload(null)}
           />
           {/* Trigger selector overlay when no trigger exists (not for groups) */}
           {!hasTrigger && showTriggerSelector && !isGroupsChannel && (

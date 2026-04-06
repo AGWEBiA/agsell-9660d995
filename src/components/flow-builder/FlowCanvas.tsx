@@ -150,13 +150,10 @@ export function FlowCanvas({
     e.preventDefault();
     setDragOverCanvas(false);
     const raw = e.dataTransfer.getData('application/flow-node');
-    console.log('[FlowCanvas] drop raw:', raw);
     if (!raw) return;
     try {
       const { nodeType, subtype } = JSON.parse(raw);
-      console.log('[FlowCanvas] parsed:', nodeType, subtype);
       const info = [...actionOptions, ...conditionOptions, ...triggerOptions].find(a => a.id === subtype);
-      console.log('[FlowCanvas] info found:', !!info, info?.label);
       if (!info) return;
       const pos = screenToCanvas(e.clientX, e.clientY);
       const newNode: FlowNode = {
@@ -167,11 +164,8 @@ export function FlowCanvas({
         config: {},
         position: { x: pos.x - 160, y: pos.y - 40 },
       };
-      console.log('[FlowCanvas] adding node:', newNode.label);
       onNodesChange([...nodes, newNode]);
-    } catch (err) {
-      console.error('[FlowCanvas] drop error:', err);
-    }
+    } catch {}
   }, [screenToCanvas, nodes, onNodesChange]);
 
   const handleCanvasDragOver = (e: React.DragEvent) => {

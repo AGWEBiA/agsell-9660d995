@@ -394,6 +394,7 @@ const channelConfig: Record<string, {
   allowedActions?: string[];
   title: string;
   subtitle: string;
+  noTriggerSelector?: boolean;
 }> = {
   whatsapp: {
     triggerChannels: ['whatsapp', 'crm', 'pagamento', 'site'],

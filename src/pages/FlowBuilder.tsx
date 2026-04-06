@@ -946,29 +946,31 @@ export default function FlowBuilder() {
               ));
             })()}
 
-            {/* Conditions */}
-            <div className="mb-3">
-              <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">Condições</p>
-              <div className="grid grid-cols-2 gap-1">
-                {conditionOptions.map(opt => (
-                  <div
-                    key={opt.id}
-                    draggable="true"
-                    unselectable="on"
-                    onDragStart={e => handleDragStart(e, 'condition', opt.id)}
-                    className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
-                    title={opt.label}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0 pointer-events-none', opt.color)}>
-                      <opt.icon className="h-3.5 w-3.5" />
+            {/* Conditions (hidden in group mode as they're in nodeCategories) */}
+            {!isGroupMode && (
+              <div className="mb-3">
+                <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">Condições</p>
+                <div className="grid grid-cols-2 gap-1">
+                  {conditionOptions.map(opt => (
+                    <div
+                      key={opt.id}
+                      draggable="true"
+                      unselectable="on"
+                      onDragStart={e => handleDragStart(e, 'condition', opt.id)}
+                      className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
+                      title={opt.label}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0 pointer-events-none', opt.color)}>
+                        <opt.icon className="h-3.5 w-3.5" />
+                      </div>
+                      <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full pointer-events-none">{opt.label}</span>
                     </div>
-                    <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full pointer-events-none">{opt.label}</span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 

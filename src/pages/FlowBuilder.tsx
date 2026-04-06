@@ -661,7 +661,7 @@ export default function FlowBuilder() {
   const editId = searchParams.get('id');
   const isNew = searchParams.get('new') === '1';
   const channelFilter = searchParams.get('channel');
-  const isGroupMode = channelFilter === 'groups';
+  
   const { data: nodeAnalytics } = useFlowNodeAnalytics(editId || undefined);
 
   const [mode, setMode] = useState<'list' | 'editor'>(editId || isNew ? 'editor' : 'list');

@@ -693,6 +693,25 @@ export default function FlowBuilder() {
     e.dataTransfer.effectAllowed = 'copy';
   };
 
+  // Click to add node (fallback for drag-and-drop)
+  const handleClickToAdd = (nodeType: string, subtype: string) => {
+    const allOptions = [...triggerOptions, ...actionOptions, ...conditionOptions];
+    const info = allOptions.find(a => a.id === subtype);
+    if (!info) return;
+    // Place in the center area with some randomness to avoid stacking
+    const offsetX = 200 + Math.random() * 300;
+    const offsetY = 100 + nodes.length * 120;
+    const newNode: FlowNode = {
+      id: crypto.randomUUID(),
+      type: nodeType as FlowNode['type'],
+      subtype,
+      label: info.label,
+      config: {},
+      position: { x: offsetX, y: offsetY },
+    };
+    setNodes(prev => [...prev, newNode]);
+  };
+
   // Load existing flow
   useEffect(() => {
     if (currentFlowId && automations.length > 0) {
@@ -975,8 +994,9 @@ export default function FlowBuilder() {
                       draggable="true"
                       unselectable="on"
                       onDragStart={e => handleDragStart(e, 'trigger', 'tag_added')}
+                      onClick={() => handleClickToAdd('trigger', 'tag_added')}
                       className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-grab active:cursor-grabbing group select-none"
-                      title="Tag — Gatilho inicial do fluxo de grupo"
+                      title="Tag — Clique ou arraste para adicionar"
                     >
                       <div className="flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-gradient-to-br from-emerald-500 to-green-600 text-white pointer-events-none">
                         <Tag className="h-4 w-4" />
@@ -992,8 +1012,9 @@ export default function FlowBuilder() {
                   draggable="true"
                   unselectable="on"
                   onDragStart={e => handleDragStart(e, 'action', 'timer')}
-                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-grab active:cursor-grabbing group select-none"
-                  title="Timer — Agendar próxima ação"
+                  onClick={() => handleClickToAdd('action', 'timer')}
+                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-pointer group select-none"
+                  title="Timer — Clique ou arraste"
                 >
                   <div className="flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300 pointer-events-none">
                     <Timer className="h-4 w-4" />
@@ -1007,8 +1028,9 @@ export default function FlowBuilder() {
                   draggable="true"
                   unselectable="on"
                   onDragStart={e => handleDragStart(e, 'action', 'edit_whatsapp_group')}
-                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-grab active:cursor-grabbing group select-none"
-                  title="Editar grupos — Configurar grupo de destino"
+                  onClick={() => handleClickToAdd('action', 'edit_whatsapp_group')}
+                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-pointer group select-none"
+                  title="Editar grupos — Clique ou arraste"
                 >
                   <div className="flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 pointer-events-none">
                     <Pencil className="h-4 w-4" />
@@ -1022,8 +1044,9 @@ export default function FlowBuilder() {
                   draggable="true"
                   unselectable="on"
                   onDragStart={e => handleDragStart(e, 'action', 'send_whatsapp_group')}
-                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-grab active:cursor-grabbing group select-none"
-                  title="WhatsApp — Enviar mensagem para o grupo"
+                  onClick={() => handleClickToAdd('action', 'send_whatsapp_group')}
+                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-pointer group select-none"
+                  title="WhatsApp — Clique ou arraste"
                 >
                   <div className="flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 pointer-events-none">
                     <MessageSquare className="h-4 w-4" />
@@ -1037,8 +1060,9 @@ export default function FlowBuilder() {
                   draggable="true"
                   unselectable="on"
                   onDragStart={e => handleDragStart(e, 'action', 'note')}
-                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-grab active:cursor-grabbing group select-none"
-                  title="Nota — Anotação no fluxo"
+                  onClick={() => handleClickToAdd('action', 'note')}
+                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-pointer group select-none"
+                  title="Nota — Clique ou arraste"
                 >
                   <div className="flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300 pointer-events-none">
                     <StickyNote className="h-4 w-4" />
@@ -1058,7 +1082,7 @@ export default function FlowBuilder() {
                 </div>
 
                 <p className="text-[7px] text-white/20 text-center mt-3 px-1 leading-tight">
-                  Clique em Eventos<br/>no topo superior<br/>direito do objeto<br/>para ver todas as<br/>ações disponíveis
+                  Clique nos ícones<br/>para adicionar nós<br/>ao canvas ou arraste
                 </p>
               </>
             ) : (
@@ -1137,7 +1161,8 @@ export default function FlowBuilder() {
                             draggable="true"
                             unselectable="on"
                             onDragStart={e => handleDragStart(e, getNodeType(opt.id), opt.id)}
-                            className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
+                            onClick={() => handleClickToAdd(getNodeType(opt.id), opt.id)}
+                            className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-pointer group select-none"
                             title={opt.label}
                             role="button"
                             tabIndex={0}
@@ -1171,7 +1196,8 @@ export default function FlowBuilder() {
                             draggable="true"
                             unselectable="on"
                             onDragStart={e => handleDragStart(e, 'condition', opt.id)}
-                            className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
+                            onClick={() => handleClickToAdd('condition', opt.id)}
+                            className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-pointer group select-none"
                             title={opt.label}
                             role="button"
                             tabIndex={0}

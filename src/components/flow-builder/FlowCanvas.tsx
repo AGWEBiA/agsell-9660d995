@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 import type { FlowNode, FlowConnection, FlowNodePosition } from './flowNodeTypes';
 import { triggerOptions, actionOptions, conditionOptions } from './flowNodeTypes';
@@ -16,6 +16,8 @@ interface FlowCanvasProps {
   onEditNode: (node: FlowNode) => void;
   onDeleteNode: (nodeId: string) => void;
   analytics?: Array<{ node_id: string; entries_count: number; conversions_count: number; errors_count: number }>;
+  sidebarDragPayload?: { nodeType: FlowNode['type']; subtype: string } | null;
+  onSidebarDragConsume?: () => void;
 }
 
 export function FlowCanvas({
@@ -26,6 +28,8 @@ export function FlowCanvas({
   onEditNode,
   onDeleteNode,
   analytics,
+  sidebarDragPayload,
+  onSidebarDragConsume,
 }: FlowCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -149,24 +153,41 @@ export function FlowCanvas({
   const handleCanvasDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setDragOverCanvas(false);
-    const raw = e.dataTransfer.getData('application/flow-node');
-    if (!raw) return;
+
+    const raw = e.dataTransfer.getData('application/flow-node') || e.dataTransfer.getData('text/plain');
+    let droppedNode: { nodeType: FlowNode['type']; subtype: string } | null = null;
+
     try {
-      const { nodeType, subtype } = JSON.parse(raw);
-      const info = [...actionOptions, ...conditionOptions, ...triggerOptions].find(a => a.id === subtype);
+      if (raw) {
+        const parsed = JSON.parse(raw) as { nodeType: FlowNode['type']; subtype: string };
+        if (parsed?.nodeType && parsed?.subtype) {
+          droppedNode = parsed;
+        }
+      }
+    } catch {}
+
+    if (!droppedNode && sidebarDragPayload) {
+      droppedNode = sidebarDragPayload;
+    }
+
+    if (!droppedNode) return;
+
+    try {
+      const info = [...actionOptions, ...conditionOptions, ...triggerOptions].find(a => a.id === droppedNode?.subtype);
       if (!info) return;
       const pos = screenToCanvas(e.clientX, e.clientY);
       const newNode: FlowNode = {
         id: crypto.randomUUID(),
-        type: nodeType,
-        subtype,
+        type: droppedNode.nodeType,
+        subtype: droppedNode.subtype,
         label: info.label,
         config: {},
         position: { x: pos.x - 160, y: pos.y - 40 },
       };
       onNodesChange([...nodes, newNode]);
+      onSidebarDragConsume?.();
     } catch {}
-  }, [screenToCanvas, nodes, onNodesChange]);
+  }, [screenToCanvas, nodes, onNodesChange, onSidebarDragConsume, sidebarDragPayload]);
 
   const handleCanvasDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -231,6 +252,8 @@ export function FlowCanvas({
           height: '1px',
           overflow: 'visible',
         }}
+        onDrop={handleCanvasDrop}
+        onDragOver={handleCanvasDragOver}
       >
         {/* SVG connections layer */}
         <svg

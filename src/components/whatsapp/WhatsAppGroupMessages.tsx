@@ -42,6 +42,8 @@ export function WhatsAppGroupMessages({ currentInstanceId }: { currentInstanceId
     groupMessages,
     isLoadingMessages,
     createGroupMessage,
+    updateGroupMessage,
+    deleteGroupMessage,
   } = useWhatsAppGroups();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -260,21 +262,37 @@ export function WhatsAppGroupMessages({ currentInstanceId }: { currentInstanceId
                   <div>
                     <CardTitle className="text-base flex items-center gap-2">
                       {message.name}
-                      {!message.is_active && (
-                        <Badge variant="outline" className="text-xs">
-                          Inativa
+                    </CardTitle>
+                    <div className="mt-2 flex items-center gap-2">
+                      {getTriggerBadge(message.trigger_event)}
+                      {message.target_groups && message.target_groups.length > 0 && (
+                        <Badge variant="secondary" className="text-xs">
+                          <MessageSquare className="h-3 w-3 mr-1" />
+                          {message.target_groups.length} grupo(s)
                         </Badge>
                       )}
-                    </CardTitle>
-                    <div className="mt-2">
-                      {getTriggerBadge(message.trigger_event)}
                     </div>
                   </div>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={message.is_active}
+                      onCheckedChange={(checked) =>
+                        updateGroupMessage({ id: message.id, is_active: checked })
+                      }
+                    />
+                    <Badge variant={message.is_active ? 'default' : 'outline'} className="text-xs">
+                      {message.is_active ? 'Ativa' : 'Inativa'}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => {
+                        if (confirm('Deseja realmente excluir esta mensagem?')) {
+                          deleteGroupMessage(message.id);
+                        }
+                      }}
+                    >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
@@ -284,12 +302,6 @@ export function WhatsAppGroupMessages({ currentInstanceId }: { currentInstanceId
                 <p className="text-sm text-muted-foreground line-clamp-3 bg-muted p-3 rounded-lg">
                   {message.content}
                 </p>
-                {message.target_groups && message.target_groups.length > 0 && (
-                  <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-                    <MessageSquare className="h-4 w-4" />
-                    <span>{message.target_groups.length} grupo(s) selecionado(s)</span>
-                  </div>
-                )}
               </CardContent>
             </Card>
           ))}

@@ -558,15 +558,17 @@ function FlowList({ onCreateNew, onEditFlow, channelFilter }: {
   channelFilter?: string | null;
 }) {
   const { automations, isLoading, toggleAutomation, deleteAutomation } = useAutomations();
-  const isGroupMode = channelFilter === 'groups';
-  const groupTriggerIds = ['whatsapp_group_join', 'whatsapp_group_leave'];
+  const cfg = channelFilter ? channelConfig[channelFilter] : null;
+  const allowedTriggers = getChannelTriggers(channelFilter);
+  const allowedTriggerIds = new Set(allowedTriggers.map(t => t.id));
+  const { title, subtitle } = getChannelTitle(channelFilter);
 
   const flows = automations.filter(a => {
     const tc = a.trigger_config as Record<string, unknown> | null;
     if (tc?.flow_builder !== true) return false;
-    if (isGroupMode) {
+    if (channelFilter) {
       const originalTrigger = tc?.original_trigger as string | undefined;
-      return originalTrigger ? groupTriggerIds.includes(originalTrigger) : false;
+      return originalTrigger ? allowedTriggerIds.has(originalTrigger) : false;
     }
     return true;
   });

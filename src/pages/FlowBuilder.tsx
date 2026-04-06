@@ -420,7 +420,7 @@ const channelConfig: Record<string, {
       'note', 'add_to_whatsapp_group', 'edit_whatsapp_group',
     ],
     noTriggerSelector: true,
-  } as any,
+  },
   email: {
     triggerChannels: ['email', 'crm', 'pagamento', 'site'],
     title: 'Fluxos de E-mail',

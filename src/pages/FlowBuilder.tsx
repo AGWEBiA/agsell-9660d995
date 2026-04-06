@@ -1075,12 +1075,8 @@ export default function FlowBuilder() {
           </div>
         </div>
 
-        {/* Canvas */}
-        {!hasTrigger && showTriggerSelector ? (
-          <div className="flex-1 overflow-auto bg-background">
-            <TriggerSelector onSelect={handleSelectTrigger} channelFilter={channelFilter} />
-          </div>
-        ) : (
+        {/* Canvas - always rendered for drag-drop support */}
+        <div className="flex-1 relative overflow-hidden">
           <FlowCanvas
             nodes={nodes}
             connections={connections}
@@ -1090,7 +1086,13 @@ export default function FlowBuilder() {
             onDeleteNode={handleDeleteNode}
             analytics={nodeAnalytics}
           />
-        )}
+          {/* Trigger selector overlay when no trigger exists */}
+          {!hasTrigger && showTriggerSelector && (
+            <div className="absolute inset-0 overflow-auto bg-background/95 z-20">
+              <TriggerSelector onSelect={handleSelectTrigger} channelFilter={channelFilter} />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Bottom status bar */}

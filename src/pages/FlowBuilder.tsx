@@ -388,14 +388,38 @@ function NodeConfigDialog({ node, open, onClose, onSave }: {
 }
 
 // ─── Trigger Selection (shown when canvas has no trigger) ───
-function TriggerSelector({ onSelect }: { onSelect: (triggerId: string) => void }) {
+function TriggerSelector({ onSelect, channelFilter }: { onSelect: (triggerId: string) => void; channelFilter?: string | null }) {
   const [filter, setFilter] = useState<string>('all');
   const tagTriggerIds = ['tag_added', 'tag_removed'];
-  const filtered = triggerOptions.filter(t => {
+
+  // Group-only mode
+  const isGroupMode = channelFilter === 'groups';
+  const groupTriggerIds = ['whatsapp_group_join', 'whatsapp_group_leave'];
+
+  const availableTriggers = isGroupMode
+    ? triggerOptions.filter(t => groupTriggerIds.includes(t.id))
+    : triggerOptions;
+
+  const filtered = availableTriggers.filter(t => {
     if (filter === 'all') return true;
     if (filter === 'tags') return tagTriggerIds.includes(t.id);
     return t.channel === filter;
   });
+
+  const filterTabs = isGroupMode
+    ? [{ key: 'all', label: 'Todos' }]
+    : [
+        { key: 'all', label: 'Todos' },
+        { key: 'tags', label: '🏷️ Tags' },
+        { key: 'instagram', label: '📸 Instagram' },
+        { key: 'whatsapp', label: '💬 WhatsApp' },
+        { key: 'crm', label: '👤 CRM' },
+        { key: 'pagamento', label: '💳 Pagamentos' },
+        { key: 'email', label: '📧 E-mail' },
+        { key: 'site', label: '🌐 Site' },
+        { key: 'voip', label: '📞 VoIP' },
+        { key: 'telegram', label: '✈️ Telegram' },
+      ];
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in">
@@ -403,27 +427,18 @@ function TriggerSelector({ onSelect }: { onSelect: (triggerId: string) => void }
         <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-primary to-primary/60 mb-4">
           <Zap className="h-8 w-8 text-primary-foreground" />
         </div>
-        <h2 className="text-2xl font-bold">Como o fluxo começa?</h2>
-        <p className="text-muted-foreground mt-1">Escolha o gatilho que vai iniciar sua automação</p>
+        <h2 className="text-2xl font-bold">{isGroupMode ? 'Como o fluxo de grupo começa?' : 'Como o fluxo começa?'}</h2>
+        <p className="text-muted-foreground mt-1">{isGroupMode ? 'Escolha o gatilho de grupo para iniciar' : 'Escolha o gatilho que vai iniciar sua automação'}</p>
       </div>
-      <div className="flex gap-2 mb-6 flex-wrap justify-center">
-        {([
-          { key: 'all', label: 'Todos' },
-          { key: 'tags', label: '🏷️ Tags' },
-          { key: 'instagram', label: '📸 Instagram' },
-          { key: 'whatsapp', label: '💬 WhatsApp' },
-          { key: 'crm', label: '👤 CRM' },
-          { key: 'pagamento', label: '💳 Pagamentos' },
-          { key: 'email', label: '📧 E-mail' },
-          { key: 'site', label: '🌐 Site' },
-          { key: 'voip', label: '📞 VoIP' },
-          { key: 'telegram', label: '✈️ Telegram' },
-        ]).map(f => (
-          <button key={f.key} onClick={() => setFilter(f.key)} className={cn('px-4 py-2 rounded-full text-sm font-medium transition-colors', filter === f.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80')}>
-            {f.label}
-          </button>
-        ))}
-      </div>
+      {filterTabs.length > 1 && (
+        <div className="flex gap-2 mb-6 flex-wrap justify-center">
+          {filterTabs.map(f => (
+            <button key={f.key} onClick={() => setFilter(f.key)} className={cn('px-4 py-2 rounded-full text-sm font-medium transition-colors', filter === f.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80')}>
+              {f.label}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-w-3xl">
         {filtered.map(trigger => {
           const Icon = trigger.icon;
@@ -445,14 +460,23 @@ function TriggerSelector({ onSelect }: { onSelect: (triggerId: string) => void }
 }
 
 // ─── Flow List ───
-function FlowList({ onCreateNew, onEditFlow }: {
+function FlowList({ onCreateNew, onEditFlow, channelFilter }: {
   onCreateNew: () => void;
   onEditFlow: (id: string) => void;
+  channelFilter?: string | null;
 }) {
   const { automations, isLoading, toggleAutomation, deleteAutomation } = useAutomations();
+  const isGroupMode = channelFilter === 'groups';
+  const groupTriggerIds = ['whatsapp_group_join', 'whatsapp_group_leave'];
+
   const flows = automations.filter(a => {
     const tc = a.trigger_config as Record<string, unknown> | null;
-    return tc?.flow_builder === true;
+    if (tc?.flow_builder !== true) return false;
+    if (isGroupMode) {
+      const originalTrigger = tc?.original_trigger as string | undefined;
+      return originalTrigger ? groupTriggerIds.includes(originalTrigger) : false;
+    }
+    return true;
   });
 
   const getTriggerLabel = (a: typeof automations[0]) => {
@@ -471,9 +495,9 @@ function FlowList({ onCreateNew, onEditFlow }: {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-3">
-            <Workflow className="h-7 w-7 text-primary" />Meus Fluxos
+            <Workflow className="h-7 w-7 text-primary" />{isGroupMode ? 'Fluxos de Grupo' : 'Meus Fluxos'}
           </h1>
-          <p className="text-muted-foreground mt-1">Gerencie seus fluxos de automação visual</p>
+          <p className="text-muted-foreground mt-1">{isGroupMode ? 'Gerencie fluxos de automação para grupos WhatsApp' : 'Gerencie seus fluxos de automação visual'}</p>
         </div>
         <Button onClick={onCreateNew} size="lg"><Plus className="h-5 w-5 mr-2" />Novo Fluxo</Button>
       </div>
@@ -542,6 +566,8 @@ export default function FlowBuilder() {
   const { automations, createAutomation, updateAutomation } = useAutomations();
   const editId = searchParams.get('id');
   const isNew = searchParams.get('new') === '1';
+  const channelFilter = searchParams.get('channel');
+  const isGroupMode = channelFilter === 'groups';
   const { data: nodeAnalytics } = useFlowNodeAnalytics(editId || undefined);
 
   const [mode, setMode] = useState<'list' | 'editor'>(editId || isNew ? 'editor' : 'list');
@@ -683,7 +709,7 @@ export default function FlowBuilder() {
       setCurrentFlowId(null);
       setNodes([]);
       setConnections([]);
-      setSearchParams({});
+      setSearchParams(channelFilter ? { channel: channelFilter } : {});
     };
 
     if (currentFlowId) {
@@ -775,13 +801,13 @@ export default function FlowBuilder() {
     setCurrentFlowId(null);
     setNodes([]);
     setConnections([]);
-    setSearchParams({});
+    setSearchParams(channelFilter ? { channel: channelFilter } : {});
   };
 
   if (mode === 'list') {
     return (
       <>
-        <FlowList onCreateNew={handleCreateNew} onEditFlow={handleEditFlow} />
+        <FlowList onCreateNew={handleCreateNew} onEditFlow={handleEditFlow} channelFilter={channelFilter} />
         <NewCampaignModal open={newCampaignOpen} onClose={() => setNewCampaignOpen(false)} onCreate={handleCampaignCreate} onImportCode={handleImportCode} />
       </>
     );
@@ -834,6 +860,11 @@ export default function FlowBuilder() {
 
             {/* Triggers grouped by channel */}
             {(() => {
+              const groupTriggerIds = ['whatsapp_group_join', 'whatsapp_group_leave'];
+              const availableTriggers = isGroupMode
+                ? triggerOptions.filter(t => groupTriggerIds.includes(t.id))
+                : triggerOptions;
+
               const channelGroups: Record<string, typeof triggerOptions> = {};
               const channelLabels: Record<string, string> = {
                 instagram: '📸 Instagram',
@@ -845,7 +876,7 @@ export default function FlowBuilder() {
                 voip: '📞 VoIP',
                 telegram: '✈️ Telegram',
               };
-              triggerOptions.forEach(opt => {
+              availableTriggers.forEach(opt => {
                 const ch = opt.channel || 'outros';
                 if (!channelGroups[ch]) channelGroups[ch] = [];
                 channelGroups[ch].push(opt);
@@ -853,7 +884,7 @@ export default function FlowBuilder() {
               return Object.entries(channelGroups).map(([channel, opts]) => (
                 <div key={channel} className="mb-3">
                   <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">
-                    {channelLabels[channel] || channel}
+                    {isGroupMode ? '💬 Gatilhos de Grupo' : (channelLabels[channel] || channel)}
                   </p>
                   <div className="grid grid-cols-2 gap-1">
                     {opts.map(opt => (
@@ -880,16 +911,52 @@ export default function FlowBuilder() {
             })()}
 
             {/* Action categories */}
-            {nodeCategories.map(cat => (
-              <div key={cat.label} className="mb-3">
-                <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">{cat.label}</p>
+            {(() => {
+              const groupAllowedNodes = ['timer', 'send_whatsapp_group', 'add_tag', 'remove_tag', 'wait', 'conditional', 'tag_filter', 'note', 'send_notification', 'create_task', 'add_to_whatsapp_group', 'edit_whatsapp_group'];
+              const filteredCategories = isGroupMode
+                ? nodeCategories.map(cat => ({
+                    ...cat,
+                    nodes: cat.nodes.filter(n => groupAllowedNodes.includes(n.id)),
+                  })).filter(cat => cat.nodes.length > 0)
+                : nodeCategories;
+
+              return filteredCategories.map(cat => (
+                <div key={cat.label} className="mb-3">
+                  <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">{cat.label}</p>
+                  <div className="grid grid-cols-2 gap-1">
+                    {cat.nodes.map(opt => (
+                      <div
+                        key={opt.id}
+                        draggable="true"
+                        unselectable="on"
+                        onDragStart={e => handleDragStart(e, getNodeType(opt.id), opt.id)}
+                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
+                        title={opt.label}
+                        role="button"
+                        tabIndex={0}
+                      >
+                        <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0 pointer-events-none', opt.color)}>
+                          <opt.icon className="h-3.5 w-3.5" />
+                        </div>
+                        <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full pointer-events-none">{opt.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ));
+            })()}
+
+            {/* Conditions (hidden in group mode as they're in nodeCategories) */}
+            {!isGroupMode && (
+              <div className="mb-3">
+                <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">Condições</p>
                 <div className="grid grid-cols-2 gap-1">
-                  {cat.nodes.map(opt => (
+                  {conditionOptions.map(opt => (
                     <div
                       key={opt.id}
                       draggable="true"
                       unselectable="on"
-                      onDragStart={e => handleDragStart(e, getNodeType(opt.id), opt.id)}
+                      onDragStart={e => handleDragStart(e, 'condition', opt.id)}
                       className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
                       title={opt.label}
                       role="button"
@@ -903,38 +970,14 @@ export default function FlowBuilder() {
                   ))}
                 </div>
               </div>
-            ))}
-
-            {/* Conditions */}
-            <div className="mb-3">
-              <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">Condições</p>
-              <div className="grid grid-cols-2 gap-1">
-                {conditionOptions.map(opt => (
-                  <div
-                    key={opt.id}
-                    draggable="true"
-                    unselectable="on"
-                    onDragStart={e => handleDragStart(e, 'condition', opt.id)}
-                    className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
-                    title={opt.label}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0 pointer-events-none', opt.color)}>
-                      <opt.icon className="h-3.5 w-3.5" />
-                    </div>
-                    <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full pointer-events-none">{opt.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
         {/* Canvas */}
         {!hasTrigger && showTriggerSelector ? (
           <div className="flex-1 overflow-auto bg-background">
-            <TriggerSelector onSelect={handleSelectTrigger} />
+            <TriggerSelector onSelect={handleSelectTrigger} channelFilter={channelFilter} />
           </div>
         ) : (
           <FlowCanvas

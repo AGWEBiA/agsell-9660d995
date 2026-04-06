@@ -24,7 +24,7 @@ import {
   Tag, Star, Bell, Clock, CheckSquare, GitBranch,
   Settings, X, Play, Pause, MoreVertical,
   Workflow, Timer, Flame, MailCheck, Filter, Code,
-  Copy, Share2, StickyNote, Volume2, Split,
+  Copy, Share2, StickyNote, Volume2, Split, Pencil,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -394,6 +394,7 @@ const channelConfig: Record<string, {
   allowedActions?: string[];
   title: string;
   subtitle: string;
+  noTriggerSelector?: boolean;
 }> = {
   whatsapp: {
     triggerChannels: ['whatsapp', 'crm', 'pagamento', 'site'],
@@ -410,14 +411,15 @@ const channelConfig: Record<string, {
     ],
   },
   groups: {
-    triggerChannels: ['whatsapp', 'crm', 'pagamento', 'site', 'email'],
+    triggerChannels: [],
+    triggerIds: [],
     title: 'Fluxos de Grupo',
-    subtitle: 'Crie fluxos com qualquer gatilho → adicione tags → insira leads em grupos',
+    subtitle: 'Arraste Tag para iniciar → Timer → Adicionar ao grupo',
     allowedActions: [
-      'timer', 'send_whatsapp_group', 'add_tag', 'remove_tag', 'wait', 'conditional', 'tag_filter',
-      'note', 'send_notification', 'create_task', 'add_to_whatsapp_group', 'edit_whatsapp_group',
-      'send_whatsapp', 'send_email_performance', 'send_email_marketing',
+      'timer', 'send_whatsapp_group', 'add_tag', 'remove_tag',
+      'note', 'add_to_whatsapp_group', 'edit_whatsapp_group',
     ],
+    noTriggerSelector: true,
   },
   email: {
     triggerChannels: ['email', 'crm', 'pagamento', 'site'],
@@ -677,6 +679,7 @@ export default function FlowBuilder() {
   const [showTriggerSelector, setShowTriggerSelector] = useState(false);
 
   const hasTrigger = nodes.some(n => n.type === 'trigger');
+  const isGroupsChannel = channelFilter === 'groups';
 
   // Drag from sidebar
   const handleDragStart = (e: React.DragEvent, nodeType: string, subtype: string) => {
@@ -849,7 +852,8 @@ export default function FlowBuilder() {
     setConnections([]);
     setIsActive(false);
     setMode('editor');
-    setShowTriggerSelector(true);
+    const cfg = channelFilter ? channelConfig[channelFilter] : null;
+    setShowTriggerSelector(!cfg?.noTriggerSelector);
   };
 
   const handleImportCode = (name: string, code: string) => {
@@ -951,130 +955,236 @@ export default function FlowBuilder() {
       {/* Main content area */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar with draggable nodes */}
-        <div className="w-[160px] shrink-0 border-r bg-[#1a1a2e] overflow-y-auto">
+        <div className={cn("shrink-0 border-r bg-[#1a1a2e] overflow-y-auto", isGroupsChannel ? "w-[80px]" : "w-[160px]")}>
           <div className="p-2">
-            <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider px-1 mb-2">Arraste para o canvas</p>
+            {isGroupsChannel ? (
+              /* ── Groups channel: SellFlux-style flat vertical list ── */
+              <>
+                <p className="text-[8px] font-semibold text-white/30 uppercase tracking-wider text-center mb-2">Arraste os<br/>ícones</p>
 
-            {/* Triggers grouped by channel */}
-            {(() => {
-              const availableTriggers = getChannelTriggers(channelFilter);
-              const cfg = channelFilter ? channelConfig[channelFilter] : null;
-
-              const channelGroups: Record<string, typeof triggerOptions> = {};
-              const channelLabels: Record<string, string> = {
-                instagram: '📸 Instagram',
-                whatsapp: '💬 WhatsApp',
-                crm: '👤 CRM / Tags',
-                email: '📧 E-mail',
-                pagamento: '💳 Pagamento',
-                site: '🌐 Site',
-                voip: '📞 VoIP',
-                telegram: '✈️ Telegram',
-              };
-              availableTriggers.forEach(opt => {
-                const ch = opt.channel || 'outros';
-                if (!channelGroups[ch]) channelGroups[ch] = [];
-                channelGroups[ch].push(opt);
-              });
-              return Object.entries(channelGroups).map(([channel, opts]) => (
-                <div key={channel} className="mb-3">
-                  <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">
-                    {cfg?.triggerIds ? `🔔 ${cfg.title}` : (channelLabels[channel] || channel)}
-                  </p>
-                  <div className="grid grid-cols-2 gap-1">
-                    {opts.map(opt => (
-                      <div
-                        key={opt.id}
-                        draggable="true"
-                        unselectable="on"
-                        onDragStart={e => handleDragStart(e, 'trigger', opt.id)}
-                        onClick={() => handleSelectTrigger(opt.id)}
-                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
-                        title={opt.description || opt.label}
-                        role="button"
-                        tabIndex={0}
-                      >
-                        <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-gradient-to-br text-white pointer-events-none', opt.color)}>
-                          <opt.icon className="h-3.5 w-3.5" />
-                        </div>
-                        <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full pointer-events-none">{opt.label}</span>
+                {/* ENTRADA - Tag (starting node) */}
+                <p className="text-[7px] font-semibold text-white/30 uppercase tracking-wider text-center mb-1 mt-2">— Entrada —</p>
+                {(() => {
+                  const tagTrigger = triggerOptions.find(t => t.id === 'tag_added');
+                  if (!tagTrigger) return null;
+                  return (
+                    <div
+                      draggable="true"
+                      unselectable="on"
+                      onDragStart={e => handleDragStart(e, 'trigger', 'tag_added')}
+                      className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-grab active:cursor-grabbing group select-none"
+                      title="Tag — Gatilho inicial do fluxo de grupo"
+                    >
+                      <div className="flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-gradient-to-br from-emerald-500 to-green-600 text-white pointer-events-none">
+                        <Tag className="h-4 w-4" />
                       </div>
-                    ))}
+                      <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight pointer-events-none">Tag</span>
+                    </div>
+                  );
+                })()}
+
+                {/* AGENDAMENTO - Timer */}
+                <p className="text-[7px] font-semibold text-white/30 uppercase tracking-wider text-center mb-1 mt-3">— Agendamento —</p>
+                <div
+                  draggable="true"
+                  unselectable="on"
+                  onDragStart={e => handleDragStart(e, 'action', 'timer')}
+                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-grab active:cursor-grabbing group select-none"
+                  title="Timer — Agendar próxima ação"
+                >
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300 pointer-events-none">
+                    <Timer className="h-4 w-4" />
                   </div>
+                  <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight pointer-events-none">Timer</span>
                 </div>
-              ));
-            })()}
 
-            {/* Action categories */}
-            {(() => {
-              const cfg = channelFilter ? channelConfig[channelFilter] : null;
-              const allowedActions = cfg?.allowedActions ? new Set(cfg.allowedActions) : null;
-              const filteredCategories = allowedActions
-                ? nodeCategories.map(cat => ({
-                    ...cat,
-                    nodes: cat.nodes.filter(n => allowedActions.has(n.id)),
-                  })).filter(cat => cat.nodes.length > 0)
-                : nodeCategories;
+                {/* GRUPOS */}
+                <p className="text-[7px] font-semibold text-white/30 uppercase tracking-wider text-center mb-1 mt-3">— Grupos —</p>
+                <div
+                  draggable="true"
+                  unselectable="on"
+                  onDragStart={e => handleDragStart(e, 'action', 'edit_whatsapp_group')}
+                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-grab active:cursor-grabbing group select-none"
+                  title="Editar grupos — Configurar grupo de destino"
+                >
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 pointer-events-none">
+                    <Pencil className="h-4 w-4" />
+                  </div>
+                  <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight pointer-events-none">Editar grupos</span>
+                </div>
 
-              return filteredCategories.map(cat => (
-                <div key={cat.label} className="mb-3">
-                  <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">{cat.label}</p>
-                  <div className="grid grid-cols-2 gap-1">
-                    {cat.nodes.map(opt => (
-                      <div
-                        key={opt.id}
-                        draggable="true"
-                        unselectable="on"
-                        onDragStart={e => handleDragStart(e, getNodeType(opt.id), opt.id)}
-                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
-                        title={opt.label}
-                        role="button"
-                        tabIndex={0}
-                      >
-                        <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0 pointer-events-none', opt.color)}>
-                          <opt.icon className="h-3.5 w-3.5" />
-                        </div>
-                        <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full pointer-events-none">{opt.label}</span>
+                {/* DISPAROS - WhatsApp */}
+                <p className="text-[7px] font-semibold text-white/30 uppercase tracking-wider text-center mb-1 mt-3">— Disparos —</p>
+                <div
+                  draggable="true"
+                  unselectable="on"
+                  onDragStart={e => handleDragStart(e, 'action', 'send_whatsapp_group')}
+                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-grab active:cursor-grabbing group select-none"
+                  title="WhatsApp — Enviar mensagem para o grupo"
+                >
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 pointer-events-none">
+                    <MessageSquare className="h-4 w-4" />
+                  </div>
+                  <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight pointer-events-none">WhatsApp</span>
+                </div>
+
+                {/* EXTRAS */}
+                <p className="text-[7px] font-semibold text-white/30 uppercase tracking-wider text-center mb-1 mt-3">— Extras —</p>
+                <div
+                  draggable="true"
+                  unselectable="on"
+                  onDragStart={e => handleDragStart(e, 'action', 'note')}
+                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-grab active:cursor-grabbing group select-none"
+                  title="Nota — Anotação no fluxo"
+                >
+                  <div className="flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300 pointer-events-none">
+                    <StickyNote className="h-4 w-4" />
+                  </div>
+                  <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight pointer-events-none">Nota</span>
+                </div>
+
+                {/* GERENCIAR GRUPOS button */}
+                <div className="mt-4 px-1">
+                  <button
+                    onClick={() => navigate('/whatsapp?tab=groups')}
+                    className="w-full flex flex-col items-center gap-1.5 p-3 rounded-xl bg-green-600 hover:bg-green-500 transition-colors text-white"
+                  >
+                    <MessageSquare className="h-5 w-5" />
+                    <span className="text-[8px] font-bold uppercase tracking-wider leading-tight text-center">Gerenciar<br/>Grupos</span>
+                  </button>
+                </div>
+
+                <p className="text-[7px] text-white/20 text-center mt-3 px-1 leading-tight">
+                  Clique em Eventos<br/>no topo superior<br/>direito do objeto<br/>para ver todas as<br/>ações disponíveis
+                </p>
+              </>
+            ) : (
+              /* ── Default channel sidebar (grid layout) ── */
+              <>
+                <p className="text-[10px] font-semibold text-white/40 uppercase tracking-wider px-1 mb-2">Arraste para o canvas</p>
+
+                {/* Triggers grouped by channel */}
+                {(() => {
+                  const availableTriggers = getChannelTriggers(channelFilter);
+                  const cfg = channelFilter ? channelConfig[channelFilter] : null;
+
+                  const channelGroups: Record<string, typeof triggerOptions> = {};
+                  const channelLabels: Record<string, string> = {
+                    instagram: '📸 Instagram',
+                    whatsapp: '💬 WhatsApp',
+                    crm: '👤 CRM / Tags',
+                    email: '📧 E-mail',
+                    pagamento: '💳 Pagamento',
+                    site: '🌐 Site',
+                    voip: '📞 VoIP',
+                    telegram: '✈️ Telegram',
+                  };
+                  availableTriggers.forEach(opt => {
+                    const ch = opt.channel || 'outros';
+                    if (!channelGroups[ch]) channelGroups[ch] = [];
+                    channelGroups[ch].push(opt);
+                  });
+                  return Object.entries(channelGroups).map(([channel, opts]) => (
+                    <div key={channel} className="mb-3">
+                      <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">
+                        {cfg?.triggerIds ? `🔔 ${cfg.title}` : (channelLabels[channel] || channel)}
+                      </p>
+                      <div className="grid grid-cols-2 gap-1">
+                        {opts.map(opt => (
+                          <div
+                            key={opt.id}
+                            draggable="true"
+                            unselectable="on"
+                            onDragStart={e => handleDragStart(e, 'trigger', opt.id)}
+                            onClick={() => handleSelectTrigger(opt.id)}
+                            className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
+                            title={opt.description || opt.label}
+                            role="button"
+                            tabIndex={0}
+                          >
+                            <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-gradient-to-br text-white pointer-events-none', opt.color)}>
+                              <opt.icon className="h-3.5 w-3.5" />
+                            </div>
+                            <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full pointer-events-none">{opt.label}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              ));
-            })()}
+                    </div>
+                  ));
+                })()}
 
-            {/* Conditions */}
-            {(() => {
-              const cfg = channelFilter ? channelConfig[channelFilter] : null;
-              const allowedActions = cfg?.allowedActions ? new Set(cfg.allowedActions) : null;
-              const filteredConditions = allowedActions
-                ? conditionOptions.filter(c => allowedActions.has(c.id))
-                : conditionOptions;
-              if (filteredConditions.length === 0) return null;
-              return (
-                <div className="mb-3">
-                  <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">Condições</p>
-                  <div className="grid grid-cols-2 gap-1">
-                    {filteredConditions.map(opt => (
-                      <div
-                        key={opt.id}
-                        draggable="true"
-                        unselectable="on"
-                        onDragStart={e => handleDragStart(e, 'condition', opt.id)}
-                        className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
-                        title={opt.label}
-                        role="button"
-                        tabIndex={0}
-                      >
-                        <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0 pointer-events-none', opt.color)}>
-                          <opt.icon className="h-3.5 w-3.5" />
-                        </div>
-                        <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full pointer-events-none">{opt.label}</span>
+                {/* Action categories */}
+                {(() => {
+                  const cfg = channelFilter ? channelConfig[channelFilter] : null;
+                  const allowedActions = cfg?.allowedActions ? new Set(cfg.allowedActions) : null;
+                  const filteredCategories = allowedActions
+                    ? nodeCategories.map(cat => ({
+                        ...cat,
+                        nodes: cat.nodes.filter(n => allowedActions.has(n.id)),
+                      })).filter(cat => cat.nodes.length > 0)
+                    : nodeCategories;
+
+                  return filteredCategories.map(cat => (
+                    <div key={cat.label} className="mb-3">
+                      <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">{cat.label}</p>
+                      <div className="grid grid-cols-2 gap-1">
+                        {cat.nodes.map(opt => (
+                          <div
+                            key={opt.id}
+                            draggable="true"
+                            unselectable="on"
+                            onDragStart={e => handleDragStart(e, getNodeType(opt.id), opt.id)}
+                            className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
+                            title={opt.label}
+                            role="button"
+                            tabIndex={0}
+                          >
+                            <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0 pointer-events-none', opt.color)}>
+                              <opt.icon className="h-3.5 w-3.5" />
+                            </div>
+                            <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full pointer-events-none">{opt.label}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })()}
+                    </div>
+                  ));
+                })()}
+
+                {/* Conditions */}
+                {(() => {
+                  const cfg = channelFilter ? channelConfig[channelFilter] : null;
+                  const allowedActions = cfg?.allowedActions ? new Set(cfg.allowedActions) : null;
+                  const filteredConditions = allowedActions
+                    ? conditionOptions.filter(c => allowedActions.has(c.id))
+                    : conditionOptions;
+                  if (filteredConditions.length === 0) return null;
+                  return (
+                    <div className="mb-3">
+                      <p className="text-[9px] font-semibold text-white/30 uppercase tracking-wider px-1 mb-1">Condições</p>
+                      <div className="grid grid-cols-2 gap-1">
+                        {filteredConditions.map(opt => (
+                          <div
+                            key={opt.id}
+                            draggable="true"
+                            unselectable="on"
+                            onDragStart={e => handleDragStart(e, 'condition', opt.id)}
+                            className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
+                            title={opt.label}
+                            role="button"
+                            tabIndex={0}
+                          >
+                            <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shrink-0 pointer-events-none', opt.color)}>
+                              <opt.icon className="h-3.5 w-3.5" />
+                            </div>
+                            <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight truncate w-full pointer-events-none">{opt.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
+            )}
           </div>
         </div>
 
@@ -1089,8 +1199,8 @@ export default function FlowBuilder() {
             onDeleteNode={handleDeleteNode}
             analytics={nodeAnalytics}
           />
-          {/* Trigger selector overlay when no trigger exists */}
-          {!hasTrigger && showTriggerSelector && (
+          {/* Trigger selector overlay when no trigger exists (not for groups) */}
+          {!hasTrigger && showTriggerSelector && !isGroupsChannel && (
             <div className="absolute inset-0 overflow-auto bg-background/95 z-20">
               <TriggerSelector onSelect={handleSelectTrigger} channelFilter={channelFilter} />
             </div>

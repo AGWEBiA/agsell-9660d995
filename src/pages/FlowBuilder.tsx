@@ -1199,8 +1199,8 @@ export default function FlowBuilder() {
             onDeleteNode={handleDeleteNode}
             analytics={nodeAnalytics}
           />
-          {/* Trigger selector overlay when no trigger exists */}
-          {!hasTrigger && showTriggerSelector && (
+          {/* Trigger selector overlay when no trigger exists (not for groups) */}
+          {!hasTrigger && showTriggerSelector && !isGroupsChannel && (
             <div className="absolute inset-0 overflow-auto bg-background/95 z-20">
               <TriggerSelector onSelect={handleSelectTrigger} channelFilter={channelFilter} />
             </div>

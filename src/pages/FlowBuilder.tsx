@@ -589,9 +589,9 @@ function FlowList({ onCreateNew, onEditFlow, channelFilter }: {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-3">
-            <Workflow className="h-7 w-7 text-primary" />{isGroupMode ? 'Fluxos de Grupo' : 'Meus Fluxos'}
+            <Workflow className="h-7 w-7 text-primary" />{title}
           </h1>
-          <p className="text-muted-foreground mt-1">{isGroupMode ? 'Gerencie fluxos de automação para grupos WhatsApp' : 'Gerencie seus fluxos de automação visual'}</p>
+          <p className="text-muted-foreground mt-1">{subtitle}</p>
         </div>
         <Button onClick={onCreateNew} size="lg"><Plus className="h-5 w-5 mr-2" />Novo Fluxo</Button>
       </div>

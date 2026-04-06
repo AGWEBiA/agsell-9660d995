@@ -1012,8 +1012,9 @@ export default function FlowBuilder() {
                   draggable="true"
                   unselectable="on"
                   onDragStart={e => handleDragStart(e, 'action', 'timer')}
-                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-grab active:cursor-grabbing group select-none"
-                  title="Timer — Agendar próxima ação"
+                  onClick={() => handleClickToAdd('action', 'timer')}
+                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-pointer group select-none"
+                  title="Timer — Clique ou arraste"
                 >
                   <div className="flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300 pointer-events-none">
                     <Timer className="h-4 w-4" />
@@ -1027,8 +1028,9 @@ export default function FlowBuilder() {
                   draggable="true"
                   unselectable="on"
                   onDragStart={e => handleDragStart(e, 'action', 'edit_whatsapp_group')}
-                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-grab active:cursor-grabbing group select-none"
-                  title="Editar grupos — Configurar grupo de destino"
+                  onClick={() => handleClickToAdd('action', 'edit_whatsapp_group')}
+                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-pointer group select-none"
+                  title="Editar grupos — Clique ou arraste"
                 >
                   <div className="flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 pointer-events-none">
                     <Pencil className="h-4 w-4" />
@@ -1042,8 +1044,9 @@ export default function FlowBuilder() {
                   draggable="true"
                   unselectable="on"
                   onDragStart={e => handleDragStart(e, 'action', 'send_whatsapp_group')}
-                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-grab active:cursor-grabbing group select-none"
-                  title="WhatsApp — Enviar mensagem para o grupo"
+                  onClick={() => handleClickToAdd('action', 'send_whatsapp_group')}
+                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-pointer group select-none"
+                  title="WhatsApp — Clique ou arraste"
                 >
                   <div className="flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 pointer-events-none">
                     <MessageSquare className="h-4 w-4" />
@@ -1057,8 +1060,9 @@ export default function FlowBuilder() {
                   draggable="true"
                   unselectable="on"
                   onDragStart={e => handleDragStart(e, 'action', 'note')}
-                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-grab active:cursor-grabbing group select-none"
-                  title="Nota — Anotação no fluxo"
+                  onClick={() => handleClickToAdd('action', 'note')}
+                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-pointer group select-none"
+                  title="Nota — Clique ou arraste"
                 >
                   <div className="flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300 pointer-events-none">
                     <StickyNote className="h-4 w-4" />

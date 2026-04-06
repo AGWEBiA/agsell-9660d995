@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -25,16 +26,19 @@ import {
 import {
   MessageSquare,
   Plus,
-  Edit,
   Trash2,
   UserPlus,
   UserMinus,
   Clock,
   Zap,
   RefreshCw,
+  Send,
+  Users,
 } from 'lucide-react';
-import { useWhatsAppGroups, WhatsAppGroupMessage } from '@/hooks/useWhatsAppGroups';
+import { useWhatsAppGroups } from '@/hooks/useWhatsAppGroups';
 import { WhatsAppMultiInstanceSelector } from './WhatsAppMultiInstanceSelector';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export function WhatsAppGroupMessages({ currentInstanceId }: { currentInstanceId?: string | null }) {
   const {
@@ -47,23 +51,17 @@ export function WhatsAppGroupMessages({ currentInstanceId }: { currentInstanceId
   } = useWhatsAppGroups();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [sendingMessageId, setSendingMessageId] = useState<string | null>(null);
   const [selectedInstanceIds, setSelectedInstanceIds] = useState<string[]>(
     currentInstanceId ? [currentInstanceId] : []
   );
-  const [newMessage, setNewMessage] = useState<{
-    name: string;
-    content: string;
-    message_type: string;
-    trigger_event: string;
-    is_active: boolean;
-    target_groups: string[];
-  }>({
+  const [newMessage, setNewMessage] = useState({
     name: '',
     content: '',
     message_type: 'text',
     trigger_event: 'manual',
     is_active: true,
-    target_groups: [],
+    target_groups: [] as string[],
   });
 
   const handleCreateMessage = () => {
@@ -77,6 +75,42 @@ export function WhatsAppGroupMessages({ currentInstanceId }: { currentInstanceId
       is_active: true,
       target_groups: [],
     });
+  };
+
+  const handleSendNow = async (message: typeof groupMessages[0]) => {
+    setSendingMessageId(message.id);
+    try {
+      const targetGroups = message.target_groups?.length ? message.target_groups : groups.map(g => g.external_group_id).filter(Boolean);
+      
+      if (targetGroups.length === 0) {
+        toast.error('Nenhum grupo alvo encontrado. Sincronize seus grupos primeiro.');
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('send-whatsapp', {
+        body: {
+          organization_id: groups[0]?.organization_id,
+          to: targetGroups[0], // Send to the first group JID
+          message: message.content,
+        },
+      });
+
+      if (error) throw error;
+      toast.success(`Mensagem "${message.name}" enviada para ${targetGroups.length} grupo(s)!`);
+    } catch (err: any) {
+      toast.error(`Erro ao enviar: ${err.message || 'Falha no envio'}`);
+    } finally {
+      setSendingMessageId(null);
+    }
+  };
+
+  const toggleGroupSelection = (groupId: string) => {
+    setNewMessage(prev => ({
+      ...prev,
+      target_groups: prev.target_groups.includes(groupId)
+        ? prev.target_groups.filter(id => id !== groupId)
+        : [...prev.target_groups, groupId],
+    }));
   };
 
   const getTriggerBadge = (trigger: string | null) => {
@@ -111,14 +145,23 @@ export function WhatsAppGroupMessages({ currentInstanceId }: { currentInstanceId
     );
   };
 
+  // Stats
+  const totalMessages = groupMessages.length;
+  const activeMessages = groupMessages.filter(m => m.is_active).length;
+  const onJoinMessages = groupMessages.filter(m => m.trigger_event === 'on_join').length;
+  const totalGroups = groups.length;
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Mensagens Automáticas</h2>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <MessageSquare className="h-6 w-6 text-primary" />
+            Mensagens para Grupos
+          </h2>
           <p className="text-muted-foreground">
-            Configure mensagens automáticas para grupos
+            Crie, programe e automatize mensagens para seus grupos de WhatsApp
           </p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
@@ -128,11 +171,11 @@ export function WhatsAppGroupMessages({ currentInstanceId }: { currentInstanceId
               Nova Mensagem
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Criar Mensagem Automática</DialogTitle>
+              <DialogTitle>Criar Mensagem para Grupo</DialogTitle>
               <DialogDescription>
-                Configure uma mensagem para ser enviada automaticamente
+                Configure uma mensagem para ser enviada aos grupos
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -150,9 +193,7 @@ export function WhatsAppGroupMessages({ currentInstanceId }: { currentInstanceId
                 <Label htmlFor="triggerEvent">Gatilho</Label>
                 <Select
                   value={newMessage.trigger_event}
-                  onValueChange={(value) =>
-                    setNewMessage({ ...newMessage, trigger_event: value })
-                  }
+                  onValueChange={(value) => setNewMessage({ ...newMessage, trigger_event: value })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -194,6 +235,31 @@ export function WhatsAppGroupMessages({ currentInstanceId }: { currentInstanceId
                 currentInstanceId={currentInstanceId}
               />
 
+              {/* Group selector */}
+              <div className="space-y-2">
+                <Label>Grupos alvo</Label>
+                {groups.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Nenhum grupo sincronizado. Sincronize seus grupos primeiro.</p>
+                ) : (
+                  <div className="max-h-40 overflow-y-auto border rounded-lg p-2 space-y-1">
+                    {groups.map(group => (
+                      <label key={group.id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-muted cursor-pointer text-sm">
+                        <Checkbox
+                          checked={newMessage.target_groups.includes(group.external_group_id || group.id)}
+                          onCheckedChange={() => toggleGroupSelection(group.external_group_id || group.id)}
+                        />
+                        <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="truncate">{group.name}</span>
+                        <span className="text-xs text-muted-foreground ml-auto">{group.member_count} membros</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  Deixe vazio para enviar a todos os grupos
+                </p>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="messageContent">Conteúdo da Mensagem</Label>
                 <Textarea
@@ -213,9 +279,7 @@ export function WhatsAppGroupMessages({ currentInstanceId }: { currentInstanceId
                 <Switch
                   id="isActive"
                   checked={newMessage.is_active}
-                  onCheckedChange={(checked) =>
-                    setNewMessage({ ...newMessage, is_active: checked })
-                  }
+                  onCheckedChange={(checked) => setNewMessage({ ...newMessage, is_active: checked })}
                 />
               </div>
             </div>
@@ -232,6 +296,46 @@ export function WhatsAppGroupMessages({ currentInstanceId }: { currentInstanceId
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <MessageSquare className="h-5 w-5 text-primary" />
+            <div>
+              <p className="text-2xl font-bold">{totalMessages}</p>
+              <p className="text-xs text-muted-foreground">Total Mensagens</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <Zap className="h-5 w-5 text-destructive" />
+            <div>
+              <p className="text-2xl font-bold">{activeMessages}</p>
+              <p className="text-xs text-muted-foreground">Ativas</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <UserPlus className="h-5 w-5 text-green-600" />
+            <div>
+              <p className="text-2xl font-bold">{onJoinMessages}</p>
+              <p className="text-xs text-muted-foreground">Ao Entrar</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <Users className="h-5 w-5 text-blue-600" />
+            <div>
+              <p className="text-2xl font-bold">{totalGroups}</p>
+              <p className="text-xs text-muted-foreground">Grupos</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Messages List */}
@@ -263,11 +367,11 @@ export function WhatsAppGroupMessages({ currentInstanceId }: { currentInstanceId
                     <CardTitle className="text-base flex items-center gap-2">
                       {message.name}
                     </CardTitle>
-                    <div className="mt-2 flex items-center gap-2">
+                    <div className="mt-2 flex items-center gap-2 flex-wrap">
                       {getTriggerBadge(message.trigger_event)}
                       {message.target_groups && message.target_groups.length > 0 && (
                         <Badge variant="secondary" className="text-xs">
-                          <MessageSquare className="h-3 w-3 mr-1" />
+                          <Users className="h-3 w-3 mr-1" />
                           {message.target_groups.length} grupo(s)
                         </Badge>
                       )}
@@ -283,18 +387,6 @@ export function WhatsAppGroupMessages({ currentInstanceId }: { currentInstanceId
                     <Badge variant={message.is_active ? 'default' : 'outline'} className="text-xs">
                       {message.is_active ? 'Ativa' : 'Inativa'}
                     </Badge>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => {
-                        if (confirm('Deseja realmente excluir esta mensagem?')) {
-                          deleteGroupMessage(message.id);
-                        }
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
                   </div>
                 </div>
               </CardHeader>
@@ -302,6 +394,36 @@ export function WhatsAppGroupMessages({ currentInstanceId }: { currentInstanceId
                 <p className="text-sm text-muted-foreground line-clamp-3 bg-muted p-3 rounded-lg">
                   {message.content}
                 </p>
+                <div className="flex items-center gap-2 mt-3">
+                  {message.trigger_event === 'manual' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleSendNow(message)}
+                      disabled={sendingMessageId === message.id}
+                    >
+                      {sendingMessageId === message.id ? (
+                        <RefreshCw className="h-3.5 w-3.5 mr-1 animate-spin" />
+                      ) : (
+                        <Send className="h-3.5 w-3.5 mr-1" />
+                      )}
+                      Enviar Agora
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="ml-auto text-destructive hover:text-destructive"
+                    onClick={() => {
+                      if (confirm('Deseja realmente excluir esta mensagem?')) {
+                        deleteGroupMessage(message.id);
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-1" />
+                    Excluir
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}

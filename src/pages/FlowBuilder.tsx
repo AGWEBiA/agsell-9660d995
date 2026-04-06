@@ -693,6 +693,25 @@ export default function FlowBuilder() {
     e.dataTransfer.effectAllowed = 'copy';
   };
 
+  // Click to add node (fallback for drag-and-drop)
+  const handleClickToAdd = (nodeType: string, subtype: string) => {
+    const allOptions = [...triggerOptions, ...actionOptions, ...conditionOptions];
+    const info = allOptions.find(a => a.id === subtype);
+    if (!info) return;
+    // Place in the center area with some randomness to avoid stacking
+    const offsetX = 200 + Math.random() * 300;
+    const offsetY = 100 + nodes.length * 120;
+    const newNode: FlowNode = {
+      id: crypto.randomUUID(),
+      type: nodeType as FlowNode['type'],
+      subtype,
+      label: info.label,
+      config: {},
+      position: { x: offsetX, y: offsetY },
+    };
+    setNodes(prev => [...prev, newNode]);
+  };
+
   // Load existing flow
   useEffect(() => {
     if (currentFlowId && automations.length > 0) {

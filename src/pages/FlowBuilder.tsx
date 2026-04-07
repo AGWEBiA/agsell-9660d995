@@ -682,6 +682,13 @@ export default function FlowBuilder() {
   const loadedAutomationSnapshotRef = useRef<string | null>(null);
   const isDraggingFromSidebarRef = useRef(false);
 
+  const resetSidebarDragState = (delay = 0) => {
+    window.setTimeout(() => {
+      setSidebarDragPayload(null);
+      isDraggingFromSidebarRef.current = false;
+    }, delay);
+  };
+
   const hasTrigger = nodes.some(n => n.type === 'trigger');
   const isGroupsChannel = channelFilter === 'groups';
 
@@ -725,13 +732,17 @@ export default function FlowBuilder() {
       flushSync(() => setShowTriggerSelector(false));
     }
 
-    isDraggingFromSidebarRef.current = true;
     const payload = { nodeType: nodeType as FlowNode['type'], subtype };
-    setSidebarDragPayload(payload);
+    isDraggingFromSidebarRef.current = true;
+    flushSync(() => setSidebarDragPayload(payload));
     e.dataTransfer.clearData();
     e.dataTransfer.setData('application/flow-node', JSON.stringify(payload));
     e.dataTransfer.setData('text/plain', JSON.stringify(payload));
     e.dataTransfer.effectAllowed = 'copy';
+  };
+
+  const handleDragEnd = () => {
+    resetSidebarDragState(100);
   };
 
   // Click to add node (fallback for drag-and-drop)
@@ -755,6 +766,8 @@ export default function FlowBuilder() {
       config: {},
       position: { x: offsetX, y: offsetY },
     };
+    setShowTriggerSelector(false);
+    setSidebarDragPayload(null);
     setNodes(prev => [...prev, newNode]);
   };
 
@@ -844,7 +857,7 @@ export default function FlowBuilder() {
       config: {},
       position: { x: 400, y: 80 },
     };
-    setNodes([newNode]);
+    setNodes(prev => [newNode, ...prev.filter(node => node.type !== 'trigger')]);
     setShowTriggerSelector(false);
   };
 
@@ -1064,6 +1077,7 @@ export default function FlowBuilder() {
                       draggable="true"
                       unselectable="on"
                       onDragStart={e => handleDragStart(e, 'trigger', 'tag_added')}
+                       onDragEnd={handleDragEnd}
                       onClick={() => handleClickToAdd('trigger', 'tag_added')}
                       className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-grab active:cursor-grabbing group select-none"
                       title="Tag — Clique ou arraste para adicionar"
@@ -1082,6 +1096,7 @@ export default function FlowBuilder() {
                   draggable="true"
                   unselectable="on"
                   onDragStart={e => handleDragStart(e, 'action', 'timer')}
+                  onDragEnd={handleDragEnd}
                   onClick={() => handleClickToAdd('action', 'timer')}
                   className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-pointer group select-none"
                   title="Timer — Clique ou arraste"
@@ -1098,6 +1113,7 @@ export default function FlowBuilder() {
                   draggable="true"
                   unselectable="on"
                   onDragStart={e => handleDragStart(e, 'action', 'edit_whatsapp_group')}
+                  onDragEnd={handleDragEnd}
                   onClick={() => handleClickToAdd('action', 'edit_whatsapp_group')}
                   className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-pointer group select-none"
                   title="Editar grupos — Clique ou arraste"
@@ -1114,6 +1130,7 @@ export default function FlowBuilder() {
                   draggable="true"
                   unselectable="on"
                   onDragStart={e => handleDragStart(e, 'action', 'send_whatsapp_group')}
+                  onDragEnd={handleDragEnd}
                   onClick={() => handleClickToAdd('action', 'send_whatsapp_group')}
                   className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-pointer group select-none"
                   title="WhatsApp — Clique ou arraste"
@@ -1130,6 +1147,7 @@ export default function FlowBuilder() {
                   draggable="true"
                   unselectable="on"
                   onDragStart={e => handleDragStart(e, 'action', 'note')}
+                  onDragEnd={handleDragEnd}
                   onClick={() => handleClickToAdd('action', 'note')}
                   className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-pointer group select-none"
                   title="Nota — Clique ou arraste"
@@ -1193,6 +1211,7 @@ export default function FlowBuilder() {
                             draggable="true"
                             unselectable="on"
                             onDragStart={e => handleDragStart(e, 'trigger', opt.id)}
+                            onDragEnd={handleDragEnd}
                             onClick={() => handleClickToAdd('trigger', opt.id)}
                             className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
                             title={opt.description || opt.label}
@@ -1231,6 +1250,7 @@ export default function FlowBuilder() {
                             draggable="true"
                             unselectable="on"
                             onDragStart={e => handleDragStart(e, getNodeType(opt.id), opt.id)}
+                            onDragEnd={handleDragEnd}
                             onClick={() => handleClickToAdd(getNodeType(opt.id), opt.id)}
                             className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-pointer group select-none"
                             title={opt.label}
@@ -1266,6 +1286,7 @@ export default function FlowBuilder() {
                             draggable="true"
                             unselectable="on"
                             onDragStart={e => handleDragStart(e, 'condition', opt.id)}
+                            onDragEnd={handleDragEnd}
                             onClick={() => handleClickToAdd('condition', opt.id)}
                             className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-pointer group select-none"
                             title={opt.label}
@@ -1298,7 +1319,7 @@ export default function FlowBuilder() {
             onDeleteNode={handleDeleteNode}
             analytics={nodeAnalytics}
             sidebarDragPayload={sidebarDragPayload}
-            onSidebarDragConsume={() => { setSidebarDragPayload(null); setTimeout(() => { isDraggingFromSidebarRef.current = false; }, 100); }}
+            onSidebarDragConsume={() => resetSidebarDragState(100)}
           />
           {/* Trigger selector overlay when no trigger exists (not for groups) */}
           {!hasTrigger && showTriggerSelector && !isGroupsChannel && (

@@ -736,6 +736,11 @@ export default function FlowBuilder() {
 
   // Click to add node (fallback for drag-and-drop)
   const handleClickToAdd = (nodeType: string, subtype: string) => {
+    // If we just finished a drag, ignore the click event
+    if (isDraggingFromSidebarRef.current) {
+      isDraggingFromSidebarRef.current = false;
+      return;
+    }
     const allOptions = [...triggerOptions, ...actionOptions, ...conditionOptions];
     const info = allOptions.find(a => a.id === subtype);
     if (!info) return;

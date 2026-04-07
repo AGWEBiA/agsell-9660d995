@@ -26,6 +26,7 @@ export function CanvasNode({
   onInputMouseUp,
   isConnecting,
   analytics,
+  onResizeStart,
 }: CanvasNodeProps) {
   if (!node.position) return null;
 

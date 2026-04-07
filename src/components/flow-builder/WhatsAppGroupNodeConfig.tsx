@@ -3,11 +3,10 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Info, Tag, Users, X, Plus, Search } from 'lucide-react';
+import { Info, Tag as TagIcon, Users, X, Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TEMPLATE_VARIABLES } from './flowNodeTypes';
 import { useTags } from '@/hooks/useTags';
-import type { Tag } from '@/hooks/useTags';
 
 interface WhatsAppGroupNodeConfigProps {
   config: Record<string, unknown>;

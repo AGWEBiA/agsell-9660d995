@@ -14,7 +14,7 @@ import {
 import {
   Plus, Send, Clock, Play, Pause, Trash2, Eye, CheckCircle2, XCircle,
   Users, Megaphone, Calendar, Image, FileText, MessageSquare, Search,
-  MoreVertical, Copy, BarChart3, Smartphone,
+  MoreVertical, Copy, BarChart3, Smartphone, Pencil, StopCircle,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -29,9 +29,10 @@ import { ptBR } from 'date-fns/locale';
 const TEMPLATE_VARS = ['{{nome}}', '{{telefone}}', '{{email}}'];
 
 export default function WhatsAppCampaignsPage() {
-  const { campaigns, isLoading, createCampaign, startCampaign, pauseCampaign, stopCampaign } = useWhatsAppCampaigns();
+  const { campaigns, isLoading, createCampaign, updateCampaign, startCampaign, pauseCampaign, stopCampaign, deleteCampaign } = useWhatsAppCampaigns();
   const { tags } = useTags();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingCampaign, setEditingCampaign] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch] = useState('');
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null);

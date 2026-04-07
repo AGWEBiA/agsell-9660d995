@@ -232,12 +232,12 @@ export function FlowCanvas({
     onSidebarDragConsume?.();
   }, [screenToCanvas, onNodesChange, onSidebarDragConsume, sidebarDragPayload]);
 
-  const handleCanvasDragOver = (e: React.DragEvent) => {
+  const handleCanvasDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     e.dataTransfer.dropEffect = 'copy';
-    setDragOverCanvas(true);
-  };
+    if (!dragOverCanvas) setDragOverCanvas(true);
+  }, [dragOverCanvas]);
 
   const handleDeleteConnection = useCallback((connId: string) => {
     onConnectionsChange(currentConnections => currentConnections.filter(c => c.id !== connId));

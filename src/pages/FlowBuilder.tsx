@@ -755,9 +755,9 @@ export default function FlowBuilder() {
     const allOptions = [...triggerOptions, ...actionOptions, ...conditionOptions];
     const info = allOptions.find(a => a.id === subtype);
     if (!info) return;
-    // Place in the center area with some randomness to avoid stacking
-    const offsetX = 200 + Math.random() * 300;
-    const offsetY = 100 + nodes.length * 120;
+    // Place near center of visible canvas area
+    const offsetX = 100 + Math.random() * 200;
+    const offsetY = 50 + nodes.length * 140;
     const newNode: FlowNode = {
       id: crypto.randomUUID(),
       type: nodeType as FlowNode['type'],

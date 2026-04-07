@@ -113,10 +113,13 @@ export function useWhatsAppCampaigns() {
       message_content: string;
       description?: string;
       message_type?: string;
+      media_url?: string;
       target_type?: string;
       messages_per_minute?: number;
       delay_between_messages?: number;
       daily_limit?: number;
+      scheduled_at?: string;
+      instance_id?: string;
     }) => {
       if (!orgId || !user?.id) throw new Error('Organização ou usuário não encontrado');
       
@@ -127,10 +130,13 @@ export function useWhatsAppCampaigns() {
           message_content: campaign.message_content,
           description: campaign.description,
           message_type: campaign.message_type || 'text',
+          media_url: campaign.media_url || null,
           target_type: campaign.target_type || 'contacts',
           messages_per_minute: campaign.messages_per_minute || 20,
           delay_between_messages: campaign.delay_between_messages || 3000,
           daily_limit: campaign.daily_limit || 1000,
+          scheduled_at: campaign.scheduled_at || null,
+          status: campaign.scheduled_at ? 'scheduled' : 'draft',
           organization_id: orgId,
           created_by: user.id,
           target_filters: {} as Json,

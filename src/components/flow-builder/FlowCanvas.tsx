@@ -261,7 +261,7 @@ export function FlowCanvas({
       onDragOver={handleCanvasDragOver}
       onDragLeave={() => setDragOverCanvas(false)}
     >
-      {/* Transform layer — NO drop/dragOver here; outer canvas handles it */}
+      {/* Transform layer — drops handled by outer canvas div only */}
       <div
         style={{
           transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
@@ -272,7 +272,6 @@ export function FlowCanvas({
           width: '1px',
           height: '1px',
           overflow: 'visible',
-          pointerEvents: 'none',
         }}
       >
         {/* SVG connections layer */}

@@ -1298,7 +1298,7 @@ export default function FlowBuilder() {
             onDeleteNode={handleDeleteNode}
             analytics={nodeAnalytics}
             sidebarDragPayload={sidebarDragPayload}
-            onSidebarDragConsume={() => setSidebarDragPayload(null)}
+            onSidebarDragConsume={() => { setSidebarDragPayload(null); setTimeout(() => { isDraggingFromSidebarRef.current = false; }, 100); }}
           />
           {/* Trigger selector overlay when no trigger exists (not for groups) */}
           {!hasTrigger && showTriggerSelector && !isGroupsChannel && (

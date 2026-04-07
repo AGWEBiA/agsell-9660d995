@@ -11,8 +11,8 @@ import {
 interface FlowCanvasProps {
   nodes: FlowNode[];
   connections: FlowConnection[];
-  onNodesChange: (nodes: FlowNode[]) => void;
-  onConnectionsChange: (connections: FlowConnection[]) => void;
+  onNodesChange: React.Dispatch<React.SetStateAction<FlowNode[]>>;
+  onConnectionsChange: React.Dispatch<React.SetStateAction<FlowConnection[]>>;
   onEditNode: (node: FlowNode) => void;
   onDeleteNode: (nodeId: string) => void;
   analytics?: Array<{ node_id: string; entries_count: number; conversions_count: number; errors_count: number }>;
@@ -77,7 +77,7 @@ export function FlowCanvas({
     if (draggingNodeId && dragNodeStart) {
       const dx = (e.clientX - dragNodeStart.mousePos.x) / scale;
       const dy = (e.clientY - dragNodeStart.mousePos.y) / scale;
-      onNodesChange(nodes.map(n =>
+      onNodesChange(currentNodes => currentNodes.map(n =>
         n.id === draggingNodeId
           ? { ...n, position: { x: dragNodeStart.nodePos.x + dx, y: dragNodeStart.nodePos.y + dy } }
           : n
@@ -86,7 +86,7 @@ export function FlowCanvas({
     if (connectingFrom) {
       setConnectingMouse(screenToCanvas(e.clientX, e.clientY));
     }
-  }, [isPanning, panStart, draggingNodeId, dragNodeStart, scale, nodes, onNodesChange, connectingFrom, screenToCanvas]);
+  }, [isPanning, panStart, draggingNodeId, dragNodeStart, scale, onNodesChange, connectingFrom, screenToCanvas]);
 
   const handleCanvasMouseUp = useCallback(() => {
     setIsPanning(false);
@@ -135,23 +135,26 @@ export function FlowCanvas({
 
   const handleNodeInputDrop = useCallback((targetNodeId: string) => {
     if (!connectingFrom || connectingFrom.nodeId === targetNodeId) return;
-    // Check if connection already exists
-    const exists = connections.some(c => c.from === connectingFrom.nodeId && c.fromPort === connectingFrom.port && c.to === targetNodeId);
-    if (!exists) {
+    onConnectionsChange(currentConnections => {
+      const exists = currentConnections.some(c => c.from === connectingFrom.nodeId && c.fromPort === connectingFrom.port && c.to === targetNodeId);
+      if (exists) return currentConnections;
+
       const newConn: FlowConnection = {
         id: crypto.randomUUID(),
         from: connectingFrom.nodeId,
         to: targetNodeId,
         fromPort: connectingFrom.port,
       };
-      onConnectionsChange([...connections, newConn]);
-    }
+
+      return [...currentConnections, newConn];
+    });
     setConnectingFrom(null);
-  }, [connectingFrom, connections, onConnectionsChange]);
+  }, [connectingFrom, onConnectionsChange]);
 
   // Drop from sidebar
   const handleCanvasDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setDragOverCanvas(false);
 
     const raw = e.dataTransfer.getData('application/flow-node') || e.dataTransfer.getData('text/plain');
@@ -184,20 +187,21 @@ export function FlowCanvas({
         config: {},
         position: { x: pos.x - 160, y: pos.y - 40 },
       };
-      onNodesChange([...nodes, newNode]);
+      onNodesChange(currentNodes => [...currentNodes, newNode]);
       onSidebarDragConsume?.();
     } catch {}
-  }, [screenToCanvas, nodes, onNodesChange, onSidebarDragConsume, sidebarDragPayload]);
+  }, [screenToCanvas, onNodesChange, onSidebarDragConsume, sidebarDragPayload]);
 
   const handleCanvasDragOver = (e: React.DragEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     e.dataTransfer.dropEffect = 'copy';
     setDragOverCanvas(true);
   };
 
   const handleDeleteConnection = useCallback((connId: string) => {
-    onConnectionsChange(connections.filter(c => c.id !== connId));
-  }, [connections, onConnectionsChange]);
+    onConnectionsChange(currentConnections => currentConnections.filter(c => c.id !== connId));
+  }, [onConnectionsChange]);
 
   // Get node center positions for connection rendering
   const getNodePort = (nodeId: string, port: 'input' | 'default' | 'yes' | 'no'): FlowNodePosition => {

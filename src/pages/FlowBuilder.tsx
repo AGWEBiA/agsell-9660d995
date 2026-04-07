@@ -1193,7 +1193,7 @@ export default function FlowBuilder() {
                             draggable="true"
                             unselectable="on"
                             onDragStart={e => handleDragStart(e, 'trigger', opt.id)}
-                            onClick={() => handleSelectTrigger(opt.id)}
+                            onClick={() => handleClickToAdd('trigger', opt.id)}
                             className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
                             title={opt.description || opt.label}
                             role="button"

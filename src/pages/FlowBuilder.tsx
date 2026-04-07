@@ -1284,7 +1284,7 @@ export default function FlowBuilder() {
                     onClick={() => setShowGroupsDialog(true)}
                     className="w-full flex flex-col items-center gap-1.5 p-3 rounded-xl bg-green-600 hover:bg-green-500 transition-colors text-white"
                   >
-                    <MessageSquare className="h-5 w-5" />
+                    <Phone className="h-5 w-5" />
                     <span className="text-[8px] font-bold uppercase tracking-wider leading-tight text-center">Gerenciar<br/>Grupos</span>
                   </button>
                 </div>

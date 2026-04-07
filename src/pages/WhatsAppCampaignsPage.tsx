@@ -14,7 +14,7 @@ import {
 import {
   Plus, Send, Clock, Play, Pause, Trash2, Eye, CheckCircle2, XCircle,
   Users, Megaphone, Calendar, Image, FileText, MessageSquare, Search,
-  MoreVertical, Copy, BarChart3, Smartphone,
+  MoreVertical, Copy, BarChart3, Smartphone, Pencil, StopCircle,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -29,9 +29,10 @@ import { ptBR } from 'date-fns/locale';
 const TEMPLATE_VARS = ['{{nome}}', '{{telefone}}', '{{email}}'];
 
 export default function WhatsAppCampaignsPage() {
-  const { campaigns, isLoading, createCampaign, startCampaign, pauseCampaign, stopCampaign } = useWhatsAppCampaigns();
+  const { campaigns, isLoading, createCampaign, updateCampaign, startCampaign, pauseCampaign, stopCampaign, deleteCampaign } = useWhatsAppCampaigns();
   const { tags } = useTags();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingCampaign, setEditingCampaign] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('all');
   const [search, setSearch] = useState('');
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null);
@@ -55,6 +56,11 @@ export default function WhatsAppCampaignsPage() {
     return true;
   });
 
+  const resetForm = () => setForm({
+    name: '', message_content: '', media_url: '', message_type: 'text',
+    delay_between_messages: 3000, scheduled_at: '', filter_tags: [],
+  });
+
   const handleCreate = () => {
     createCampaign({
       name: form.name,
@@ -66,10 +72,35 @@ export default function WhatsAppCampaignsPage() {
       instance_id: selectedInstanceId || undefined,
     });
     setIsCreateOpen(false);
+    resetForm();
+  };
+
+  const handleEdit = (campaign: any) => {
+    setEditingCampaign(campaign);
     setForm({
-      name: '', message_content: '', media_url: '', message_type: 'text',
-      delay_between_messages: 3000, scheduled_at: '', filter_tags: [],
+      name: campaign.name || '',
+      message_content: campaign.message_content || '',
+      media_url: campaign.media_url || '',
+      message_type: campaign.message_type || 'text',
+      delay_between_messages: campaign.delay_between_messages || 3000,
+      scheduled_at: campaign.scheduled_at ? campaign.scheduled_at.slice(0, 16) : '',
+      filter_tags: [],
     });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingCampaign) return;
+    updateCampaign({
+      id: editingCampaign.id,
+      name: form.name,
+      message_content: form.message_content,
+      media_url: form.media_url || null,
+      message_type: form.message_type,
+      delay_between_messages: form.delay_between_messages,
+      scheduled_at: form.scheduled_at || null,
+    });
+    setEditingCampaign(null);
+    resetForm();
   };
 
   const statusColors: Record<string, string> = {
@@ -201,6 +232,9 @@ export default function WhatsAppCampaignsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEdit(campaign)}>
+                          <Pencil className="h-4 w-4 mr-2" /> Editar
+                        </DropdownMenuItem>
                         {campaign.status === 'draft' && (
                           <DropdownMenuItem onClick={() => startCampaign(campaign.id)}>
                             <Play className="h-4 w-4 mr-2" /> Iniciar
@@ -218,7 +252,12 @@ export default function WhatsAppCampaignsPage() {
                         )}
                         {['running', 'paused'].includes(campaign.status) && (
                           <DropdownMenuItem onClick={() => stopCampaign(campaign.id)} className="text-destructive">
-                            <Trash2 className="h-4 w-4 mr-2" /> Cancelar
+                            <StopCircle className="h-4 w-4 mr-2" /> Cancelar
+                          </DropdownMenuItem>
+                        )}
+                        {['draft', 'completed', 'cancelled'].includes(campaign.status) && (
+                          <DropdownMenuItem onClick={() => deleteCampaign(campaign.id)} className="text-destructive">
+                            <Trash2 className="h-4 w-4 mr-2" /> Excluir
                           </DropdownMenuItem>
                         )}
                       </DropdownMenuContent>
@@ -353,6 +392,101 @@ export default function WhatsAppCampaignsPage() {
             <Button onClick={handleCreate} disabled={!form.name || !form.message_content}>
               <Send className="h-4 w-4 mr-2" />
               Criar Campanha
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingCampaign} onOpenChange={(open) => { if (!open) { setEditingCampaign(null); resetForm(); } }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Campanha</DialogTitle>
+            <DialogDescription>
+              Altere os dados da campanha
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label>Nome da Campanha</Label>
+              <Input
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+              />
+            </div>
+
+            <div>
+              <Label>Tipo de Mensagem</Label>
+              <Select value={form.message_type} onValueChange={v => setForm(f => ({ ...f, message_type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="text">Texto</SelectItem>
+                  <SelectItem value="image">Imagem + Texto</SelectItem>
+                  <SelectItem value="video">Vídeo + Texto</SelectItem>
+                  <SelectItem value="document">Documento</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Mensagem</Label>
+              <Textarea
+                value={form.message_content}
+                onChange={e => setForm(f => ({ ...f, message_content: e.target.value }))}
+                rows={5}
+              />
+              <div className="flex gap-1 mt-2 flex-wrap">
+                {TEMPLATE_VARS.map(v => (
+                  <Badge
+                    key={v}
+                    variant="outline"
+                    className="cursor-pointer hover:bg-primary/10"
+                    onClick={() => setForm(f => ({ ...f, message_content: f.message_content + ' ' + v }))}
+                  >
+                    {v}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {form.message_type !== 'text' && (
+              <div>
+                <Label>URL da Mídia</Label>
+                <Input
+                  placeholder="https://..."
+                  value={form.media_url}
+                  onChange={e => setForm(f => ({ ...f, media_url: e.target.value }))}
+                />
+              </div>
+            )}
+
+            <div>
+              <Label>Intervalo entre mensagens (ms)</Label>
+              <Input
+                type="number"
+                value={form.delay_between_messages}
+                onChange={e => setForm(f => ({ ...f, delay_between_messages: Number(e.target.value) }))}
+                min={1000}
+                step={500}
+              />
+            </div>
+
+            <div>
+              <Label>Agendar Envio (opcional)</Label>
+              <Input
+                type="datetime-local"
+                value={form.scheduled_at}
+                onChange={e => setForm(f => ({ ...f, scheduled_at: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setEditingCampaign(null); resetForm(); }}>Cancelar</Button>
+            <Button onClick={handleSaveEdit} disabled={!form.name || !form.message_content}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Salvar Alterações
             </Button>
           </DialogFooter>
         </DialogContent>

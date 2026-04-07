@@ -152,16 +152,26 @@ export function useWhatsAppCampaigns() {
 
   // Update campaign
   const updateCampaignMutation = useMutation({
-    mutationFn: async ({ id, status, started_at, paused_at, completed_at }: {
+    mutationFn: async ({ id, ...updates }: {
       id: string;
+      name?: string;
+      description?: string | null;
+      message_content?: string;
+      message_type?: string;
+      media_url?: string | null;
+      target_type?: string;
+      messages_per_minute?: number;
+      delay_between_messages?: number;
+      daily_limit?: number;
       status?: string;
       started_at?: string;
       paused_at?: string;
       completed_at?: string;
+      scheduled_at?: string | null;
     }) => {
       const { data, error } = await supabase
         .from('whatsapp_campaigns')
-        .update({ status, started_at, paused_at, completed_at })
+        .update(updates)
         .eq('id', id)
         .select()
         .single();
@@ -310,10 +320,12 @@ export function useWhatsAppCampaigns() {
     deleteCampaign: deleteCampaignMutation.mutate,
     startCampaign: startCampaignMutation.mutate,
     pauseCampaign: pauseCampaignMutation.mutate,
+    stopCampaign: (id: string) => updateCampaignMutation.mutate({ id, status: 'cancelled', completed_at: new Date().toISOString() }),
     createTemplate: createTemplateMutation.mutate,
     fetchCampaignRecipients,
     getCampaignStats,
     isCreatingCampaign: createCampaignMutation.isPending,
     isUpdatingCampaign: updateCampaignMutation.isPending,
+    isLoading: isLoadingCampaigns,
   };
 }

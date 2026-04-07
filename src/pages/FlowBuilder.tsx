@@ -734,6 +734,41 @@ function FlowList({ onCreateNew, onEditFlow, channelFilter }: {
   );
 }
 
+// ─── Groups Management Inline (popup inside Flow Builder) ───
+function GroupsManagementInline() {
+  const [groups, setGroups] = useState<Array<{ id: string; subject: string; size: number }>>([]);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const filtered = groups.filter(g => g.subject.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-amber-500 font-bold text-sm">⚠ Atenção</span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          A gestão de grupos requer uma instância WhatsApp conectada via Evolution API. 
+          Grupos da API Oficial do WhatsApp não são suportados para automação.
+        </p>
+      </div>
+
+      <div className="flex gap-2">
+        <Input placeholder="Buscar grupo..." value={search} onChange={e => setSearch(e.target.value)} className="flex-1" />
+        <Button variant="outline" size="sm" onClick={() => window.open('/whatsapp?tab=groups', '_blank')}>
+          Abrir Gerenciador Completo
+        </Button>
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        Para gerenciamento completo (membros, eventos, mensagens), use o gerenciador de grupos na aba de WhatsApp.
+        Aqui você pode configurar ações rápidas nos nós "Editar Grupo" e "Adicionar ao Grupo" do fluxo.
+      </p>
+    </div>
+  );
+}
+
 // ─── Main Flow Builder ───
 export default function FlowBuilder() {
   const navigate = useNavigate();

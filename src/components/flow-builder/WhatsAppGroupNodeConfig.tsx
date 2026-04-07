@@ -7,6 +7,7 @@ import { Info, Tag, Users, X, Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TEMPLATE_VARIABLES } from './flowNodeTypes';
 import { useTags } from '@/hooks/useTags';
+import type { Tag } from '@/hooks/useTags';
 
 interface WhatsAppGroupNodeConfigProps {
   config: Record<string, unknown>;

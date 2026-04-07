@@ -56,6 +56,11 @@ export default function WhatsAppCampaignsPage() {
     return true;
   });
 
+  const resetForm = () => setForm({
+    name: '', message_content: '', media_url: '', message_type: 'text',
+    delay_between_messages: 3000, scheduled_at: '', filter_tags: [],
+  });
+
   const handleCreate = () => {
     createCampaign({
       name: form.name,
@@ -67,10 +72,35 @@ export default function WhatsAppCampaignsPage() {
       instance_id: selectedInstanceId || undefined,
     });
     setIsCreateOpen(false);
+    resetForm();
+  };
+
+  const handleEdit = (campaign: any) => {
+    setEditingCampaign(campaign);
     setForm({
-      name: '', message_content: '', media_url: '', message_type: 'text',
-      delay_between_messages: 3000, scheduled_at: '', filter_tags: [],
+      name: campaign.name || '',
+      message_content: campaign.message_content || '',
+      media_url: campaign.media_url || '',
+      message_type: campaign.message_type || 'text',
+      delay_between_messages: campaign.delay_between_messages || 3000,
+      scheduled_at: campaign.scheduled_at ? campaign.scheduled_at.slice(0, 16) : '',
+      filter_tags: [],
     });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingCampaign) return;
+    updateCampaign({
+      id: editingCampaign.id,
+      name: form.name,
+      message_content: form.message_content,
+      media_url: form.media_url || null,
+      message_type: form.message_type,
+      delay_between_messages: form.delay_between_messages,
+      scheduled_at: form.scheduled_at || null,
+    });
+    setEditingCampaign(null);
+    resetForm();
   };
 
   const statusColors: Record<string, string> = {

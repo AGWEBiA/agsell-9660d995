@@ -396,6 +396,101 @@ export default function WhatsAppCampaignsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingCampaign} onOpenChange={(open) => { if (!open) { setEditingCampaign(null); resetForm(); } }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Campanha</DialogTitle>
+            <DialogDescription>
+              Altere os dados da campanha
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label>Nome da Campanha</Label>
+              <Input
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+              />
+            </div>
+
+            <div>
+              <Label>Tipo de Mensagem</Label>
+              <Select value={form.message_type} onValueChange={v => setForm(f => ({ ...f, message_type: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="text">Texto</SelectItem>
+                  <SelectItem value="image">Imagem + Texto</SelectItem>
+                  <SelectItem value="video">Vídeo + Texto</SelectItem>
+                  <SelectItem value="document">Documento</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label>Mensagem</Label>
+              <Textarea
+                value={form.message_content}
+                onChange={e => setForm(f => ({ ...f, message_content: e.target.value }))}
+                rows={5}
+              />
+              <div className="flex gap-1 mt-2 flex-wrap">
+                {TEMPLATE_VARS.map(v => (
+                  <Badge
+                    key={v}
+                    variant="outline"
+                    className="cursor-pointer hover:bg-primary/10"
+                    onClick={() => setForm(f => ({ ...f, message_content: f.message_content + ' ' + v }))}
+                  >
+                    {v}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            {form.message_type !== 'text' && (
+              <div>
+                <Label>URL da Mídia</Label>
+                <Input
+                  placeholder="https://..."
+                  value={form.media_url}
+                  onChange={e => setForm(f => ({ ...f, media_url: e.target.value }))}
+                />
+              </div>
+            )}
+
+            <div>
+              <Label>Intervalo entre mensagens (ms)</Label>
+              <Input
+                type="number"
+                value={form.delay_between_messages}
+                onChange={e => setForm(f => ({ ...f, delay_between_messages: Number(e.target.value) }))}
+                min={1000}
+                step={500}
+              />
+            </div>
+
+            <div>
+              <Label>Agendar Envio (opcional)</Label>
+              <Input
+                type="datetime-local"
+                value={form.scheduled_at}
+                onChange={e => setForm(f => ({ ...f, scheduled_at: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setEditingCampaign(null); resetForm(); }}>Cancelar</Button>
+            <Button onClick={handleSaveEdit} disabled={!form.name || !form.message_content}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Salvar Alterações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

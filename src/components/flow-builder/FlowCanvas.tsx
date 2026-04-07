@@ -87,10 +87,21 @@ export function FlowCanvas({
           : n
       ));
     }
+    if (resizingNodeId && resizeStart) {
+      const dx = (e.clientX - resizeStart.mouseX) / scale;
+      const dy = (e.clientY - resizeStart.mouseY) / scale;
+      const newW = Math.max(160, resizeStart.w + dx);
+      const newH = Math.max(80, resizeStart.h + dy);
+      onNodesChange(currentNodes => currentNodes.map(n =>
+        n.id === resizingNodeId
+          ? { ...n, config: { ...n.config, width: newW, height: newH } }
+          : n
+      ));
+    }
     if (connectingFrom) {
       setConnectingMouse(screenToCanvas(e.clientX, e.clientY));
     }
-  }, [isPanning, panStart, draggingNodeId, dragNodeStart, scale, onNodesChange, connectingFrom, screenToCanvas]);
+  }, [isPanning, panStart, draggingNodeId, dragNodeStart, scale, onNodesChange, connectingFrom, screenToCanvas, resizingNodeId, resizeStart]);
 
   const handleCanvasMouseUp = useCallback(() => {
     setIsPanning(false);

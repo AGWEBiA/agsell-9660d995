@@ -1430,6 +1430,17 @@ export default function FlowBuilder() {
       </div>
 
       <NodeConfigDialog node={editingNode} open={editDialogOpen} onClose={() => { setEditDialogOpen(false); setEditingNode(null); }} onSave={handleSaveNodeConfig} />
+
+      {/* Groups Management Dialog — inline popup */}
+      <Dialog open={showGroupsDialog} onOpenChange={setShowGroupsDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Configurar grupos de WhatsApp</DialogTitle>
+            <DialogDescription>Gerencie seus grupos diretamente do Flow Builder.</DialogDescription>
+          </DialogHeader>
+          <GroupsManagementInline />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

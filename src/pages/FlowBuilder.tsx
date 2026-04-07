@@ -757,6 +757,7 @@ export default function FlowBuilder() {
   const [newCampaignOpen, setNewCampaignOpen] = useState(false);
   const [showTriggerSelector, setShowTriggerSelector] = useState(false);
   const [sidebarDragPayload, setSidebarDragPayload] = useState<{ nodeType: FlowNode['type']; subtype: string } | null>(null);
+  const [showGroupsDialog, setShowGroupsDialog] = useState(false);
   const loadedAutomationSnapshotRef = useRef<string | null>(null);
   const isDraggingFromSidebarRef = useRef(false);
 

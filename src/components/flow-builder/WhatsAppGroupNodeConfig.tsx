@@ -7,6 +7,7 @@ import { Info, Tag, Users, X, Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TEMPLATE_VARIABLES } from './flowNodeTypes';
 import { useTags } from '@/hooks/useTags';
+import type { Tag } from '@/hooks/useTags';
 
 interface WhatsAppGroupNodeConfigProps {
   config: Record<string, unknown>;
@@ -16,7 +17,7 @@ interface WhatsAppGroupNodeConfigProps {
 export function WhatsAppGroupNodeConfig({ config, onChange }: WhatsAppGroupNodeConfigProps) {
   const selectedTags = (config.target_tags as string[]) || [];
   const [searchQuery, setSearchQuery] = useState('');
-  const { tags: orgTags = [] } = useTags();
+  const { data: orgTags = [] } = useTags();
 
   const filteredTags = useMemo(() => {
     if (!searchQuery.trim()) return orgTags;

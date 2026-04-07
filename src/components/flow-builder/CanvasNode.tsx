@@ -14,6 +14,7 @@ interface CanvasNodeProps {
   onInputMouseUp: () => void;
   isConnecting: boolean;
   analytics?: { entries_count: number; conversions_count: number; errors_count: number };
+  onResizeStart?: (e: React.MouseEvent) => void;
 }
 
 export function CanvasNode({

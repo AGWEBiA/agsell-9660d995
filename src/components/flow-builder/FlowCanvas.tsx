@@ -174,7 +174,22 @@ export function FlowCanvas({
     e.stopPropagation();
     setDragOverCanvas(false);
 
-    const raw = e.dataTransfer.getData('application/flow-node') || e.dataTransfer.getData('text/plain');
+    // Try multiple data transfer formats
+    let raw = '';
+    try {
+      raw = e.dataTransfer.getData('application/flow-node');
+    } catch {}
+    if (!raw) {
+      try {
+        raw = e.dataTransfer.getData('text/plain');
+      } catch {}
+    }
+    if (!raw) {
+      try {
+        raw = e.dataTransfer.getData('text');
+      } catch {}
+    }
+
     let droppedNode: { nodeType: FlowNode['type']; subtype: string } | null = null;
 
     try {
@@ -184,37 +199,45 @@ export function FlowCanvas({
           droppedNode = parsed;
         }
       }
-    } catch {}
+    } catch {
+      console.warn('[FlowCanvas] Failed to parse drop data:', raw);
+    }
 
+    // Fallback to sidebar payload state
     if (!droppedNode && sidebarDragPayload) {
       droppedNode = sidebarDragPayload;
     }
 
-    if (!droppedNode) return;
+    if (!droppedNode) {
+      console.warn('[FlowCanvas] Drop event received but no valid payload found');
+      return;
+    }
 
-    try {
-      const info = [...actionOptions, ...conditionOptions, ...triggerOptions].find(a => a.id === droppedNode?.subtype);
-      if (!info) return;
-      const pos = screenToCanvas(e.clientX, e.clientY);
-      const newNode: FlowNode = {
-        id: crypto.randomUUID(),
-        type: droppedNode.nodeType,
-        subtype: droppedNode.subtype,
-        label: info.label,
-        config: {},
-        position: { x: pos.x - 160, y: pos.y - 40 },
-      };
-      onNodesChange(currentNodes => [...currentNodes, newNode]);
-      onSidebarDragConsume?.();
-    } catch {}
+    const info = [...actionOptions, ...conditionOptions, ...triggerOptions].find(a => a.id === droppedNode?.subtype);
+    if (!info) {
+      console.warn('[FlowCanvas] Unknown subtype:', droppedNode.subtype);
+      return;
+    }
+
+    const pos = screenToCanvas(e.clientX, e.clientY);
+    const newNode: FlowNode = {
+      id: crypto.randomUUID(),
+      type: droppedNode.nodeType,
+      subtype: droppedNode.subtype,
+      label: info.label,
+      config: {},
+      position: { x: pos.x - 110, y: pos.y - 30 },
+    };
+    onNodesChange(currentNodes => [...currentNodes, newNode]);
+    onSidebarDragConsume?.();
   }, [screenToCanvas, onNodesChange, onSidebarDragConsume, sidebarDragPayload]);
 
-  const handleCanvasDragOver = (e: React.DragEvent) => {
+  const handleCanvasDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     e.dataTransfer.dropEffect = 'copy';
-    setDragOverCanvas(true);
-  };
+    if (!dragOverCanvas) setDragOverCanvas(true);
+  }, [dragOverCanvas]);
 
   const handleDeleteConnection = useCallback((connId: string) => {
     onConnectionsChange(currentConnections => currentConnections.filter(c => c.id !== connId));
@@ -261,7 +284,7 @@ export function FlowCanvas({
       onDragOver={handleCanvasDragOver}
       onDragLeave={() => setDragOverCanvas(false)}
     >
-      {/* Transform layer */}
+      {/* Transform layer — drops handled by outer canvas div only */}
       <div
         style={{
           transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`,
@@ -273,8 +296,6 @@ export function FlowCanvas({
           height: '1px',
           overflow: 'visible',
         }}
-        onDrop={handleCanvasDrop}
-        onDragOver={handleCanvasDragOver}
       >
         {/* SVG connections layer */}
         <svg

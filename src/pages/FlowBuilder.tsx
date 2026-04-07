@@ -1256,7 +1256,7 @@ export default function FlowBuilder() {
                   title="WhatsApp — Clique ou arraste"
                 >
                   <div className="flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 pointer-events-none">
-                    <MessageSquare className="h-4 w-4" />
+                    <Phone className="h-4 w-4" />
                   </div>
                   <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight pointer-events-none">WhatsApp</span>
                 </div>

@@ -25,7 +25,7 @@ import {
   Tag, Star, Bell, Clock, CheckSquare, GitBranch,
   Settings, X, Play, Pause, MoreVertical,
   Workflow, Timer, Flame, MailCheck, Filter, Code,
-  Copy, Share2, StickyNote, Volume2, Split, Pencil,
+  Copy, Share2, StickyNote, Volume2, Split, Pencil, Users, Phone,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -280,7 +280,7 @@ function NodeConfigDialog({ node, open, onClose, onSave }: {
         return (<div className="space-y-4"><div><Label>Etapa de destino (opcional)</Label><Input placeholder="Ex: Proposta, Negociação" value={String(config.target_stage || '')} onChange={e => setConfig({ ...config, target_stage: e.target.value })} /></div></div>);
       case 'tag_added':
       case 'tag_removed':
-        return (<div className="space-y-4"><div><Label>Nome da Tag *</Label><Input placeholder="Ex: lead_quente, comprador" value={String(config.tag_name || '')} onChange={e => setConfig({ ...config, tag_name: e.target.value })} /></div></div>);
+        return (<div className="space-y-4"><div><Label>Nome da Tag *</Label><Input placeholder="Ex: lead_quente, comprador" value={String(config.tag_name || '')} onChange={e => setConfig({ ...config, tag_name: e.target.value })} /></div><div className="rounded-lg border border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-900/10 p-4"><div className="flex items-center gap-2 mb-2"><Users className="h-4 w-4 text-green-600" /><span className="text-sm font-medium text-green-700 dark:text-green-400">Envio para Grupos por Tag</span></div><p className="text-xs text-muted-foreground mb-3">A mensagem será enviada para todos os grupos de WhatsApp que possuem as tags selecionadas abaixo. Configure as tags dos grupos na aba Grupos do WhatsApp.</p><Label className="font-semibold">Tags dos Grupos Alvo</Label><SearchableTagSelect selectedTags={(config.target_tags as string[]) || []} onTagsChange={tags => setConfig({ ...config, target_tags: tags })} placeholder="Buscar tags dos grupos..." /></div></div>);
       case 'score_threshold':
         return (<div className="space-y-4"><div><Label>Score mínimo *</Label><Input type="number" min={1} value={String(config.min_score || 50)} onChange={e => setConfig({ ...config, min_score: Number(e.target.value) })} /></div></div>);
       case 'date_trigger':
@@ -1256,7 +1256,7 @@ export default function FlowBuilder() {
                   title="WhatsApp — Clique ou arraste"
                 >
                   <div className="flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 pointer-events-none">
-                    <MessageSquare className="h-4 w-4" />
+                    <Phone className="h-4 w-4" />
                   </div>
                   <span className="text-[9px] text-white/60 group-hover:text-white/90 text-center leading-tight pointer-events-none">WhatsApp</span>
                 </div>
@@ -1284,7 +1284,7 @@ export default function FlowBuilder() {
                     onClick={() => setShowGroupsDialog(true)}
                     className="w-full flex flex-col items-center gap-1.5 p-3 rounded-xl bg-green-600 hover:bg-green-500 transition-colors text-white"
                   >
-                    <MessageSquare className="h-5 w-5" />
+                    <Phone className="h-5 w-5" />
                     <span className="text-[8px] font-bold uppercase tracking-wider leading-tight text-center">Gerenciar<br/>Grupos</span>
                   </button>
                 </div>

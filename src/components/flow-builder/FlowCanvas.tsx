@@ -44,6 +44,10 @@ export function FlowCanvas({
   const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
   const [dragNodeStart, setDragNodeStart] = useState<{ nodePos: FlowNodePosition; mousePos: FlowNodePosition } | null>(null);
 
+  // Resize state for note nodes
+  const [resizingNodeId, setResizingNodeId] = useState<string | null>(null);
+  const [resizeStart, setResizeStart] = useState<{ w: number; h: number; mouseX: number; mouseY: number } | null>(null);
+
   // Connection drawing
   const [connectingFrom, setConnectingFrom] = useState<{ nodeId: string; port: 'default' | 'yes' | 'no' } | null>(null);
   const [connectingMouse, setConnectingMouse] = useState<FlowNodePosition>({ x: 0, y: 0 });

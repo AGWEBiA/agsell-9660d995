@@ -403,12 +403,21 @@ export function FlowCanvas({
         ))}
       </div>
 
-      {/* Zoom controls */}
-      <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-[#222240] rounded-lg p-1 border border-white/10 z-10">
+      {/* Zoom & node scale controls */}
+      <div className="absolute bottom-4 right-4 flex items-center gap-1 bg-[#222240] rounded-lg p-1 border border-white/10 z-10">
         <button onClick={() => { setScale(s => Math.max(0.2, s - 0.1)); }} className="px-2 py-1 text-white/60 hover:text-white text-sm">−</button>
         <span className="text-white/50 text-xs min-w-[40px] text-center">{Math.round(scale * 100)}%</span>
         <button onClick={() => { setScale(s => Math.min(3, s + 0.1)); }} className="px-2 py-1 text-white/60 hover:text-white text-sm">+</button>
         <button onClick={() => { setScale(1); setOffset({ x: 100, y: 100 }); }} className="px-2 py-1 text-white/40 hover:text-white text-[10px] border-l border-white/10">Reset</button>
+        {onNodeScaleChange && (
+          <>
+            <div className="w-px h-4 bg-white/10 mx-1" />
+            <span className="text-white/30 text-[9px] uppercase tracking-wider">Nós</span>
+            <button onClick={() => onNodeScaleChange(Math.max(0.6, nodeScale - 0.1))} className="px-1.5 py-1 text-white/60 hover:text-white text-sm">−</button>
+            <span className="text-white/50 text-[10px] min-w-[28px] text-center">{Math.round(nodeScale * 100)}%</span>
+            <button onClick={() => onNodeScaleChange(Math.min(1.5, nodeScale + 0.1))} className="px-1.5 py-1 text-white/60 hover:text-white text-sm">+</button>
+          </>
+        )}
       </div>
 
       {/* Instructions overlay */}

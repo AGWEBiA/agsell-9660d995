@@ -15,6 +15,7 @@ interface CanvasNodeProps {
   isConnecting: boolean;
   analytics?: { entries_count: number; conversions_count: number; errors_count: number };
   onResizeStart?: (e: React.MouseEvent) => void;
+  nodeScale?: number;
 }
 
 export function CanvasNode({
@@ -27,6 +28,7 @@ export function CanvasNode({
   isConnecting,
   analytics,
   onResizeStart,
+  nodeScale = 1,
 }: CanvasNodeProps) {
   if (!node.position) return null;
 
@@ -92,7 +94,7 @@ export function CanvasNode({
   const summary = getNodeSummary();
   const colorClass = node.type === 'trigger' ? `bg-gradient-to-br ${(info as any).color}` : (info as any).color;
   const isCondition = node.type === 'condition';
-  const NODE_WIDTH = 220;
+  const NODE_WIDTH = Math.round(220 * nodeScale);
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -268,17 +270,21 @@ export function CanvasNode({
   );
 
   function InnerContent() {
+    const iconBoxSize = nodeScale <= 0.8 ? 'h-6 w-6' : nodeScale >= 1.2 ? 'h-10 w-10' : 'h-8 w-8';
+    const iconSize = nodeScale <= 0.8 ? 'h-3 w-3' : nodeScale >= 1.2 ? 'h-5 w-5' : 'h-4 w-4';
+    const labelSize = nodeScale <= 0.8 ? 'text-[10px]' : nodeScale >= 1.2 ? 'text-sm' : 'text-xs';
+    const badgeSize = nodeScale <= 0.8 ? 'text-[7px]' : 'text-[8px]';
     return (
       <>
         <div className="flex items-center gap-2">
-          <div className={cn('flex items-center justify-center h-8 w-8 rounded-lg shadow-md shrink-0', node.type === 'trigger' ? `bg-gradient-to-br text-white ${(info as any).color}` : colorClass)}>
-            <Icon className="h-4 w-4" />
+          <div className={cn(`flex items-center justify-center ${iconBoxSize} rounded-lg shadow-md shrink-0`, node.type === 'trigger' ? `bg-gradient-to-br text-white ${(info as any).color}` : colorClass)}>
+            <Icon className={iconSize} />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
-              <Badge variant="outline" className="text-[8px] px-1 py-0 border-white/20 text-white/60">{getTypeLabel()}</Badge>
+              <Badge variant="outline" className={`${badgeSize} px-1 py-0 border-white/20 text-white/60`}>{getTypeLabel()}</Badge>
             </div>
-            <p className="font-semibold text-xs mt-0.5 text-white truncate">{info.label}</p>
+            <p className={`font-semibold ${labelSize} mt-0.5 text-white truncate`}>{info.label}</p>
             {summary && <p className="text-[10px] text-white/50 mt-0.5 truncate">{summary}</p>}
           </div>
           <button

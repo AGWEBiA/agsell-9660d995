@@ -15,6 +15,7 @@ interface CanvasNodeProps {
   isConnecting: boolean;
   analytics?: { entries_count: number; conversions_count: number; errors_count: number };
   onResizeStart?: (e: React.MouseEvent) => void;
+  nodeScale?: number;
 }
 
 export function CanvasNode({
@@ -27,6 +28,7 @@ export function CanvasNode({
   isConnecting,
   analytics,
   onResizeStart,
+  nodeScale = 1,
 }: CanvasNodeProps) {
   if (!node.position) return null;
 

@@ -1387,7 +1387,7 @@ export default function FlowBuilder() {
                             onDragStart={e => handleDragStart(e, getNodeType(opt.id), opt.id)}
                             onDragEnd={handleDragEnd}
                             onClick={() => handleClickToAdd(getNodeType(opt.id), opt.id)}
-                            className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-pointer group select-none"
+                            className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
                             title={opt.label}
                             role="button"
                             tabIndex={0}
@@ -1423,7 +1423,7 @@ export default function FlowBuilder() {
                             onDragStart={e => handleDragStart(e, 'condition', opt.id)}
                             onDragEnd={handleDragEnd}
                             onClick={() => handleClickToAdd('condition', opt.id)}
-                            className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-pointer group select-none"
+                            className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/5 transition-all cursor-grab active:cursor-grabbing group select-none"
                             title={opt.label}
                             role="button"
                             tabIndex={0}

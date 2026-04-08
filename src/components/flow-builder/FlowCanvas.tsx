@@ -230,7 +230,7 @@ export function FlowCanvas({
       subtype: droppedNode.subtype,
       label: info.label,
       config: {},
-      position: { x: pos.x - 110, y: pos.y - 30 },
+      position: { x: pos.x - 90, y: pos.y - 30 },
     };
     onNodesChange(currentNodes => [...currentNodes, newNode]);
     onSidebarDragConsume?.();

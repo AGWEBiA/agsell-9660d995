@@ -32,6 +32,8 @@ export function FlowCanvas({
   analytics,
   sidebarDragPayload,
   onSidebarDragConsume,
+  nodeScale = 1,
+  onNodeScaleChange,
 }: FlowCanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);

@@ -1445,6 +1445,8 @@ export default function FlowBuilder() {
             analytics={nodeAnalytics}
             sidebarDragPayload={sidebarDragPayload}
             onSidebarDragConsume={() => resetSidebarDragState(100)}
+            nodeScale={nodeScale}
+            onNodeScaleChange={setNodeScale}
           />
           {/* Trigger selector overlay when no trigger exists (not for groups) */}
           {!hasTrigger && showTriggerSelector && !isGroupsChannel && (

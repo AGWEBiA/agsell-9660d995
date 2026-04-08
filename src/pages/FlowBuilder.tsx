@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { flushSync } from 'react-dom';
+
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

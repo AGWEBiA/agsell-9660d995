@@ -889,8 +889,11 @@ export default function FlowBuilder() {
         const originalTrigger = (tc?.original_trigger as string) || existing.trigger_type;
         const trigger = triggerOptions.find(t => t.id === originalTrigger);
 
+        // Preserve the original trigger node ID so connections remain valid
+        const savedTriggerId = (tc?.trigger_node_id as string) || 'trigger-' + existing.id;
+
         const triggerNode: FlowNode = {
-          id: 'trigger-' + existing.id,
+          id: savedTriggerId,
           type: 'trigger',
           subtype: originalTrigger,
           label: trigger?.label || originalTrigger,
@@ -989,6 +992,7 @@ export default function FlowBuilder() {
       channel: trigger?.channel || 'instagram',
       flow_builder: true,
       original_trigger: triggerNode.subtype,
+      trigger_node_id: triggerNode.id,
       position: triggerNode.position,
       connections: connections,
       ...triggerNode.config,

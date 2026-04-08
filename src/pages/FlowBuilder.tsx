@@ -992,6 +992,7 @@ export default function FlowBuilder() {
       channel: trigger?.channel || 'instagram',
       flow_builder: true,
       original_trigger: triggerNode.subtype,
+      trigger_node_id: triggerNode.id,
       position: triggerNode.position,
       connections: connections,
       ...triggerNode.config,

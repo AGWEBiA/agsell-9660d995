@@ -437,7 +437,6 @@ serve(async (req) => {
                 scheduled_at: scheduledAt,
                 status: 'pending',
                 actions: remainingActions,
-                auth_token: token,
               });
 
               // Update execution to waiting

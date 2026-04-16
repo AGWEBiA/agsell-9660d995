@@ -28,9 +28,7 @@ await renderMedia({
   codec: 'h264',
   outputLocation: outFile,
   puppeteerInstance: browser,
-  muted: false,
-  enforceAudioTrack: true,
-  audioCodec: 'aac',
+  muted: true,
   concurrency: 1,
   onProgress: ({ progress }) => {
     if (Math.floor(progress * 100) % 10 === 0) process.stdout.write(`${Math.floor(progress * 100)}% `);
@@ -38,4 +36,4 @@ await renderMedia({
 });
 
 await browser.close({ silent: false });
-console.log('\nDONE');
+console.log('\nVideo (no audio) rendered. Now muxing audio...');

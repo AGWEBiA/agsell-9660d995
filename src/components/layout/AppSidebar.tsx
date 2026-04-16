@@ -287,8 +287,8 @@ function FavoritesSection({ collapsed, onNavigate }: { collapsed: boolean; onNav
   return (
     <div className="py-1">
       {!collapsed && (
-        <div className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">
-          <Star className="h-3.5 w-3.5" />
+        <div className="flex items-center gap-2 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/45">
+          <Star className="h-3 w-3" />
           <span>Acesso Rápido</span>
         </div>
       )}
@@ -401,13 +401,14 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, isMobile, onClose 
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
+        <div className="relative flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
           <Link to="/dashboard" onClick={onClose}>
             <Logo variant="red" size="md" showText />
           </Link>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-5 w-5" />
           </Button>
+          <span className="absolute bottom-0 left-0 h-[2px] w-16 bg-primary" aria-hidden="true" />
         </div>
         <ScrollArea className="h-[calc(100vh-4rem)]">
           <nav className="space-y-1 p-2" aria-label="Menu principal">
@@ -426,7 +427,7 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, isMobile, onClose 
         collapsed ? 'w-16' : 'w-64'
       )}
     >
-      <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
+      <div className="relative flex h-16 items-center justify-between border-b border-sidebar-border px-4">
         {!collapsed && (
           <Link to="/dashboard">
             <Logo variant="red" size="md" showText />
@@ -437,6 +438,13 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, isMobile, onClose 
             <LogoIcon variant="red" size="md" />
           </Link>
         )}
+        <span
+          className={cn(
+            'absolute bottom-0 left-0 h-[2px] bg-primary transition-all duration-300',
+            collapsed ? 'w-10' : 'w-16'
+          )}
+          aria-hidden="true"
+        />
       </div>
 
       <ScrollArea className="h-[calc(100vh-4rem-3rem)]">
@@ -445,12 +453,12 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, isMobile, onClose 
         </nav>
       </ScrollArea>
 
-      <div className="absolute bottom-0 left-0 right-0 border-t border-sidebar-border p-2">
+      <div className="absolute bottom-0 left-0 right-0 border-t border-sidebar-border p-2 bg-sidebar">
         <Button
           variant="ghost"
           size="sm"
           onClick={onToggle}
-          className="w-full justify-center"
+          className="w-full justify-center text-sidebar-foreground/70 hover:text-sidebar-foreground"
           aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'}
         >
           {collapsed ? (
@@ -458,7 +466,7 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, isMobile, onClose 
           ) : (
             <>
               <ChevronLeft className="h-4 w-4 mr-2" />
-              <span>Recolher</span>
+              <span className="text-xs">Recolher</span>
             </>
           )}
         </Button>

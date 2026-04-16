@@ -1,121 +1,141 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* AG Sell Design System - Based on AG WEBi Brand Manual */
+/* AG Sell Design System v2 — Inspirado no estilo cinematográfico do vídeo de apresentação
+ * Sidebar escura com acento vermelho, header refinado, cards com sombra sutil
+ */
 
 @layer base {
   :root {
-    /* AG Sell Brand Colors - Light Theme (Default) */
-    --ag-red: 0 79% 33%;
-    --ag-black: 0 0% 9%;
-    --ag-white: 0 0% 100%;
-    
-    --background: 0 0% 98%;
-    --foreground: 0 0% 9%;
+    /* Brand */
+    --ag-red: 0 79% 47%;
+    --ag-red-glow: 0 84% 60%;
+    --ag-black: 240 6% 4%;
+
+    /* Light theme — refinado, fundo levemente off-white para reduzir fadiga */
+    --background: 0 0% 99%;
+    --foreground: 240 10% 8%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 9%;
+    --card-foreground: 240 10% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 9%;
+    --popover-foreground: 240 10% 8%;
 
-    --primary: 0 79% 33%;
+    --primary: 0 79% 47%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 9%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 10% 8%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
 
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 9%;
+    --accent: 0 79% 96%;
+    --accent-foreground: 0 79% 30%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 76% 36%;
+    --success: 142 71% 38%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
-    --warning-foreground: 0 0% 9%;
+    --warning-foreground: 240 10% 8%;
 
-    --info: 221 83% 53%;
+    --info: 217 91% 55%;
     --info-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 0 79% 33%;
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 0 79% 47%;
 
-    --radius: 0.5rem;
+    --radius: 0.625rem;
 
+    /* Sidebar — light keeps subtle gray for hierarchy, dark uses cinematic black */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 9%;
-    --sidebar-primary: 0 79% 33%;
+    --sidebar-foreground: 240 10% 8%;
+    --sidebar-primary: 0 79% 47%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 96%;
-    --sidebar-accent-foreground: 0 0% 9%;
-    --sidebar-border: 0 0% 90%;
-    --sidebar-ring: 0 79% 33%;
+    --sidebar-accent: 240 5% 95%;
+    --sidebar-accent-foreground: 240 10% 8%;
+    --sidebar-border: 240 6% 88%;
+    --sidebar-ring: 0 79% 47%;
 
-    /* Chart colors */
-    --chart-1: 0 79% 33%;
-    --chart-2: 221 83% 53%;
-    --chart-3: 142 76% 36%;
+    /* Chart palette — coordenada com a marca */
+    --chart-1: 0 79% 47%;
+    --chart-2: 217 91% 55%;
+    --chart-3: 142 71% 38%;
     --chart-4: 38 92% 50%;
     --chart-5: 262 83% 58%;
+
+    /* Effects */
+    --gradient-brand: linear-gradient(135deg, hsl(0 79% 47%), hsl(0 84% 60%));
+    --gradient-surface: linear-gradient(180deg, hsl(0 0% 100%), hsl(240 5% 98%));
+    --shadow-sm: 0 1px 2px 0 hsl(240 10% 8% / 0.04);
+    --shadow-md: 0 4px 12px -2px hsl(240 10% 8% / 0.08);
+    --shadow-lg: 0 12px 32px -8px hsl(240 10% 8% / 0.12);
+    --shadow-glow: 0 0 0 1px hsl(0 79% 47% / 0.2), 0 8px 24px -8px hsl(0 79% 47% / 0.3);
   }
 
   .dark {
-    /* AG Sell Brand Colors - Dark Theme */
-    --background: 0 0% 9%;
+    /* Dark theme — cinematográfico, inspirado no vídeo (preto profundo + vermelho saturado) */
+    --background: 240 6% 4%;
     --foreground: 0 0% 98%;
 
-    --card: 0 0% 12%;
+    --card: 240 6% 7%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 12%;
+    --popover: 240 6% 8%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 0 79% 45%;
+    --primary: 0 84% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 18%;
+    --secondary: 240 5% 12%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 0 0% 18%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 240 5% 12%;
+    --muted-foreground: 240 5% 65%;
 
-    --accent: 0 0% 18%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 0 84% 14%;
+    --accent-foreground: 0 84% 90%;
 
-    --destructive: 0 62% 50%;
+    --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 76% 40%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 55%;
-    --warning-foreground: 0 0% 9%;
+    --warning-foreground: 240 10% 8%;
 
-    --info: 221 83% 60%;
+    --info: 217 91% 60%;
     --info-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 0 79% 45%;
+    --border: 240 5% 15%;
+    --input: 240 5% 15%;
+    --ring: 0 84% 55%;
 
-    --sidebar-background: 0 0% 9%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 0 79% 45%;
+    /* Sidebar — preto cinematográfico com acento vermelho (estilo vídeo) */
+    --sidebar-background: 240 8% 3%;
+    --sidebar-foreground: 0 0% 90%;
+    --sidebar-primary: 0 84% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 18%;
+    --sidebar-accent: 240 5% 10%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 0 79% 45%;
+    --sidebar-border: 240 5% 12%;
+    --sidebar-ring: 0 84% 55%;
+
+    --gradient-brand: linear-gradient(135deg, hsl(0 84% 55%), hsl(15 90% 55%));
+    --gradient-surface: linear-gradient(180deg, hsl(240 6% 7%), hsl(240 6% 5%));
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.3);
+    --shadow-md: 0 4px 12px -2px hsl(0 0% 0% / 0.4);
+    --shadow-lg: 0 12px 32px -8px hsl(0 0% 0% / 0.6);
+    --shadow-glow: 0 0 0 1px hsl(0 84% 55% / 0.3), 0 8px 24px -8px hsl(0 84% 55% / 0.4);
   }
 }
 
@@ -125,12 +145,18 @@
   }
 
   html {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
   }
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings: "rlig" 1, "calt" 1, "ss01" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.02em;
   }
 
   /* Custom scrollbar */
@@ -140,15 +166,15 @@
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-muted;
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/30 rounded-full;
+    @apply bg-muted-foreground/20 rounded-full;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/50;
+    @apply bg-muted-foreground/40;
   }
 }
 
@@ -189,6 +215,30 @@
   }
 
   .gradient-primary {
-    @apply bg-gradient-to-r from-primary to-primary/80;
+    background: var(--gradient-brand);
+  }
+
+  .gradient-surface {
+    background: var(--gradient-surface);
+  }
+
+  .shadow-brand-sm { box-shadow: var(--shadow-sm); }
+  .shadow-brand-md { box-shadow: var(--shadow-md); }
+  .shadow-brand-lg { box-shadow: var(--shadow-lg); }
+  .shadow-brand-glow { box-shadow: var(--shadow-glow); }
+
+  /* Card refinado estilo vídeo */
+  .card-elevated {
+    @apply bg-card border border-border rounded-xl;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  .card-elevated:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Section label estilo vídeo (uppercase pequeno) */
+  .section-label {
+    @apply text-[11px] font-semibold uppercase tracking-wider text-muted-foreground;
   }
 }

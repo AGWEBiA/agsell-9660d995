@@ -183,7 +183,7 @@ function SectionHeader({
             className={cn(
               'flex w-full items-center justify-center rounded-lg p-2 transition-colors',
               hasActiveItem
-                ? 'text-sidebar-primary-foreground bg-sidebar-primary/10'
+                ? 'text-primary bg-primary/10'
                 : 'text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent'
             )}
             aria-label={section.label}
@@ -203,19 +203,19 @@ function SectionHeader({
     <button
       onClick={onToggle}
       className={cn(
-        'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors',
+        'flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors',
         hasActiveItem
-          ? 'text-sidebar-primary'
-          : 'text-sidebar-foreground/50 hover:text-sidebar-foreground/80'
+          ? 'text-primary'
+          : 'text-sidebar-foreground/45 hover:text-sidebar-foreground/75'
       )}
       aria-expanded={isOpen}
       aria-label={`${isOpen ? 'Recolher' : 'Expandir'} seção ${section.label}`}
     >
-      <Icon className="h-4 w-4 shrink-0" />
+      <Icon className="h-3.5 w-3.5 shrink-0" />
       <span className="flex-1 text-left">{section.label}</span>
       <ChevronDown
         className={cn(
-          'h-3.5 w-3.5 shrink-0 transition-transform duration-200',
+          'h-3 w-3 shrink-0 transition-transform duration-200',
           isOpen ? 'rotate-0' : '-rotate-90'
         )}
       />
@@ -235,20 +235,32 @@ function MenuItemLink({
       to={isLocked ? '/plans' : item.path}
       onClick={onNavigate}
       className={cn(
-        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-        collapsed ? 'justify-center' : 'ml-2',
+        'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all',
+        collapsed ? 'justify-center mx-1' : 'ml-2 mr-1',
         isLocked
-          ? 'text-sidebar-foreground/40 hover:text-sidebar-foreground/60 hover:bg-sidebar-accent/50'
+          ? 'text-sidebar-foreground/35 hover:text-sidebar-foreground/55 hover:bg-sidebar-accent/40'
           : isActive
-            ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-            : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+            ? 'bg-gradient-to-r from-primary/15 via-primary/5 to-transparent text-foreground font-semibold'
+            : 'text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
       )}
       aria-current={isActive ? 'page' : undefined}
     >
-      <Icon className="h-4.5 w-4.5 shrink-0" />
+      {/* Indicador vermelho à esquerda (estilo vídeo) */}
+      {isActive && !collapsed && (
+        <span
+          className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-primary"
+          aria-hidden="true"
+        />
+      )}
+      <Icon
+        className={cn(
+          'h-[18px] w-[18px] shrink-0 transition-colors',
+          isActive ? 'text-primary' : 'text-sidebar-foreground/55 group-hover:text-sidebar-foreground/90'
+        )}
+      />
       {!collapsed && (
         <>
-          <span className="flex-1">{item.label}</span>
+          <span className="flex-1 truncate">{item.label}</span>
           {isLocked && <Lock className="h-3.5 w-3.5 shrink-0 opacity-50" />}
         </>
       )}
@@ -275,8 +287,8 @@ function FavoritesSection({ collapsed, onNavigate }: { collapsed: boolean; onNav
   return (
     <div className="py-1">
       {!collapsed && (
-        <div className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">
-          <Star className="h-3.5 w-3.5" />
+        <div className="flex items-center gap-2 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-sidebar-foreground/45">
+          <Star className="h-3 w-3" />
           <span>Acesso Rápido</span>
         </div>
       )}
@@ -389,13 +401,14 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, isMobile, onClose 
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
+        <div className="relative flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
           <Link to="/dashboard" onClick={onClose}>
             <Logo variant="red" size="md" showText />
           </Link>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-5 w-5" />
           </Button>
+          <span className="absolute bottom-0 left-0 h-[2px] w-16 bg-primary" aria-hidden="true" />
         </div>
         <ScrollArea className="h-[calc(100vh-4rem)]">
           <nav className="space-y-1 p-2" aria-label="Menu principal">
@@ -414,7 +427,7 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, isMobile, onClose 
         collapsed ? 'w-16' : 'w-64'
       )}
     >
-      <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
+      <div className="relative flex h-16 items-center justify-between border-b border-sidebar-border px-4">
         {!collapsed && (
           <Link to="/dashboard">
             <Logo variant="red" size="md" showText />
@@ -425,6 +438,13 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, isMobile, onClose 
             <LogoIcon variant="red" size="md" />
           </Link>
         )}
+        <span
+          className={cn(
+            'absolute bottom-0 left-0 h-[2px] bg-primary transition-all duration-300',
+            collapsed ? 'w-10' : 'w-16'
+          )}
+          aria-hidden="true"
+        />
       </div>
 
       <ScrollArea className="h-[calc(100vh-4rem-3rem)]">
@@ -433,12 +453,12 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, isMobile, onClose 
         </nav>
       </ScrollArea>
 
-      <div className="absolute bottom-0 left-0 right-0 border-t border-sidebar-border p-2">
+      <div className="absolute bottom-0 left-0 right-0 border-t border-sidebar-border p-2 bg-sidebar">
         <Button
           variant="ghost"
           size="sm"
           onClick={onToggle}
-          className="w-full justify-center"
+          className="w-full justify-center text-sidebar-foreground/70 hover:text-sidebar-foreground"
           aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'}
         >
           {collapsed ? (
@@ -446,7 +466,7 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, isMobile, onClose 
           ) : (
             <>
               <ChevronLeft className="h-4 w-4 mr-2" />
-              <span>Recolher</span>
+              <span className="text-xs">Recolher</span>
             </>
           )}
         </Button>

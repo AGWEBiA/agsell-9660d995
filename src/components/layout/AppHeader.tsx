@@ -52,7 +52,7 @@ export function AppHeader({ sidebarCollapsed, onMenuToggle, isMobile }: HeaderPr
     <>
       <header
         className={cn(
-          'fixed top-0 right-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background px-3 sm:px-6 transition-all duration-300',
+          'fixed top-0 right-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/95 backdrop-blur-md px-3 sm:px-6 transition-all duration-300',
           isMobile ? 'left-0' : sidebarCollapsed ? 'left-16' : 'left-64'
         )}
       >
@@ -63,14 +63,17 @@ export function AppHeader({ sidebarCollapsed, onMenuToggle, isMobile }: HeaderPr
               <Menu className="h-5 w-5" />
             </Button>
           )}
-          {/* Search - hidden on mobile, visible on sm+ */}
+          {/* Search in pill style — inspirado no vídeo */}
           <div className="relative hidden sm:block">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Buscar... (Ctrl+K)"
-              className="w-48 pl-9 lg:w-80"
+              placeholder="Buscar contatos, conversas, automações..."
+              className="w-56 lg:w-96 pl-9 h-9 bg-muted/50 border-border/60 rounded-lg text-[13px] focus-visible:bg-background focus-visible:ring-1 focus-visible:ring-primary/40"
             />
+            <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 hidden lg:inline-flex h-5 select-none items-center gap-1 rounded border border-border/60 bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+              ⌘K
+            </kbd>
           </div>
           {/* Mobile search icon */}
           {isMobile && (

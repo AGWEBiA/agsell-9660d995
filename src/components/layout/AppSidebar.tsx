@@ -11,6 +11,7 @@ import {
   Lock, BookOpen, Workflow, ArrowRightLeft, Ticket, ShieldCheck, Activity,
   Layout, Clock, Sparkles, Smile, Route, Crosshair, Wand2, Monitor,
   Phone, PhoneCall, DollarSign, Crown, Smartphone, QrCode, Server, Globe,
+  Star,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -19,6 +20,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Logo, LogoIcon } from '@/components/ui/Logo';
 import { useAdminView } from '@/contexts/AdminViewContext';
 import { usePlans } from '@/hooks/usePlans';
+import { Separator } from '@/components/ui/separator';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -44,13 +46,21 @@ interface MenuSection {
   items: MenuItem[];
 }
 
+// Quick access favorites (always visible at top)
+const favoriteItems: MenuItem[] = [
+  { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+  { label: 'Inbox', icon: Inbox, path: '/inbox' },
+  { label: 'Contatos', icon: Users, path: '/contacts' },
+  { label: 'Pipeline', icon: Kanban, path: '/pipeline' },
+];
+
+// Merged sections: 8 → 6
 const menuSections: MenuSection[] = [
   {
     id: 'daily',
     label: 'Dia a Dia',
     icon: Home,
     items: [
-      { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
       { label: 'Tarefas', icon: CheckSquare, path: '/tasks' },
     ],
   },
@@ -59,21 +69,11 @@ const menuSections: MenuSection[] = [
     label: 'CRM',
     icon: Users,
     items: [
-      { label: 'Contatos', icon: Users, path: '/contacts' },
       { label: 'Empresas', icon: Building2, path: '/companies' },
-      { label: 'Pipeline', icon: Kanban, path: '/pipeline' },
       { label: 'Win Probability', icon: Brain, path: '/win-probability' },
       { label: 'Sales Routing', icon: Route, path: '/sales-routing' },
       { label: 'Tags', icon: Tags, path: '/tags' },
       { label: 'Preferências', icon: ShieldCheck, path: '/contact-preferences' },
-    ],
-  },
-  {
-    id: 'attendance',
-    label: 'Atendimento',
-    icon: Inbox,
-    items: [
-      { label: 'Inbox Central', icon: Inbox, path: '/inbox' },
     ],
   },
   {
@@ -92,13 +92,13 @@ const menuSections: MenuSection[] = [
     ],
   },
   {
-    id: 'growth',
-    label: 'Crescimento',
+    id: 'marketing',
+    label: 'Marketing & Analytics',
     icon: Rocket,
     items: [
+      // Growth
       { label: 'E-mail Marketing', icon: Send, path: '/email', featureRequired: 'email_marketing' },
       { label: 'Campanhas SMS/VoIP', icon: Megaphone, path: '/communication-campaigns' },
-      
       { label: 'Growth Tools', icon: Rocket, path: '/growth-tools' },
       { label: 'Formulários', icon: FileText, path: '/forms' },
       { label: 'Landing Pages', icon: Layout, path: '/landing-pages' },
@@ -109,13 +109,7 @@ const menuSections: MenuSection[] = [
       { label: 'Predictive Send', icon: Clock, path: '/predictive-sending' },
       { label: 'Metas', icon: Crosshair, path: '/goals' },
       { label: 'Conteúdo Dinâmico', icon: Wand2, path: '/conditional-content' },
-    ],
-  },
-  {
-    id: 'intelligence',
-    label: 'Inteligência',
-    icon: Brain,
-    items: [
+      // Intelligence
       { label: 'Analytics', icon: BarChart3, path: '/analytics', featureRequired: 'analytics' },
       { label: 'BI do Funil', icon: Target, path: '/funnel-bi' },
       { label: 'Métricas Automação', icon: Activity, path: '/automation-metrics' },
@@ -168,6 +162,10 @@ const menuSections: MenuSection[] = [
     ],
   },
 ];
+
+function getItemPathBase(path: string) {
+  return path.split('?')[0];
+}
 
 function SectionHeader({
   section, isOpen, onToggle, collapsed, hasActiveItem,
@@ -271,18 +269,52 @@ function MenuItemLink({
   return linkContent;
 }
 
+function FavoritesSection({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
+  const location = useLocation();
+
+  return (
+    <div className="py-1">
+      {!collapsed && (
+        <div className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50">
+          <Star className="h-3.5 w-3.5" />
+          <span>Acesso Rápido</span>
+        </div>
+      )}
+      <div className="space-y-0.5">
+        {favoriteItems.map((item) => {
+          const itemBase = getItemPathBase(item.path);
+          const isActive = location.pathname === itemBase;
+          return (
+            <MenuItemLink
+              key={item.path}
+              item={item}
+              isActive={isActive}
+              collapsed={collapsed}
+              onNavigate={onNavigate}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function AppSidebar({ collapsed, onToggle, mobileOpen, isMobile, onClose }: SidebarProps) {
   const location = useLocation();
   const { currentPlan } = usePlans();
   const planFeatures = currentPlan?.features ?? [];
 
+  // FIX: Auto-expand the section containing the active route
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     menuSections.forEach((section) => {
       const hasActive = section.items.some((item) => {
-        const itemPath = item.path.split('?')[0];
+        const itemPath = getItemPathBase(item.path);
         return location.pathname === itemPath;
       });
+      if (hasActive) {
+        initial[section.id] = true;
+      }
     });
     return initial;
   });
@@ -303,7 +335,52 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, isMobile, onClose 
     }),
   }));
 
-  // On mobile, sidebar is an overlay drawer
+  const renderSections = (sidebarCollapsed: boolean, navigateCallback?: () => void) => (
+    <>
+      <FavoritesSection collapsed={sidebarCollapsed} onNavigate={navigateCallback} />
+      <Separator className="mx-2 my-1 bg-sidebar-border" />
+      {filteredSections.map((section) => {
+        if (section.items.length === 0) return null;
+        const hasActiveItem = section.items.some((item) => location.pathname === getItemPathBase(item.path));
+        const isOpen = openSections[section.id] ?? false;
+
+        return (
+          <div key={section.id} className="py-0.5">
+            <SectionHeader
+              section={section}
+              isOpen={isOpen}
+              onToggle={() => toggleSection(section.id)}
+              collapsed={sidebarCollapsed}
+              hasActiveItem={hasActiveItem}
+            />
+            <div
+              className={cn(
+                'overflow-hidden transition-all duration-200 ease-in-out',
+                isOpen ? 'max-h-[9999px] opacity-100' : 'max-h-0 opacity-0'
+              )}
+              role="group"
+              aria-label={section.label}
+            >
+              <div className="mt-0.5 space-y-0.5">
+                {section.items.map((item) => (
+                  <MenuItemLink
+                    key={item.path}
+                    item={item}
+                    isActive={location.pathname === getItemPathBase(item.path) && location.search === (item.path.includes('?') ? '?' + item.path.split('?')[1] : '')}
+                    collapsed={sidebarCollapsed}
+                    onNavigate={navigateCallback}
+                    isLocked={!!item.featureRequired && !planFeatures.includes(item.featureRequired)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </>
+  );
+
+  // Mobile sidebar
   if (isMobile) {
     return (
       <aside
@@ -312,7 +389,6 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, isMobile, onClose 
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
-        {/* Mobile Header */}
         <div className="flex h-16 items-center justify-between border-b border-sidebar-border px-4">
           <Link to="/dashboard" onClick={onClose}>
             <Logo variant="red" size="md" showText />
@@ -321,47 +397,9 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, isMobile, onClose 
             <X className="h-5 w-5" />
           </Button>
         </div>
-
         <ScrollArea className="h-[calc(100vh-4rem)]">
           <nav className="space-y-1 p-2" aria-label="Menu principal">
-            {filteredSections.map((section) => {
-              if (section.items.length === 0) return null;
-              const hasActiveItem = section.items.some((item) => location.pathname === item.path.split('?')[0]);
-              const isOpen = openSections[section.id] ?? false;
-
-              return (
-                <div key={section.id} className="py-0.5">
-                  <SectionHeader
-                    section={section}
-                    isOpen={isOpen}
-                    onToggle={() => toggleSection(section.id)}
-                    collapsed={false}
-                    hasActiveItem={hasActiveItem}
-                  />
-                  <div
-                    className={cn(
-                      'overflow-hidden transition-all duration-200 ease-in-out',
-                      isOpen ? 'max-h-[9999px] opacity-100' : 'max-h-0 opacity-0'
-                    )}
-                    role="group"
-                    aria-label={section.label}
-                  >
-                    <div className="mt-0.5 space-y-0.5">
-                      {section.items.map((item) => (
-                        <MenuItemLink
-                          key={item.path}
-                          item={item}
-                          isActive={location.pathname === item.path.split('?')[0] && location.search === (item.path.includes('?') ? '?' + item.path.split('?')[1] : '')}
-                          collapsed={false}
-                          onNavigate={onClose}
-                          isLocked={!!item.featureRequired && !planFeatures.includes(item.featureRequired)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {renderSections(false, onClose)}
           </nav>
         </ScrollArea>
       </aside>
@@ -391,43 +429,7 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, isMobile, onClose 
 
       <ScrollArea className="h-[calc(100vh-4rem-3rem)]">
         <nav className="space-y-1 p-2" aria-label="Menu principal">
-          {filteredSections.map((section) => {
-            if (section.items.length === 0) return null;
-            const hasActiveItem = section.items.some((item) => location.pathname === item.path.split('?')[0]);
-            const isOpen = openSections[section.id] ?? false;
-
-            return (
-              <div key={section.id} className="py-0.5">
-                <SectionHeader
-                  section={section}
-                  isOpen={isOpen}
-                  onToggle={() => toggleSection(section.id)}
-                  collapsed={collapsed}
-                  hasActiveItem={hasActiveItem}
-                />
-                <div
-                  className={cn(
-                    'overflow-hidden transition-all duration-200 ease-in-out',
-                    isOpen ? 'max-h-[9999px] opacity-100' : 'max-h-0 opacity-0'
-                  )}
-                  role="group"
-                  aria-label={section.label}
-                >
-                  <div className="mt-0.5 space-y-0.5">
-                    {section.items.map((item) => (
-                      <MenuItemLink
-                        key={item.path}
-                        item={item}
-                        isActive={location.pathname === item.path.split('?')[0] && location.search === (item.path.includes('?') ? '?' + item.path.split('?')[1] : '')}
-                        collapsed={collapsed}
-                        isLocked={!!item.featureRequired && !planFeatures.includes(item.featureRequired)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {renderSections(collapsed)}
         </nav>
       </ScrollArea>
 

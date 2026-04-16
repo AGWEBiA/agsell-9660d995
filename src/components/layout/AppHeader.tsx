@@ -17,8 +17,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
   Search, Sun, Moon, User, Settings, LogOut, HelpCircle,
-  Eye, Shield, Crown, Menu,
+  Eye, Shield, Crown, Menu, Inbox, Users, Kanban,
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { AgencyAccountSelector } from '@/components/agency/AgencyAccountSelector';
 import { OrganizationSwitcher } from '@/components/organization/OrganizationSwitcher';
@@ -78,6 +79,31 @@ export function AppHeader({ sidebarCollapsed, onMenuToggle, isMobile }: HeaderPr
             </Button>
           )}
         </div>
+
+        {/* Quick access icons - desktop only */}
+        {!isMobile && (
+          <div className="hidden md:flex items-center gap-0.5">
+            {[
+              { icon: Inbox, path: '/inbox', label: 'Inbox' },
+              { icon: Users, path: '/contacts', label: 'Contatos' },
+              { icon: Kanban, path: '/pipeline', label: 'Pipeline' },
+            ].map(({ icon: Icon, path, label }) => (
+              <Tooltip key={path} delayDuration={0}>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9"
+                    onClick={() => navigate(path)}
+                  >
+                    <Icon className="h-4.5 w-4.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{label}</TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
+        )}
 
         {/* Right actions */}
         <div className="flex items-center gap-1 sm:gap-2">

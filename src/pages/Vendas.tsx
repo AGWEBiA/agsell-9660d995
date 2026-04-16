@@ -515,12 +515,6 @@ export default function Vendas() {
               Quero começar agora <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
-
-          {/* Resumo dos planos */}
-          <div className="mt-16">
-            <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-6">Planos disponíveis</p>
-            <VendasPlansBox variant="compact" />
-          </div>
         </div>
       </section>
 

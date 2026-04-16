@@ -17,8 +17,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
   Search, Sun, Moon, User, Settings, LogOut, HelpCircle,
-  Eye, Shield, Crown, Menu,
+  Eye, Shield, Crown, Menu, Inbox, Users, Kanban,
 } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 import { AgencyAccountSelector } from '@/components/agency/AgencyAccountSelector';
 import { OrganizationSwitcher } from '@/components/organization/OrganizationSwitcher';

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/Logo';
 import { PlatformDemoPlayer } from '@/components/vendas/PlatformDemoPlayer';
+import { VendasPlansBox } from '@/components/vendas/VendasPlansBox';
 import {
   ArrowRight, Check, Star, MessageSquare, Mail, Bot,
   BarChart3, Users, Workflow, Phone, Instagram, Send, Brain,
@@ -514,6 +515,30 @@ export default function Vendas() {
               Quero começar agora <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
+
+          {/* Resumo dos planos */}
+          <div className="mt-16">
+            <p className="text-xs uppercase tracking-[0.2em] text-white/40 mb-6">Planos disponíveis</p>
+            <VendasPlansBox variant="compact" />
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Box completo */}
+      <section id="planos" className="py-20 md:py-28 border-t border-white/5">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="text-center mb-10 max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-xs font-semibold tracking-wider uppercase text-primary mb-4">
+              Planos &amp; Preços
+            </div>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+              Escolha o plano ideal para <span className="text-primary">sua operação</span>
+            </h2>
+            <p className="text-white/55 text-base">
+              Qualquer plano AG Sell substitui pelo menos 3 ferramentas que você paga hoje.
+            </p>
+          </div>
+          <VendasPlansBox variant="full" />
         </div>
       </section>
 

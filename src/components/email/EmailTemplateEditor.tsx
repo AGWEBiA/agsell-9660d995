@@ -985,8 +985,8 @@ export function EmailTemplateEditor({ content, onChange }: EmailTemplateEditorPr
       </div>
 
       {/* Properties Panel */}
-      <div className="col-span-3 border rounded-lg flex flex-col overflow-hidden">
-        <div className="p-3 border-b flex items-center justify-between">
+      <div className="col-span-3 border rounded-lg flex flex-col overflow-hidden min-h-0">
+        <div className="p-3 border-b flex items-center justify-between shrink-0">
           <p className="font-medium text-sm">{selectedBlock ? 'Propriedades' : 'Configurações'}</p>
           {selectedBlock && (
             <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => setSelectedBlockId(null)}>
@@ -994,7 +994,7 @@ export function EmailTemplateEditor({ content, onChange }: EmailTemplateEditorPr
             </Button>
           )}
         </div>
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-h-0">
           {renderPropertiesPanel()}
         </ScrollArea>
       </div>

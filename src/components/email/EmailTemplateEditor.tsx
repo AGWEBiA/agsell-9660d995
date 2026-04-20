@@ -863,13 +863,13 @@ export function EmailTemplateEditor({ content, onChange }: EmailTemplateEditorPr
   };
 
   return (
-    <div className="grid grid-cols-12 gap-4 h-[650px]">
+    <div className="grid grid-cols-12 gap-4 h-[min(80vh,750px)] min-h-[550px]">
       {/* Sidebar - Blocks */}
-      <div className="col-span-2 border rounded-lg flex flex-col overflow-hidden">
-        <div className="p-3 border-b">
+      <div className="col-span-3 lg:col-span-2 border rounded-lg flex flex-col overflow-hidden min-h-0">
+        <div className="p-3 border-b shrink-0">
           <p className="font-medium text-sm">Blocos</p>
         </div>
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-h-0">
           <div className="p-2 space-y-3">
             {blockCategories.map(cat => (
               <div key={cat.label}>
@@ -903,8 +903,8 @@ export function EmailTemplateEditor({ content, onChange }: EmailTemplateEditorPr
       </div>
 
       {/* Canvas */}
-      <div className="col-span-7 border rounded-lg flex flex-col">
-        <div className="p-3 border-b flex items-center justify-between">
+      <div className="col-span-6 lg:col-span-7 border rounded-lg flex flex-col min-h-0 overflow-hidden">
+        <div className="p-3 border-b flex items-center justify-between shrink-0">
           <p className="font-medium text-sm">Editor</p>
           <div className="flex gap-1">
             {[
@@ -919,7 +919,7 @@ export function EmailTemplateEditor({ content, onChange }: EmailTemplateEditorPr
           </div>
         </div>
 
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-h-0">
           {viewMode === 'edit' && (
             <div className="p-4 space-y-2">
               {blocks.length === 0 ? (
@@ -985,8 +985,8 @@ export function EmailTemplateEditor({ content, onChange }: EmailTemplateEditorPr
       </div>
 
       {/* Properties Panel */}
-      <div className="col-span-3 border rounded-lg flex flex-col overflow-hidden">
-        <div className="p-3 border-b flex items-center justify-between">
+      <div className="col-span-3 border rounded-lg flex flex-col overflow-hidden min-h-0">
+        <div className="p-3 border-b flex items-center justify-between shrink-0">
           <p className="font-medium text-sm">{selectedBlock ? 'Propriedades' : 'Configurações'}</p>
           {selectedBlock && (
             <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => setSelectedBlockId(null)}>
@@ -994,7 +994,7 @@ export function EmailTemplateEditor({ content, onChange }: EmailTemplateEditorPr
             </Button>
           )}
         </div>
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-h-0">
           {renderPropertiesPanel()}
         </ScrollArea>
       </div>

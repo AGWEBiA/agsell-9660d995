@@ -185,11 +185,19 @@ export default function Inbox() {
         if (c.channel !== channelFilter) return false;
       }
     }
+    // Instance filter
+    if (instanceFilter !== 'all') {
+      const meta = getConversationMetadata(c);
+      const convInstanceId = meta.whatsapp_instance_id || meta.whatsapp_manual_instance_id || '';
+      if (convInstanceId !== instanceFilter) return false;
+    }
     if (!searchQuery) return true;
     const name = `${c.contacts?.first_name || ''} ${c.contacts?.last_name || ''}`.toLowerCase();
     const protocol = (c as any).protocol_number?.toLowerCase() || '';
     const phone = c.contacts?.phone?.toLowerCase() || '';
-    return name.includes(searchQuery.toLowerCase()) || protocol.includes(searchQuery.toLowerCase()) || phone.includes(searchQuery.toLowerCase());
+    const whatsapp = c.contacts?.whatsapp?.toLowerCase() || '';
+    const q = searchQuery.toLowerCase();
+    return name.includes(q) || protocol.includes(q) || phone.includes(q) || whatsapp.includes(q);
   });
 
   const channelCounts = {

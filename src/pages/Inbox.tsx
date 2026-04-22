@@ -834,8 +834,15 @@ export default function Inbox() {
           </div>
         )}
 
+        {/* Debug Panel */}
+        {showDebug && (
+          <div className="w-80 border-l shrink-0 hidden sm:flex flex-col overflow-hidden bg-background">
+            <InboxDebugPanel conversationId={selectedId} onClose={() => setShowDebug(false)} />
+          </div>
+        )}
+
         {/* Right Panel — Contact Info (desktop only) */}
-        {selectedConversation && (
+        {selectedConversation && !showDebug && (
           <div className="w-72 border-l shrink-0 hidden xl:flex flex-col overflow-hidden bg-background">
             <ContactInfoPanel
               conversation={selectedConversation}

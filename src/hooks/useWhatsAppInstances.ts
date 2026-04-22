@@ -162,7 +162,8 @@ export function useWhatsAppInstances() {
           integration_type: data.integration_type,
           config: config as unknown as Json,
           is_active: true,
-        })
+          user_id: user?.id,
+        } as any)
         .select()
         .single();
 

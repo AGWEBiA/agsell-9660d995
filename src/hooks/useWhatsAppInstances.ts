@@ -5,6 +5,20 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Json } from '@/integrations/supabase/types';
 
+const logWhatsAppAudit = async (orgId: string, action: string, details?: Record<string, unknown>) => {
+  try {
+    await supabase.rpc('log_audit_event', {
+      _org_id: orgId,
+      _action: action,
+      _resource_type: 'whatsapp_instance',
+      _resource_id: null,
+      _details: details || null,
+    });
+  } catch (e) {
+    console.warn('Audit log failed:', e);
+  }
+};
+
 export interface WhatsAppInstance {
   id: string;
   organization_id: string;
@@ -171,10 +185,13 @@ export function useWhatsAppInstances() {
       if (error) throw error;
       return newInstance;
     },
-    onSuccess: () => {
+    onSuccess: (newInstance) => {
       queryClient.invalidateQueries({ queryKey: ['whatsapp_instances'] });
       queryClient.invalidateQueries({ queryKey: ['organization_integrations'] });
       toast.success('Instância WhatsApp criada com sucesso!');
+      if (currentOrganization?.id) {
+        logWhatsAppAudit(currentOrganization.id, 'connect', { instance_name: newInstance.name, integration_type: newInstance.integration_type });
+      }
     },
     onError: (error) => {
       toast.error('Erro ao criar instância: ' + error.message);
@@ -214,6 +231,9 @@ export function useWhatsAppInstances() {
       queryClient.invalidateQueries({ queryKey: ['whatsapp_instances'] });
       queryClient.invalidateQueries({ queryKey: ['organization_integrations'] });
       toast.success('Instância atualizada!');
+      if (currentOrganization?.id) {
+        logWhatsAppAudit(currentOrganization.id, 'update', { action: 'config_update' });
+      }
     },
     onError: (error) => {
       toast.error('Erro ao atualizar instância: ' + error.message);
@@ -294,6 +314,9 @@ export function useWhatsAppInstances() {
       queryClient.invalidateQueries({ queryKey: ['whatsapp_instances'] });
       queryClient.invalidateQueries({ queryKey: ['organization_integrations'] });
       toast.success('Instância desconectada e removida!');
+      if (currentOrganization?.id) {
+        logWhatsAppAudit(currentOrganization.id, 'disconnect', { action: 'instance_removed' });
+      }
     },
     onError: (error) => {
       toast.error('Erro ao remover instância: ' + error.message);
@@ -317,6 +340,9 @@ export function useWhatsAppInstances() {
       queryClient.invalidateQueries({ queryKey: ['whatsapp_instances'] });
       queryClient.invalidateQueries({ queryKey: ['organization_integrations'] });
       toast.success(data.is_active ? 'Instância ativada!' : 'Instância desativada!');
+      if (currentOrganization?.id) {
+        logWhatsAppAudit(currentOrganization.id, data.is_active ? 'activate' : 'deactivate', { instance_name: data.name });
+      }
     },
     onError: (error) => {
       toast.error('Erro ao alterar instância: ' + error.message);

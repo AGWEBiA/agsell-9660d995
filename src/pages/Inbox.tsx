@@ -56,6 +56,8 @@ const channelIcons: Record<string, typeof MessageSquare> = {
   telegram: MessageSquare,
 };
 
+const URL_REGEX = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+
 type QueueTab = 'fila' | 'meus' | 'todos';
 type ChannelFilter = 'all' | 'whatsapp' | 'instagram' | 'email' | 'voip' | 'support';
 type NcStep = 'search' | 'new' | 'device';
@@ -66,6 +68,39 @@ const getConversationMetadata = (conversation: any): Record<string, any> => {
   }
 
   return conversation.metadata as Record<string, any>;
+};
+
+const renderMessageContent = (content: string, isUser: boolean) => {
+  const parts = content.split(URL_REGEX);
+
+  return (
+    <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+      {parts.map((part, index) => {
+        if (!part) return null;
+
+        const isLink = URL_REGEX.test(part);
+        URL_REGEX.lastIndex = 0;
+
+        if (!isLink) {
+          return <React.Fragment key={`${part}-${index}`}>{part}</React.Fragment>;
+        }
+
+        const href = part.startsWith('http://') || part.startsWith('https://') ? part : `https://${part}`;
+
+        return (
+          <a
+            key={`${href}-${index}`}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`underline underline-offset-2 break-all transition-opacity hover:opacity-80 ${isUser ? 'text-foreground/90' : 'text-primary'}`}
+          >
+            {part}
+          </a>
+        );
+      })}
+    </p>
+  );
 };
 
 export default function Inbox() {
@@ -667,7 +702,7 @@ export default function Inbox() {
                           </a>
                         )}
                         {message.content && !(msgType !== 'text' && message.content.startsWith('📎')) && (
-                          <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                          renderMessageContent(message.content, isUser)
                         )}
                         <div className={`flex items-center justify-end gap-1 mt-0.5 text-[10px] ${isUser ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
                           <span>{new Date(message.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>

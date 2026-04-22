@@ -13,7 +13,7 @@ import {
   FileAudio, File as FileIcon, X, Loader2,
   Hash, ChevronLeft, Inbox as InboxIcon, User, Ticket,
   BarChart3, Brain, Calendar, Users, CheckCircle2,
-  ArrowDownToLine, Instagram, AlertCircle, Clock,
+  ArrowDownToLine, Instagram, AlertCircle, Clock, Bug, Filter,
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useInbox } from '@/hooks/useInbox';
@@ -25,6 +25,7 @@ import { SendIAButton } from '@/components/inbox/SendIAButton';
 import { AudioTranscription } from '@/components/inbox/AudioTranscription';
 import { ContactInfoPanel } from '@/components/inbox/ContactInfoPanel';
 import { SacWhatsAppInstanceSelector } from '@/components/inbox/SacWhatsAppInstanceSelector';
+import { InboxDebugPanel } from '@/components/inbox/InboxDebugPanel';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupportTickets } from '@/hooks/useSupportTickets';
 import { useWhatsAppInstances } from '@/hooks/useWhatsAppInstances';
@@ -135,6 +136,8 @@ export default function Inbox() {
   const [ncNewPhone, setNcNewPhone] = useState('');
   const [isCreatingContact, setIsCreatingContact] = useState(false);
   const [selectedWhatsappInstanceId, setSelectedWhatsappInstanceId] = useState('auto');
+  const [instanceFilter, setInstanceFilter] = useState('all');
+  const [showDebug, setShowDebug] = useState(false);
 
   const selectedConversation = conversations.find(c => c.id === selectedId);
   const sacInstances = (activeInstances || []).filter((instance: any) => instance.config?.use_for_sac === true);

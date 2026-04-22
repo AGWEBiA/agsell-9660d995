@@ -517,16 +517,42 @@ export default function Inbox() {
             ))}
           </div>
 
-          {/* Search */}
-          <div className="p-2 shrink-0">
+          {/* Search & Instance Filter */}
+          <div className="p-2 space-y-1.5 shrink-0">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar chats..."
+                placeholder="Buscar nome, telefone, protocolo..."
                 className="pl-8 h-8 text-xs bg-muted/50 border-0 focus-visible:ring-1"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Select value={instanceFilter} onValueChange={setInstanceFilter}>
+                <SelectTrigger className="h-7 text-[10px] flex-1 bg-muted/30 border-0">
+                  <Filter className="h-3 w-3 mr-1 shrink-0" />
+                  <SelectValue placeholder="Instância" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas instâncias</SelectItem>
+                  {(instances || []).map((inst: any) => (
+                    <SelectItem key={inst.id} value={inst.id}>
+                      {inst.name || inst.instance_name || inst.phone_number || 'Sem nome'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Tooltip><TooltipTrigger asChild>
+                <Button
+                  variant={showDebug ? 'secondary' : 'ghost'}
+                  size="icon"
+                  className="h-7 w-7 shrink-0"
+                  onClick={() => setShowDebug(!showDebug)}
+                >
+                  <Bug className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger><TooltipContent>Debug SAC</TooltipContent></Tooltip>
             </div>
           </div>
 

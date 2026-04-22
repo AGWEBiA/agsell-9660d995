@@ -13,6 +13,7 @@ import { useWhatsAppGroups } from '@/hooks/useWhatsAppGroups';
 import { WhatsAppCampaignsManager } from '@/components/whatsapp/WhatsAppCampaignsManager';
 import { WhatsAppGroupMessages } from '@/components/whatsapp/WhatsAppGroupMessages';
 import { WhatsAppAuditLog } from '@/components/whatsapp/WhatsAppAuditLog';
+import { WhatsAppWebhookLogs } from '@/components/whatsapp/WhatsAppWebhookLogs';
 import { useWhatsAppInstances, WhatsAppInstance } from '@/hooks/useWhatsAppInstances';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { Button } from '@/components/ui/button';

@@ -314,6 +314,9 @@ export function useWhatsAppInstances() {
       queryClient.invalidateQueries({ queryKey: ['whatsapp_instances'] });
       queryClient.invalidateQueries({ queryKey: ['organization_integrations'] });
       toast.success('Instância desconectada e removida!');
+      if (currentOrganization?.id) {
+        logWhatsAppAudit(currentOrganization.id, 'disconnect', { action: 'instance_removed' });
+      }
     },
     onError: (error) => {
       toast.error('Erro ao remover instância: ' + error.message);

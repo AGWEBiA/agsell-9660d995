@@ -932,6 +932,8 @@ async function routeToInbox(
       is_read: params.isFromMe ? true : false,
       ...(params.isFromMe && userId ? { sender_id: userId } : {}),
     };
+    if (params.externalMessageId) messageInsert.external_id = params.externalMessageId;
+    if (params.isFromMe) messageInsert.delivery_status = "sent";
     if (params.mediaUrl) messageInsert.media_url = params.mediaUrl;
     if (params.mediaMimeType) messageInsert.media_mime_type = params.mediaMimeType;
     if (params.messageType && params.messageType !== "text") messageInsert.message_type = params.messageType;

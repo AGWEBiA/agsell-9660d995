@@ -288,6 +288,15 @@ Deno.serve(async (req) => {
       .update({ last_sync_at: new Date().toISOString() })
       .eq("id", integration.id);
 
+    // Audit log for sync
+    await supabase.from("audit_logs").insert({
+      organization_id: integration.organization_id,
+      user_id: userId,
+      action: "sync",
+      resource_type: "whatsapp_instance",
+      details: { instance: instanceName, synced_chats: syncedChats, synced_messages: syncedMessages },
+    });
+
     const result = {
       success: true,
       instance: instanceName,

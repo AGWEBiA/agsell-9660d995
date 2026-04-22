@@ -702,7 +702,7 @@ export default function Inbox() {
                           </a>
                         )}
                         {message.content && !(msgType !== 'text' && message.content.startsWith('📎')) && (
-                          <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
+                          renderMessageContent(message.content, isUser)
                         )}
                         <div className={`flex items-center justify-end gap-1 mt-0.5 text-[10px] ${isUser ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
                           <span>{new Date(message.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>

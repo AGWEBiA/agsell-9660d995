@@ -5,6 +5,20 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Json } from '@/integrations/supabase/types';
 
+const logWhatsAppAudit = async (orgId: string, action: string, details?: Record<string, unknown>) => {
+  try {
+    await supabase.rpc('log_audit_event', {
+      _org_id: orgId,
+      _action: action,
+      _resource_type: 'whatsapp_instance',
+      _resource_id: null,
+      _details: details || null,
+    });
+  } catch (e) {
+    console.warn('Audit log failed:', e);
+  }
+};
+
 export interface WhatsAppInstance {
   id: string;
   organization_id: string;

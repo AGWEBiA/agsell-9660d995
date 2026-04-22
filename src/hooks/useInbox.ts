@@ -266,7 +266,6 @@ export function useInbox() {
           await supabase.from('messages').update({ delivery_status: 'failed' }).eq('id', data.id);
         }
       }
-      }
 
       return data;
     },

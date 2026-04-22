@@ -231,6 +231,9 @@ export function useWhatsAppInstances() {
       queryClient.invalidateQueries({ queryKey: ['whatsapp_instances'] });
       queryClient.invalidateQueries({ queryKey: ['organization_integrations'] });
       toast.success('Instância atualizada!');
+      if (currentOrganization?.id) {
+        logWhatsAppAudit(currentOrganization.id, 'update', { action: 'config_update' });
+      }
     },
     onError: (error) => {
       toast.error('Erro ao atualizar instância: ' + error.message);

@@ -632,6 +632,7 @@ export default function Vendas() {
           </div>
         </div>
       </footer>
+      <WhatsAppFloatingButton />
     </div>
   );
 }

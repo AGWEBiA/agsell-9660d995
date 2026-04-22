@@ -1,7 +1,7 @@
 import { MessageCircle } from 'lucide-react';
 
 const WHATSAPP_NUMBER = '5522992545278';
-const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Olá! Gostaria de saber mais sobre o AG Sell.')}`;
+const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Olá, meu nome é [seu nome]. Estou na página da AG SELL e preciso de mais informações.')}`;
 
 export function WhatsAppFloatingButton() {
   return (

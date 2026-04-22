@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 const getConversationMetadata = (conversation: any): Record<string, any> => {
   if (!conversation?.metadata || typeof conversation.metadata !== 'object' || Array.isArray(conversation.metadata)) {
@@ -17,7 +17,10 @@ export function useInbox() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const queryClient = useQueryClient();
-  const conversationsQueryKey = ['conversations', currentOrganization?.id ?? null, user?.id ?? null] as const;
+  const conversationsQueryKey = useMemo(
+    () => ['conversations', currentOrganization?.id ?? null, user?.id ?? null] as const,
+    [currentOrganization?.id, user?.id],
+  );
 
   const conversationsQuery = useQuery({
     queryKey: conversationsQueryKey,

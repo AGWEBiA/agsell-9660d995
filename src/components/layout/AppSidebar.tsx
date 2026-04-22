@@ -49,7 +49,7 @@ interface MenuSection {
 // Quick access favorites (always visible at top)
 const favoriteItems: MenuItem[] = [
   { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-  { label: 'Inbox', icon: Inbox, path: '/inbox' },
+  { label: 'SAC', icon: Inbox, path: '/inbox' },
   { label: 'Contatos', icon: Users, path: '/contacts' },
   { label: 'Pipeline', icon: Kanban, path: '/pipeline' },
 ];

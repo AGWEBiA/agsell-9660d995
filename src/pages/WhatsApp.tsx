@@ -313,6 +313,7 @@ export default function WhatsApp() {
     deleteInstance, toggleInstance, setDefaultInstance,
   } = useWhatsAppInstances();
   const { groups } = useWhatsAppGroups();
+  const { organizations, currentOrganization, setCurrentOrganization } = useOrganization();
   const [configInstance, setConfigInstance] = useState<WhatsAppInstance | null>(null);
   const [activeTab, setActiveTab] = useState('connection');
   const [filterDeviceInstance, setFilterDeviceInstance] = useState<string | null>(null);

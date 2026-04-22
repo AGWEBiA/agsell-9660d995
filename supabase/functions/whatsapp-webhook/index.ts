@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
           // Find the organization that owns this phone number
           const { data: integration } = await supabase
             .from("organization_integrations")
-            .select("organization_id, config")
+            .select("id, name, organization_id, config")
             .eq("integration_type", "whatsapp_business")
             .eq("is_active", true)
             .filter("config->>phone_number_id", "eq", phoneNumberId)
@@ -80,6 +80,8 @@ Deno.serve(async (req) => {
               identifierField: "whatsapp_phone",
               messageText,
               externalMessageId: messageId,
+              sourceInstanceId: integration.id,
+              sourceInstanceName: integration.name || String((integration.config as Record<string, unknown>)?.phone_number_id || "WhatsApp Business"),
             });
           }
         }
@@ -371,7 +373,7 @@ Deno.serve(async (req) => {
 
       const { data: activeIntegrations } = await supabase
         .from("organization_integrations")
-        .select("organization_id, config")
+        .select("id, name, organization_id, config")
         .eq("integration_type", "evolution_api")
         .eq("is_active", true);
 
@@ -600,6 +602,8 @@ interface RouteToInboxParams {
   mediaMimeType?: string | null;
   messageType?: string;
   fileName?: string | null;
+  sourceInstanceId?: string;
+  sourceInstanceName?: string;
 }
 
 async function routeToInbox(
@@ -607,7 +611,7 @@ async function routeToInbox(
   params: RouteToInboxParams
 ) {
   try {
-    const { organizationId, userId, channel, senderIdentifier, messageText } = params;
+    const { organizationId, userId, channel, senderIdentifier, messageText, sourceInstanceId, sourceInstanceName } = params;
 
     // Try to find existing contact by normalized phone/whatsapp number
     let contactId: string | null = null;
@@ -787,6 +791,10 @@ async function routeToInbox(
       conversationId = existingConv.id;
 
       const existingMetadata = (existingConv.metadata as Record<string, unknown> | null) || {};
+      const sourceInstanceMetadata = {
+        ...(sourceInstanceId ? { whatsapp_instance_id: sourceInstanceId } : {}),
+        ...(sourceInstanceName ? { whatsapp_instance_name: sourceInstanceName } : {}),
+      };
 
       await supabase
         .from("conversations")
@@ -794,10 +802,19 @@ async function routeToInbox(
           last_message_at: new Date().toISOString(),
           status: "open",
           contact_id: contactId || existingConv.contact_id,
-          metadata: { ...existingMetadata, [metadataKey]: normalizedSender || senderIdentifier },
+          metadata: {
+            ...existingMetadata,
+            ...sourceInstanceMetadata,
+            [metadataKey]: normalizedSender || senderIdentifier,
+          },
         })
         .eq("id", conversationId);
     } else {
+      const sourceInstanceMetadata = {
+        ...(sourceInstanceId ? { whatsapp_instance_id: sourceInstanceId } : {}),
+        ...(sourceInstanceName ? { whatsapp_instance_name: sourceInstanceName } : {}),
+      };
+
       const { data: newConv, error: convError } = await supabase
         .from("conversations")
         .insert({
@@ -807,7 +824,7 @@ async function routeToInbox(
           status: "open",
           contact_id: contactId,
           last_message_at: new Date().toISOString(),
-          metadata: { [metadataKey]: normalizedSender || senderIdentifier },
+          metadata: { ...sourceInstanceMetadata, [metadataKey]: normalizedSender || senderIdentifier },
         })
         .select("id")
         .single();

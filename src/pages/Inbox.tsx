@@ -9,11 +9,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Separator } from '@/components/ui/separator';
 import {
   Search, Send, Paperclip, Smile, Phone, Settings,
-  MessageSquare, Mail, CheckCheck, Plus, Bot, Image as ImageIcon,
+  MessageSquare, Mail, CheckCheck, Check, Plus, Bot, Image as ImageIcon,
   FileAudio, File as FileIcon, X, Loader2,
   Hash, ChevronLeft, Inbox as InboxIcon, User, Ticket,
   BarChart3, Brain, Calendar, Users, CheckCircle2,
-  ArrowDownToLine, Instagram,
+  ArrowDownToLine, Instagram, AlertCircle, Clock,
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useInbox } from '@/hooks/useInbox';

@@ -45,12 +45,18 @@ Deno.serve(async (req) => {
     }
 
     if (body.organization_id) {
-      const { data: isMember } = await supabase.rpc("is_org_member", {
-        _org_id: body.organization_id,
-        _user_id: user.id,
-      });
+      const [{ data: isMember }, { data: isAdmin }] = await Promise.all([
+        supabase.rpc("is_org_member", {
+          _org_id: body.organization_id,
+          _user_id: user.id,
+        }),
+        supabase.rpc("has_role", {
+          _user_id: user.id,
+          _role: "admin",
+        }),
+      ]);
 
-      if (!isMember) {
+      if (!isMember && !isAdmin) {
         return jsonResponse({ success: false, error: "Sem permissão nesta organização" }, 403);
       }
     }

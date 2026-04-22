@@ -706,7 +706,14 @@ export default function Inbox() {
                         )}
                         <div className={`flex items-center justify-end gap-1 mt-0.5 text-[10px] ${isUser ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
                           <span>{new Date(message.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-                          {isUser && <CheckCheck className="h-2.5 w-2.5" />}
+                          {isUser && (() => {
+                            const status = message.delivery_status || 'sent';
+                            if (status === 'failed') return <AlertCircle className="h-2.5 w-2.5 text-destructive" />;
+                            if (status === 'read') return <CheckCheck className="h-2.5 w-2.5 text-blue-400" />;
+                            if (status === 'delivered') return <CheckCheck className="h-2.5 w-2.5" />;
+                            if (status === 'sent') return <Check className="h-2.5 w-2.5" />;
+                            return <Clock className="h-2.5 w-2.5 opacity-50" />;
+                          })()}
                         </div>
                       </div>
                     </div>

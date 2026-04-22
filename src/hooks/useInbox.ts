@@ -36,7 +36,8 @@ export function useInbox() {
           ),
           messages (
             id, content, sender_type, is_read, created_at,
-            message_type, media_url, media_mime_type, file_name, sender_id
+            message_type, media_url, media_mime_type, file_name, sender_id,
+            delivery_status, external_id
           )
         `)
         .order('last_message_at', { ascending: false })
@@ -249,11 +250,20 @@ export function useInbox() {
 
           if (whatsappError) {
             toast.error('Mensagem salva, mas falhou ao enviar via WhatsApp');
+            await supabase.from('messages').update({ delivery_status: 'failed' }).eq('id', data.id);
           } else if (responseData?.error) {
             toast.error(`Erro WhatsApp: ${responseData.error}`);
+            await supabase.from('messages').update({ delivery_status: 'failed' }).eq('id', data.id);
+          } else {
+            // Save external_id from WhatsApp response for delivery tracking
+            const externalId = responseData?.key?.id || responseData?.messageId || responseData?.id;
+            if (externalId) {
+              await supabase.from('messages').update({ external_id: externalId, delivery_status: 'sent' }).eq('id', data.id);
+            }
           }
         } catch {
           toast.error('Falha ao enviar mensagem via WhatsApp');
+          await supabase.from('messages').update({ delivery_status: 'failed' }).eq('id', data.id);
         }
       }
 

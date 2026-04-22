@@ -88,6 +88,35 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Handle Evolution API message status updates (delivered/read)
+    if (body.event === "messages.update" || body.event === "MESSAGES_UPDATE") {
+      const updates = Array.isArray(body.data) ? body.data : [body.data];
+      for (const update of updates) {
+        const msgId = update?.key?.id || update?.id;
+        const status = update?.status;
+        if (!msgId || !status) continue;
+
+        // Map Evolution API status to our delivery_status
+        let deliveryStatus: string | null = null;
+        if (status === "DELIVERY_ACK" || status === "delivered" || status === 3) {
+          deliveryStatus = "delivered";
+        } else if (status === "READ" || status === "read" || status === 4) {
+          deliveryStatus = "read";
+        } else if (status === "PLAYED" || status === 5) {
+          deliveryStatus = "read";
+        } else if (status === "ERROR" || status === "failed") {
+          deliveryStatus = "failed";
+        }
+
+        if (deliveryStatus) {
+          await supabase
+            .from("messages")
+            .update({ delivery_status: deliveryStatus })
+            .eq("external_id", msgId);
+        }
+      }
+    }
+
     // Handle Evolution API connection status events
     if (body.event === "connection.update" || body.event === "CONNECTION_UPDATE") {
       const data = body.data || body;
@@ -903,6 +932,8 @@ async function routeToInbox(
       is_read: params.isFromMe ? true : false,
       ...(params.isFromMe && userId ? { sender_id: userId } : {}),
     };
+    if (params.externalMessageId) messageInsert.external_id = params.externalMessageId;
+    if (params.isFromMe) messageInsert.delivery_status = "sent";
     if (params.mediaUrl) messageInsert.media_url = params.mediaUrl;
     if (params.mediaMimeType) messageInsert.media_mime_type = params.mediaMimeType;
     if (params.messageType && params.messageType !== "text") messageInsert.message_type = params.messageType;

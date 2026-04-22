@@ -78,6 +78,7 @@ const extractPhoneFromConfig = (config: Record<string, unknown>): string | undef
 export function useWhatsAppInstances() {
   const { currentOrganization } = useOrganization();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   // Fetch all WhatsApp instances for the organization
   const instancesQuery = useQuery({

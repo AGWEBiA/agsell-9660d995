@@ -581,7 +581,7 @@ export default function Inbox() {
                   const isUser = message.sender_type === 'user';
                   return (
                     <div key={message.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[70%] rounded-xl px-3 py-2 ${isUser ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                      <div className={`max-w-[70%] rounded-xl px-3 py-2 ${isUser ? 'bg-emerald-900/60 text-foreground' : 'bg-muted'}`}>
                         {isUser && message.sender_name && (
                           <p className="text-[10px] font-semibold mb-0.5 opacity-75">{message.sender_name}</p>
                         )}

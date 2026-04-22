@@ -165,6 +165,56 @@ function InstanceConfigDialog({ instance, open, onOpenChange }: {
               </div>
             </>
           )}
+
+          {/* Disconnect */}
+          <div className="rounded-lg border border-destructive/30 p-4 space-y-3">
+            <div className="space-y-1">
+              <Label className="flex items-center gap-2 text-destructive">
+                <Trash2 className="h-4 w-4" /> Desconectar instância
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Remove a instância do WhatsApp e desconecta do Evolution API. Esta ação não pode ser desfeita.
+              </p>
+            </div>
+            {!confirmDisconnect ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                onClick={() => setConfirmDisconnect(true)}
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                Desconectar
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={deleteInstance.isPending}
+                  onClick={() => {
+                    if (!instance) return;
+                    deleteInstance.mutate(instance.id, {
+                      onSuccess: () => {
+                        setConfirmDisconnect(false);
+                        onOpenChange(false);
+                      },
+                    });
+                  }}
+                >
+                  {deleteInstance.isPending ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                  ) : (
+                    <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                  )}
+                  Confirmar desconexão
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setConfirmDisconnect(false)}>
+                  Cancelar
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>

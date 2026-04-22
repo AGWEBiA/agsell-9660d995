@@ -340,6 +340,10 @@ export function useWhatsAppInstances() {
       queryClient.invalidateQueries({ queryKey: ['whatsapp_instances'] });
       queryClient.invalidateQueries({ queryKey: ['organization_integrations'] });
       toast.success(data.is_active ? 'Instância ativada!' : 'Instância desativada!');
+      if (currentOrganization?.id) {
+        logWhatsAppAudit(currentOrganization.id, data.is_active ? 'activate' : 'deactivate', { instance_name: data.name });
+      }
+    },
     },
     onError: (error) => {
       toast.error('Erro ao alterar instância: ' + error.message);

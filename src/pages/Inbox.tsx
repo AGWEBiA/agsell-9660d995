@@ -24,6 +24,7 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 import { SendIAButton } from '@/components/inbox/SendIAButton';
 import { AudioTranscription } from '@/components/inbox/AudioTranscription';
 import { ContactInfoPanel } from '@/components/inbox/ContactInfoPanel';
+import { SacWhatsAppInstanceSelector } from '@/components/inbox/SacWhatsAppInstanceSelector';
 import { supabase } from '@/integrations/supabase/client';
 import { useSupportTickets } from '@/hooks/useSupportTickets';
 import { useWhatsAppInstances } from '@/hooks/useWhatsAppInstances';
@@ -59,13 +60,21 @@ type QueueTab = 'fila' | 'meus' | 'todos';
 type ChannelFilter = 'all' | 'whatsapp' | 'instagram' | 'email' | 'voip' | 'support';
 type NcStep = 'search' | 'new' | 'device';
 
+const getConversationMetadata = (conversation: any): Record<string, any> => {
+  if (!conversation?.metadata || typeof conversation.metadata !== 'object' || Array.isArray(conversation.metadata)) {
+    return {};
+  }
+
+  return conversation.metadata as Record<string, any>;
+};
+
 export default function Inbox() {
   const { conversations, isLoading, createConversation, sendMessage, markAsRead, updateConversation } = useInbox();
   const contactsQuery = useContacts();
   const contacts = contactsQuery.data ?? [];
   const { assignConversation } = useAssignmentRules();
   const { createTicket: createSupportTicket } = useSupportTickets();
-  const { instances } = useWhatsAppInstances();
+  const { instances, activeInstances } = useWhatsAppInstances();
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const navigate = useNavigate();
@@ -80,7 +89,6 @@ export default function Inbox() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [queueTab, setQueueTab] = useState<QueueTab>('fila');
   const [channelFilter, setChannelFilter] = useState<ChannelFilter>('all');
-  // Nova Conversa dialog state
   const [novaConversaOpen, setNovaConversaOpen] = useState(false);
   const [ncStep, setNcStep] = useState<NcStep>('search');
   const [ncSearch, setNcSearch] = useState('');
@@ -91,8 +99,12 @@ export default function Inbox() {
   const [ncNewEmail, setNcNewEmail] = useState('');
   const [ncNewPhone, setNcNewPhone] = useState('');
   const [isCreatingContact, setIsCreatingContact] = useState(false);
+  const [selectedWhatsappInstanceId, setSelectedWhatsappInstanceId] = useState('auto');
 
   const selectedConversation = conversations.find(c => c.id === selectedId);
+  const sacInstances = (activeInstances || []).filter((instance: any) => instance.config?.use_for_sac === true);
+  const availableSacInstances = sacInstances.length > 0 ? sacInstances : (activeInstances || []);
+  const selectedConversationMetadata = getConversationMetadata(selectedConversation);
 
   useEffect(() => {
     if (selectedConversation) markAsRead.mutate(selectedConversation.id);
@@ -102,23 +114,30 @@ export default function Inbox() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [selectedConversation?.messages]);
 
-  // Helpers
+  useEffect(() => {
+    if (!selectedConversation || selectedConversation.channel !== 'whatsapp') {
+      setSelectedWhatsappInstanceId('auto');
+      return;
+    }
+
+    const manualId = typeof selectedConversationMetadata.whatsapp_manual_instance_id === 'string'
+      ? selectedConversationMetadata.whatsapp_manual_instance_id
+      : null;
+
+    setSelectedWhatsappInstanceId(manualId || 'auto');
+  }, [selectedConversation?.id, selectedConversation?.channel, selectedConversation?.metadata]);
+
   const getInitials = (f?: string, l?: string | null) => `${f?.[0] || ''}${l?.[0] || ''}`.toUpperCase() || '??';
   const getUnreadCount = (c: any) => c.messages?.filter((m: any) => !m.is_read && m.sender_type === 'contact').length || 0;
 
-  // Queue logic:
-  // Fila = unassigned (waiting to be pulled)
-  // Meus = assigned to current user (active conversations)
-  // Todos = resolved/closed (finished)
   const queueFiltered = conversations.filter(c => {
     if (queueTab === 'fila') return !c.assigned_to && c.status !== 'resolved' && c.status !== 'closed';
     if (queueTab === 'meus') return c.assigned_to === user?.id && c.status !== 'resolved' && c.status !== 'closed';
-    if (queueTab === 'todos') return true; // ALL conversations
+    if (queueTab === 'todos') return true;
     return true;
   });
 
   const filteredConversations = queueFiltered.filter(c => {
-    // Channel filter
     if (channelFilter !== 'all') {
       if (channelFilter === 'support') {
         if (c.channel !== 'support' && c.category !== 'support') return false;
@@ -150,7 +169,6 @@ export default function Inbox() {
     todos: conversations.length,
   };
 
-  // Puxar atendimento = assign to me
   const handlePuxar = (convId: string) => {
     if (!user?.id) return;
     updateConversation.mutate({ id: convId, assigned_to: user.id, status: 'open' });
@@ -159,7 +177,6 @@ export default function Inbox() {
     toast.success('Atendimento puxado para você!');
   };
 
-  // Finalizar atendimento = mark as resolved
   const handleFinalizar = () => {
     if (!selectedConversation) return;
     updateConversation.mutate({
@@ -171,7 +188,6 @@ export default function Inbox() {
     toast.success('Atendimento finalizado!');
   };
 
-  // File handling
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -191,6 +207,25 @@ export default function Inbox() {
     if (error) { toast.error('Erro ao fazer upload: ' + error.message); return null; }
     const { data: urlData } = supabase.storage.from('inbox-attachments').getPublicUrl(path);
     return urlData.publicUrl;
+  };
+
+  const handleWhatsappInstanceChange = (instanceId: string) => {
+    if (!selectedConversation || selectedConversation.channel !== 'whatsapp') return;
+
+    setSelectedWhatsappInstanceId(instanceId);
+    const currentMetadata = getConversationMetadata(selectedConversation);
+    const nextMetadata = { ...currentMetadata };
+
+    if (instanceId === 'auto') {
+      delete nextMetadata.whatsapp_manual_instance_id;
+    } else {
+      nextMetadata.whatsapp_manual_instance_id = instanceId;
+    }
+
+    updateConversation.mutate({
+      id: selectedConversation.id,
+      metadata: nextMetadata,
+    });
   };
 
   const handleSendMessage = async () => {
@@ -215,6 +250,7 @@ export default function Inbox() {
       media_url: mediaUrl,
       media_mime_type: mediaMimeType,
       file_name: fileName,
+      instance_id: selectedWhatsappInstanceId !== 'auto' ? selectedWhatsappInstanceId : undefined,
     } as any);
     setMessageInput('');
     setPendingFile(null);
@@ -226,7 +262,6 @@ export default function Inbox() {
     setEmojiOpen(false);
   };
 
-  // Nova Conversa: search contacts
   const ncFilteredContacts = ncSearch.trim()
     ? contacts.filter(c => {
         const s = ncSearch.toLowerCase();
@@ -240,19 +275,26 @@ export default function Inbox() {
 
   const handleNovaConversaStart = () => {
     if (!ncSelectedContact) { toast.error('Selecione um contato'); return; }
-    // If whatsapp channel with devices, go to device step
-    if (ncChannel === 'whatsapp' && instances && instances.length > 0 && !ncDeviceId) {
+    if (ncChannel === 'whatsapp' && availableSacInstances.length > 0 && !ncDeviceId) {
       setNcStep('device');
       return;
     }
-    createConversation.mutate({ contact_id: ncSelectedContact, channel: ncChannel });
+    createConversation.mutate({
+      contact_id: ncSelectedContact,
+      channel: ncChannel,
+      metadata: ncChannel === 'whatsapp' && ncDeviceId ? { whatsapp_manual_instance_id: ncDeviceId } : undefined,
+    });
     resetNovaConversa();
   };
 
   const handleDeviceSelected = (deviceId: string) => {
     setNcDeviceId(deviceId);
     if (ncSelectedContact) {
-      createConversation.mutate({ contact_id: ncSelectedContact, channel: ncChannel });
+      createConversation.mutate({
+        contact_id: ncSelectedContact,
+        channel: ncChannel,
+        metadata: { whatsapp_manual_instance_id: deviceId },
+      });
       resetNovaConversa();
     }
   };
@@ -277,10 +319,9 @@ export default function Inbox() {
       const { data: contact, error } = await supabase.from('contacts').insert(contactData).select().single();
       if (error) throw error;
       setNcSelectedContact(contact.id);
-      // If whatsapp with devices, go to device step
-      if (ncChannel === 'whatsapp' && instances && instances.length > 0) {
+      if (ncChannel === 'whatsapp' && availableSacInstances.length > 0) {
         setNcStep('device');
-        toast.success('Contato criado! Selecione o dispositivo.');
+        toast.success('Contato criado! Selecione a instância.');
       } else {
         createConversation.mutate({ contact_id: contact.id, channel: ncChannel });
         resetNovaConversa();
@@ -305,7 +346,6 @@ export default function Inbox() {
     setNcNewPhone('');
   };
 
-  // Loading
   if (isLoading) {
     return (
       <div className="h-[calc(100vh-7rem)] animate-fade-in flex gap-0">
@@ -317,6 +357,7 @@ export default function Inbox() {
       </div>
     );
   }
+
 
   return (
     <div className="h-[calc(100vh-7rem)] animate-fade-in flex flex-col">

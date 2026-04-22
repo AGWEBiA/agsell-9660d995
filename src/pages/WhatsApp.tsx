@@ -375,7 +375,7 @@ export default function WhatsApp() {
       {instances.length > 0 && (
         <Card className="overflow-hidden">
           <CardContent className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <Smartphone className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">
@@ -385,12 +385,38 @@ export default function WhatsApp() {
                   {activeInstances.length} conectado(s)
                 </Badge>
               </div>
-              {sacInstances.length > 0 && (
-                <Badge variant="secondary" className="text-[10px] gap-1">
-                  <Headphones className="h-3 w-3" />
-                  {sacInstances.length} no SAC
-                </Badge>
-              )}
+              <div className="flex items-center gap-2">
+                {organizations.length > 1 && (
+                  <Select
+                    value={currentOrganization?.id || ''}
+                    onValueChange={(orgId) => {
+                      const org = organizations.find(o => o.id === orgId);
+                      if (org) {
+                        setCurrentOrganization(org);
+                        setSelectedInstanceId(null);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="h-7 text-xs w-auto min-w-[160px] gap-1.5">
+                      <Building2 className="h-3 w-3 text-muted-foreground shrink-0" />
+                      <SelectValue placeholder="Organização" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {organizations.map(org => (
+                        <SelectItem key={org.id} value={org.id} className="text-xs">
+                          {org.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                {sacInstances.length > 0 && (
+                  <Badge variant="secondary" className="text-[10px] gap-1">
+                    <Headphones className="h-3 w-3" />
+                    {sacInstances.length} no SAC
+                  </Badge>
+                )}
+              </div>
             </div>
 
             <InstanceSelectorBar

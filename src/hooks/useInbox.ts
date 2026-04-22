@@ -36,7 +36,8 @@ export function useInbox() {
           ),
           messages (
             id, content, sender_type, is_read, created_at,
-            message_type, media_url, media_mime_type, file_name, sender_id
+            message_type, media_url, media_mime_type, file_name, sender_id,
+            delivery_status, external_id
           )
         `)
         .order('last_message_at', { ascending: false })

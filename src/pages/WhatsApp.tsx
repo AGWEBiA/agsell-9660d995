@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   MessageSquare, Smartphone, CheckCircle2, Users, Send, Settings, Star,
-  Server, Trash2, Power, Loader2, Copy, Gauge, Phone, Headphones, Globe, Monitor,
+  Server, Trash2, Power, Loader2, Copy, Gauge, Phone, Headphones, Globe, Monitor, Building2,
 } from 'lucide-react';
 import { WhatsAppProviderSetup } from '@/components/integrations/WhatsAppProviderSetup';
 import { WhatsAppGroupsManager } from '@/components/whatsapp/WhatsAppGroupsManager';
@@ -14,11 +14,13 @@ import { WhatsAppCampaignsManager } from '@/components/whatsapp/WhatsAppCampaign
 import { WhatsAppGroupMessages } from '@/components/whatsapp/WhatsAppGroupMessages';
 import { WhatsAppAuditLog } from '@/components/whatsapp/WhatsAppAuditLog';
 import { useWhatsAppInstances, WhatsAppInstance } from '@/hooks/useWhatsAppInstances';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   MessageSquare, Smartphone, CheckCircle2, Users, Send, Settings, Star,
-  Server, Trash2, Power, Loader2, Copy, Gauge, Phone, Headphones, Globe, Monitor,
+  Server, Trash2, Power, Loader2, Copy, Gauge, Phone, Headphones, Globe, Monitor, Building2,
 } from 'lucide-react';
 import { WhatsAppProviderSetup } from '@/components/integrations/WhatsAppProviderSetup';
 import { WhatsAppGroupsManager } from '@/components/whatsapp/WhatsAppGroupsManager';
@@ -14,11 +14,13 @@ import { WhatsAppCampaignsManager } from '@/components/whatsapp/WhatsAppCampaign
 import { WhatsAppGroupMessages } from '@/components/whatsapp/WhatsAppGroupMessages';
 import { WhatsAppAuditLog } from '@/components/whatsapp/WhatsAppAuditLog';
 import { useWhatsAppInstances, WhatsAppInstance } from '@/hooks/useWhatsAppInstances';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
@@ -311,6 +313,7 @@ export default function WhatsApp() {
     deleteInstance, toggleInstance, setDefaultInstance,
   } = useWhatsAppInstances();
   const { groups } = useWhatsAppGroups();
+  const { organizations, currentOrganization, setCurrentOrganization } = useOrganization();
   const [configInstance, setConfigInstance] = useState<WhatsAppInstance | null>(null);
   const [activeTab, setActiveTab] = useState('connection');
   const [filterDeviceInstance, setFilterDeviceInstance] = useState<string | null>(null);
@@ -372,7 +375,7 @@ export default function WhatsApp() {
       {instances.length > 0 && (
         <Card className="overflow-hidden">
           <CardContent className="p-4 space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <Smartphone className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-medium">
@@ -382,12 +385,38 @@ export default function WhatsApp() {
                   {activeInstances.length} conectado(s)
                 </Badge>
               </div>
-              {sacInstances.length > 0 && (
-                <Badge variant="secondary" className="text-[10px] gap-1">
-                  <Headphones className="h-3 w-3" />
-                  {sacInstances.length} no SAC
-                </Badge>
-              )}
+              <div className="flex items-center gap-2">
+                {organizations.length > 1 && (
+                  <Select
+                    value={currentOrganization?.id || ''}
+                    onValueChange={(orgId) => {
+                      const org = organizations.find(o => o.id === orgId);
+                      if (org) {
+                        setCurrentOrganization(org);
+                        setSelectedInstanceId(null);
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="h-7 text-xs w-auto min-w-[160px] gap-1.5">
+                      <Building2 className="h-3 w-3 text-muted-foreground shrink-0" />
+                      <SelectValue placeholder="Organização" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {organizations.map(org => (
+                        <SelectItem key={org.id} value={org.id} className="text-xs">
+                          {org.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                {sacInstances.length > 0 && (
+                  <Badge variant="secondary" className="text-[10px] gap-1">
+                    <Headphones className="h-3 w-3" />
+                    {sacInstances.length} no SAC
+                  </Badge>
+                )}
+              </div>
             </div>
 
             <InstanceSelectorBar

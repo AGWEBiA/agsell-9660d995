@@ -888,11 +888,13 @@ async function routeToInbox(
     }
 
     // Insert the message
+    const senderType = params.isFromMe ? "user" : "contact";
     const messageInsert: Record<string, unknown> = {
       conversation_id: conversationId,
       content: messageText,
-      sender_type: "contact",
-      is_read: false,
+      sender_type: senderType,
+      is_read: params.isFromMe ? true : false,
+      ...(params.isFromMe && userId ? { sender_id: userId } : {}),
     };
     if (params.mediaUrl) messageInsert.media_url = params.mediaUrl;
     if (params.mediaMimeType) messageInsert.media_mime_type = params.mediaMimeType;

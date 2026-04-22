@@ -654,6 +654,7 @@ interface RouteToInboxParams {
   fileName?: string | null;
   sourceInstanceId?: string;
   sourceInstanceName?: string;
+  isFromMe?: boolean;
 }
 
 async function routeToInbox(

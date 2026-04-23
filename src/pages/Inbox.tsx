@@ -148,6 +148,9 @@ export default function Inbox() {
   const [replyingTo, setReplyingTo] = useState<{ id: string; content: string; sender_type: string; external_id?: string | null } | null>(null);
   const [quickReplyOpen, setQuickReplyOpen] = useState(false);
   const [shortcutSuggestions, setShortcutSuggestions] = useState<typeof quickReplies>([]);
+  const [selectedSuggestionIdx, setSelectedSuggestionIdx] = useState(0);
+  const [lastSentMessageId, setLastSentMessageId] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSyncConversations = async (hours: number = 48) => {
     if (!currentOrganization?.id || activeInstances.length === 0) {

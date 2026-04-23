@@ -239,6 +239,7 @@ const App = () => (
                     <Route path="support" element={<SupportTickets />} />
                     <Route path="support-center" element={<SupportCenter />} />
                     <Route path="support-portal-settings" element={<FeatureRequiredPage feature="customer_support_center" featureLabel="Portal de Suporte"><SupportPortalSettingsPage /></FeatureRequiredPage>} />
+                    <Route path="notifications" element={<Notifications />} />
                   </Route>
                   
                   {/* Plans accessible even with expired subscription */}

@@ -825,7 +825,7 @@ export default function Inbox() {
                             <p className="text-[10px] font-semibold opacity-70">
                               {message.quoted_sender_type === 'user' ? 'Você' : selectedConversation.contacts?.first_name || 'Contato'}
                             </p>
-                            <p className="text-xs text-muted-foreground truncate">{message.quoted_content}</p>
+                            <p className="text-xs text-muted-foreground line-clamp-3">{message.quoted_content}</p>
                           </div>
                         )}
                         {isUser && message.sender_name && (
@@ -913,7 +913,7 @@ export default function Inbox() {
                     <p className="text-[10px] font-semibold text-primary">
                       {replyingTo.sender_type === 'user' ? 'Você' : selectedConversation?.contacts?.first_name || 'Contato'}
                     </p>
-                    <p className="text-xs text-muted-foreground truncate">{replyingTo.content}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{replyingTo.content}</p>
                   </div>
                   <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => setReplyingTo(null)}>
                     <X className="h-3 w-3" />

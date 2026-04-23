@@ -914,8 +914,8 @@ export default function Inbox() {
             </div>
 
             {/* Messages */}
-            <ScrollArea className="flex-1 p-4">
-              <div className="space-y-2.5 max-w-3xl mx-auto">
+            <ScrollArea className="flex-1 p-4 [&_*]:select-text">
+              <div className="space-y-2.5 max-w-3xl mx-auto cursor-text">
                 {selectedConversation.messages?.map((message: any) => {
                   const msgType = message.message_type || 'text';
                   const isUser = message.sender_type === 'user';

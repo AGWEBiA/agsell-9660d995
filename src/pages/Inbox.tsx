@@ -922,6 +922,25 @@ export default function Inbox() {
               </div>
             )}
 
+            {/* Shortcut suggestions */}
+            {shortcutSuggestions.length > 0 && (
+              <div className="px-4 pb-1 shrink-0">
+                <div className="max-w-3xl mx-auto bg-popover border rounded-lg shadow-lg p-1 space-y-0.5">
+                  {shortcutSuggestions.map(r => (
+                    <button
+                      key={r.id}
+                      className="w-full text-left px-3 py-1.5 rounded hover:bg-accent text-sm flex items-center gap-2"
+                      onClick={() => applyQuickReply(r.content)}
+                    >
+                      <Zap className="h-3 w-3 text-primary shrink-0" />
+                      <span className="font-medium truncate">{r.title}</span>
+                      {r.shortcut && <span className="text-[10px] text-muted-foreground ml-auto">/{r.shortcut}</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Message Input */}
             <div className="p-2.5 border-t shrink-0">
               <div className="flex items-end gap-1 max-w-3xl mx-auto">
@@ -931,22 +950,59 @@ export default function Inbox() {
                 </Button>
                 <AudioTranscription onTranscription={(text) => setMessageInput(prev => prev + text)} />
                 <textarea
-                  placeholder="Digite uma mensagem..."
+                  placeholder="Digite /atalho ou uma mensagem..."
                   className="flex-1 min-h-[36px] max-h-[120px] py-2 text-sm rounded-2xl bg-muted/50 border-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring px-4 resize-none overflow-y-auto"
                   value={messageInput}
                   onChange={(e) => {
-                    setMessageInput(e.target.value);
+                    handleInputChange(e.target.value);
                     e.target.style.height = 'auto';
                     e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
-                      handleSendMessage();
+                      if (shortcutSuggestions.length > 0) {
+                        applyQuickReply(shortcutSuggestions[0].content);
+                      } else {
+                        handleSendMessage();
+                      }
                     }
                   }}
                   rows={1}
                 />
+                {/* Quick replies button */}
+                <Popover open={quickReplyOpen} onOpenChange={setQuickReplyOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" title="Respostas rápidas">
+                      <Zap className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent side="top" align="end" className="w-72 p-2 max-h-64 overflow-y-auto">
+                    <p className="text-xs font-semibold text-muted-foreground mb-2 px-1">Respostas Rápidas</p>
+                    {quickReplies.length === 0 ? (
+                      <p className="text-xs text-muted-foreground text-center py-4">
+                        Nenhuma resposta rápida cadastrada.<br/>
+                        <Link to="/inbox-settings" className="text-primary underline">Criar templates</Link>
+                      </p>
+                    ) : (
+                      <div className="space-y-0.5">
+                        {quickReplies.map(r => (
+                          <button
+                            key={r.id}
+                            className="w-full text-left px-2 py-1.5 rounded hover:bg-accent text-sm"
+                            onClick={() => applyQuickReply(r.content)}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium truncate">{r.title}</span>
+                              {r.category && <Badge variant="secondary" className="text-[9px] h-4 shrink-0">{r.category}</Badge>}
+                            </div>
+                            <p className="text-[10px] text-muted-foreground truncate mt-0.5">{r.content.slice(0, 80)}</p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
                 <Popover open={emojiOpen} onOpenChange={setEmojiOpen}>
                   <PopoverTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0"><Smile className="h-4 w-4" /></Button>

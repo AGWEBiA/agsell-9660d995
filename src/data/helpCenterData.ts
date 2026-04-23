@@ -2884,7 +2884,8 @@ Use estas métricas para ajustar o **system prompt** e a **base de conhecimento*
 
 💡 **Dica**: Comece com **temperatura 0.3** e ajuste para cima se as respostas ficarem muito repetitivas. Para suporte, prefira respostas curtas e diretas; para vendas, permita mais criatividade.`,
   },
-
+  {
+    id: 'analytics',
     categoryId: 'intelligence',
     title: 'Analytics e relatórios',
     icon: BarChart3,

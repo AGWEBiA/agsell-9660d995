@@ -16,7 +16,7 @@ import {
   Hash, ChevronLeft, Inbox as InboxIcon, User, Ticket,
   BarChart3, Brain, Calendar, Users, CheckCircle2,
   ArrowDownToLine, Instagram, AlertCircle, Clock, Bug, Filter, RefreshCw,
-  Reply, Zap,
+  Reply, Zap, Copy, Download,
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useInbox } from '@/hooks/useInbox';
@@ -151,6 +151,77 @@ export default function Inbox() {
   const [selectedSuggestionIdx, setSelectedSuggestionIdx] = useState(0);
   const [lastSentMessageId, setLastSentMessageId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const formatMessageForCopy = (message: any, contactName: string) => {
+    const sender = message.sender_type === 'user' ? (message.sender_name || 'Você') : contactName;
+    const date = new Date(message.created_at).toLocaleString('pt-BR');
+    let text = '';
+    if (message.quoted_content) {
+      const quotedSender = message.quoted_sender_type === 'user' ? 'Você' : contactName;
+      text += `> "${message.quoted_content}" — ${quotedSender}\n\n`;
+    }
+    text += message.content || '';
+    text += `\n— ${sender}, ${date}`;
+    return text;
+  };
+
+  const handleCopyMessage = (message: any, contactName: string) => {
+    const text = formatMessageForCopy(message, contactName);
+    navigator.clipboard.writeText(text).then(() => toast.success('Mensagem copiada!')).catch(() => toast.error('Erro ao copiar'));
+  };
+
+  const handleExportPDF = async () => {
+    if (!selectedConversation) return;
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF();
+    const contactName = `${selectedConversation.contacts?.first_name || ''} ${selectedConversation.contacts?.last_name || ''}`.trim() || 'Desconhecido';
+    const protocol = (selectedConversation as any).protocol_number || selectedConversation.id.slice(0, 8);
+
+    doc.setFontSize(16);
+    doc.text(`Histórico de Conversa — ${contactName}`, 14, 20);
+    doc.setFontSize(9);
+    doc.text(`Protocolo: ${protocol} | Canal: ${selectedConversation.channel} | Exportado: ${new Date().toLocaleString('pt-BR')}`, 14, 28);
+    doc.line(14, 31, 196, 31);
+
+    let y = 38;
+    const pageHeight = 280;
+    const messages = selectedConversation.messages || [];
+
+    for (const msg of messages) {
+      const sender = msg.sender_type === 'user' ? (msg.sender_name || 'Você') : contactName;
+      const time = new Date(msg.created_at).toLocaleString('pt-BR');
+      const content = msg.content || (msg.message_type !== 'text' ? `[${msg.message_type}]` : '');
+
+      const lines: string[] = [];
+      if (msg.quoted_content) {
+        lines.push(`  > "${msg.quoted_content.slice(0, 120)}"`);
+      }
+      const wrapped = doc.splitTextToSize(content, 160);
+      lines.push(...wrapped);
+
+      const blockHeight = (lines.length + 1) * 5 + 4;
+      if (y + blockHeight > pageHeight) {
+        doc.addPage();
+        y = 20;
+      }
+
+      doc.setFontSize(8);
+      doc.setTextColor(100);
+      doc.text(`${sender} — ${time}`, 14, y);
+      y += 5;
+
+      doc.setFontSize(10);
+      doc.setTextColor(30);
+      for (const line of lines) {
+        doc.text(line, 16, y);
+        y += 5;
+      }
+      y += 3;
+    }
+
+    doc.save(`conversa-${protocol}-${new Date().toISOString().slice(0, 10)}.pdf`);
+    toast.success('PDF exportado com sucesso!');
+  };
 
   const handleSyncConversations = async (hours: number = 48) => {
     if (!currentOrganization?.id || activeInstances.length === 0) {
@@ -833,12 +904,18 @@ export default function Inbox() {
                     sendMessage.mutate({ conversation_id: selectedConversation.id, content, sender_type: 'user' });
                   }}
                 />
+                {/* Export PDF */}
+                <Tooltip><TooltipTrigger asChild>
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleExportPDF}>
+                    <Download className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger><TooltipContent>Exportar PDF</TooltipContent></Tooltip>
               </div>
             </div>
 
             {/* Messages */}
-            <ScrollArea className="flex-1 p-4">
-              <div className="space-y-2.5 max-w-3xl mx-auto">
+            <ScrollArea className="flex-1 p-4 [&_*]:select-text">
+              <div className="space-y-2.5 max-w-3xl mx-auto cursor-text">
                 {selectedConversation.messages?.map((message: any) => {
                   const msgType = message.message_type || 'text';
                   const isUser = message.sender_type === 'user';
@@ -897,19 +974,28 @@ export default function Inbox() {
                             );
                           })()}
                         </div>
-                        {/* Reply button */}
-                        <button
-                          onClick={() => setReplyingTo({
-                            id: message.id,
-                            content: message.content,
-                            sender_type: message.sender_type,
-                            external_id: message.external_id,
-                          })}
-                          className={`absolute ${isUser ? '-left-8' : '-right-8'} top-1/2 -translate-y-1/2 opacity-0 group-hover/msg:opacity-100 transition-opacity p-1 rounded-full hover:bg-muted`}
-                          title="Responder"
-                        >
-                          <Reply className="h-3.5 w-3.5 text-muted-foreground" />
-                        </button>
+                        {/* Action buttons */}
+                        <div className={`absolute ${isUser ? '-left-16' : '-right-16'} top-1/2 -translate-y-1/2 opacity-0 group-hover/msg:opacity-100 transition-opacity flex gap-0.5`}>
+                          <button
+                            onClick={() => handleCopyMessage(message, selectedConversation?.contacts?.first_name || 'Contato')}
+                            className="p-1 rounded-full hover:bg-muted"
+                            title="Copiar mensagem"
+                          >
+                            <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+                          </button>
+                          <button
+                            onClick={() => setReplyingTo({
+                              id: message.id,
+                              content: message.content,
+                              sender_type: message.sender_type,
+                              external_id: message.external_id,
+                            })}
+                            className="p-1 rounded-full hover:bg-muted"
+                            title="Responder"
+                          >
+                            <Reply className="h-3.5 w-3.5 text-muted-foreground" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   );

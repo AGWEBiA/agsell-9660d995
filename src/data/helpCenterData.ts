@@ -1778,6 +1778,70 @@ Acompanhe o aquecimento do domínio:
 
 💡 **Dica**: Comece com o limite de aquecimento (50 e-mails/dia) para novos domínios e aumente gradualmente a cada 1-2 semanas conforme a reputação cresce.`,
   },
+  {
+    id: 'sac-productivity',
+    categoryId: 'communication',
+    title: 'Novidades do SAC: copiar, citar e exportar',
+    icon: Inbox,
+    description: 'Use citação na resposta, copie mensagens com metadados, selecione texto livremente e exporte o histórico em PDF.',
+    readTime: '5 min',
+    popular: true,
+    content: `O SAC do AG Sell ganhou um conjunto de melhorias para acelerar seu atendimento e facilitar o compartilhamento de informações fora da plataforma.
+
+## ✍️ Citação automática na resposta
+
+Quando você clica em **Responder** em uma mensagem, o conteúdo citado é enviado **junto** com a sua resposta e fica visível na bolha do contato.
+
+- Útil para deixar claro a qual mensagem você está respondendo em conversas longas
+- A citação aparece destacada acima do seu texto
+- Funciona para mensagens enviadas e recebidas
+
+> Caso queira remover a citação antes de enviar, basta clicar no **X** ao lado do bloco citado no campo de resposta.
+
+## 📋 Copiar mensagem (com metadados)
+
+Cada bolha de mensagem agora exibe um botão **Copiar** ao passar o mouse. O texto vai para a área de transferência no formato:
+
+\`\`\`
+> "trecho citado" — Autor da citação
+
+Conteúdo da mensagem
+— Remetente, dd/mm/aaaa hh:mm
+\`\`\`
+
+- Inclui automaticamente a **citação** (se houver), o **autor** e a **data/hora**
+- Atalho de teclado **Ctrl+C** funciona após selecionar texto na bolha
+- Ideal para colar em outros sistemas, e-mails ou documentos
+
+## 🖱️ Seleção livre de texto
+
+Você pode **selecionar qualquer trecho** das mensagens com o mouse — basta arrastar para destacar. Isso permite:
+
+- Copiar apenas uma parte específica da conversa
+- Pesquisar o texto em outras ferramentas
+- Compartilhar trechos pontuais com a equipe
+
+## 📄 Exportar histórico em PDF
+
+No header da conversa, clique no botão de **Download** para gerar um PDF completo do atendimento.
+
+O arquivo é salvo como \`conversa-{protocolo}-{data}.pdf\` e inclui:
+
+- Nome do contato, número de protocolo e canal
+- Todas as mensagens em ordem cronológica
+- Citações preservadas e timestamps
+- Pronto para arquivar, compartilhar ou anexar a auditorias
+
+[screenshot:Botão de exportar PDF no header da conversa|/inbox]
+
+## 🖼️ Imagens e anexos
+
+As mídias enviadas no SAC (imagens, áudios e documentos) são armazenadas no bucket público \`inbox-attachments\`, garantindo carregamento rápido e visualização imediata em qualquer dispositivo.
+
+⚠️ **Importante**: Mensagens excluídas do contato no WhatsApp continuam disponíveis no histórico do AG Sell — o SAC mantém um registro completo do atendimento para fins de auditoria.
+
+💡 **Dica**: Combine **citação + cópia + PDF** quando precisar transferir um caso para outra equipe ou abrir um ticket interno com contexto completo.`,
+  },
 
   // =====================================================
   // MARKETING E AUTOMAÇÃO

@@ -778,8 +778,17 @@ export default function Inbox() {
                   const msgType = message.message_type || 'text';
                   const isUser = message.sender_type === 'user';
                   return (
-                    <div key={message.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[70%] rounded-xl px-3 py-2 ${isUser ? 'bg-emerald-900/60 text-foreground' : 'bg-muted'}`}>
+                    <div key={message.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'} group/msg`}>
+                      <div className={`max-w-[70%] rounded-xl px-3 py-2 relative ${isUser ? 'bg-emerald-900/60 text-foreground' : 'bg-muted'}`}>
+                        {/* Quoted message preview */}
+                        {message.quoted_content && (
+                          <div className="mb-1.5 rounded-md bg-background/30 border-l-2 border-primary px-2 py-1">
+                            <p className="text-[10px] font-semibold opacity-70">
+                              {message.quoted_sender_type === 'user' ? 'Você' : selectedConversation.contacts?.first_name || 'Contato'}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">{message.quoted_content}</p>
+                          </div>
+                        )}
                         {isUser && message.sender_name && (
                           <p className="text-[10px] font-semibold mb-0.5 opacity-75">{message.sender_name}</p>
                         )}
@@ -802,7 +811,7 @@ export default function Inbox() {
                         {message.content && !(msgType !== 'text' && message.content.startsWith('📎')) && (
                           renderMessageContent(message.content, isUser)
                         )}
-                        <div className={`flex items-center justify-end gap-1 mt-0.5 text-[10px] ${isUser ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
+                        <div className={`flex items-center justify-end gap-1 mt-0.5 text-[10px] text-muted-foreground`}>
                           <span>{new Date(message.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                           {isUser && (() => {
                             const status = message.delivery_status || 'sent';
@@ -813,6 +822,19 @@ export default function Inbox() {
                             return <Clock className="h-2.5 w-2.5 opacity-50" />;
                           })()}
                         </div>
+                        {/* Reply button */}
+                        <button
+                          onClick={() => setReplyingTo({
+                            id: message.id,
+                            content: message.content,
+                            sender_type: message.sender_type,
+                            external_id: message.external_id,
+                          })}
+                          className={`absolute ${isUser ? '-left-8' : '-right-8'} top-1/2 -translate-y-1/2 opacity-0 group-hover/msg:opacity-100 transition-opacity p-1 rounded-full hover:bg-muted`}
+                          title="Responder"
+                        >
+                          <Reply className="h-3.5 w-3.5 text-muted-foreground" />
+                        </button>
                       </div>
                     </div>
                   );

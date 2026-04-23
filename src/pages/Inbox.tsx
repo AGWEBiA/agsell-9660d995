@@ -584,6 +584,17 @@ export default function Inbox() {
                   <Bug className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger><TooltipContent>Debug SAC</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0"
+                  onClick={handleSyncConversations}
+                  disabled={isSyncing}
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                </Button>
+              </TooltipTrigger><TooltipContent>Puxar conversas dos dispositivos</TooltipContent></Tooltip>
             </div>
           </div>
 

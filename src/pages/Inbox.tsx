@@ -332,11 +332,17 @@ export default function Inbox() {
       media_mime_type: mediaMimeType,
       file_name: fileName,
       instance_id: selectedWhatsappInstanceId !== 'auto' ? selectedWhatsappInstanceId : undefined,
+      ...(replyingTo ? {
+        quoted_message_id: replyingTo.id,
+        quoted_content: replyingTo.content?.slice(0, 200),
+        quoted_sender_type: replyingTo.sender_type,
+        quoted_external_id: replyingTo.external_id,
+      } : {}),
     } as any);
     setMessageInput('');
     setPendingFile(null);
     setIsUploading(false);
-  };
+    setReplyingTo(null);
 
   const handleEmojiSelect = (emoji: any) => {
     setMessageInput(prev => prev + emoji.native);

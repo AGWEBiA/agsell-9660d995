@@ -500,6 +500,67 @@ export const automationTemplates: AutomationTemplate[] = [
       },
     ],
   },
+  {
+    id: 'form_to_crm_sac',
+    name: 'Formulário → CRM + SAC + Tag',
+    description: 'Lead capturado via formulário entra no CRM, recebe tag, ganha pontos, abre conversa no SAC e gera deal no Pipeline.',
+    category: 'Captação',
+    icon: UserPlus,
+    color: 'bg-indigo-500',
+    trigger_type: 'form_submitted',
+    trigger_config: {},
+    actions: [
+      {
+        id: '1',
+        type: 'add_tag',
+        config: { tag_name: 'lead-formulario' },
+      },
+      {
+        id: '2',
+        type: 'update_score',
+        config: { points: 15, operation: 'add' },
+      },
+      {
+        id: '3',
+        type: 'send_email',
+        config: {
+          subject: 'Recebemos seu cadastro, {{first_name}}! 🎉',
+          content: '<h1>Olá {{first_name}}!</h1><p>Recebemos seu cadastro e em breve entraremos em contato. Fique atento(a) ao seu WhatsApp.</p>',
+        },
+      },
+      {
+        id: '4',
+        type: 'send_whatsapp',
+        config: {
+          message: 'Olá {{first_name}}! 👋 Recebemos seu cadastro. Um especialista vai te atender em instantes. Pode mandar sua dúvida por aqui!',
+        },
+      },
+      {
+        id: '5',
+        type: 'create_deal',
+        config: {
+          title: 'Lead Formulário — {{first_name}}',
+          value: 0,
+          probability: 30,
+          expected_close_days: 14,
+        },
+      },
+      {
+        id: '6',
+        type: 'assign_agent',
+        config: { strategy: 'round_robin' },
+      },
+      {
+        id: '7',
+        type: 'send_notification',
+        config: {
+          title: 'Novo lead via formulário',
+          message: '{{first_name}} acabou de se cadastrar. Verifique no SAC e no Pipeline.',
+          link: '/pipeline',
+        },
+      },
+    ],
+  },
 ];
 
 interface AutomationTemplatesProps {

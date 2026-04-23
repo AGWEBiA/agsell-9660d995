@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +14,7 @@ import {
   FileAudio, File as FileIcon, X, Loader2,
   Hash, ChevronLeft, Inbox as InboxIcon, User, Ticket,
   BarChart3, Brain, Calendar, Users, CheckCircle2,
-  ArrowDownToLine, Instagram, AlertCircle, Clock, Bug, Filter,
+  ArrowDownToLine, Instagram, AlertCircle, Clock, Bug, Filter, RefreshCw,
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useInbox } from '@/hooks/useInbox';
@@ -114,6 +115,7 @@ export default function Inbox() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState('');
@@ -138,6 +140,35 @@ export default function Inbox() {
   const [selectedWhatsappInstanceId, setSelectedWhatsappInstanceId] = useState('auto');
   const [instanceFilter, setInstanceFilter] = useState('all');
   const [showDebug, setShowDebug] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleSyncConversations = async () => {
+    if (!currentOrganization?.id || activeInstances.length === 0) {
+      toast.error('Nenhuma instância ativa para sincronizar');
+      return;
+    }
+    setIsSyncing(true);
+    try {
+      let syncedCount = 0;
+      for (const inst of activeInstances) {
+        const instanceName = inst.instance_name || inst.name;
+        if (!instanceName) continue;
+        const { error } = await supabase.functions.invoke('sync-whatsapp-reconnect', {
+          body: {
+            instance_name: instanceName,
+            state: 'open',
+          },
+        });
+        if (!error) syncedCount++;
+      }
+      toast.success(`Sincronização concluída para ${syncedCount} instância(s)!`);
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+    } catch (e: any) {
+      toast.error('Erro ao sincronizar: ' + (e.message || 'Erro desconhecido'));
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const selectedConversation = conversations.find(c => c.id === selectedId);
   const sacInstances = (activeInstances || []).filter((instance: any) => instance.config?.use_for_sac === true);
@@ -553,6 +584,17 @@ export default function Inbox() {
                   <Bug className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger><TooltipContent>Debug SAC</TooltipContent></Tooltip>
+              <Tooltip><TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0"
+                  onClick={handleSyncConversations}
+                  disabled={isSyncing}
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                </Button>
+              </TooltipTrigger><TooltipContent>Puxar conversas dos dispositivos</TooltipContent></Tooltip>
             </div>
           </div>
 

@@ -228,6 +228,26 @@ export function ContactInfoPanel({
               <ArrowRightLeft className="h-3.5 w-3.5 mr-2" />
               Transferir Atendimento
             </Button>
+
+            <Separator />
+
+            {/* Convert to Pipeline Deal */}
+            <Button
+              size="sm"
+              className="w-full bg-primary hover:bg-primary/90"
+              onClick={handleCreateDeal}
+              disabled={createDeal.isPending || !contact?.id}
+            >
+              {createDeal.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+              ) : (
+                <TrendingUp className="h-3.5 w-3.5 mr-2" />
+              )}
+              Criar Deal a partir deste contato
+            </Button>
+            <p className="text-[10px] text-muted-foreground text-center -mt-2">
+              Transforma esta conversa em uma oportunidade no Pipeline
+            </p>
           </TabsContent>
 
           {/* Ticket Tab */}

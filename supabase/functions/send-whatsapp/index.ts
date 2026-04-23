@@ -296,10 +296,14 @@ async function sendWithEvolutionAPI(
   };
 
   if (!whatsappReq.media_url) {
-    const result = await sendWithInstanceFallback("sendText", {
+    const textPayload: Record<string, unknown> = {
       number: phoneNumber,
       text: whatsappReq.message,
-    });
+    };
+    if (whatsappReq.quoted_message_external_id) {
+      textPayload.quoted = { key: { id: whatsappReq.quoted_message_external_id } };
+    }
+    const result = await sendWithInstanceFallback("sendText", textPayload);
 
     if (!result.ok) {
       console.error("Evolution API error:", result.data);

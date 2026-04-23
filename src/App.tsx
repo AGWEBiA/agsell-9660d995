@@ -116,6 +116,7 @@ const FunnelPlanner = React.lazy(() => import("./pages/FunnelPlanner"));
 const FunnelBI = React.lazy(() => import("./pages/FunnelBI"));
 const AutomationMetrics = React.lazy(() => import("./pages/AutomationMetrics"));
 const SMSMarketing = React.lazy(() => import("./pages/SMSMarketing"));
+const Notifications = React.lazy(() => import("./pages/Notifications"));
 
 const queryClient = new QueryClient({
   defaultOptions: {

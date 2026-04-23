@@ -96,7 +96,15 @@ export function QuickRepliesManager() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1"><Label>Título *</Label><Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Saudação inicial" /></div>
-            <div className="space-y-1"><Label>Conteúdo *</Label><Textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Olá! Como posso ajudá-lo(a) hoje?" rows={4} /></div>
+            <div className="space-y-1">
+              <Label>Conteúdo *</Label>
+              <Textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Olá {{nome}}! Como posso ajudá-lo(a) hoje?" rows={4} />
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                <button type="button" className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20" onClick={() => setContent(prev => prev + '{{nome}}')}>+ Nome</button>
+                <button type="button" className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20" onClick={() => setContent(prev => prev + '{{citação}}')}>+ Citação</button>
+              </div>
+              <p className="text-[10px] text-muted-foreground">Use <code className="bg-muted px-1 rounded">{'{{nome}}'}</code> para o nome do contato e <code className="bg-muted px-1 rounded">{'{{citação}}'}</code> para inserir a mensagem citada.</p>
+            </div>
             <div className="space-y-1"><Label>Categoria</Label><Select value={category} onValueChange={setCategory}><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent>{replyCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select></div>
             <div className="space-y-1"><Label>Atalho (opcional)</Label><Input value={shortcut} onChange={e => setShortcut(e.target.value)} placeholder="Ex: ola" /><p className="text-xs text-muted-foreground">Use /atalho no chat para inserir rapidamente</p></div>
           </div>

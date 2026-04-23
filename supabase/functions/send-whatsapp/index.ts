@@ -252,7 +252,7 @@ async function sendWithEvolutionAPI(
           url: webhookUrl,
           webhookByEvents: false,
           webhookBase64: false,
-          events: ["MESSAGES_UPSERT", "GROUP_PARTICIPANTS_UPDATE", "CONNECTION_UPDATE"],
+          events: ["MESSAGES_UPSERT", "MESSAGES_UPDATE", "GROUP_PARTICIPANTS_UPDATE", "CONNECTION_UPDATE"],
         },
       }),
     });

@@ -15,6 +15,7 @@ interface WhatsAppRequest {
   media_type?: "image" | "video" | "audio" | "document";
   template_name?: string;
   template_params?: string[];
+  quoted_message_external_id?: string; // External WhatsApp message ID to quote/reply to
 }
 
 Deno.serve(async (req) => {

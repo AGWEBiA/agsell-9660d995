@@ -880,11 +880,21 @@ export default function Inbox() {
                           <span>{new Date(message.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                           {isUser && (() => {
                             const status = message.delivery_status || 'sent';
-                            if (status === 'failed') return <AlertCircle className="h-2.5 w-2.5 text-destructive" />;
-                            if (status === 'read') return <CheckCheck className="h-2.5 w-2.5 text-blue-400" />;
-                            if (status === 'delivered') return <CheckCheck className="h-2.5 w-2.5" />;
-                            if (status === 'sent') return <Check className="h-2.5 w-2.5" />;
-                            return <Clock className="h-2.5 w-2.5 opacity-50" />;
+                            const statusLabel: Record<string, string> = { failed: 'Falhou', read: 'Lida', delivered: 'Entregue', sent: 'Enviada', pending: 'Pendente' };
+                            const label = statusLabel[status] || 'Pendente';
+                            const icon = (() => {
+                              if (status === 'failed') return <AlertCircle className="h-2.5 w-2.5 text-destructive" />;
+                              if (status === 'read') return <CheckCheck className="h-2.5 w-2.5 text-blue-400" />;
+                              if (status === 'delivered') return <CheckCheck className="h-2.5 w-2.5" />;
+                              if (status === 'sent') return <Check className="h-2.5 w-2.5" />;
+                              return <Clock className="h-2.5 w-2.5 opacity-50" />;
+                            })();
+                            return (
+                              <Tooltip>
+                                <TooltipTrigger asChild><span className="inline-flex items-center cursor-default">{icon}</span></TooltipTrigger>
+                                <TooltipContent side="left" className="text-xs">{label}</TooltipContent>
+                              </Tooltip>
+                            );
                           })()}
                         </div>
                         {/* Reply button */}

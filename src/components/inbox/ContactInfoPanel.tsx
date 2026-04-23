@@ -74,6 +74,9 @@ export function ContactInfoPanel({
   const { replies } = useQuickReplies();
   const { members } = useOrganizationMembers();
   const { agents } = useSacAgents();
+  const { data: stages = [] } = usePipelineStages();
+  const createDeal = useCreateDeal();
+  const navigate = useNavigate();
   const [noteInput, setNoteInput] = useState('');
   const [activeTab, setActiveTab] = useState('info');
   const [transferOpen, setTransferOpen] = useState(false);

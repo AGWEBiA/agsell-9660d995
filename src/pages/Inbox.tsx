@@ -115,6 +115,7 @@ export default function Inbox() {
   const { assignConversation } = useAssignmentRules();
   const { createTicket: createSupportTicket } = useSupportTickets();
   const { instances, activeInstances } = useWhatsAppInstances();
+  const { replies: quickReplies } = useQuickReplies();
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const navigate = useNavigate();
@@ -145,6 +146,8 @@ export default function Inbox() {
   const [showDebug, setShowDebug] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [replyingTo, setReplyingTo] = useState<{ id: string; content: string; sender_type: string; external_id?: string | null } | null>(null);
+  const [quickReplyOpen, setQuickReplyOpen] = useState(false);
+  const [shortcutSuggestions, setShortcutSuggestions] = useState<typeof quickReplies>([]);
 
   const handleSyncConversations = async (hours: number = 48) => {
     if (!currentOrganization?.id || activeInstances.length === 0) {

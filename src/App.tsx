@@ -116,6 +116,7 @@ const FunnelPlanner = React.lazy(() => import("./pages/FunnelPlanner"));
 const FunnelBI = React.lazy(() => import("./pages/FunnelBI"));
 const AutomationMetrics = React.lazy(() => import("./pages/AutomationMetrics"));
 const SMSMarketing = React.lazy(() => import("./pages/SMSMarketing"));
+const Notifications = React.lazy(() => import("./pages/Notifications"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -238,6 +239,7 @@ const App = () => (
                     <Route path="support" element={<SupportTickets />} />
                     <Route path="support-center" element={<SupportCenter />} />
                     <Route path="support-portal-settings" element={<FeatureRequiredPage feature="customer_support_center" featureLabel="Portal de Suporte"><SupportPortalSettingsPage /></FeatureRequiredPage>} />
+                    <Route path="notifications" element={<Notifications />} />
                   </Route>
                   
                   {/* Plans accessible even with expired subscription */}

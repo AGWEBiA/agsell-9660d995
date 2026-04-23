@@ -498,6 +498,24 @@ Deno.serve(async (req) => {
           let fileName: string | null = null;
           let mediaCaption: string | null = null;
 
+          // Extract quoted message info from contextInfo
+          const contextInfo = messageData?.extendedTextMessage?.contextInfo
+            || messageData?.imageMessage?.contextInfo
+            || messageData?.audioMessage?.contextInfo
+            || messageData?.videoMessage?.contextInfo
+            || messageData?.documentMessage?.contextInfo
+            || null;
+          const quotedExternalId = contextInfo?.stanzaId || null;
+          const quotedMessage = contextInfo?.quotedMessage || null;
+          const quotedContent = quotedMessage?.conversation
+            || quotedMessage?.extendedTextMessage?.text
+            || (quotedMessage?.imageMessage?.caption)
+            || (quotedMessage?.videoMessage?.caption)
+            || (quotedMessage ? "[Mídia]" : null);
+          const quotedFromMe = contextInfo?.participant
+            ? !contextInfo.participant.includes(senderPhone)
+            : null;
+
           if (messageData?.imageMessage) {
             mediaMimeType = messageData.imageMessage.mimetype || "image/jpeg";
             messageType = "image";

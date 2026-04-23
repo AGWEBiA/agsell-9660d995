@@ -152,7 +152,77 @@ export default function Inbox() {
   const [lastSentMessageId, setLastSentMessageId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleSyncConversations = async (hours: number = 48) => {
+  const formatMessageForCopy = (message: any, contactName: string) => {
+    const sender = message.sender_type === 'user' ? (message.sender_name || 'Você') : contactName;
+    const date = new Date(message.created_at).toLocaleString('pt-BR');
+    let text = '';
+    if (message.quoted_content) {
+      const quotedSender = message.quoted_sender_type === 'user' ? 'Você' : contactName;
+      text += `> "${message.quoted_content}" — ${quotedSender}\n\n`;
+    }
+    text += message.content || '';
+    text += `\n— ${sender}, ${date}`;
+    return text;
+  };
+
+  const handleCopyMessage = (message: any, contactName: string) => {
+    const text = formatMessageForCopy(message, contactName);
+    navigator.clipboard.writeText(text).then(() => toast.success('Mensagem copiada!')).catch(() => toast.error('Erro ao copiar'));
+  };
+
+  const handleExportPDF = async () => {
+    if (!selectedConversation) return;
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF();
+    const contactName = `${selectedConversation.contacts?.first_name || ''} ${selectedConversation.contacts?.last_name || ''}`.trim() || 'Desconhecido';
+    const protocol = (selectedConversation as any).protocol_number || selectedConversation.id.slice(0, 8);
+
+    doc.setFontSize(16);
+    doc.text(`Histórico de Conversa — ${contactName}`, 14, 20);
+    doc.setFontSize(9);
+    doc.text(`Protocolo: ${protocol} | Canal: ${selectedConversation.channel} | Exportado: ${new Date().toLocaleString('pt-BR')}`, 14, 28);
+    doc.line(14, 31, 196, 31);
+
+    let y = 38;
+    const pageHeight = 280;
+    const messages = selectedConversation.messages || [];
+
+    for (const msg of messages) {
+      const sender = msg.sender_type === 'user' ? (msg.sender_name || 'Você') : contactName;
+      const time = new Date(msg.created_at).toLocaleString('pt-BR');
+      const content = msg.content || (msg.message_type !== 'text' ? `[${msg.message_type}]` : '');
+
+      const lines: string[] = [];
+      if (msg.quoted_content) {
+        lines.push(`  > "${msg.quoted_content.slice(0, 120)}"`);
+      }
+      const wrapped = doc.splitTextToSize(content, 160);
+      lines.push(...wrapped);
+
+      const blockHeight = (lines.length + 1) * 5 + 4;
+      if (y + blockHeight > pageHeight) {
+        doc.addPage();
+        y = 20;
+      }
+
+      doc.setFontSize(8);
+      doc.setTextColor(100);
+      doc.text(`${sender} — ${time}`, 14, y);
+      y += 5;
+
+      doc.setFontSize(10);
+      doc.setTextColor(30);
+      for (const line of lines) {
+        doc.text(line, 16, y);
+        y += 5;
+      }
+      y += 3;
+    }
+
+    doc.save(`conversa-${protocol}-${new Date().toISOString().slice(0, 10)}.pdf`);
+    toast.success('PDF exportado com sucesso!');
+  };
+
     if (!currentOrganization?.id || activeInstances.length === 0) {
       toast.error('Nenhuma instância ativa para sincronizar');
       return;

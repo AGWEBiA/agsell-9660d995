@@ -986,6 +986,7 @@ export default function Inbox() {
                 </Button>
                 <AudioTranscription onTranscription={(text) => setMessageInput(prev => prev + text)} />
                 <textarea
+                  ref={textareaRef}
                   placeholder="Digite /atalho ou uma mensagem..."
                   className="flex-1 min-h-[36px] max-h-[120px] py-2 text-sm rounded-2xl bg-muted/50 border-0 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring px-4 resize-none overflow-y-auto"
                   value={messageInput}
@@ -995,10 +996,36 @@ export default function Inbox() {
                     e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
                   }}
                   onKeyDown={(e) => {
+                    // Escape: close reply, suggestions, quick reply popover
+                    if (e.key === 'Escape') {
+                      e.preventDefault();
+                      if (shortcutSuggestions.length > 0) {
+                        setShortcutSuggestions([]);
+                        setSelectedSuggestionIdx(0);
+                      } else if (quickReplyOpen) {
+                        setQuickReplyOpen(false);
+                      } else if (replyingTo) {
+                        setReplyingTo(null);
+                      }
+                      return;
+                    }
+                    // Arrow navigation for shortcut suggestions
+                    if (shortcutSuggestions.length > 0) {
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        setSelectedSuggestionIdx(prev => Math.min(prev + 1, shortcutSuggestions.length - 1));
+                        return;
+                      }
+                      if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        setSelectedSuggestionIdx(prev => Math.max(prev - 1, 0));
+                        return;
+                      }
+                    }
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
                       if (shortcutSuggestions.length > 0) {
-                        applyQuickReply(shortcutSuggestions[0].content);
+                        applyQuickReply(shortcutSuggestions[selectedSuggestionIdx].content);
                       } else {
                         handleSendMessage();
                       }

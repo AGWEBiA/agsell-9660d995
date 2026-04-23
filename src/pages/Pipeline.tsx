@@ -532,8 +532,8 @@ export default function Pipeline() {
               <h3 className="font-semibold mb-3">Etapas do funil</h3>
               <div className="space-y-3">
                 <div className="flex items-start gap-3 rounded-lg border p-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zinc-500/10 shrink-0">
-                    <Sparkles className="h-4 w-4 text-zinc-500" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
+                    <Sparkles className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div>
                     <div className="font-medium text-sm">1. Novo Lead</div>
@@ -545,8 +545,8 @@ export default function Pipeline() {
                 </div>
 
                 <div className="flex items-start gap-3 rounded-lg border p-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/10 shrink-0">
-                    <Target className="h-4 w-4 text-blue-500" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary shrink-0">
+                    <Target className="h-4 w-4 text-secondary-foreground" />
                   </div>
                   <div>
                     <div className="font-medium text-sm">2. Qualificado</div>
@@ -558,8 +558,8 @@ export default function Pipeline() {
                 </div>
 
                 <div className="flex items-start gap-3 rounded-lg border p-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/10 shrink-0">
-                    <FileText className="h-4 w-4 text-amber-500" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent shrink-0">
+                    <FileText className="h-4 w-4 text-accent-foreground" />
                   </div>
                   <div>
                     <div className="font-medium text-sm">3. Proposta</div>
@@ -584,8 +584,8 @@ export default function Pipeline() {
                 </div>
 
                 <div className="flex items-start gap-3 rounded-lg border p-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-500/10 shrink-0">
-                    <Trophy className="h-4 w-4 text-green-500" />
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 shrink-0">
+                    <Trophy className="h-4 w-4 text-primary" />
                   </div>
                   <div>
                     <div className="font-medium text-sm">5. Ganho</div>

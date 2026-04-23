@@ -34,6 +34,10 @@ export interface FormSettings {
   showTitle: boolean;
   showDescription: boolean;
   redirectUrl: string;
+  /** Tag aplicada automaticamente em todo lead que envia este formulário */
+  tag_id?: string | null;
+  /** Nome da tag a criar (se não houver tag_id) */
+  tag_name?: string | null;
 }
 
 export const DEFAULT_SETTINGS: FormSettings = {
@@ -55,6 +59,8 @@ export const DEFAULT_SETTINGS: FormSettings = {
   showTitle: true,
   showDescription: true,
   redirectUrl: '',
+  tag_id: null,
+  tag_name: null,
 };
 
 const TEMPLATES: FormTemplate[] = [

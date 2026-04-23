@@ -28,6 +28,7 @@ import { FormIntegrationDialog } from '@/components/forms/FormIntegrationDialog'
 import { FormTemplates, DEFAULT_SETTINGS, type FormSettings, type FormTemplate } from '@/components/forms/FormTemplates';
 import { FormStyleEditor } from '@/components/forms/FormStyleEditor';
 import { FormPreview } from '@/components/forms/FormPreview';
+import { FormTagSelector } from '@/components/forms/FormTagSelector';
 
 export default function Forms() {
   const { forms, isLoading, createForm, updateForm, toggleForm, deleteForm, getFormSubmissions } = useForms();
@@ -185,11 +186,18 @@ export default function Forms() {
                       onChange={(fields) => setNewForm(prev => ({ ...prev, fields }))}
                     />
                   </div>
-                  <div>
+                  <div className="space-y-4">
                     <Label className="text-sm font-semibold mb-3 block">Aparência & Layout</Label>
                     <FormStyleEditor
                       settings={newForm.settings}
                       onChange={(settings) => setNewForm(prev => ({ ...prev, settings }))}
+                    />
+                    <FormTagSelector
+                      tagId={newForm.settings.tag_id}
+                      tagName={newForm.settings.tag_name}
+                      onChange={({ tag_id, tag_name }) =>
+                        setNewForm(prev => ({ ...prev, settings: { ...prev.settings, tag_id, tag_name } }))
+                      }
                     />
                   </div>
                 </div>
@@ -410,6 +418,13 @@ export default function Forms() {
                     onChange={(settings) => setEditingForm(prev => prev ? { ...prev, settings } : null)}
                   />
                 </div>
+                <FormTagSelector
+                  tagId={editingForm?.settings?.tag_id}
+                  tagName={editingForm?.settings?.tag_name}
+                  onChange={({ tag_id, tag_name }) =>
+                    setEditingForm(prev => prev ? { ...prev, settings: { ...prev.settings, tag_id, tag_name } } : null)
+                  }
+                />
               </div>
               <div>
                 <Label className="text-sm font-semibold mb-3 block">Pré-visualização</Label>

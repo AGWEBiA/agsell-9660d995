@@ -16,6 +16,7 @@ import {
   Hash, ChevronLeft, Inbox as InboxIcon, User, Ticket,
   BarChart3, Brain, Calendar, Users, CheckCircle2,
   ArrowDownToLine, Instagram, AlertCircle, Clock, Bug, Filter, RefreshCw,
+  Reply,
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useInbox } from '@/hooks/useInbox';
@@ -142,6 +143,7 @@ export default function Inbox() {
   const [instanceFilter, setInstanceFilter] = useState('all');
   const [showDebug, setShowDebug] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<{ id: string; content: string; sender_type: string; external_id?: string | null } | null>(null);
 
   const handleSyncConversations = async (hours: number = 48) => {
     if (!currentOrganization?.id || activeInstances.length === 0) {
@@ -184,6 +186,10 @@ export default function Inbox() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [selectedConversation?.messages]);
+
+  useEffect(() => {
+    setReplyingTo(null);
+  }, [selectedId]);
 
   useEffect(() => {
     if (!selectedConversation || selectedConversation.channel !== 'whatsapp') {
@@ -330,10 +336,17 @@ export default function Inbox() {
       media_mime_type: mediaMimeType,
       file_name: fileName,
       instance_id: selectedWhatsappInstanceId !== 'auto' ? selectedWhatsappInstanceId : undefined,
+      ...(replyingTo ? {
+        quoted_message_id: replyingTo.id,
+        quoted_content: replyingTo.content?.slice(0, 200),
+        quoted_sender_type: replyingTo.sender_type,
+        quoted_external_id: replyingTo.external_id,
+      } : {}),
     } as any);
     setMessageInput('');
     setPendingFile(null);
     setIsUploading(false);
+    setReplyingTo(null);
   };
 
   const handleEmojiSelect = (emoji: any) => {
@@ -769,8 +782,17 @@ export default function Inbox() {
                   const msgType = message.message_type || 'text';
                   const isUser = message.sender_type === 'user';
                   return (
-                    <div key={message.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[70%] rounded-xl px-3 py-2 ${isUser ? 'bg-emerald-900/60 text-foreground' : 'bg-muted'}`}>
+                    <div key={message.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'} group/msg`}>
+                      <div className={`max-w-[70%] rounded-xl px-3 py-2 relative ${isUser ? 'bg-emerald-900/60 text-foreground' : 'bg-muted'}`}>
+                        {/* Quoted message preview */}
+                        {message.quoted_content && (
+                          <div className="mb-1.5 rounded-md bg-background/30 border-l-2 border-primary px-2 py-1">
+                            <p className="text-[10px] font-semibold opacity-70">
+                              {message.quoted_sender_type === 'user' ? 'Você' : selectedConversation.contacts?.first_name || 'Contato'}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">{message.quoted_content}</p>
+                          </div>
+                        )}
                         {isUser && message.sender_name && (
                           <p className="text-[10px] font-semibold mb-0.5 opacity-75">{message.sender_name}</p>
                         )}
@@ -793,7 +815,7 @@ export default function Inbox() {
                         {message.content && !(msgType !== 'text' && message.content.startsWith('📎')) && (
                           renderMessageContent(message.content, isUser)
                         )}
-                        <div className={`flex items-center justify-end gap-1 mt-0.5 text-[10px] ${isUser ? 'text-muted-foreground' : 'text-muted-foreground'}`}>
+                        <div className={`flex items-center justify-end gap-1 mt-0.5 text-[10px] text-muted-foreground`}>
                           <span>{new Date(message.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                           {isUser && (() => {
                             const status = message.delivery_status || 'sent';
@@ -804,6 +826,19 @@ export default function Inbox() {
                             return <Clock className="h-2.5 w-2.5 opacity-50" />;
                           })()}
                         </div>
+                        {/* Reply button */}
+                        <button
+                          onClick={() => setReplyingTo({
+                            id: message.id,
+                            content: message.content,
+                            sender_type: message.sender_type,
+                            external_id: message.external_id,
+                          })}
+                          className={`absolute ${isUser ? '-left-8' : '-right-8'} top-1/2 -translate-y-1/2 opacity-0 group-hover/msg:opacity-100 transition-opacity p-1 rounded-full hover:bg-muted`}
+                          title="Responder"
+                        >
+                          <Reply className="h-3.5 w-3.5 text-muted-foreground" />
+                        </button>
                       </div>
                     </div>
                   );
@@ -828,6 +863,24 @@ export default function Inbox() {
                     <p className="text-[10px] text-muted-foreground">{(pendingFile.file.size / 1024).toFixed(0)} KB</p>
                   </div>
                   <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => setPendingFile(null)}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Reply preview */}
+            {replyingTo && (
+              <div className="px-4 pt-2 border-t shrink-0">
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-muted border-l-2 border-primary">
+                  <Reply className="h-4 w-4 text-primary shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-semibold text-primary">
+                      {replyingTo.sender_type === 'user' ? 'Você' : selectedConversation?.contacts?.first_name || 'Contato'}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">{replyingTo.content}</p>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => setReplyingTo(null)}>
                     <X className="h-3 w-3" />
                   </Button>
                 </div>

@@ -498,6 +498,24 @@ Deno.serve(async (req) => {
           let fileName: string | null = null;
           let mediaCaption: string | null = null;
 
+          // Extract quoted message info from contextInfo
+          const contextInfo = messageData?.extendedTextMessage?.contextInfo
+            || messageData?.imageMessage?.contextInfo
+            || messageData?.audioMessage?.contextInfo
+            || messageData?.videoMessage?.contextInfo
+            || messageData?.documentMessage?.contextInfo
+            || null;
+          const quotedExternalId = contextInfo?.stanzaId || null;
+          const quotedMessage = contextInfo?.quotedMessage || null;
+          const quotedContent = quotedMessage?.conversation
+            || quotedMessage?.extendedTextMessage?.text
+            || (quotedMessage?.imageMessage?.caption)
+            || (quotedMessage?.videoMessage?.caption)
+            || (quotedMessage ? "[Mídia]" : null);
+          const quotedFromMe = contextInfo?.participant
+            ? !contextInfo.participant.includes(senderPhone)
+            : null;
+
           if (messageData?.imageMessage) {
             mediaMimeType = messageData.imageMessage.mimetype || "image/jpeg";
             messageType = "image";
@@ -667,6 +685,9 @@ Deno.serve(async (req) => {
               sourceInstanceId: integration.id,
               sourceInstanceName: integration.name || instanceName,
               isFromMe: isFromMe,
+              quotedContent: quotedContent?.slice(0, 200) || null,
+              quotedExternalId,
+              quotedSenderType: quotedFromMe === null ? null : (quotedFromMe ? "contact" : "user"),
             });
           } else if (isGroupMessage) {
             // Log discarded group message
@@ -769,6 +790,9 @@ interface RouteToInboxParams {
   sourceInstanceId?: string;
   sourceInstanceName?: string;
   isFromMe?: boolean;
+  quotedContent?: string | null;
+  quotedExternalId?: string | null;
+  quotedSenderType?: string | null;
 }
 
 async function routeToInbox(
@@ -1016,6 +1040,22 @@ async function routeToInbox(
     if (params.mediaMimeType) messageInsert.media_mime_type = params.mediaMimeType;
     if (params.messageType && params.messageType !== "text") messageInsert.message_type = params.messageType;
     if (params.fileName) messageInsert.file_name = params.fileName;
+    if (params.quotedContent) messageInsert.quoted_content = params.quotedContent;
+    if (params.quotedExternalId) {
+      // Try to find the quoted message by external_id to set quoted_message_id
+      const { data: quotedMsg } = await supabase
+        .from("messages")
+        .select("id, sender_type")
+        .eq("external_id", params.quotedExternalId)
+        .eq("conversation_id", conversationId)
+        .maybeSingle();
+      if (quotedMsg) {
+        messageInsert.quoted_message_id = quotedMsg.id;
+        messageInsert.quoted_sender_type = quotedMsg.sender_type;
+      } else {
+        messageInsert.quoted_sender_type = params.quotedSenderType || "contact";
+      }
+    }
 
     const { error: msgError } = await supabase
       .from("messages")

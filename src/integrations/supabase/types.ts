@@ -3218,6 +3218,9 @@ export type Database = {
           media_mime_type: string | null
           media_url: string | null
           message_type: string
+          quoted_content: string | null
+          quoted_message_id: string | null
+          quoted_sender_type: string | null
           sender_id: string | null
           sender_type: string
         }
@@ -3233,6 +3236,9 @@ export type Database = {
           media_mime_type?: string | null
           media_url?: string | null
           message_type?: string
+          quoted_content?: string | null
+          quoted_message_id?: string | null
+          quoted_sender_type?: string | null
           sender_id?: string | null
           sender_type?: string
         }
@@ -3248,6 +3254,9 @@ export type Database = {
           media_mime_type?: string | null
           media_url?: string | null
           message_type?: string
+          quoted_content?: string | null
+          quoted_message_id?: string | null
+          quoted_sender_type?: string | null
           sender_id?: string | null
           sender_type?: string
         }
@@ -3257,6 +3266,13 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_quoted_message_id_fkey"
+            columns: ["quoted_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
         ]

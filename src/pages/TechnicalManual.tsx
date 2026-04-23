@@ -9,9 +9,11 @@ import { Loader2 } from 'lucide-react';
 const MANUAL_CONTENT = `# MANUAL TÉCNICO COMPLETO — AG SELL
 ## Plataforma CRM + Automação Omnichannel + IA
 
-**Versão:** 2.0  
-**Data:** Março 2026  
+**Versão:** 2.1  
+**Data:** Abril 2026  
 **Classificação:** Documentação Interna — Uso Técnico e Estratégico
+
+> **Novidades 2.1:** SAC com cópia de mensagens (com citação e metadados), exportação do histórico de conversa em PDF, seleção livre de texto nas bolhas, citação automática nas respostas e bucket público \`inbox-attachments\` para mídias. Agente de Suporte AG Sell (RAG) e Chatbot Builder com IA documentados.
 
 ---
 
@@ -300,7 +302,7 @@ Visualização Kanban de deals com drag-and-drop entre estágios.
 ## 4.5 SAC / Inbox Omnichannel
 
 ### Objetivo
-Centralizar conversas de WhatsApp, E-mail e Instagram DM em uma única interface.
+Centralizar conversas de WhatsApp, E-mail, Instagram DM e Telegram em uma única interface, com produtividade para o atendente e portabilidade dos dados.
 
 ### Funcionalidades
 - Atribuição de agentes (SacAgentsManager)
@@ -309,12 +311,60 @@ Centralizar conversas de WhatsApp, E-mail e Instagram DM em uma única interface
 - Transcrição de áudio (AudioTranscription via Edge Function \`transcribe-audio\`)
 - IA para respostas sugeridas (SendIAButton)
 - Realtime habilitado para \`messages\`, \`conversations\`, \`notifications\`
+- **Citação de mensagem na resposta** — ao responder, o conteúdo citado é enviado junto e renderizado na bolha
+- **Cópia de mensagem com metadados** — botão "Copiar" em cada bolha, formato com aspas, autor e data; suporta atalho Ctrl+C
+- **Seleção livre de texto** — \`select-text\` aplicado às bolhas para permitir copiar trechos via mouse/drag
+- **Exportação de histórico em PDF** — botão no header gera arquivo \`conversa-{protocolo}-{data}.pdf\` via \`jspdf\`
+- **Bucket público de anexos** — \`inbox-attachments\` em Storage com policies de SELECT público e INSERT/DELETE autenticado para servir imagens/áudios/documentos
+- Status de mensagem em tempo real (enviada, entregue, lida) via webhooks dos canais
 
 ### Tabelas Envolvidas
-- \`conversations\` (canal, status, assigned_to, metadata)
-- \`messages\` (conteúdo, tipo, timestamps)
+- \`conversations\` (canal, status, assigned_to, metadata, protocol_number)
+- \`messages\` (conteúdo, tipo, timestamps, quoted_content, quoted_sender_type)
 - \`assignment_rules\` (estratégia, membros elegíveis, max concorrência)
 - \`assignment_state\` (round-robin index)
+- \`support_chat_sessions\` / \`support_chat_messages\` (Agente de Suporte AG Sell)
+
+### Storage
+- Bucket \`inbox-attachments\` (público) — mídias do SAC
+  - SELECT: público
+  - INSERT/DELETE: usuários autenticados
+
+## 4.5.1 Agentes de IA (Chatbot Builder)
+
+### Objetivo
+Criar bots autônomos por organização com base de conhecimento (RAG), templates pré-configurados e dashboard de performance.
+
+### Funcionalidades
+- Configuração de modelo (Gemini 2.5/3, GPT-5), temperatura e \`max_tokens\`
+- Mensagem de boas-vindas e fallback
+- Multi-canal (\`channels: string[]\`) — WhatsApp, Instagram, etc.
+- Base de conhecimento (\`ai_agent_knowledge\`) com tipos texto/URL/arquivo
+- Dashboard de performance (AgentPerformanceDashboard) com taxa de transferência humana e satisfação
+- Templates prontos (AgentTemplates) por vertical
+
+### Tabelas Envolvidas
+- \`ai_agents\` (model, system_prompt, temperature, channels, knowledge_base)
+- \`ai_agent_knowledge\` (content, content_type, metadata)
+- \`ai_agent_conversations\` (messages, status, satisfaction_rating, transferred_to_human)
+
+## 4.5.2 Agente de Suporte AG Sell
+
+### Objetivo
+Chat flutuante persistente no dashboard que responde dúvidas dos usuários da plataforma usando RAG sobre os artigos da Central de Ajuda.
+
+### Arquitetura
+- Componente \`SupportAgentChat\` (botão flutuante + janela)
+- Edge Function \`support-agent\` com streaming SSE (Lovable AI Gateway, Gemini 3 Flash)
+- Knowledge base construída em runtime a partir de \`helpArticles\` (\`buildKnowledgeBase\`)
+- Sessões persistidas em \`support_chat_sessions\` e mensagens em \`support_chat_messages\`
+- Renderiza markdown básico (bold) e converte caminhos \`(/rota)\` em links navegáveis
+- Quick actions com perguntas frequentes; opção de abrir ticket em \`/support-center\` para casos complexos
+
+### Tratamento de erros
+- 429 → toast de rate limit
+- 402 → toast de créditos de IA insuficientes
+- Outros → toast genérico de falha de conexão
 
 ## 4.6 WhatsApp
 

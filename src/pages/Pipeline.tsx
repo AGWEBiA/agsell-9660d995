@@ -86,6 +86,7 @@ const formatCurrency = (value: number | null) => {
 
 export default function Pipeline() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [draggedDealId, setDraggedDealId] = useState<string | null>(null);
   const [dragOverStageId, setDragOverStageId] = useState<string | null>(null);

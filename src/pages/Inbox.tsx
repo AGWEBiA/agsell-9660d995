@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import {
   Search, Send, Paperclip, Smile, Phone, Settings,
@@ -142,7 +143,7 @@ export default function Inbox() {
   const [showDebug, setShowDebug] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const handleSyncConversations = async () => {
+  const handleSyncConversations = async (hours: number = 48) => {
     if (!currentOrganization?.id || activeInstances.length === 0) {
       toast.error('Nenhuma instância ativa para sincronizar');
       return;
@@ -157,11 +158,12 @@ export default function Inbox() {
           body: {
             instance_name: instanceName,
             state: 'open',
+            hours,
           },
         });
         if (!error) syncedCount++;
       }
-      toast.success(`Sincronização concluída para ${syncedCount} instância(s)!`);
+      toast.success(`Sincronização (${hours}h) concluída para ${syncedCount} instância(s)!`);
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
     } catch (e: any) {
       toast.error('Erro ao sincronizar: ' + (e.message || 'Erro desconhecido'));
@@ -584,17 +586,25 @@ export default function Inbox() {
                   <Bug className="h-3.5 w-3.5" />
                 </Button>
               </TooltipTrigger><TooltipContent>Debug SAC</TooltipContent></Tooltip>
-              <Tooltip><TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 shrink-0"
-                  onClick={handleSyncConversations}
-                  disabled={isSyncing}
-                >
-                  <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
-                </Button>
-              </TooltipTrigger><TooltipContent>Puxar conversas dos dispositivos</TooltipContent></Tooltip>
+              <DropdownMenu>
+                <Tooltip><TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0"
+                      disabled={isSyncing}
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger><TooltipContent>Puxar conversas dos dispositivos</TooltipContent></Tooltip>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleSyncConversations(24)}>Últimas 24 horas</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSyncConversations(48)}>Últimas 48 horas</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleSyncConversations(72)}>Últimas 72 horas</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 

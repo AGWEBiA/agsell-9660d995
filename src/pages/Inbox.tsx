@@ -358,6 +358,37 @@ export default function Inbox() {
     setEmojiOpen(false);
   };
 
+  const applyQuickReply = (template: string) => {
+    let text = template;
+    // Replace variables
+    const contactName = selectedConversation?.contacts
+      ? `${selectedConversation.contacts.first_name} ${selectedConversation.contacts.last_name || ''}`.trim()
+      : 'Cliente';
+    text = text.replace(/\{\{nome\}\}/gi, contactName);
+    if (replyingTo?.content) {
+      text = text.replace(/\{\{citação\}\}/gi, replyingTo.content.slice(0, 150));
+    } else {
+      text = text.replace(/\{\{citação\}\}/gi, '');
+    }
+    setMessageInput(text);
+    setQuickReplyOpen(false);
+    setShortcutSuggestions([]);
+  };
+
+  const handleInputChange = (value: string) => {
+    setMessageInput(value);
+    // Detect /shortcut pattern
+    if (value.startsWith('/') && value.length > 1 && !value.includes(' ')) {
+      const query = value.slice(1).toLowerCase();
+      const matches = quickReplies.filter(r =>
+        r.shortcut?.toLowerCase().startsWith(query) || r.title.toLowerCase().includes(query)
+      );
+      setShortcutSuggestions(matches.slice(0, 5));
+    } else {
+      setShortcutSuggestions([]);
+    }
+  };
+
   const ncFilteredContacts = ncSearch.trim()
     ? contacts.filter(c => {
         const s = ncSearch.toLowerCase();

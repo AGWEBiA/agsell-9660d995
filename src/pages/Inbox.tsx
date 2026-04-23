@@ -865,6 +865,24 @@ export default function Inbox() {
               </div>
             )}
 
+            {/* Reply preview */}
+            {replyingTo && (
+              <div className="px-4 pt-2 border-t shrink-0">
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-muted border-l-2 border-primary">
+                  <Reply className="h-4 w-4 text-primary shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[10px] font-semibold text-primary">
+                      {replyingTo.sender_type === 'user' ? 'Você' : selectedConversation?.contacts?.first_name || 'Contato'}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">{replyingTo.content}</p>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => setReplyingTo(null)}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Message Input */}
             <div className="p-2.5 border-t shrink-0">
               <div className="flex items-end gap-1 max-w-3xl mx-auto">

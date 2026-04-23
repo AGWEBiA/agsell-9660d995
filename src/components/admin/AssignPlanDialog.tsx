@@ -25,6 +25,7 @@ export function AssignPlanDialog({ organization, open, onOpenChange }: AssignPla
       const { data, error } = await supabase
         .from('plans')
         .select('id, name, slug, price_monthly')
+        .eq('is_active', true)
         .order('price_monthly', { ascending: true });
       if (error) throw error;
       return data || [];

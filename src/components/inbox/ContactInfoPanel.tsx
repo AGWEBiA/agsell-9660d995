@@ -97,6 +97,26 @@ export function ContactInfoPanel({
     setNoteInput('');
   };
 
+  const handleCreateDeal = async () => {
+    if (!contact?.id) {
+      toast.error('Este atendimento não possui contato vinculado.');
+      return;
+    }
+    try {
+      const fullName = `${contact.first_name || ''} ${contact.last_name || ''}`.trim();
+      const result = await createDeal.mutateAsync({
+        title: `${fullName || 'Lead SAC'} — ${conversation.channel || 'SAC'}`,
+        contact_id: contact.id,
+        stage_id: stages[0]?.id,
+        value: 0,
+      });
+      toast.success('Deal criado! Abrindo no Pipeline...');
+      navigate('/pipeline');
+    } catch (e) {
+      // Error toast already handled by useCreateDeal
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}

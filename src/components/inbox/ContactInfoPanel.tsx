@@ -20,9 +20,11 @@ import { Label } from '@/components/ui/label';
 import {
   Mail, Phone, MessageSquare, Tag, Clock, AlertTriangle, CheckCircle2,
   StickyNote, Zap, MoreVertical, UserCheck, ArrowRightLeft, Hash,
-  Plus, Trash2, Copy,
+  Plus, Trash2, Copy, TrendingUp, Loader2,
 } from 'lucide-react';
 import { useConversationNotes } from '@/hooks/useConversationNotes';
+import { useCreateDeal, usePipelineStages } from '@/hooks/usePipeline';
+import { useNavigate } from 'react-router-dom';
 import { SoftphoneTrigger } from '@/components/voip/Softphone';
 import { useQuickReplies } from '@/hooks/useQuickReplies';
 import { useOrganizationMembers } from '@/hooks/useOrganizationMembers';
@@ -72,6 +74,9 @@ export function ContactInfoPanel({
   const { replies } = useQuickReplies();
   const { members } = useOrganizationMembers();
   const { agents } = useSacAgents();
+  const { data: stages = [] } = usePipelineStages();
+  const createDeal = useCreateDeal();
+  const navigate = useNavigate();
   const [noteInput, setNoteInput] = useState('');
   const [activeTab, setActiveTab] = useState('info');
   const [transferOpen, setTransferOpen] = useState(false);
@@ -90,6 +95,26 @@ export function ContactInfoPanel({
     if (!noteInput.trim()) return;
     addNote.mutate(noteInput.trim());
     setNoteInput('');
+  };
+
+  const handleCreateDeal = async () => {
+    if (!contact?.id) {
+      toast.error('Este atendimento não possui contato vinculado.');
+      return;
+    }
+    try {
+      const fullName = `${contact.first_name || ''} ${contact.last_name || ''}`.trim();
+      const result = await createDeal.mutateAsync({
+        title: `${fullName || 'Lead SAC'} — ${conversation.channel || 'SAC'}`,
+        contact_id: contact.id,
+        stage_id: stages[0]?.id,
+        value: 0,
+      });
+      toast.success('Deal criado! Abrindo no Pipeline...');
+      navigate('/pipeline');
+    } catch (e) {
+      // Error toast already handled by useCreateDeal
+    }
   };
 
   return (
@@ -203,6 +228,26 @@ export function ContactInfoPanel({
               <ArrowRightLeft className="h-3.5 w-3.5 mr-2" />
               Transferir Atendimento
             </Button>
+
+            <Separator />
+
+            {/* Convert to Pipeline Deal */}
+            <Button
+              size="sm"
+              className="w-full bg-primary hover:bg-primary/90"
+              onClick={handleCreateDeal}
+              disabled={createDeal.isPending || !contact?.id}
+            >
+              {createDeal.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />
+              ) : (
+                <TrendingUp className="h-3.5 w-3.5 mr-2" />
+              )}
+              Criar Deal a partir deste contato
+            </Button>
+            <p className="text-[10px] text-muted-foreground text-center -mt-2">
+              Transforma esta conversa em uma oportunidade no Pipeline
+            </p>
           </TabsContent>
 
           {/* Ticket Tab */}

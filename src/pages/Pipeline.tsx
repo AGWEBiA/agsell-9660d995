@@ -75,6 +75,10 @@ import {
   type Deal,
 } from '@/hooks/usePipeline';
 import { useContacts } from '@/hooks/useContacts';
+import { useContactLastSacMessage } from '@/hooks/useSacLeads';
+import { SacLeadsPanel } from '@/components/pipeline/SacLeadsPanel';
+import { DealSourceBadge } from '@/components/pipeline/DealSourceBadge';
+import { DealCard } from '@/components/pipeline/DealCard';
 import { PageHeader, FormField } from '@/components/ui/help-tooltip';
 const formatCurrency = (value: number | null) => {
   if (!value) return 'R$ 0,00';
@@ -334,6 +338,9 @@ export default function Pipeline() {
         </Dialog>
       </PageHeader>
 
+      {/* SAC Leads Panel */}
+      <SacLeadsPanel defaultStageId={stages[0]?.id} />
+
       {/* Pipeline Kanban */}
       <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 -mx-3 px-3 sm:mx-0 sm:px-0 snap-x snap-mandatory sm:snap-none">
         {stages.map((stage) => {
@@ -388,84 +395,19 @@ export default function Pipeline() {
                           Nenhum deal
                         </div>
                       ) : (
-                        stageDeals.map((deal) => {
-                          const contactName = getContactName(deal);
-                          return (
-                            <Card
-                              key={deal.id}
-                              draggable
-                              onDragStart={(e) => handleDragStart(e, deal.id)}
-                              onDragEnd={handleDragEnd}
-                              className={cn(
-                                'cursor-grab active:cursor-grabbing hover:shadow-md transition-all border-2 border-transparent',
-                                draggedDealId === deal.id
-                                  ? 'opacity-40 scale-95 border-primary/30'
-                                  : 'opacity-100'
-                              )}
-                            >
-                              <CardContent className="p-4">
-                                <div className="flex items-start justify-between mb-3">
-                                  <div className="flex items-center gap-2">
-                                    <GripVertical className="h-4 w-4 text-muted-foreground" />
-                                    <span className="font-medium text-sm">{deal.title}</span>
-                                  </div>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-6 w-6">
-                                        <MoreHorizontal className="h-3 w-3" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuItem disabled>Editar</DropdownMenuItem>
-                                      {stages.filter(s => s.id !== stage.id).map(s => (
-                                        <DropdownMenuItem 
-                                          key={s.id}
-                                          onClick={() => handleMoveDeal(deal.id, s.id)}
-                                        >
-                                          Mover para {s.name}
-                                        </DropdownMenuItem>
-                                      ))}
-                                      <DropdownMenuItem 
-                                        className="text-destructive"
-                                        onClick={() => setDeleteId(deal.id)}
-                                      >
-                                        Excluir
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </div>
-
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-                                    <DollarSign className="h-4 w-4" />
-                                    {formatCurrency(deal.value)}
-                                  </div>
-
-                                  {contactName && (
-                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                      <Avatar className="h-5 w-5">
-                                        <AvatarFallback className="text-[10px]">
-                                          {getInitials(contactName)}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                      <span>{contactName}</span>
-                                    </div>
-                                  )}
-
-                                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                    {deal.company && <span>{deal.company.name}</span>}
-                                    {deal.expected_close_date && (
-                                      <div className="flex items-center gap-1">
-                                        <Calendar className="h-3 w-3" />
-                                        {new Date(deal.expected_close_date).toLocaleDateString('pt-BR')}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          );
-                        })
+                        stageDeals.map((deal) => (
+                          <DealCard
+                            key={deal.id}
+                            deal={deal}
+                            stage={stage}
+                            stages={stages}
+                            isDragged={draggedDealId === deal.id}
+                            onDragStart={handleDragStart}
+                            onDragEnd={handleDragEnd}
+                            onMove={handleMoveDeal}
+                            onDelete={(id) => setDeleteId(id)}
+                          />
+                        ))
                       )}
                     </div>
                   </ScrollArea>

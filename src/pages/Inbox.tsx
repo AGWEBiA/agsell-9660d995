@@ -115,6 +115,7 @@ export default function Inbox() {
   const { user } = useAuth();
   const { currentOrganization } = useOrganization();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messageInput, setMessageInput] = useState('');

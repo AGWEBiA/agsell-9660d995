@@ -223,6 +223,7 @@ export default function Inbox() {
     toast.success('PDF exportado com sucesso!');
   };
 
+  const handleSyncConversations = async (hours: number = 48) => {
     if (!currentOrganization?.id || activeInstances.length === 0) {
       toast.error('Nenhuma instância ativa para sincronizar');
       return;

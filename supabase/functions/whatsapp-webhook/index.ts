@@ -1019,6 +1019,22 @@ async function routeToInbox(
     if (params.mediaMimeType) messageInsert.media_mime_type = params.mediaMimeType;
     if (params.messageType && params.messageType !== "text") messageInsert.message_type = params.messageType;
     if (params.fileName) messageInsert.file_name = params.fileName;
+    if (params.quotedContent) messageInsert.quoted_content = params.quotedContent;
+    if (params.quotedExternalId) {
+      // Try to find the quoted message by external_id to set quoted_message_id
+      const { data: quotedMsg } = await supabase
+        .from("messages")
+        .select("id, sender_type")
+        .eq("external_id", params.quotedExternalId)
+        .eq("conversation_id", conversationId)
+        .maybeSingle();
+      if (quotedMsg) {
+        messageInsert.quoted_message_id = quotedMsg.id;
+        messageInsert.quoted_sender_type = quotedMsg.sender_type;
+      } else {
+        messageInsert.quoted_sender_type = params.quotedSenderType || "contact";
+      }
+    }
 
     const { error: msgError } = await supabase
       .from("messages")

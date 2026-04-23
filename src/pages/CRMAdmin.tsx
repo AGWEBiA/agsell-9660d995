@@ -16,7 +16,6 @@ import {
   ShieldAlert, ArrowUpRight, BarChart3, PieChart as PieIcon,
 } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
-import { useAuth } from '@/contexts/AuthContext';
 import {
   useCRMOverview, useSalesRepPerformance, useDealsByStageAdmin,
   useDealsBySource, useMonthlyTrend,
@@ -35,12 +34,10 @@ const getInitials = (name: string) =>
 const SOURCE_COLORS = ['hsl(var(--primary))', '#3b82f6', '#8b5cf6', '#f59e0b', '#22c55e', '#ec4899', '#06b6d4'];
 
 export default function CRMAdmin() {
-  const { user } = useAuth();
-  const { currentOrganization, members } = useOrganization() as any;
+  const { currentOrganization, currentRole } = useOrganization();
 
   // Permission gate: only owner/admin of the org (or global admin) can see this
-  const currentMember = members?.find((m: any) => m.user_id === user?.id);
-  const isOrgAdmin = currentMember?.role === 'owner' || currentMember?.role === 'admin';
+  const isOrgAdmin = currentRole === 'owner' || currentRole === 'admin';
 
   const overview = useCRMOverview();
   const reps = useSalesRepPerformance();

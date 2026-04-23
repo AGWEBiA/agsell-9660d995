@@ -962,10 +962,10 @@ export default function Inbox() {
             {shortcutSuggestions.length > 0 && (
               <div className="px-4 pb-1 shrink-0">
                 <div className="max-w-3xl mx-auto bg-popover border rounded-lg shadow-lg p-1 space-y-0.5">
-                  {shortcutSuggestions.map(r => (
+                  {shortcutSuggestions.map((r, idx) => (
                     <button
                       key={r.id}
-                      className="w-full text-left px-3 py-1.5 rounded hover:bg-accent text-sm flex items-center gap-2"
+                      className={`w-full text-left px-3 py-1.5 rounded text-sm flex items-center gap-2 ${idx === selectedSuggestionIdx ? 'bg-accent' : 'hover:bg-accent'}`}
                       onClick={() => applyQuickReply(r.content)}
                     >
                       <Zap className="h-3 w-3 text-primary shrink-0" />

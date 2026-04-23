@@ -188,6 +188,10 @@ export default function Inbox() {
   }, [selectedConversation?.messages]);
 
   useEffect(() => {
+    setReplyingTo(null);
+  }, [selectedId]);
+
+  useEffect(() => {
     if (!selectedConversation || selectedConversation.channel !== 'whatsapp') {
       setSelectedWhatsappInstanceId('auto');
       return;

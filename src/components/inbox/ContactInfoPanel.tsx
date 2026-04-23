@@ -20,9 +20,11 @@ import { Label } from '@/components/ui/label';
 import {
   Mail, Phone, MessageSquare, Tag, Clock, AlertTriangle, CheckCircle2,
   StickyNote, Zap, MoreVertical, UserCheck, ArrowRightLeft, Hash,
-  Plus, Trash2, Copy,
+  Plus, Trash2, Copy, TrendingUp, Loader2,
 } from 'lucide-react';
 import { useConversationNotes } from '@/hooks/useConversationNotes';
+import { useCreateDeal, usePipelineStages } from '@/hooks/usePipeline';
+import { useNavigate } from 'react-router-dom';
 import { SoftphoneTrigger } from '@/components/voip/Softphone';
 import { useQuickReplies } from '@/hooks/useQuickReplies';
 import { useOrganizationMembers } from '@/hooks/useOrganizationMembers';

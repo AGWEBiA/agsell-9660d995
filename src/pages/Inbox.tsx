@@ -904,6 +904,12 @@ export default function Inbox() {
                     sendMessage.mutate({ conversation_id: selectedConversation.id, content, sender_type: 'user' });
                   }}
                 />
+                {/* Export PDF */}
+                <Tooltip><TooltipTrigger asChild>
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleExportPDF}>
+                    <Download className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger><TooltipContent>Exportar PDF</TooltipContent></Tooltip>
               </div>
             </div>
 

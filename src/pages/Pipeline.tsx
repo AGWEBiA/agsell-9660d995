@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 import {
   Dialog,
   DialogContent,
@@ -30,6 +39,14 @@ import {
   Calendar,
   GripVertical,
   Loader2,
+  HelpCircle,
+  Home,
+  MousePointerClick,
+  Sparkles,
+  Target,
+  FileText,
+  Handshake,
+  Trophy,
 } from 'lucide-react';
 import {
   DropdownMenu,

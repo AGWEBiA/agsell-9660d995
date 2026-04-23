@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 import {
   Dialog,
   DialogContent,
@@ -30,6 +39,14 @@ import {
   Calendar,
   GripVertical,
   Loader2,
+  HelpCircle,
+  Home,
+  MousePointerClick,
+  Sparkles,
+  Target,
+  FileText,
+  Handshake,
+  Trophy,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -69,6 +86,7 @@ const formatCurrency = (value: number | null) => {
 
 export default function Pipeline() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [draggedDealId, setDraggedDealId] = useState<string | null>(null);
   const [dragOverStageId, setDragOverStageId] = useState<string | null>(null);
@@ -192,12 +210,34 @@ export default function Pipeline() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Breadcrumb */}
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/dashboard" className="flex items-center gap-1">
+                <Home className="h-3.5 w-3.5" />
+                Dashboard
+              </Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Pipeline de Vendas</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       {/* Page Header */}
       <PageHeader
         title="Pipeline de Vendas"
         description="Gerencie suas oportunidades de negócio"
         helpText="Arraste os deals entre colunas ou use o menu para mover. Cada coluna representa um estágio do seu funil de vendas."
       >
+        <Button variant="outline" onClick={() => setIsHelpOpen(true)}>
+          <HelpCircle className="h-4 w-4 mr-2" />
+          Como funciona
+        </Button>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -453,6 +493,127 @@ export default function Pipeline() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Help Dialog */}
+      <Dialog open={isHelpOpen} onOpenChange={setIsHelpOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <HelpCircle className="h-5 w-5 text-primary" />
+              Como funciona o Pipeline de Vendas
+            </DialogTitle>
+            <DialogDescription>
+              Aprenda a organizar suas oportunidades em cada etapa do funil
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-2">
+            {/* Drag and Drop */}
+            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4">
+              <div className="flex items-start gap-3">
+                <MousePointerClick className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Arrastar e soltar (Drag & Drop)</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Clique e segure o card de um deal e arraste para a coluna do estágio desejado.
+                    Solte sobre a coluna destino para mover o deal automaticamente. A coluna fica
+                    destacada quando você passa o mouse sobre ela.
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    💡 Dica: você também pode usar o menu (<MoreHorizontal className="inline h-3 w-3" />) no card
+                    para mover entre estágios sem arrastar.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Stages */}
+            <div>
+              <h3 className="font-semibold mb-3">Etapas do funil</h3>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 rounded-lg border p-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted shrink-0">
+                    <Sparkles className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-sm">1. Novo Lead</div>
+                    <p className="text-xs text-muted-foreground">
+                      Contatos recém-chegados que ainda não foram qualificados. Ponto de entrada de
+                      oportunidades vindas de formulários, importações ou criação manual.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 rounded-lg border p-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary shrink-0">
+                    <Target className="h-4 w-4 text-secondary-foreground" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-sm">2. Qualificado</div>
+                    <p className="text-xs text-muted-foreground">
+                      Lead validado: tem perfil, interesse real e orçamento compatível. Está pronto
+                      para receber uma proposta comercial.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 rounded-lg border p-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent shrink-0">
+                    <FileText className="h-4 w-4 text-accent-foreground" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-sm">3. Proposta</div>
+                    <p className="text-xs text-muted-foreground">
+                      Proposta enviada e em análise pelo cliente. Acompanhe o tempo desde o envio
+                      para fazer follow-up no momento certo.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 rounded-lg border p-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/10 shrink-0">
+                    <Handshake className="h-4 w-4 text-destructive" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-sm">4. Negociação</div>
+                    <p className="text-xs text-muted-foreground">
+                      Cliente interessado, ajustando termos finais (preço, prazo, condições).
+                      Momento crítico que exige atenção e velocidade nas respostas.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 rounded-lg border p-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 shrink-0">
+                    <Trophy className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <div className="font-medium text-sm">5. Ganho</div>
+                    <p className="text-xs text-muted-foreground">
+                      Negócio fechado! O valor entra na sua taxa de conversão e nas métricas de
+                      receita. Mova para cá após a confirmação do pagamento ou contrato assinado.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg bg-muted/50 p-4 text-sm">
+              <strong>💡 Boas práticas:</strong>
+              <ul className="mt-2 space-y-1 text-muted-foreground list-disc list-inside">
+                <li>Mantenha o pipeline atualizado diariamente</li>
+                <li>Defina valor estimado em todo deal para previsão de receita</li>
+                <li>Adicione data esperada de fechamento para priorizar follow-ups</li>
+                <li>Vincule sempre um contato ao deal para histórico completo</li>
+              </ul>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => setIsHelpOpen(false)}>Entendi</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

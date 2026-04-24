@@ -27,9 +27,17 @@ interface WhatsAppRequest {
   instance_id?: string; // Optional: specify which instance to use
   to: string;
   message: string;
-  // ── Phase 1 extension: kind drives which Evolution endpoint we call ──
+  // ── kind drives which Evolution endpoint we call ──
   // Defaults to "text" (or "media" if media_url present) for full backward compatibility.
-  message_kind?: "text" | "media" | "buttons" | "list" | "presence";
+  message_kind?:
+    | "text"
+    | "media"
+    | "buttons"
+    | "list"
+    | "presence"
+    | "audio_ptt"
+    | "location"
+    | "contact";
   // Buttons (interactive reply buttons, max 3)
   buttons?: WhatsAppButton[];
   buttons_footer?: string;
@@ -41,9 +49,24 @@ interface WhatsAppRequest {
   // Presence (typing indicator)
   presence_state?: "composing" | "recording" | "paused";
   presence_delay_ms?: number; // how long to keep state on
-  // Existing fields
+  // Media (image/video/audio/document)
   media_url?: string;
   media_type?: "image" | "video" | "audio" | "document";
+  media_filename?: string; // for documents
+  media_caption?: string;  // optional caption override
+  // Audio PTT (voice note) — sent via /message/sendWhatsAppAudio
+  audio_url?: string;
+  // Location
+  latitude?: number;
+  longitude?: number;
+  location_name?: string;
+  location_address?: string;
+  // Contact / vCard
+  contact_full_name?: string;
+  contact_phone?: string;
+  contact_organization?: string;
+  contact_email?: string;
+  // Templates (Cloud API)
   template_name?: string;
   template_params?: string[];
   quoted_message_external_id?: string; // External WhatsApp message ID to quote/reply to

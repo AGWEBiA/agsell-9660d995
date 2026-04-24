@@ -97,10 +97,19 @@ Deno.serve(async (req) => {
           const userId = orgOwner?.user_id;
           if (!userId) continue;
 
+          // Cloud API sends contact profile names in `value.contacts[]`
+          const contactsByWaId: Record<string, string> = {};
+          for (const c of (value.contacts || [])) {
+            const waId = c?.wa_id || c?.waId;
+            const profileName = c?.profile?.name;
+            if (waId && profileName) contactsByWaId[String(waId)] = String(profileName);
+          }
+
           for (const message of value.messages || []) {
             const senderPhone = message.from; // e.g. "5511999990000"
             const messageText = message.text?.body || message.caption || "[Mídia recebida]";
             const messageId = message.id;
+            const profileName = contactsByWaId[senderPhone] || null;
 
             await routeToInbox(supabase, {
               organizationId: integration.organization_id,
@@ -112,6 +121,7 @@ Deno.serve(async (req) => {
               externalMessageId: messageId,
               sourceInstanceId: integration.id,
               sourceInstanceName: integration.name || String((integration.config as Record<string, unknown>)?.phone_number_id || "WhatsApp Business"),
+              contactName: profileName,
             });
           }
         }
@@ -514,6 +524,19 @@ Deno.serve(async (req) => {
             .replace("@c.us", "");
 
           const isFromMe = keyData.fromMe || data.fromMe || false;
+
+          // Extract WhatsApp display name (pushName) from payload
+          // Evolution API typically sends it as `pushName` at the root of `data`
+          const rawPushName: string | null =
+            data.pushName ||
+            data.pushname ||
+            data.notifyName ||
+            data.verifiedBizName ||
+            messageData?.pushName ||
+            null;
+          const pushName = (typeof rawPushName === "string" && rawPushName.trim())
+            ? rawPushName.trim().slice(0, 80)
+            : null;
 
           // Extract interactive responses (button clicks / list selections)
           const buttonReply =
@@ -1025,6 +1048,7 @@ Deno.serve(async (req) => {
               quotedExternalId,
               quotedSenderType: quotedFromMe === null ? null : (quotedFromMe ? "contact" : "user"),
               extraMetadata,
+              contactName: pushName,
             });
           } else if (isGroupMessage) {
             // Log discarded group message
@@ -1131,6 +1155,7 @@ interface RouteToInboxParams {
   quotedExternalId?: string | null;
   quotedSenderType?: string | null;
   extraMetadata?: Record<string, unknown>;
+  contactName?: string | null;
 }
 
 async function routeToInbox(
@@ -1138,7 +1163,14 @@ async function routeToInbox(
   params: RouteToInboxParams
 ) {
   try {
-    const { organizationId, userId, channel, senderIdentifier, messageText, sourceInstanceId, sourceInstanceName } = params;
+    const { organizationId, userId, channel, senderIdentifier, messageText, sourceInstanceId, sourceInstanceName, contactName } = params;
+
+    // Sanitize inbound display name (push notification name from WhatsApp)
+    const isPhoneLikeName = (name: string | null | undefined) =>
+      !name || /^\+?\d[\d\s\-\.\(\)]+$/.test(String(name).trim());
+    const cleanContactName = (typeof contactName === "string" && contactName.trim() && !isPhoneLikeName(contactName))
+      ? contactName.trim().slice(0, 80)
+      : null;
 
     // Try to find existing contact by normalized phone/whatsapp number
     let contactId: string | null = null;
@@ -1219,25 +1251,34 @@ async function routeToInbox(
 
       // Ensure whatsapp field is populated on the matched contact
       const existingWhatsapp = normalizePhone(matchedContact.whatsapp);
-      if (!existingWhatsapp) {
+      const updates: Record<string, unknown> = {};
+      if (!existingWhatsapp) updates.whatsapp = cleanPhone;
+
+      // If existing contact has an auto-created phone-like name, replace it with the real WhatsApp display name
+      if (cleanContactName && isAutoCreatedName(matchedContact.first_name || "")) {
+        updates.first_name = cleanContactName;
+      }
+
+      if (Object.keys(updates).length > 0) {
         await supabase
           .from("contacts")
-          .update({ whatsapp: cleanPhone })
+          .update(updates)
           .eq("id", matchedContact.id);
       }
     } else {
-      // Auto-create contact from incoming message
-      // Format phone for display name
+      // Auto-create contact from incoming message.
+      // Use WhatsApp pushName as display name when available; fallback to formatted phone.
       const displayPhone = cleanPhone.length > 11
         ? `+${cleanPhone.slice(0, 2)} ${cleanPhone.slice(2, 4)} ${cleanPhone.slice(4)}`
         : cleanPhone;
+      const displayName = cleanContactName || displayPhone;
 
       const { data: newContact } = await supabase
         .from("contacts")
         .insert({
           organization_id: organizationId,
           user_id: userId,
-          first_name: displayPhone,
+          first_name: displayName,
           whatsapp: cleanPhone,
           phone: cleanPhone,
           source: "whatsapp_inbound",

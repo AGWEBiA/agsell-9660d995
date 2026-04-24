@@ -1144,6 +1144,7 @@ interface RouteToInboxParams {
   quotedExternalId?: string | null;
   quotedSenderType?: string | null;
   extraMetadata?: Record<string, unknown>;
+  contactName?: string | null;
 }
 
 async function routeToInbox(
@@ -1151,7 +1152,14 @@ async function routeToInbox(
   params: RouteToInboxParams
 ) {
   try {
-    const { organizationId, userId, channel, senderIdentifier, messageText, sourceInstanceId, sourceInstanceName } = params;
+    const { organizationId, userId, channel, senderIdentifier, messageText, sourceInstanceId, sourceInstanceName, contactName } = params;
+
+    // Sanitize inbound display name (push notification name from WhatsApp)
+    const isPhoneLikeName = (name: string | null | undefined) =>
+      !name || /^\+?\d[\d\s\-\.\(\)]+$/.test(String(name).trim());
+    const cleanContactName = (typeof contactName === "string" && contactName.trim() && !isPhoneLikeName(contactName))
+      ? contactName.trim().slice(0, 80)
+      : null;
 
     // Try to find existing contact by normalized phone/whatsapp number
     let contactId: string | null = null;

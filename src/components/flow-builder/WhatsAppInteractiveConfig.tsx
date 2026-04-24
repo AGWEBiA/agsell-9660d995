@@ -71,6 +71,9 @@ export function WhatsAppInteractiveConfig({ config, onChange }: Props) {
     { value: 'contact', label: 'Contato (vCard)', icon: UserSquare, desc: 'Cartão de contato' },
     { value: 'buttons', label: 'Botões', icon: MousePointerClick, desc: 'Até 3 botões clicáveis' },
     { value: 'list', label: 'Lista', icon: ListIcon, desc: 'Menu interativo (até 10)' },
+    { value: 'poll', label: 'Enquete', icon: BarChart3, desc: 'Votação com até 12 opções' },
+    { value: 'reaction', label: 'Reação', icon: Smile, desc: 'Emoji em mensagem específica' },
+    { value: 'sticker', label: 'Figurinha', icon: Sticker, desc: 'Sticker WebP por URL' },
     { value: 'presence', label: '"Digitando..."', icon: Activity, desc: 'Indicador antes da mensagem' },
   ];
 

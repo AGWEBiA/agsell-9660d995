@@ -689,7 +689,7 @@ serve(async (req) => {
               try {
                 if (channel === 'whatsapp' && (contact?.whatsapp || contact?.phone)) {
                   const msg = replaceVars(action.config.whatsapp_message as string || action.config.message as string, contact);
-                  parallelResults.whatsapp = await sendWhatsAppDirect(contact.whatsapp || contact.phone, msg);
+                  parallelResults.whatsapp = await sendWhatsAppDirect(contact.whatsapp || contact.phone, { ...action.config, message: msg });
                 } else if (channel === 'email' && contact?.email) {
                   await fetch(`${supabaseUrl}/functions/v1/send-email`, {
                     method: 'POST',

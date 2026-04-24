@@ -44,11 +44,13 @@ export function WhatsAppNodeConfig({ config, onChange }: WhatsAppNodeConfigProps
         </div>
       </div>
 
-      {/* Message (hidden for presence kind) */}
-      {config.message_kind !== 'presence' && (
+      {/* Message — hidden for kinds that don't use a body text */}
+      {!['presence', 'audio_ptt', 'location', 'contact'].includes(String(config.message_kind || '')) && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label>Mensagem</Label>
+            <Label>
+              {config.message_kind === 'media' ? 'Legenda (opcional)' : 'Mensagem'}
+            </Label>
             <span className="text-xs text-muted-foreground">
               {String(config.message || '').length}/500
             </span>

@@ -34,6 +34,36 @@ Deno.serve(async (req) => {
     const body = await req.json();
     console.log("WhatsApp webhook received:", JSON.stringify(body).slice(0, 500));
 
+    // ────────────────────────────────────────────────────────────────
+    // Standardized structured logger for Phase 3 events
+    // (poll/reaction/sticker/mention) — makes debugging fast.
+    // ────────────────────────────────────────────────────────────────
+    const logPhase3Event = async (
+      level: "info" | "warn" | "error" | "skipped",
+      kind: "poll" | "poll_vote" | "reaction" | "sticker" | "mention" | "unsupported",
+      details: Record<string, unknown>,
+      orgId: string | null = null,
+      instance = "",
+      phone: string | null = null,
+    ) => {
+      const tag = `[whatsapp-webhook][${level.toUpperCase()}][${kind}]`;
+      const logFn = level === "error" ? console.error : (level === "warn" ? console.warn : console.log);
+      logFn(`${tag} ${JSON.stringify(details).slice(0, 600)}`);
+
+      try {
+        await supabase.from("whatsapp_webhook_logs").insert({
+          event_type: `phase3.${kind}`,
+          instance_name: instance || null,
+          phone,
+          organization_id: orgId,
+          routing_status: level === "skipped" ? "discarded" : (level === "error" ? "discarded" : "routed"),
+          details: { phase: 3, kind, level, ...details },
+        });
+      } catch (logErr) {
+        console.error(`${tag} failed to persist webhook log:`, logErr);
+      }
+    };
+
     // Handle WhatsApp Business API (Cloud API) format
     if (body.object === "whatsapp_business_account") {
       for (const entry of body.entry || []) {

@@ -47,6 +47,7 @@ function Navbar() {
       <div className="container mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
         <Logo variant="red" size="md" showText />
         <nav className="hidden md:flex items-center gap-6 text-sm" aria-label="Navegação principal">
+          <a href="#novidades" className="text-primary hover:text-white transition-colors font-semibold">Novidades</a>
           <a href="#funcionalidades" className="text-[hsl(0,0%,63%)] hover:text-white transition-colors">Funcionalidades</a>
           <a href="#diferenciais" className="text-[hsl(0,0%,63%)] hover:text-white transition-colors">Diferenciais</a>
           <a href="#comparativo" className="text-[hsl(0,0%,63%)] hover:text-white transition-colors">Comparativo</a>

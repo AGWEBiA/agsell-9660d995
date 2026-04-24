@@ -297,34 +297,7 @@ async function sendWithEvolutionAPI(
     console.log("Webhook auto-config failed (non-blocking):", e);
   }
 
-  const sendWithInstanceFallback = async (endpoint: "sendText" | "sendMedia", payload: Record<string, unknown>) => {
-    let lastError: { status: number; data: any; instance: string } | null = null;
-
-    for (const candidate of instanceCandidates) {
-      const response = await fetch(`${baseUrl}/message/${endpoint}/${encodeURIComponent(candidate)}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": apiKey,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        return { ok: true as const, data, instance: candidate };
-      }
-
-      lastError = { status: response.status, data, instance: candidate };
-
-      const message = data?.response?.message?.[0] || data?.message || "";
-      const isInstanceNotFound = response.status === 404 && /instance does not exist/i.test(String(message));
-      if (!isInstanceNotFound) break;
-    }
-
-    return { ok: false as const, ...(lastError || { status: 500, data: { message: "Unknown Evolution API error" }, instance: configuredInstanceName }) };
-  };
+  // (legacy sendWithInstanceFallback removed — replaced by `dispatch` below)
 
   // Generic dispatcher (works for sendText, sendMedia, sendButtons, sendList, sendPresence)
   const dispatch = async (endpoint: string, payload: Record<string, unknown>) => {

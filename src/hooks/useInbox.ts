@@ -223,7 +223,14 @@ export function useInbox() {
 
   const sendMessage = useMutation({
     mutationFn: async (message: any) => {
-      const { instance_id, quoted_message_id, quoted_content, quoted_sender_type, quoted_external_id, ...messageToInsert } = { ...message };
+      const {
+        instance_id,
+        quoted_message_id,
+        quoted_content,
+        quoted_sender_type,
+        quoted_external_id,
+        ...messageToInsert
+      } = { ...message };
 
       if (message.sender_type === 'user' && user?.id) {
         messageToInsert.sender_id = user.id;
@@ -276,14 +283,39 @@ export function useInbox() {
 
       if (conv?.channel === 'whatsapp' && contactPhone) {
         try {
+          // Map internal message_type → send-whatsapp media_type
+          const incomingType = String(message.message_type || 'text');
+          const mime = String(message.media_mime_type || '');
+          let mappedMediaType: 'image' | 'video' | 'audio' | 'document' | undefined;
+          if (incomingType === 'image') mappedMediaType = 'image';
+          else if (incomingType === 'video' || mime.startsWith('video/')) mappedMediaType = 'video';
+          else if (incomingType === 'audio' || mime.startsWith('audio/')) mappedMediaType = 'audio';
+          else if (incomingType === 'file' || incomingType === 'document') mappedMediaType = 'document';
+
+          const isPtt = incomingType === 'audio' && (mime.includes('ogg') || mime.includes('opus'));
+
+          const sendBody: Record<string, unknown> = {
+            organization_id: currentOrganization?.id,
+            to: contactPhone,
+            message: message.content,
+            instance_id: resolvedInstanceId || undefined,
+            quoted_message_external_id: quoted_external_id || undefined,
+          };
+          if (message.media_url && mappedMediaType) {
+            if (isPtt) {
+              sendBody.message_kind = 'audio_ptt';
+              sendBody.audio_url = message.media_url;
+            } else {
+              sendBody.message_kind = 'media';
+              sendBody.media_url = message.media_url;
+              sendBody.media_type = mappedMediaType;
+              if (message.file_name) sendBody.media_filename = message.file_name;
+              sendBody.media_caption = message.content || '';
+            }
+          }
+
           const { data: responseData, error: whatsappError } = await supabase.functions.invoke('send-whatsapp', {
-            body: {
-              organization_id: currentOrganization?.id,
-              to: contactPhone,
-              message: message.content,
-              instance_id: resolvedInstanceId || undefined,
-              quoted_message_external_id: quoted_external_id || undefined,
-            },
+            body: sendBody,
           });
 
           if (whatsappError) {

@@ -141,7 +141,7 @@ serve(async (req) => {
         message,
         message_kind: messageKind,
       };
-      // Pass through interactive fields when relevant
+      // Pass through interactive / rich-media fields when relevant
       if (messageKind === 'buttons') {
         payload.buttons = actionConfig.buttons || [];
         payload.buttons_footer = actionConfig.buttons_footer;
@@ -153,10 +153,23 @@ serve(async (req) => {
       } else if (messageKind === 'presence') {
         payload.presence_state = actionConfig.presence_state || 'composing';
         payload.presence_delay_ms = actionConfig.presence_delay_ms || 2000;
+      } else if (messageKind === 'audio_ptt') {
+        payload.audio_url = actionConfig.audio_url || actionConfig.media_url;
+      } else if (messageKind === 'location') {
+        payload.latitude = actionConfig.latitude;
+        payload.longitude = actionConfig.longitude;
+        payload.location_name = actionConfig.location_name;
+        payload.location_address = actionConfig.location_address;
+      } else if (messageKind === 'contact') {
+        payload.contact_full_name = actionConfig.contact_full_name;
+        payload.contact_phone = actionConfig.contact_phone;
+        payload.contact_organization = actionConfig.contact_organization;
+        payload.contact_email = actionConfig.contact_email;
       }
       if (actionConfig.media_url) {
         payload.media_url = actionConfig.media_url;
         payload.media_type = actionConfig.media_type || 'image';
+        if (actionConfig.media_filename) payload.media_filename = actionConfig.media_filename;
       }
 
       const resp = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {

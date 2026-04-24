@@ -27,9 +27,17 @@ interface WhatsAppRequest {
   instance_id?: string; // Optional: specify which instance to use
   to: string;
   message: string;
-  // ── Phase 1 extension: kind drives which Evolution endpoint we call ──
+  // ── kind drives which Evolution endpoint we call ──
   // Defaults to "text" (or "media" if media_url present) for full backward compatibility.
-  message_kind?: "text" | "media" | "buttons" | "list" | "presence";
+  message_kind?:
+    | "text"
+    | "media"
+    | "buttons"
+    | "list"
+    | "presence"
+    | "audio_ptt"
+    | "location"
+    | "contact";
   // Buttons (interactive reply buttons, max 3)
   buttons?: WhatsAppButton[];
   buttons_footer?: string;
@@ -41,9 +49,24 @@ interface WhatsAppRequest {
   // Presence (typing indicator)
   presence_state?: "composing" | "recording" | "paused";
   presence_delay_ms?: number; // how long to keep state on
-  // Existing fields
+  // Media (image/video/audio/document)
   media_url?: string;
   media_type?: "image" | "video" | "audio" | "document";
+  media_filename?: string; // for documents
+  media_caption?: string;  // optional caption override
+  // Audio PTT (voice note) — sent via /message/sendWhatsAppAudio
+  audio_url?: string;
+  // Location
+  latitude?: number;
+  longitude?: number;
+  location_name?: string;
+  location_address?: string;
+  // Contact / vCard
+  contact_full_name?: string;
+  contact_phone?: string;
+  contact_organization?: string;
+  contact_email?: string;
+  // Templates (Cloud API)
   template_name?: string;
   template_params?: string[];
   quoted_message_external_id?: string; // External WhatsApp message ID to quote/reply to
@@ -396,6 +419,69 @@ async function sendWithEvolutionAPI(
     return okResponse(result.data, result.instance);
   }
 
+  // ── Audio PTT (voice note via sendWhatsAppAudio) ──
+  if (kind === "audio_ptt") {
+    const audioUrl = whatsappReq.audio_url || whatsappReq.media_url;
+    if (!audioUrl) {
+      return new Response(
+        JSON.stringify({ error: "audio_url is required for audio_ptt" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const result = await dispatch("message/sendWhatsAppAudio", {
+      number: phoneNumber,
+      audio: audioUrl,
+      encoding: true,
+    });
+    if (!result.ok) return errResponse(result.status, result.data);
+    return okResponse(result.data, result.instance);
+  }
+
+  // ── Location ──
+  if (kind === "location") {
+    if (whatsappReq.latitude == null || whatsappReq.longitude == null) {
+      return new Response(
+        JSON.stringify({ error: "latitude and longitude are required for location" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const result = await dispatch("message/sendLocation", {
+      number: phoneNumber,
+      latitude: Number(whatsappReq.latitude),
+      longitude: Number(whatsappReq.longitude),
+      name: whatsappReq.location_name || "",
+      address: whatsappReq.location_address || "",
+    });
+    if (!result.ok) return errResponse(result.status, result.data);
+    return okResponse(result.data, result.instance);
+  }
+
+  // ── Contact (vCard) ──
+  if (kind === "contact") {
+    const fullName = whatsappReq.contact_full_name || "";
+    const cPhone = (whatsappReq.contact_phone || "").replace(/\D/g, "");
+    if (!fullName || !cPhone) {
+      return new Response(
+        JSON.stringify({ error: "contact_full_name and contact_phone are required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const result = await dispatch("message/sendContact", {
+      number: phoneNumber,
+      contact: [
+        {
+          fullName,
+          wuid: cPhone,
+          phoneNumber: cPhone,
+          ...(whatsappReq.contact_organization ? { organization: whatsappReq.contact_organization } : {}),
+          ...(whatsappReq.contact_email ? { email: whatsappReq.contact_email } : {}),
+        },
+      ],
+    });
+    if (!result.ok) return errResponse(result.status, result.data);
+    return okResponse(result.data, result.instance);
+  }
+
   // ── Text (default) ──
   if (kind === "text") {
     const textPayload: Record<string, unknown> = {
@@ -411,12 +497,16 @@ async function sendWithEvolutionAPI(
   }
 
   // ── Media (image/video/audio/document via sendMedia) ──
-  const result = await dispatch("message/sendMedia", {
+  const mediaPayload: Record<string, unknown> = {
     number: phoneNumber,
     mediatype: whatsappReq.media_type || "image",
     media: whatsappReq.media_url,
-    caption: whatsappReq.message,
-  });
+    caption: whatsappReq.media_caption ?? whatsappReq.message ?? "",
+  };
+  if (whatsappReq.media_type === "document" && whatsappReq.media_filename) {
+    mediaPayload.fileName = whatsappReq.media_filename;
+  }
+  const result = await dispatch("message/sendMedia", mediaPayload);
   if (!result.ok) return errResponse(result.status, result.data);
   return okResponse(result.data, result.instance);
 }
@@ -489,6 +579,46 @@ async function sendWithBusinessAPI(
       JSON.stringify({ success: true, provider: "whatsapp_business", skipped: "presence_not_supported_on_cloud_api" }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+  } else if (businessKind === "audio_ptt") {
+    const audioUrl = whatsappReq.audio_url || whatsappReq.media_url;
+    messageBody = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "audio",
+      audio: { link: audioUrl },
+    };
+  } else if (businessKind === "location") {
+    messageBody = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "location",
+      location: {
+        latitude: Number(whatsappReq.latitude),
+        longitude: Number(whatsappReq.longitude),
+        ...(whatsappReq.location_name ? { name: whatsappReq.location_name } : {}),
+        ...(whatsappReq.location_address ? { address: whatsappReq.location_address } : {}),
+      },
+    };
+  } else if (businessKind === "contact") {
+    const cPhone = (whatsappReq.contact_phone || "").replace(/\D/g, "");
+    messageBody = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "contacts",
+      contacts: [
+        {
+          name: { formatted_name: whatsappReq.contact_full_name, first_name: whatsappReq.contact_full_name },
+          phones: [{ phone: cPhone, type: "CELL", wa_id: cPhone }],
+          ...(whatsappReq.contact_organization
+            ? { org: { company: whatsappReq.contact_organization } }
+            : {}),
+          ...(whatsappReq.contact_email ? { emails: [{ email: whatsappReq.contact_email, type: "WORK" }] } : {}),
+        },
+      ],
+    };
   } else if (whatsappReq.template_name) {
     messageBody = {
       messaging_product: "whatsapp",
@@ -513,15 +643,21 @@ async function sendWithBusinessAPI(
     };
   } else if (whatsappReq.media_url) {
     const mediaType = whatsappReq.media_type || "image";
+    const mediaObj: Record<string, unknown> = {
+      link: whatsappReq.media_url,
+    };
+    if (mediaType !== "audio") {
+      mediaObj.caption = whatsappReq.media_caption ?? whatsappReq.message ?? "";
+    }
+    if (mediaType === "document" && whatsappReq.media_filename) {
+      mediaObj.filename = whatsappReq.media_filename;
+    }
     messageBody = {
       messaging_product: "whatsapp",
       recipient_type: "individual",
       to: phoneNumber,
       type: mediaType,
-      [mediaType]: {
-        link: whatsappReq.media_url,
-        caption: whatsappReq.message,
-      },
+      [mediaType]: mediaObj,
     };
   } else {
     messageBody = {

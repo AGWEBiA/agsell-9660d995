@@ -555,7 +555,42 @@ Deno.serve(async (req) => {
             messageType = "image";
           }
 
-          const hasMedia = messageType !== "text";
+          // Phase 2: capture location & contact card metadata (no binary download needed)
+          let extraMetadata: Record<string, unknown> = {};
+          const locMsg = messageData?.locationMessage;
+          if (locMsg && (locMsg.degreesLatitude != null || locMsg.degreesLongitude != null)) {
+            messageType = "location";
+            extraMetadata = {
+              location: {
+                latitude: locMsg.degreesLatitude,
+                longitude: locMsg.degreesLongitude,
+                name: locMsg.name || null,
+                address: locMsg.address || null,
+              },
+            };
+          }
+          const contactMsg = messageData?.contactMessage;
+          if (contactMsg) {
+            messageType = "contact";
+            extraMetadata = {
+              contact: {
+                display_name: contactMsg.displayName || null,
+                vcard: contactMsg.vcard || null,
+              },
+            };
+          }
+          const contactsArrayMsg = messageData?.contactsArrayMessage?.contacts;
+          if (Array.isArray(contactsArrayMsg) && contactsArrayMsg.length > 0) {
+            messageType = "contact";
+            extraMetadata = {
+              contacts: contactsArrayMsg.map((c: Record<string, unknown>) => ({
+                display_name: c.displayName || null,
+                vcard: c.vcard || null,
+              })),
+            };
+          }
+
+          const hasMedia = messageType !== "text" && messageType !== "location" && messageType !== "contact";
 
           // Download media via Evolution API getBase64 and upload to Storage
           if (hasMedia && keyData.id) {
@@ -666,15 +701,26 @@ Deno.serve(async (req) => {
             }
           }
 
+          // Phase 2: location & contact are not "media" but are valid inbound messages
+          const isLocation = messageType === "location";
+          const isContact = messageType === "contact";
+
           // Ignore delivery/read status updates that are not real inbound messages
-          const isStatusOnly = !messageText && !hasMedia;
+          const isStatusOnly = !messageText && !hasMedia && !isLocation && !isContact;
 
           // Skip group messages (they are handled elsewhere)
           const isGroupMessage = String(remoteJid).includes("@g.us") || String(remoteJid).includes("@broadcast");
 
           if (senderPhone && !isStatusOnly && !isGroupMessage) {
-            const displayText = mediaCaption || messageText || (hasMedia ? "" : "");
-            const resolvedText = displayText || (hasMedia ? `[${messageType === "audio" ? "🎵 Áudio" : messageType === "image" ? "📷 Imagem" : messageType === "video" ? "🎥 Vídeo" : "📎 Arquivo"}]` : "[Mensagem]");
+            const locName = (extraMetadata.location as Record<string, unknown> | undefined)?.name as string | undefined;
+            const contactName = (extraMetadata.contact as Record<string, unknown> | undefined)?.display_name as string | undefined
+              || ((extraMetadata.contacts as Record<string, unknown>[] | undefined)?.[0]?.display_name as string | undefined);
+
+            const displayText = mediaCaption || messageText || "";
+            const resolvedText = displayText
+              || (isLocation ? `📍 Localização${locName ? `: ${locName}` : ""}` : "")
+              || (isContact ? `👤 Contato${contactName ? `: ${contactName}` : ""}` : "")
+              || (hasMedia ? `[${messageType === "audio" ? "🎵 Áudio" : messageType === "image" ? "📷 Imagem" : messageType === "video" ? "🎥 Vídeo" : "📎 Arquivo"}]` : "[Mensagem]");
 
             // Log routed message
             await supabase.from("whatsapp_webhook_logs").insert({
@@ -683,7 +729,7 @@ Deno.serve(async (req) => {
               phone: senderPhone,
               organization_id: integration.organization_id,
               routing_status: "routed",
-              details: { message_type: hasMedia ? messageType : "text", from_me: isFromMe, text_preview: resolvedText.slice(0, 100) },
+              details: { message_type: hasMedia || isLocation || isContact ? messageType : "text", from_me: isFromMe, text_preview: resolvedText.slice(0, 100) },
             }).then(() => {}).catch(() => {});
 
             // For fromMe messages, the senderPhone is the contact we're messaging
@@ -698,7 +744,7 @@ Deno.serve(async (req) => {
               externalMessageId: keyData.id,
               mediaUrl,
               mediaMimeType,
-              messageType: hasMedia ? messageType : "text",
+              messageType: (hasMedia || isLocation || isContact) ? messageType : "text",
               fileName,
               sourceInstanceId: integration.id,
               sourceInstanceName: integration.name || instanceName,
@@ -706,6 +752,7 @@ Deno.serve(async (req) => {
               quotedContent: quotedContent?.slice(0, 200) || null,
               quotedExternalId,
               quotedSenderType: quotedFromMe === null ? null : (quotedFromMe ? "contact" : "user"),
+              extraMetadata,
             });
           } else if (isGroupMessage) {
             // Log discarded group message
@@ -811,6 +858,7 @@ interface RouteToInboxParams {
   quotedContent?: string | null;
   quotedExternalId?: string | null;
   quotedSenderType?: string | null;
+  extraMetadata?: Record<string, unknown>;
 }
 
 async function routeToInbox(
@@ -1058,6 +1106,9 @@ async function routeToInbox(
     if (params.mediaMimeType) messageInsert.media_mime_type = params.mediaMimeType;
     if (params.messageType && params.messageType !== "text") messageInsert.message_type = params.messageType;
     if (params.fileName) messageInsert.file_name = params.fileName;
+    if (params.extraMetadata && Object.keys(params.extraMetadata).length > 0) {
+      messageInsert.metadata = params.extraMetadata;
+    }
     if (params.quotedContent) messageInsert.quoted_content = params.quotedContent;
     if (params.quotedExternalId) {
       // Try to find the quoted message by external_id to set quoted_message_id

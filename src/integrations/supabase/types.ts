@@ -3218,6 +3218,7 @@ export type Database = {
           media_mime_type: string | null
           media_url: string | null
           message_type: string
+          metadata: Json | null
           quoted_content: string | null
           quoted_message_id: string | null
           quoted_sender_type: string | null
@@ -3236,6 +3237,7 @@ export type Database = {
           media_mime_type?: string | null
           media_url?: string | null
           message_type?: string
+          metadata?: Json | null
           quoted_content?: string | null
           quoted_message_id?: string | null
           quoted_sender_type?: string | null
@@ -3254,6 +3256,7 @@ export type Database = {
           media_mime_type?: string | null
           media_url?: string | null
           message_type?: string
+          metadata?: Json | null
           quoted_content?: string | null
           quoted_message_id?: string | null
           quoted_sender_type?: string | null

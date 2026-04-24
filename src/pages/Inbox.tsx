@@ -767,13 +767,14 @@ export default function Inbox() {
                 const ChannelIcon = channelIcons[conversation.channel] || MessageSquare;
                 const lastMessage = conversation.messages?.[conversation.messages.length - 1];
                 const unreadCount = getUnreadCount(conversation);
+                const hasUnread = unreadCount > 0;
                 const isSelected = selectedId === conversation.id;
 
                 return (
                   <div
                     key={conversation.id}
                     className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer border-b border-border/50 transition-colors ${
-                      isSelected ? 'bg-accent' : 'hover:bg-muted/50'
+                      isSelected ? 'bg-accent' : hasUnread ? 'bg-success/5 hover:bg-success/10' : 'hover:bg-muted/50'
                     }`}
                     onClick={() => setSelectedId(conversation.id)}
                   >
@@ -789,21 +790,21 @@ export default function Inbox() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium truncate">
+                        <span className={`text-sm truncate ${hasUnread ? 'font-bold text-foreground' : 'font-medium'}`}>
                           {conversation.contacts?.first_name} {conversation.contacts?.last_name}
                         </span>
-                        <span className="text-[10px] text-muted-foreground shrink-0 ml-1">
+                        <span className={`text-[10px] shrink-0 ml-1 ${hasUnread ? 'text-success font-semibold' : 'text-muted-foreground'}`}>
                           {lastMessage ? new Date(lastMessage.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''}
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground truncate mt-0.5">
+                      <p className={`text-xs truncate mt-0.5 ${hasUnread ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
                         {lastMessage?.content || 'Sem mensagens'}
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1 shrink-0">
-                      {unreadCount > 0 && (
-                        <span className="bg-primary text-primary-foreground text-[10px] h-4.5 min-w-4.5 flex items-center justify-center rounded-full px-1 font-medium">
-                          {unreadCount}
+                      {hasUnread && (
+                        <span className="bg-success text-success-foreground text-[11px] h-5 min-w-5 flex items-center justify-center rounded-full px-1.5 font-bold shadow-sm shadow-success/40 animate-in zoom-in">
+                          {unreadCount > 99 ? '99+' : unreadCount}
                         </span>
                       )}
                       {/* Puxar button for Fila tab */}

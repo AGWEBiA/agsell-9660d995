@@ -2,11 +2,31 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, MousePointerClick, List as ListIcon, Type, Activity } from 'lucide-react';
+import {
+  Plus,
+  Trash2,
+  MousePointerClick,
+  List as ListIcon,
+  Type,
+  Activity,
+  Mic,
+  MapPin,
+  UserSquare,
+  Image as ImageIcon,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type WhatsAppMessageKind = 'text' | 'buttons' | 'list' | 'presence';
+export type WhatsAppMessageKind =
+  | 'text'
+  | 'media'
+  | 'buttons'
+  | 'list'
+  | 'presence'
+  | 'audio_ptt'
+  | 'location'
+  | 'contact';
 
 interface Props {
   config: Record<string, unknown>;
@@ -23,7 +43,11 @@ interface ListSection { title: string; rows: ListRow[] }
  */
 export function WhatsAppInteractiveConfig({ config, onChange }: Props) {
   const kind: WhatsAppMessageKind = (config.message_kind as WhatsAppMessageKind) || 'text';
-  const setKind = (k: WhatsAppMessageKind) => onChange({ ...config, message_kind: k });
+  const setKind = (k: WhatsAppMessageKind) => {
+    const next: Record<string, unknown> = { ...config, message_kind: k };
+    if (k === 'media' && !config.media_type) next.media_type = 'image';
+    onChange(next);
+  };
 
   const buttons = (config.buttons as ButtonItem[]) || [];
   const setButtons = (b: ButtonItem[]) => onChange({ ...config, buttons: b });
@@ -32,10 +56,14 @@ export function WhatsAppInteractiveConfig({ config, onChange }: Props) {
   const setSections = (s: ListSection[]) => onChange({ ...config, list_sections: s });
 
   const kindOptions: { value: WhatsAppMessageKind; label: string; icon: React.ElementType; desc: string }[] = [
-    { value: 'text', label: 'Texto', icon: Type, desc: 'Mensagem padrão (texto / mídia)' },
-    { value: 'buttons', label: 'Botões', icon: MousePointerClick, desc: 'Até 3 botões clicáveis de resposta rápida' },
-    { value: 'list', label: 'Lista', icon: ListIcon, desc: 'Menu interativo com até 10 opções' },
-    { value: 'presence', label: '"Digitando..."', icon: Activity, desc: 'Mostra indicador antes da próxima mensagem' },
+    { value: 'text', label: 'Texto', icon: Type, desc: 'Mensagem padrão de texto' },
+    { value: 'media', label: 'Mídia', icon: ImageIcon, desc: 'Imagem, vídeo ou documento' },
+    { value: 'audio_ptt', label: 'Áudio (PTT)', icon: Mic, desc: 'Mensagem de voz nativa' },
+    { value: 'location', label: 'Localização', icon: MapPin, desc: 'Coordenadas geográficas' },
+    { value: 'contact', label: 'Contato (vCard)', icon: UserSquare, desc: 'Cartão de contato' },
+    { value: 'buttons', label: 'Botões', icon: MousePointerClick, desc: 'Até 3 botões clicáveis' },
+    { value: 'list', label: 'Lista', icon: ListIcon, desc: 'Menu interativo (até 10)' },
+    { value: 'presence', label: '"Digitando..."', icon: Activity, desc: 'Indicador antes da mensagem' },
   ];
 
   return (

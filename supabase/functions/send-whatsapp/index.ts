@@ -499,11 +499,89 @@ async function sendWithEvolutionAPI(
     return okResponse(result.data, result.instance);
   }
 
+  // ── Poll (enquete) ──
+  if (kind === "poll") {
+    const name = (whatsappReq.poll_name || whatsappReq.message || "").trim();
+    const values = (whatsappReq.poll_values || []).map(v => String(v).trim()).filter(Boolean).slice(0, 12);
+    if (!name || values.length < 2) {
+      return new Response(
+        JSON.stringify({ error: "poll_name and at least 2 poll_values are required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const selectableCount = Math.max(1, Math.min(Number(whatsappReq.poll_selectable_count ?? 1), values.length));
+    const result = await dispatch("message/sendPoll", {
+      number: phoneNumber,
+      name,
+      selectableCount,
+      values,
+    });
+    if (!result.ok) return errResponse(result.status, result.data);
+    return okResponse(result.data, result.instance);
+  }
+
+  // ── Reaction (reage a uma mensagem específica) ──
+  if (kind === "reaction") {
+    const emoji = whatsappReq.reaction_emoji ?? "";
+    const targetId = whatsappReq.reaction_external_id;
+    if (!targetId) {
+      return new Response(
+        JSON.stringify({ error: "reaction_external_id is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const remoteJid =
+      whatsappReq.reaction_remote_jid ||
+      (phoneNumber.includes("@") ? phoneNumber : `${phoneNumber}@s.whatsapp.net`);
+    const result = await dispatch("message/sendReaction", {
+      key: {
+        remoteJid,
+        fromMe: !!whatsappReq.reaction_from_me,
+        id: targetId,
+      },
+      reaction: emoji,
+    });
+    if (!result.ok) return errResponse(result.status, result.data);
+    return okResponse(result.data, result.instance);
+  }
+
+  // ── Sticker (figurinha webp) ──
+  if (kind === "sticker") {
+    const stickerUrl = whatsappReq.sticker_url || whatsappReq.media_url;
+    if (!stickerUrl) {
+      return new Response(
+        JSON.stringify({ error: "sticker_url is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const result = await dispatch("message/sendSticker", {
+      number: phoneNumber,
+      sticker: stickerUrl,
+    });
+    if (!result.ok) return errResponse(result.status, result.data);
+    return okResponse(result.data, result.instance);
+  }
+
+  // Helper to build mentions array (only useful in groups)
+  const isGroupTarget = phoneNumber.includes("@g.us") || (whatsappReq.to || "").includes("@g.us");
+  const buildMentions = (): { mentioned?: string[]; mentionsEveryOne?: boolean } => {
+    const out: { mentioned?: string[]; mentionsEveryOne?: boolean } = {};
+    if (!isGroupTarget) return out;
+    if (whatsappReq.mentions_everyone) out.mentionsEveryOne = true;
+    if (whatsappReq.mentions?.length) {
+      out.mentioned = whatsappReq.mentions
+        .map(m => String(m).replace(/\D/g, ""))
+        .filter(Boolean);
+    }
+    return out;
+  };
+
   // ── Text (default) ──
   if (kind === "text") {
     const textPayload: Record<string, unknown> = {
       number: phoneNumber,
       text: whatsappReq.message,
+      ...buildMentions(),
     };
     if (whatsappReq.quoted_message_external_id) {
       textPayload.quoted = { key: { id: whatsappReq.quoted_message_external_id } };
@@ -519,6 +597,7 @@ async function sendWithEvolutionAPI(
     mediatype: whatsappReq.media_type || "image",
     media: whatsappReq.media_url,
     caption: whatsappReq.media_caption ?? whatsappReq.message ?? "",
+    ...buildMentions(),
   };
   if (whatsappReq.media_type === "document" && whatsappReq.media_filename) {
     mediaPayload.fileName = whatsappReq.media_filename;

@@ -598,6 +598,11 @@ Deno.serve(async (req) => {
             mediaMimeType = messageData.videoMessage.mimetype || "video/mp4";
             messageType = "video";
             mediaCaption = messageData.videoMessage.caption || null;
+            // Capture base64 thumbnail (jpegThumbnail) as data URL for poster preview if available
+            const thumb = messageData.videoMessage.jpegThumbnail;
+            if (typeof thumb === "string" && thumb.length > 0) {
+              extraMetadata.thumbnail_url = `data:image/jpeg;base64,${thumb}`;
+            }
           } else if (messageData?.documentMessage) {
             mediaMimeType = messageData.documentMessage.mimetype || "application/octet-stream";
             messageType = "document";

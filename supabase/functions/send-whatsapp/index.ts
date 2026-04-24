@@ -579,6 +579,46 @@ async function sendWithBusinessAPI(
       JSON.stringify({ success: true, provider: "whatsapp_business", skipped: "presence_not_supported_on_cloud_api" }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+  } else if (businessKind === "audio_ptt") {
+    const audioUrl = whatsappReq.audio_url || whatsappReq.media_url;
+    messageBody = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "audio",
+      audio: { link: audioUrl },
+    };
+  } else if (businessKind === "location") {
+    messageBody = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "location",
+      location: {
+        latitude: Number(whatsappReq.latitude),
+        longitude: Number(whatsappReq.longitude),
+        ...(whatsappReq.location_name ? { name: whatsappReq.location_name } : {}),
+        ...(whatsappReq.location_address ? { address: whatsappReq.location_address } : {}),
+      },
+    };
+  } else if (businessKind === "contact") {
+    const cPhone = (whatsappReq.contact_phone || "").replace(/\D/g, "");
+    messageBody = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "contacts",
+      contacts: [
+        {
+          name: { formatted_name: whatsappReq.contact_full_name, first_name: whatsappReq.contact_full_name },
+          phones: [{ phone: cPhone, type: "CELL", wa_id: cPhone }],
+          ...(whatsappReq.contact_organization
+            ? { org: { company: whatsappReq.contact_organization } }
+            : {}),
+          ...(whatsappReq.contact_email ? { emails: [{ email: whatsappReq.contact_email, type: "WORK" }] } : {}),
+        },
+      ],
+    };
   } else if (whatsappReq.template_name) {
     messageBody = {
       messaging_product: "whatsapp",
@@ -603,15 +643,21 @@ async function sendWithBusinessAPI(
     };
   } else if (whatsappReq.media_url) {
     const mediaType = whatsappReq.media_type || "image";
+    const mediaObj: Record<string, unknown> = {
+      link: whatsappReq.media_url,
+    };
+    if (mediaType !== "audio") {
+      mediaObj.caption = whatsappReq.media_caption ?? whatsappReq.message ?? "";
+    }
+    if (mediaType === "document" && whatsappReq.media_filename) {
+      mediaObj.filename = whatsappReq.media_filename;
+    }
     messageBody = {
       messaging_product: "whatsapp",
       recipient_type: "individual",
       to: phoneNumber,
       type: mediaType,
-      [mediaType]: {
-        link: whatsappReq.media_url,
-        caption: whatsappReq.message,
-      },
+      [mediaType]: mediaObj,
     };
   } else {
     messageBody = {

@@ -419,6 +419,69 @@ async function sendWithEvolutionAPI(
     return okResponse(result.data, result.instance);
   }
 
+  // ── Audio PTT (voice note via sendWhatsAppAudio) ──
+  if (kind === "audio_ptt") {
+    const audioUrl = whatsappReq.audio_url || whatsappReq.media_url;
+    if (!audioUrl) {
+      return new Response(
+        JSON.stringify({ error: "audio_url is required for audio_ptt" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const result = await dispatch("message/sendWhatsAppAudio", {
+      number: phoneNumber,
+      audio: audioUrl,
+      encoding: true,
+    });
+    if (!result.ok) return errResponse(result.status, result.data);
+    return okResponse(result.data, result.instance);
+  }
+
+  // ── Location ──
+  if (kind === "location") {
+    if (whatsappReq.latitude == null || whatsappReq.longitude == null) {
+      return new Response(
+        JSON.stringify({ error: "latitude and longitude are required for location" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const result = await dispatch("message/sendLocation", {
+      number: phoneNumber,
+      latitude: Number(whatsappReq.latitude),
+      longitude: Number(whatsappReq.longitude),
+      name: whatsappReq.location_name || "",
+      address: whatsappReq.location_address || "",
+    });
+    if (!result.ok) return errResponse(result.status, result.data);
+    return okResponse(result.data, result.instance);
+  }
+
+  // ── Contact (vCard) ──
+  if (kind === "contact") {
+    const fullName = whatsappReq.contact_full_name || "";
+    const cPhone = (whatsappReq.contact_phone || "").replace(/\D/g, "");
+    if (!fullName || !cPhone) {
+      return new Response(
+        JSON.stringify({ error: "contact_full_name and contact_phone are required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const result = await dispatch("message/sendContact", {
+      number: phoneNumber,
+      contact: [
+        {
+          fullName,
+          wuid: cPhone,
+          phoneNumber: cPhone,
+          ...(whatsappReq.contact_organization ? { organization: whatsappReq.contact_organization } : {}),
+          ...(whatsappReq.contact_email ? { email: whatsappReq.contact_email } : {}),
+        },
+      ],
+    });
+    if (!result.ok) return errResponse(result.status, result.data);
+    return okResponse(result.data, result.instance);
+  }
+
   // ── Text (default) ──
   if (kind === "text") {
     const textPayload: Record<string, unknown> = {
@@ -434,12 +497,16 @@ async function sendWithEvolutionAPI(
   }
 
   // ── Media (image/video/audio/document via sendMedia) ──
-  const result = await dispatch("message/sendMedia", {
+  const mediaPayload: Record<string, unknown> = {
     number: phoneNumber,
     mediatype: whatsappReq.media_type || "image",
     media: whatsappReq.media_url,
-    caption: whatsappReq.message,
-  });
+    caption: whatsappReq.media_caption ?? whatsappReq.message ?? "",
+  };
+  if (whatsappReq.media_type === "document" && whatsappReq.media_filename) {
+    mediaPayload.fileName = whatsappReq.media_filename;
+  }
+  const result = await dispatch("message/sendMedia", mediaPayload);
   if (!result.ok) return errResponse(result.status, result.data);
   return okResponse(result.data, result.instance);
 }

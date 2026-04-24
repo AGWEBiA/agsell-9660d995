@@ -165,6 +165,21 @@ serve(async (req) => {
         payload.contact_phone = actionConfig.contact_phone;
         payload.contact_organization = actionConfig.contact_organization;
         payload.contact_email = actionConfig.contact_email;
+      } else if (messageKind === 'poll') {
+        payload.poll_name = actionConfig.poll_name || actionConfig.message;
+        payload.poll_values = actionConfig.poll_values || [];
+        payload.poll_selectable_count = actionConfig.poll_selectable_count ?? 1;
+      } else if (messageKind === 'reaction') {
+        payload.reaction_emoji = actionConfig.reaction_emoji ?? '';
+        payload.reaction_external_id = actionConfig.reaction_external_id;
+        payload.reaction_from_me = actionConfig.reaction_from_me;
+      } else if (messageKind === 'sticker') {
+        payload.sticker_url = actionConfig.sticker_url || actionConfig.media_url;
+      }
+      // Group mentions (only effective when "to" is a group JID)
+      if (actionConfig.mentions || actionConfig.mentions_everyone) {
+        payload.mentions = actionConfig.mentions || [];
+        payload.mentions_everyone = !!actionConfig.mentions_everyone;
       }
       if (actionConfig.media_url) {
         payload.media_url = actionConfig.media_url;

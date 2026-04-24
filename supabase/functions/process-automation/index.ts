@@ -219,8 +219,8 @@ serve(async (req) => {
             const contact = await getContact();
             const phone = (action.config.to as string) || contact?.whatsapp || contact?.phone;
             if (phone) {
-              const message = replaceVars(action.config.message as string, contact);
-              actionResult = await sendWhatsAppDirect(phone, message);
+              const cfg = { ...action.config, message: replaceVars(action.config.message as string, contact) };
+              actionResult = await sendWhatsAppDirect(phone, cfg);
             } else {
               actionResult = { skipped: true, reason: 'No phone number' };
             }

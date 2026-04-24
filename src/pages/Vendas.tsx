@@ -372,6 +372,9 @@ export default function Vendas() {
         </div>
       </section>
 
+      {/* Novidades — recursos recém-lançados */}
+      <WhatsNewSection />
+
       {/* Trilhas (com imagens, sem "Aprenda") */}
       <section id="trilhas" className="py-20 md:py-28 border-t border-white/5">
         <div className="container mx-auto px-4 sm:px-6">

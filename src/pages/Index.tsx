@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { WhatsNewSection } from '@/components/vendas/WhatsNewSection';
 
 // ─── SECTION 1: Navbar ──────────────────────────────────────
 function Navbar() {
@@ -1080,6 +1081,7 @@ export default function LandingPage() {
         <CostComparisonSection />
         <ComparisonTableSection />
         <DifferentialsSection />
+        <WhatsNewSection />
         <FeaturesSection />
         <BrazilSection />
         <MigrationSection />

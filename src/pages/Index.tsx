@@ -76,6 +76,7 @@ function Navbar() {
       {mobileMenuOpen && (
         <div className="md:hidden bg-[hsl(0,0%,5%)]/95 backdrop-blur-xl border-t border-[hsl(0,0%,16%)] animate-fade-in">
           <nav className="container mx-auto px-4 py-4 flex flex-col gap-3">
+            <a href="#novidades" onClick={() => setMobileMenuOpen(false)} className="text-primary hover:text-white transition-colors py-2 text-sm font-semibold">✨ Novidades</a>
             <a href="#funcionalidades" onClick={() => setMobileMenuOpen(false)} className="text-[hsl(0,0%,63%)] hover:text-white transition-colors py-2 text-sm">Funcionalidades</a>
             <a href="#diferenciais" onClick={() => setMobileMenuOpen(false)} className="text-[hsl(0,0%,63%)] hover:text-white transition-colors py-2 text-sm">Diferenciais</a>
             <a href="#comparativo" onClick={() => setMobileMenuOpen(false)} className="text-[hsl(0,0%,63%)] hover:text-white transition-colors py-2 text-sm">Comparativo</a>

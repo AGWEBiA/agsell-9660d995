@@ -1106,6 +1106,9 @@ async function routeToInbox(
     if (params.mediaMimeType) messageInsert.media_mime_type = params.mediaMimeType;
     if (params.messageType && params.messageType !== "text") messageInsert.message_type = params.messageType;
     if (params.fileName) messageInsert.file_name = params.fileName;
+    if (params.extraMetadata && Object.keys(params.extraMetadata).length > 0) {
+      messageInsert.metadata = params.extraMetadata;
+    }
     if (params.quotedContent) messageInsert.quoted_content = params.quotedContent;
     if (params.quotedExternalId) {
       // Try to find the quoted message by external_id to set quoted_message_id

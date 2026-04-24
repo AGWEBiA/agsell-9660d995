@@ -587,6 +587,9 @@ Deno.serve(async (req) => {
             ? !contextInfo.participant.includes(senderPhone)
             : null;
 
+          // Declared early so media branches (e.g. video thumbnail) can populate before location/contact
+          let extraMetadata: Record<string, unknown> = {};
+
           if (messageData?.imageMessage) {
             mediaMimeType = messageData.imageMessage.mimetype || "image/jpeg";
             messageType = "image";
@@ -614,7 +617,6 @@ Deno.serve(async (req) => {
           }
 
           // Phase 2: capture location & contact card metadata (no binary download needed)
-          let extraMetadata: Record<string, unknown> = {};
           const locMsg = messageData?.locationMessage;
           if (locMsg && (locMsg.degreesLatitude != null || locMsg.degreesLongitude != null)) {
             messageType = "location";

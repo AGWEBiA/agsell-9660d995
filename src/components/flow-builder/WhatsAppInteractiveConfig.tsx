@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import {
   Plus,
   Trash2,
@@ -15,6 +16,10 @@ import {
   MapPin,
   UserSquare,
   Image as ImageIcon,
+  BarChart3,
+  Smile,
+  Sticker,
+  AtSign,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -26,7 +31,10 @@ export type WhatsAppMessageKind =
   | 'presence'
   | 'audio_ptt'
   | 'location'
-  | 'contact';
+  | 'contact'
+  | 'poll'
+  | 'reaction'
+  | 'sticker';
 
 interface Props {
   config: Record<string, unknown>;
@@ -63,6 +71,9 @@ export function WhatsAppInteractiveConfig({ config, onChange }: Props) {
     { value: 'contact', label: 'Contato (vCard)', icon: UserSquare, desc: 'Cartão de contato' },
     { value: 'buttons', label: 'Botões', icon: MousePointerClick, desc: 'Até 3 botões clicáveis' },
     { value: 'list', label: 'Lista', icon: ListIcon, desc: 'Menu interativo (até 10)' },
+    { value: 'poll', label: 'Enquete', icon: BarChart3, desc: 'Votação com até 12 opções' },
+    { value: 'reaction', label: 'Reação', icon: Smile, desc: 'Emoji em mensagem específica' },
+    { value: 'sticker', label: 'Figurinha', icon: Sticker, desc: 'Sticker WebP por URL' },
     { value: 'presence', label: '"Digitando..."', icon: Activity, desc: 'Indicador antes da mensagem' },
   ];
 
@@ -511,6 +522,200 @@ export function WhatsAppInteractiveConfig({ config, onChange }: Props) {
               />
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── POLL ── */}
+      {kind === 'poll' && (() => {
+        const pollValues = ((config.poll_values as string[]) || ['', '']);
+        const setPollValues = (v: string[]) => onChange({ ...config, poll_values: v });
+        return (
+          <div className="space-y-3 rounded-lg border border-fuchsia-200 dark:border-fuchsia-800 bg-fuchsia-50/50 dark:bg-fuchsia-900/10 p-4">
+            <Label className="text-sm font-medium text-fuchsia-700 dark:text-fuchsia-400">Enquete (votação)</Label>
+            <p className="text-xs text-muted-foreground -mt-2">
+              Cria uma enquete nativa do WhatsApp. Funciona apenas no canal não-oficial (Evolution API).
+            </p>
+
+            <div className="space-y-1">
+              <Label className="text-xs">Pergunta</Label>
+              <Input
+                placeholder="Ex: Qual horário é melhor para você?"
+                value={String(config.poll_name || '')}
+                maxLength={255}
+                onChange={e => onChange({ ...config, poll_name: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs">Opções ({pollValues.length}/12)</Label>
+              </div>
+              {pollValues.map((val, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <Input
+                    placeholder={`Opção ${idx + 1}`}
+                    value={val}
+                    maxLength={100}
+                    onChange={e => {
+                      const next = [...pollValues];
+                      next[idx] = e.target.value;
+                      setPollValues(next);
+                    }}
+                  />
+                  {pollValues.length > 2 && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setPollValues(pollValues.filter((_, i) => i !== idx))}
+                      className="text-destructive shrink-0"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              {pollValues.length < 12 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPollValues([...pollValues, ''])}
+                  className="w-full"
+                >
+                  <Plus className="h-3 w-3 mr-1" /> Adicionar opção
+                </Button>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between rounded border border-border bg-background/60 p-3">
+              <div>
+                <Label className="text-xs">Múltipla escolha</Label>
+                <p className="text-[11px] text-muted-foreground">Permite ao contato selecionar mais de uma opção</p>
+              </div>
+              <Switch
+                checked={Number(config.poll_selectable_count || 1) > 1}
+                onCheckedChange={v => onChange({ ...config, poll_selectable_count: v ? Math.max(2, pollValues.length) : 1 })}
+              />
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ── REACTION ── */}
+      {kind === 'reaction' && (
+        <div className="space-y-3 rounded-lg border border-yellow-200 dark:border-yellow-800 bg-yellow-50/50 dark:bg-yellow-900/10 p-4">
+          <Label className="text-sm font-medium text-yellow-700 dark:text-yellow-400">Reação (emoji)</Label>
+          <p className="text-xs text-muted-foreground -mt-2">
+            Adiciona um emoji à última mensagem do contato. Use um id externo de mensagem específico ou{' '}
+            <code className="text-[10px]">{'{{ultima_mensagem_id}}'}</code> para reagir à mais recente.
+          </p>
+
+          <div className="grid grid-cols-[1fr_2fr] gap-2">
+            <div className="space-y-1">
+              <Label className="text-xs">Emoji</Label>
+              <Input
+                placeholder="👍"
+                value={String(config.reaction_emoji ?? '')}
+                maxLength={4}
+                onChange={e => onChange({ ...config, reaction_emoji: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">ID da mensagem alvo</Label>
+              <Input
+                placeholder="{{ultima_mensagem_id}}"
+                value={String(config.reaction_external_id || '')}
+                onChange={e => onChange({ ...config, reaction_external_id: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between rounded border border-border bg-background/60 p-3">
+            <div>
+              <Label className="text-xs">Reagir a uma mensagem nossa</Label>
+              <p className="text-[11px] text-muted-foreground">Marque se o ID alvo é de uma mensagem enviada por nós</p>
+            </div>
+            <Switch
+              checked={!!config.reaction_from_me}
+              onCheckedChange={v => onChange({ ...config, reaction_from_me: v })}
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-1">
+            {['👍','❤️','😂','😮','😢','🙏','🔥','🎉','✅','❌'].map(em => (
+              <button
+                key={em}
+                type="button"
+                onClick={() => onChange({ ...config, reaction_emoji: em })}
+                className="text-lg rounded border border-border hover:bg-muted px-2 py-1"
+              >
+                {em}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => onChange({ ...config, reaction_emoji: '' })}
+              className="text-xs rounded border border-border hover:bg-muted px-2 py-1"
+            >
+              Remover
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── STICKER ── */}
+      {kind === 'sticker' && (
+        <div className="space-y-3 rounded-lg border border-pink-200 dark:border-pink-800 bg-pink-50/50 dark:bg-pink-900/10 p-4">
+          <Label className="text-sm font-medium text-pink-700 dark:text-pink-400">Figurinha (sticker)</Label>
+          <p className="text-xs text-muted-foreground -mt-2">
+            Envia uma figurinha animada ou estática (formato WebP, ideal 512x512). Use uma URL pública.
+          </p>
+          <div className="space-y-1">
+            <Label className="text-xs">URL do sticker (.webp)</Label>
+            <Input
+              placeholder="https://...sticker.webp"
+              value={String(config.sticker_url || '')}
+              onChange={e => onChange({ ...config, sticker_url: e.target.value })}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ── MENTIONS (group only) ── */}
+      {(kind === 'text' || kind === 'media') && (
+        <div className="space-y-3 rounded-lg border border-cyan-200 dark:border-cyan-800 bg-cyan-50/50 dark:bg-cyan-900/10 p-4">
+          <div className="flex items-center gap-2">
+            <AtSign className="h-4 w-4 text-cyan-600" />
+            <Label className="text-sm font-medium text-cyan-700 dark:text-cyan-400">Menções em grupo (opcional)</Label>
+          </div>
+          <p className="text-xs text-muted-foreground -mt-2">
+            Quando o destinatário for um grupo, o WhatsApp marca os números abaixo na mensagem. Ignorado em conversas 1:1.
+          </p>
+
+          <div className="flex items-center justify-between rounded border border-border bg-background/60 p-3">
+            <div>
+              <Label className="text-xs">Mencionar todos (@all)</Label>
+              <p className="text-[11px] text-muted-foreground">Marca todos os participantes do grupo</p>
+            </div>
+            <Switch
+              checked={!!config.mentions_everyone}
+              onCheckedChange={v => onChange({ ...config, mentions_everyone: v })}
+            />
+          </div>
+
+          {!config.mentions_everyone && (
+            <div className="space-y-1">
+              <Label className="text-xs">Telefones a mencionar (um por linha, com DDI)</Label>
+              <textarea
+                className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm font-mono"
+                placeholder={'5511999990000\n5511988887777'}
+                value={((config.mentions as string[]) || []).join('\n')}
+                onChange={e => onChange({
+                  ...config,
+                  mentions: e.target.value.split('\n').map(s => s.trim()).filter(Boolean),
+                })}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -37,7 +37,10 @@ interface WhatsAppRequest {
     | "presence"
     | "audio_ptt"
     | "location"
-    | "contact";
+    | "contact"
+    | "poll"
+    | "reaction"
+    | "sticker";
   // Buttons (interactive reply buttons, max 3)
   buttons?: WhatsAppButton[];
   buttons_footer?: string;
@@ -70,6 +73,20 @@ interface WhatsAppRequest {
   template_name?: string;
   template_params?: string[];
   quoted_message_external_id?: string; // External WhatsApp message ID to quote/reply to
+  // Phase 3 — Poll
+  poll_name?: string;          // question
+  poll_values?: string[];      // up to 12 options
+  poll_selectable_count?: number; // 1 = single, >1 = multi
+  // Phase 3 — Reaction
+  reaction_emoji?: string;     // single emoji (or "" to remove)
+  reaction_external_id?: string; // external message id to react to
+  reaction_from_me?: boolean;  // whether the original message was sent by us
+  reaction_remote_jid?: string; // override remoteJid (defaults to "to")
+  // Phase 3 — Sticker
+  sticker_url?: string;        // public webp URL
+  // Phase 3 — Mentions (works only when "to" is a group JID)
+  mentions?: string[];         // list of phone numbers in international format (no "+")
+  mentions_everyone?: boolean; // mention all group participants
 }
 
 Deno.serve(async (req) => {
@@ -482,11 +499,89 @@ async function sendWithEvolutionAPI(
     return okResponse(result.data, result.instance);
   }
 
+  // ── Poll (enquete) ──
+  if (kind === "poll") {
+    const name = (whatsappReq.poll_name || whatsappReq.message || "").trim();
+    const values = (whatsappReq.poll_values || []).map(v => String(v).trim()).filter(Boolean).slice(0, 12);
+    if (!name || values.length < 2) {
+      return new Response(
+        JSON.stringify({ error: "poll_name and at least 2 poll_values are required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const selectableCount = Math.max(1, Math.min(Number(whatsappReq.poll_selectable_count ?? 1), values.length));
+    const result = await dispatch("message/sendPoll", {
+      number: phoneNumber,
+      name,
+      selectableCount,
+      values,
+    });
+    if (!result.ok) return errResponse(result.status, result.data);
+    return okResponse(result.data, result.instance);
+  }
+
+  // ── Reaction (reage a uma mensagem específica) ──
+  if (kind === "reaction") {
+    const emoji = whatsappReq.reaction_emoji ?? "";
+    const targetId = whatsappReq.reaction_external_id;
+    if (!targetId) {
+      return new Response(
+        JSON.stringify({ error: "reaction_external_id is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const remoteJid =
+      whatsappReq.reaction_remote_jid ||
+      (phoneNumber.includes("@") ? phoneNumber : `${phoneNumber}@s.whatsapp.net`);
+    const result = await dispatch("message/sendReaction", {
+      key: {
+        remoteJid,
+        fromMe: !!whatsappReq.reaction_from_me,
+        id: targetId,
+      },
+      reaction: emoji,
+    });
+    if (!result.ok) return errResponse(result.status, result.data);
+    return okResponse(result.data, result.instance);
+  }
+
+  // ── Sticker (figurinha webp) ──
+  if (kind === "sticker") {
+    const stickerUrl = whatsappReq.sticker_url || whatsappReq.media_url;
+    if (!stickerUrl) {
+      return new Response(
+        JSON.stringify({ error: "sticker_url is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const result = await dispatch("message/sendSticker", {
+      number: phoneNumber,
+      sticker: stickerUrl,
+    });
+    if (!result.ok) return errResponse(result.status, result.data);
+    return okResponse(result.data, result.instance);
+  }
+
+  // Helper to build mentions array (only useful in groups)
+  const isGroupTarget = phoneNumber.includes("@g.us") || (whatsappReq.to || "").includes("@g.us");
+  const buildMentions = (): { mentioned?: string[]; mentionsEveryOne?: boolean } => {
+    const out: { mentioned?: string[]; mentionsEveryOne?: boolean } = {};
+    if (!isGroupTarget) return out;
+    if (whatsappReq.mentions_everyone) out.mentionsEveryOne = true;
+    if (whatsappReq.mentions?.length) {
+      out.mentioned = whatsappReq.mentions
+        .map(m => String(m).replace(/\D/g, ""))
+        .filter(Boolean);
+    }
+    return out;
+  };
+
   // ── Text (default) ──
   if (kind === "text") {
     const textPayload: Record<string, unknown> = {
       number: phoneNumber,
       text: whatsappReq.message,
+      ...buildMentions(),
     };
     if (whatsappReq.quoted_message_external_id) {
       textPayload.quoted = { key: { id: whatsappReq.quoted_message_external_id } };
@@ -502,6 +597,7 @@ async function sendWithEvolutionAPI(
     mediatype: whatsappReq.media_type || "image",
     media: whatsappReq.media_url,
     caption: whatsappReq.media_caption ?? whatsappReq.message ?? "",
+    ...buildMentions(),
   };
   if (whatsappReq.media_type === "document" && whatsappReq.media_filename) {
     mediaPayload.fileName = whatsappReq.media_filename;
@@ -619,6 +715,38 @@ async function sendWithBusinessAPI(
         },
       ],
     };
+  } else if (businessKind === "reaction") {
+    if (!whatsappReq.reaction_external_id) {
+      return new Response(
+        JSON.stringify({ error: "reaction_external_id is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    messageBody = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "reaction",
+      reaction: {
+        message_id: whatsappReq.reaction_external_id,
+        emoji: whatsappReq.reaction_emoji ?? "",
+      },
+    };
+  } else if (businessKind === "sticker") {
+    const stickerUrl = whatsappReq.sticker_url || whatsappReq.media_url;
+    messageBody = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "sticker",
+      sticker: { link: stickerUrl },
+    };
+  } else if (businessKind === "poll") {
+    // Cloud API doesn't expose poll send — gracefully skip
+    return new Response(
+      JSON.stringify({ success: true, provider: "whatsapp_business", skipped: "poll_not_supported_on_cloud_api" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } else if (whatsappReq.template_name) {
     messageBody = {
       messaging_product: "whatsapp",

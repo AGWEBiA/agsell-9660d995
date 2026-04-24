@@ -45,7 +45,7 @@ export function WhatsAppNodeConfig({ config, onChange }: WhatsAppNodeConfigProps
       </div>
 
       {/* Message — hidden for kinds that don't use a body text */}
-      {!['presence', 'audio_ptt', 'location', 'contact'].includes(String(config.message_kind || '')) && (
+      {!['presence', 'audio_ptt', 'location', 'contact', 'reaction', 'sticker'].includes(String(config.message_kind || '')) && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label>

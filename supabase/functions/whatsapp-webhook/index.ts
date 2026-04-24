@@ -555,7 +555,42 @@ Deno.serve(async (req) => {
             messageType = "image";
           }
 
-          const hasMedia = messageType !== "text";
+          // Phase 2: capture location & contact card metadata (no binary download needed)
+          let extraMetadata: Record<string, unknown> = {};
+          const locMsg = messageData?.locationMessage;
+          if (locMsg && (locMsg.degreesLatitude != null || locMsg.degreesLongitude != null)) {
+            messageType = "location";
+            extraMetadata = {
+              location: {
+                latitude: locMsg.degreesLatitude,
+                longitude: locMsg.degreesLongitude,
+                name: locMsg.name || null,
+                address: locMsg.address || null,
+              },
+            };
+          }
+          const contactMsg = messageData?.contactMessage;
+          if (contactMsg) {
+            messageType = "contact";
+            extraMetadata = {
+              contact: {
+                display_name: contactMsg.displayName || null,
+                vcard: contactMsg.vcard || null,
+              },
+            };
+          }
+          const contactsArrayMsg = messageData?.contactsArrayMessage?.contacts;
+          if (Array.isArray(contactsArrayMsg) && contactsArrayMsg.length > 0) {
+            messageType = "contact";
+            extraMetadata = {
+              contacts: contactsArrayMsg.map((c: Record<string, unknown>) => ({
+                display_name: c.displayName || null,
+                vcard: c.vcard || null,
+              })),
+            };
+          }
+
+          const hasMedia = messageType !== "text" && messageType !== "location" && messageType !== "contact";
 
           // Download media via Evolution API getBase64 and upload to Storage
           if (hasMedia && keyData.id) {

@@ -957,6 +957,34 @@ export default function Inbox() {
                             <span className="text-xs truncate">{message.file_name || 'Arquivo'}</span>
                           </a>
                         )}
+                        {msgType === 'location' && message.metadata?.location && (
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${message.metadata.location.latitude},${message.metadata.location.longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 p-2 rounded border border-current/20 hover:opacity-80 mb-1"
+                          >
+                            <MapPin className="h-4 w-4 shrink-0 text-teal-500" />
+                            <div className="flex flex-col">
+                              <span className="text-xs font-medium">
+                                {message.metadata.location.name || 'Localização'}
+                              </span>
+                              {message.metadata.location.address && (
+                                <span className="text-[10px] text-muted-foreground">{message.metadata.location.address}</span>
+                              )}
+                            </div>
+                          </a>
+                        )}
+                        {msgType === 'contact' && (message.metadata?.contact || message.metadata?.contacts) && (
+                          <div className="flex items-center gap-2 p-2 rounded border border-current/20 mb-1">
+                            <UserSquare className="h-4 w-4 shrink-0 text-indigo-500" />
+                            <span className="text-xs font-medium">
+                              {message.metadata.contact?.display_name
+                                || message.metadata.contacts?.[0]?.display_name
+                                || 'Cartão de contato'}
+                            </span>
+                          </div>
+                        )}
                         {message.content && !(msgType !== 'text' && message.content.startsWith('📎')) && (
                           renderMessageContent(message.content, isUser)
                         )}

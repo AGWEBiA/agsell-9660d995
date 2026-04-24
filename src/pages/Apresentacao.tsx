@@ -37,6 +37,9 @@ const PAIN_POINTS = [
 const COMPARISON_ITEMS = [
   { feature: 'CRM com Pipeline Kanban', them: false, us: true },
   { feature: 'WhatsApp com QR Code + API Oficial', them: false, us: true },
+  { feature: 'WhatsApp Interativo (botões, listas, enquetes, reações)', them: 'parcial', us: true },
+  { feature: 'Áudio PTT, Localização, vCard e Menções @all em grupos', them: false, us: true },
+  { feature: 'Formulários com visual 100% customizável', them: 'parcial', us: true },
   { feature: 'E-mail Marketing com Domínio Próprio', them: 'parcial', us: true },
   { feature: 'Inbox Unificado (WhatsApp, E-mail, Instagram, Telegram)', them: false, us: true },
   { feature: 'Flow Builder Visual com Analytics por Nó', them: false, us: true },

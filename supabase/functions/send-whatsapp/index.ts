@@ -73,6 +73,20 @@ interface WhatsAppRequest {
   template_name?: string;
   template_params?: string[];
   quoted_message_external_id?: string; // External WhatsApp message ID to quote/reply to
+  // Phase 3 — Poll
+  poll_name?: string;          // question
+  poll_values?: string[];      // up to 12 options
+  poll_selectable_count?: number; // 1 = single, >1 = multi
+  // Phase 3 — Reaction
+  reaction_emoji?: string;     // single emoji (or "" to remove)
+  reaction_external_id?: string; // external message id to react to
+  reaction_from_me?: boolean;  // whether the original message was sent by us
+  reaction_remote_jid?: string; // override remoteJid (defaults to "to")
+  // Phase 3 — Sticker
+  sticker_url?: string;        // public webp URL
+  // Phase 3 — Mentions (works only when "to" is a group JID)
+  mentions?: string[];         // list of phone numbers in international format (no "+")
+  mentions_everyone?: boolean; // mention all group participants
 }
 
 Deno.serve(async (req) => {

@@ -946,7 +946,12 @@ export default function Inbox() {
                             <source src={message.media_url} type={message.media_mime_type || 'audio/mpeg'} />
                           </audio>
                         )}
-                        {msgType === 'file' && message.media_url && (
+                        {msgType === 'video' && message.media_url && (
+                          <video controls className="rounded-lg max-w-full max-h-72 mb-1" preload="metadata">
+                            <source src={message.media_url} type={message.media_mime_type || 'video/mp4'} />
+                          </video>
+                        )}
+                        {(msgType === 'file' || msgType === 'document') && message.media_url && (
                           <a href={message.media_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 rounded border border-current/20 hover:opacity-80 mb-1">
                             <FileIcon className="h-4 w-4 shrink-0" />
                             <span className="text-xs truncate">{message.file_name || 'Arquivo'}</span>

@@ -1038,6 +1038,7 @@ Deno.serve(async (req) => {
               quotedExternalId,
               quotedSenderType: quotedFromMe === null ? null : (quotedFromMe ? "contact" : "user"),
               extraMetadata,
+              contactName: pushName,
             });
           } else if (isGroupMessage) {
             // Log discarded group message

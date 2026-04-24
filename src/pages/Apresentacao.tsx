@@ -228,6 +228,9 @@ export default function Apresentacao() {
         </div>
       </section>
 
+      {/* Novidades — recursos recém-lançados */}
+      <WhatsNewSection />
+
       {/* Comparison Table */}
       <section id="comparativo" className="py-16 md:py-24 border-t border-white/5">
         <div className="container mx-auto px-4 sm:px-6">

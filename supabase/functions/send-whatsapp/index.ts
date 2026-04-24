@@ -326,7 +326,105 @@ async function sendWithEvolutionAPI(
     return { ok: false as const, ...(lastError || { status: 500, data: { message: "Unknown Evolution API error" }, instance: configuredInstanceName }) };
   };
 
-  if (!whatsappReq.media_url) {
+  // Generic dispatcher (works for sendText, sendMedia, sendButtons, sendList, sendPresence)
+  const dispatch = async (endpoint: string, payload: Record<string, unknown>) => {
+    let lastError: { status: number; data: any; instance: string } | null = null;
+    for (const candidate of instanceCandidates) {
+      const response = await fetch(`${baseUrl}/${endpoint}/${encodeURIComponent(candidate)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: apiKey },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (response.ok) return { ok: true as const, data, instance: candidate };
+      lastError = { status: response.status, data, instance: candidate };
+      const message = data?.response?.message?.[0] || data?.message || "";
+      const isInstanceNotFound = response.status === 404 && /instance does not exist/i.test(String(message));
+      if (!isInstanceNotFound) break;
+    }
+    return { ok: false as const, ...(lastError || { status: 500, data: { message: "Unknown Evolution API error" }, instance: configuredInstanceName }) };
+  };
+
+  const okResponse = (data: unknown, instance: string) =>
+    new Response(
+      JSON.stringify({ success: true, provider: "evolution_api", data, instance_used: instance }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  const errResponse = (status: number, data: any) =>
+    new Response(
+      JSON.stringify({ error: `Evolution API error: ${data?.message || status}` }),
+      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+
+  const kind = whatsappReq.message_kind ?? (whatsappReq.media_url ? "media" : "text");
+
+  // ── Presence (typing/recording indicator) ──
+  if (kind === "presence") {
+    const presence = whatsappReq.presence_state || "composing";
+    const delay = Math.min(Math.max(whatsappReq.presence_delay_ms ?? 2000, 200), 20000);
+    const result = await dispatch("chat/sendPresence", {
+      number: phoneNumber,
+      presence,
+      delay,
+    });
+    if (!result.ok) return errResponse(result.status, result.data);
+    return okResponse(result.data, result.instance);
+  }
+
+  // ── Buttons (interactive reply buttons) ──
+  if (kind === "buttons") {
+    const buttons = (whatsappReq.buttons || []).slice(0, 3).map((b, i) => ({
+      buttonId: b.id || `btn_${i + 1}`,
+      buttonText: { displayText: b.text },
+      type: 1,
+    }));
+    if (buttons.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "No buttons provided" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const result = await dispatch("message/sendButtons", {
+      number: phoneNumber,
+      title: "",
+      description: whatsappReq.message,
+      footer: whatsappReq.buttons_footer || "",
+      buttons,
+    });
+    if (!result.ok) return errResponse(result.status, result.data);
+    return okResponse(result.data, result.instance);
+  }
+
+  // ── List (interactive list / menu) ──
+  if (kind === "list") {
+    const sections = (whatsappReq.list_sections || []).map(sec => ({
+      title: sec.title,
+      rows: (sec.rows || []).slice(0, 10).map((r, idx) => ({
+        title: r.title,
+        description: r.description || "",
+        rowId: r.rowId || `row_${idx + 1}`,
+      })),
+    }));
+    if (sections.length === 0 || sections.every(s => s.rows.length === 0)) {
+      return new Response(
+        JSON.stringify({ error: "No list rows provided" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    const result = await dispatch("message/sendList", {
+      number: phoneNumber,
+      title: whatsappReq.list_title || "",
+      description: whatsappReq.message,
+      buttonText: whatsappReq.list_button_text || "Ver opções",
+      footerText: whatsappReq.list_footer || "",
+      sections,
+    });
+    if (!result.ok) return errResponse(result.status, result.data);
+    return okResponse(result.data, result.instance);
+  }
+
+  // ── Text (default) ──
+  if (kind === "text") {
     const textPayload: Record<string, unknown> = {
       number: phoneNumber,
       text: whatsappReq.message,
@@ -334,41 +432,20 @@ async function sendWithEvolutionAPI(
     if (whatsappReq.quoted_message_external_id) {
       textPayload.quoted = { key: { id: whatsappReq.quoted_message_external_id } };
     }
-    const result = await sendWithInstanceFallback("sendText", textPayload);
-
-    if (!result.ok) {
-      console.error("Evolution API error:", result.data);
-      return new Response(
-        JSON.stringify({ error: `Evolution API error: ${result.data?.message || result.status}` }),
-        { status: result.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    return new Response(
-      JSON.stringify({ success: true, provider: "evolution_api", data: result.data, instance_used: result.instance }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    const result = await dispatch("message/sendText", textPayload);
+    if (!result.ok) return errResponse(result.status, result.data);
+    return okResponse(result.data, result.instance);
   }
 
-  const result = await sendWithInstanceFallback("sendMedia", {
+  // ── Media (image/video/audio/document via sendMedia) ──
+  const result = await dispatch("message/sendMedia", {
     number: phoneNumber,
     mediatype: whatsappReq.media_type || "image",
     media: whatsappReq.media_url,
     caption: whatsappReq.message,
   });
-
-  if (!result.ok) {
-    console.error("Evolution API error:", result.data);
-    return new Response(
-      JSON.stringify({ error: `Evolution API error: ${result.data?.message || result.status}` }),
-      { status: result.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
-  }
-
-  return new Response(
-    JSON.stringify({ success: true, provider: "evolution_api", data: result.data, instance_used: result.instance }),
-    { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-  );
+  if (!result.ok) return errResponse(result.status, result.data);
+  return okResponse(result.data, result.instance);
 }
 
 async function sendWithBusinessAPI(

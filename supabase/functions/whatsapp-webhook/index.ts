@@ -590,7 +590,54 @@ Deno.serve(async (req) => {
             };
           }
 
-          const hasMedia = messageType !== "text" && messageType !== "location" && messageType !== "contact";
+          // Phase 3 — Poll creation message
+          const pollCreate =
+            messageData?.pollCreationMessage ||
+            messageData?.pollCreationMessageV2 ||
+            messageData?.pollCreationMessageV3 ||
+            null;
+          if (pollCreate) {
+            messageType = "poll";
+            extraMetadata = {
+              poll: {
+                name: pollCreate.name || null,
+                options: Array.isArray(pollCreate.options)
+                  ? pollCreate.options.map((o: { optionName?: string }) => o.optionName).filter(Boolean)
+                  : [],
+                selectable_count: pollCreate.selectableOptionsCount || 1,
+              },
+            };
+          }
+          // Phase 3 — Poll vote update
+          const pollUpdate = messageData?.pollUpdateMessage || null;
+          if (pollUpdate) {
+            messageType = "poll_vote";
+            extraMetadata = {
+              poll_vote: {
+                poll_message_id: pollUpdate.pollCreationMessageKey?.id || null,
+                vote_hash: pollUpdate.vote?.selectedOptions || pollUpdate.encPayload || null,
+              },
+            };
+          }
+          // Phase 3 — Reaction
+          const reactionMsg = messageData?.reactionMessage || null;
+          if (reactionMsg) {
+            messageType = "reaction";
+            extraMetadata = {
+              reaction: {
+                emoji: reactionMsg.text || "",
+                target_message_id: reactionMsg.key?.id || null,
+                target_from_me: reactionMsg.key?.fromMe || false,
+              },
+            };
+          }
+          // Phase 3 — Sticker (already partially handled above; keep messageType=sticker)
+          if (messageData?.stickerMessage) {
+            messageType = "sticker";
+            mediaMimeType = messageData.stickerMessage.mimetype || "image/webp";
+          }
+
+          const hasMedia = ["image", "audio", "video", "document", "sticker"].includes(messageType);
 
           // Download media via Evolution API getBase64 and upload to Storage
           if (hasMedia && keyData.id) {

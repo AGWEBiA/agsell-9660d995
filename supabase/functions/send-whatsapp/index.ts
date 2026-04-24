@@ -439,8 +439,57 @@ async function sendWithBusinessAPI(
   const apiUrl = `https://graph.facebook.com/v18.0/${phoneNumberId}/messages`;
 
   let messageBody: Record<string, unknown>;
+  const businessKind = whatsappReq.message_kind ?? (whatsappReq.template_name ? "text" : (whatsappReq.media_url ? "media" : "text"));
 
-  if (whatsappReq.template_name) {
+  if (businessKind === "buttons" && whatsappReq.buttons?.length) {
+    messageBody = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "interactive",
+      interactive: {
+        type: "button",
+        body: { text: whatsappReq.message },
+        ...(whatsappReq.buttons_footer ? { footer: { text: whatsappReq.buttons_footer } } : {}),
+        action: {
+          buttons: whatsappReq.buttons.slice(0, 3).map((b, i) => ({
+            type: "reply",
+            reply: { id: b.id || `btn_${i + 1}`, title: b.text.slice(0, 20) },
+          })),
+        },
+      },
+    };
+  } else if (businessKind === "list" && whatsappReq.list_sections?.length) {
+    messageBody = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: phoneNumber,
+      type: "interactive",
+      interactive: {
+        type: "list",
+        ...(whatsappReq.list_title ? { header: { type: "text", text: whatsappReq.list_title } } : {}),
+        body: { text: whatsappReq.message },
+        ...(whatsappReq.list_footer ? { footer: { text: whatsappReq.list_footer } } : {}),
+        action: {
+          button: (whatsappReq.list_button_text || "Ver opções").slice(0, 20),
+          sections: whatsappReq.list_sections.map(sec => ({
+            title: sec.title.slice(0, 24),
+            rows: sec.rows.slice(0, 10).map((r, idx) => ({
+              id: r.rowId || `row_${idx + 1}`,
+              title: r.title.slice(0, 24),
+              ...(r.description ? { description: r.description.slice(0, 72) } : {}),
+            })),
+          })),
+        },
+      },
+    };
+  } else if (businessKind === "presence") {
+    // Cloud API doesn't support arbitrary presence — silently no-op success
+    return new Response(
+      JSON.stringify({ success: true, provider: "whatsapp_business", skipped: "presence_not_supported_on_cloud_api" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } else if (whatsappReq.template_name) {
     messageBody = {
       messaging_product: "whatsapp",
       recipient_type: "individual",

@@ -460,11 +460,13 @@ const FEATURE_TABS = [
     id: 'omnichannel', label: 'Comunicação Omnichannel',
     items: [
       { icon: MessageSquare, title: 'WhatsApp Multi-instância', desc: 'Múltiplos números, campanhas em massa, flows interativos.' },
+      { icon: Hash, title: 'WhatsApp Interativo', desc: 'Botões clicáveis, listas de opções, enquetes, reações e stickers nativos.' },
+      { icon: Megaphone, title: 'Mídia Rica + Menções', desc: 'Áudio PTT, vídeo, documentos, localização, vCard e @all em grupos.' },
       { icon: Mail, title: 'E-mail Marketing', desc: 'Campanhas, templates, domínio próprio com SPF/DKIM/DMARC.' },
       { icon: Instagram, title: 'Instagram DM', desc: 'Responda DMs, comentários e stories do inbox.' },
       { icon: Phone, title: 'SMS Bidirecional', desc: 'Campanhas SMS, respostas automáticas, integrado ao CRM.' },
       { icon: PhoneCall, title: 'VoIP com Créditos', desc: 'Chamadas VoIP, gravação, histórico, créditos flexíveis.' },
-      { icon: Inbox, title: 'Inbox Unificado', desc: 'Todos os 5 canais em uma única tela com CSAT e IA.' },
+      { icon: Inbox, title: 'Inbox Unificado', desc: 'Todos os canais em uma única tela com CSAT e IA.' },
     ]
   },
   {
@@ -473,7 +475,7 @@ const FEATURE_TABS = [
       { icon: Workflow, title: 'Flow Builder com Analytics', desc: '20+ ações com métricas por nó: entradas, saídas e conversões.' },
       { icon: Bot, title: 'Agentes IA com RAG', desc: 'IA que acessa sua base e responde clientes.' },
       { icon: Zap, title: 'Automações Avançadas', desc: 'Triggers por webhook, formulário, tag, página visitada ou evento.' },
-      { icon: Sparkles, title: 'Scoring Preditivo (IA)', desc: 'IA calcula probabilidade de conversão de cada lead.' },
+      { icon: Sparkles, title: 'Trigger por Voto em Enquete', desc: 'Cada opção votada no WhatsApp dispara um fluxo diferente.' },
       { icon: Globe, title: 'Site Tracking → Trigger', desc: 'Visitou uma página? Automação dispara.' },
       { icon: BarChart3, title: 'A/B de Fluxos Completos', desc: 'Compare fluxos inteiros e descubra qual converte mais.' },
     ]

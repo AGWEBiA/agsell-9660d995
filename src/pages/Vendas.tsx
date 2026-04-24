@@ -4,6 +4,7 @@ import { Logo } from '@/components/ui/Logo';
 import { PlatformDemoPlayer } from '@/components/vendas/PlatformDemoPlayer';
 import { VendasPlansBox } from '@/components/vendas/VendasPlansBox';
 import { WhatsAppFloatingButton } from '@/components/vendas/WhatsAppFloatingButton';
+import { WhatsNewSection } from '@/components/vendas/WhatsNewSection';
 import {
   ArrowRight, Check, Star, MessageSquare, Mail, Bot,
   BarChart3, Users, Workflow, Phone, Instagram, Send, Brain,
@@ -48,9 +49,9 @@ const FEATURES = [
   },
   {
     title: 'Inbox Omnichannel',
-    desc: 'WhatsApp (QR e Oficial), E-mail, Instagram, Telegram, SMS e VoIP em uma única tela de atendimento.',
+    desc: 'WhatsApp (QR e Oficial), E-mail, Instagram, Telegram, SMS e VoIP em uma única tela de atendimento — com botões interativos, enquetes, reações e mídia rica nativos do WhatsApp.',
     image: featOmni,
-    bullets: ['Atendimento unificado', 'Distribuição inteligente entre agentes', 'CSAT e métricas SAC'],
+    bullets: ['Botões, listas, enquetes e reações no WhatsApp', 'Áudio PTT, vídeo, localização e vCard', 'Menções em grupos (incluindo @all) com visualização no Inbox'],
   },
   {
     title: 'Flow Builder Visual',
@@ -166,6 +167,7 @@ export default function Vendas() {
         <div className="container mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link to="/"><Logo variant="red" size="md" showText /></Link>
           <nav className="hidden md:flex items-center gap-8 text-sm text-white/70">
+            <a href="#novidades" className="text-primary hover:text-white transition-colors font-semibold">✨ Novidades</a>
             <a href="#funcionalidades" className="hover:text-white transition-colors">Funcionalidades</a>
             <a href="#trilhas" className="hover:text-white transition-colors">Trilhas</a>
             <a href="#especialistas" className="hover:text-white transition-colors">Especialistas</a>
@@ -369,6 +371,9 @@ export default function Vendas() {
           </div>
         </div>
       </section>
+
+      {/* Novidades — recursos recém-lançados */}
+      <WhatsNewSection />
 
       {/* Trilhas (com imagens, sem "Aprenda") */}
       <section id="trilhas" className="py-20 md:py-28 border-t border-white/5">

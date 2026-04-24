@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { WhatsNewSection } from '@/components/vendas/WhatsNewSection';
 
 // ─── SECTION 1: Navbar ──────────────────────────────────────
 function Navbar() {
@@ -46,6 +47,7 @@ function Navbar() {
       <div className="container mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
         <Logo variant="red" size="md" showText />
         <nav className="hidden md:flex items-center gap-6 text-sm" aria-label="Navegação principal">
+          <a href="#novidades" className="text-primary hover:text-white transition-colors font-semibold">Novidades</a>
           <a href="#funcionalidades" className="text-[hsl(0,0%,63%)] hover:text-white transition-colors">Funcionalidades</a>
           <a href="#diferenciais" className="text-[hsl(0,0%,63%)] hover:text-white transition-colors">Diferenciais</a>
           <a href="#comparativo" className="text-[hsl(0,0%,63%)] hover:text-white transition-colors">Comparativo</a>
@@ -74,6 +76,7 @@ function Navbar() {
       {mobileMenuOpen && (
         <div className="md:hidden bg-[hsl(0,0%,5%)]/95 backdrop-blur-xl border-t border-[hsl(0,0%,16%)] animate-fade-in">
           <nav className="container mx-auto px-4 py-4 flex flex-col gap-3">
+            <a href="#novidades" onClick={() => setMobileMenuOpen(false)} className="text-primary hover:text-white transition-colors py-2 text-sm font-semibold">✨ Novidades</a>
             <a href="#funcionalidades" onClick={() => setMobileMenuOpen(false)} className="text-[hsl(0,0%,63%)] hover:text-white transition-colors py-2 text-sm">Funcionalidades</a>
             <a href="#diferenciais" onClick={() => setMobileMenuOpen(false)} className="text-[hsl(0,0%,63%)] hover:text-white transition-colors py-2 text-sm">Diferenciais</a>
             <a href="#comparativo" onClick={() => setMobileMenuOpen(false)} className="text-[hsl(0,0%,63%)] hover:text-white transition-colors py-2 text-sm">Comparativo</a>
@@ -459,11 +462,13 @@ const FEATURE_TABS = [
     id: 'omnichannel', label: 'Comunicação Omnichannel',
     items: [
       { icon: MessageSquare, title: 'WhatsApp Multi-instância', desc: 'Múltiplos números, campanhas em massa, flows interativos.' },
+      { icon: Hash, title: 'WhatsApp Interativo', desc: 'Botões clicáveis, listas de opções, enquetes, reações e stickers nativos.' },
+      { icon: Megaphone, title: 'Mídia Rica + Menções', desc: 'Áudio PTT, vídeo, documentos, localização, vCard e @all em grupos.' },
       { icon: Mail, title: 'E-mail Marketing', desc: 'Campanhas, templates, domínio próprio com SPF/DKIM/DMARC.' },
       { icon: Instagram, title: 'Instagram DM', desc: 'Responda DMs, comentários e stories do inbox.' },
       { icon: Phone, title: 'SMS Bidirecional', desc: 'Campanhas SMS, respostas automáticas, integrado ao CRM.' },
       { icon: PhoneCall, title: 'VoIP com Créditos', desc: 'Chamadas VoIP, gravação, histórico, créditos flexíveis.' },
-      { icon: Inbox, title: 'Inbox Unificado', desc: 'Todos os 5 canais em uma única tela com CSAT e IA.' },
+      { icon: Inbox, title: 'Inbox Unificado', desc: 'Todos os canais em uma única tela com CSAT e IA.' },
     ]
   },
   {
@@ -472,7 +477,7 @@ const FEATURE_TABS = [
       { icon: Workflow, title: 'Flow Builder com Analytics', desc: '20+ ações com métricas por nó: entradas, saídas e conversões.' },
       { icon: Bot, title: 'Agentes IA com RAG', desc: 'IA que acessa sua base e responde clientes.' },
       { icon: Zap, title: 'Automações Avançadas', desc: 'Triggers por webhook, formulário, tag, página visitada ou evento.' },
-      { icon: Sparkles, title: 'Scoring Preditivo (IA)', desc: 'IA calcula probabilidade de conversão de cada lead.' },
+      { icon: Sparkles, title: 'Trigger por Voto em Enquete', desc: 'Cada opção votada no WhatsApp dispara um fluxo diferente.' },
       { icon: Globe, title: 'Site Tracking → Trigger', desc: 'Visitou uma página? Automação dispara.' },
       { icon: BarChart3, title: 'A/B de Fluxos Completos', desc: 'Compare fluxos inteiros e descubra qual converte mais.' },
     ]
@@ -1080,6 +1085,7 @@ export default function LandingPage() {
         <CostComparisonSection />
         <ComparisonTableSection />
         <DifferentialsSection />
+        <WhatsNewSection />
         <FeaturesSection />
         <BrazilSection />
         <MigrationSection />

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { WhatsAppFloatingButton } from '@/components/vendas/WhatsAppFloatingButton';
+import { WhatsNewSection } from '@/components/vendas/WhatsNewSection';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/Logo';
 import { Badge } from '@/components/ui/badge';
@@ -36,6 +37,9 @@ const PAIN_POINTS = [
 const COMPARISON_ITEMS = [
   { feature: 'CRM com Pipeline Kanban', them: false, us: true },
   { feature: 'WhatsApp com QR Code + API Oficial', them: false, us: true },
+  { feature: 'WhatsApp Interativo (botões, listas, enquetes, reações)', them: 'parcial', us: true },
+  { feature: 'Áudio PTT, Localização, vCard e Menções @all em grupos', them: false, us: true },
+  { feature: 'Formulários com visual 100% customizável', them: 'parcial', us: true },
   { feature: 'E-mail Marketing com Domínio Próprio', them: 'parcial', us: true },
   { feature: 'Inbox Unificado (WhatsApp, E-mail, Instagram, Telegram)', them: false, us: true },
   { feature: 'Flow Builder Visual com Analytics por Nó', them: false, us: true },
@@ -226,6 +230,9 @@ export default function Apresentacao() {
           </div>
         </div>
       </section>
+
+      {/* Novidades — recursos recém-lançados */}
+      <WhatsNewSection />
 
       {/* Comparison Table */}
       <section id="comparativo" className="py-16 md:py-24 border-t border-white/5">

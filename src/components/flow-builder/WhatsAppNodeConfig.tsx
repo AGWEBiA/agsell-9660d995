@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Info, Clock, AlertCircle } from 'lucide-react';
 import { TEMPLATE_VARIABLES } from './flowNodeTypes';
+import { WhatsAppInteractiveConfig } from './WhatsAppInteractiveConfig';
 
 interface WhatsAppNodeConfigProps {
   config: Record<string, unknown>;

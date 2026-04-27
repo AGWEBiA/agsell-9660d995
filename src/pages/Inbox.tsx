@@ -666,7 +666,7 @@ export default function Inbox() {
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar — Conversation List */}
-        <div className={`w-full sm:w-80 border-r flex flex-col shrink-0 bg-background ${selectedId ? 'hidden sm:flex' : 'flex'}`}>
+        <div className={`w-full sm:w-96 border-r flex flex-col shrink-0 bg-background ${selectedId ? 'hidden sm:flex' : 'flex'}`}>
           {/* Queue Tabs */}
           <div className="flex border-b shrink-0">
             {([
@@ -794,7 +794,7 @@ export default function Inbox() {
                         <span className={`text-sm truncate ${hasUnread ? 'font-bold text-foreground' : 'font-medium'}`}>
                           {conversation.contacts?.first_name} {conversation.contacts?.last_name}
                         </span>
-                        <span className={`text-[10px] shrink-0 ml-1 ${hasUnread ? 'text-success font-semibold' : 'text-muted-foreground'}`}>
+                        <span className={`text-[11px] shrink-0 ml-2 tabular-nums whitespace-nowrap ${hasUnread ? 'text-success font-semibold' : 'text-muted-foreground'}`}>
                           {lastMessage ? new Date(lastMessage.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''}
                         </span>
                       </div>

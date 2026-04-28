@@ -1071,10 +1071,16 @@ export default function Inbox() {
                           <span>{new Date(message.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                           {isUser && (() => {
                             const status = message.delivery_status || 'sent';
-                            const statusLabel: Record<string, string> = { failed: 'Falhou', read: 'Lida', delivered: 'Entregue', sent: 'Enviada', pending: 'Pendente' };
-                            const label = statusLabel[status] || 'Pendente';
+                            const statusLabel: Record<string, string> = {
+                              failed: 'Falha no envio',
+                              read: 'Lida',
+                              delivered: 'Entregue no aparelho',
+                              sent: 'Enviada ao WhatsApp',
+                              pending: 'Aguardando confirmação',
+                            };
+                            const label = statusLabel[status] || 'Aguardando confirmação';
                             const icon = (() => {
-                              if (status === 'failed') return <AlertCircle className="h-2.5 w-2.5 text-destructive" />;
+                              if (status === 'failed') return <Ban className="h-2.5 w-2.5 text-destructive" />;
                               if (status === 'read') return <CheckCheck className="h-2.5 w-2.5 text-blue-400" />;
                               if (status === 'delivered') return <CheckCheck className="h-2.5 w-2.5" />;
                               if (status === 'sent') return <Check className="h-2.5 w-2.5" />;

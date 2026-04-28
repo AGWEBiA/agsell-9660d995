@@ -287,8 +287,7 @@ Deno.serve(async (req) => {
         break;
       case "forms": {
         // /forms or /forms/:id/submissions
-        const formSubResource = pathParts[3]; // "submissions" or undefined
-        result = await handleFormSubmissions(supabase, method, orgId, resourceId, formSubResource, req);
+        result = await handleFormSubmissions(supabase, method, orgId, resourceId, subResource, req);
         break;
       }
       case "metrics": {
@@ -296,19 +295,33 @@ Deno.serve(async (req) => {
           result = { error: "Method not allowed" };
           break;
         }
-        const subResource = pathParts[2];
-        result = await handleMetrics(supabase, orgId, subResource, req);
+        // /metrics/<type> — `<type>` lives where resourceId would be
+        result = await handleMetrics(supabase, orgId, resourceId, req);
         break;
       }
       case "messages": {
-        // POST /v1/messages — send via channel (whatsapp|email|sms)
-        if (method !== "POST") { result = { error: "Method not allowed" }; break; }
-        result = await handleSendMessage(supabase, orgId, req);
+        // POST /v1/messages — send via channel
+        // v1.1 additions:
+        //   POST   /v1.1/messages              -> send (returns message_id, delivery_status, tracking_url)
+        //   GET    /v1.1/messages/:id          -> fetch a message
+        //   GET    /v1.1/messages/:id/status   -> delivery status w/ timeline
+        //   POST   /v1.1/messages/:id/status   -> provider status callback (signed)
+        if (isV11 && method === "GET" && resourceId && subResource === "status") {
+          result = await handleMessageStatus(supabase, orgId, resourceId);
+        } else if (isV11 && method === "GET" && resourceId) {
+          result = await handleGetMessage(supabase, orgId, resourceId);
+        } else if (isV11 && method === "POST" && resourceId && subResource === "status") {
+          result = await handleMessageStatusCallback(supabase, orgId, resourceId, req);
+        } else if (method === "POST" && !resourceId) {
+          result = await handleSendMessage(supabase, orgId, req, isV11);
+        } else {
+          result = { error: "Method not allowed" };
+        }
         break;
       }
       case "automations": {
         // POST /v1/automations/:id/trigger
-        if (method === "POST" && pathParts[3] === "trigger" && resourceId) {
+        if (method === "POST" && subResource === "trigger" && resourceId) {
           result = await handleTriggerAutomation(supabase, orgId, resourceId, req);
         } else if (method === "GET") {
           result = resourceId
@@ -321,7 +334,6 @@ Deno.serve(async (req) => {
         break;
       }
       case "conversations": {
-        // GET /v1/conversations — list inbox conversations
         if (method !== "GET") { result = { error: "Method not allowed" }; break; }
         result = resourceId
           ? await (async () => {
@@ -332,8 +344,20 @@ Deno.serve(async (req) => {
         break;
       }
       case "webhooks": {
-        // GET/POST/DELETE /v1/webhooks — outbound webhook subscriptions
-        result = await handleWebhooks(supabase, method, orgId, resourceId, req);
+        // v1: GET/POST/DELETE /webhooks(/{id})
+        // v1.1 additions:
+        //   GET  /v1.1/webhooks/events            -> list supported event names
+        //   POST /v1.1/webhooks/:id/test          -> send a test event
+        //   POST /v1.1/webhooks/:id/rotate-secret -> rotate signing secret
+        if (isV11 && method === "GET" && resourceId === "events" && !subResource) {
+          result = handleListWebhookEvents();
+        } else if (isV11 && method === "POST" && resourceId && subResource === "test") {
+          result = await handleTestWebhook(supabase, orgId, resourceId);
+        } else if (isV11 && method === "POST" && resourceId && subResource === "rotate-secret") {
+          result = await handleRotateWebhookSecret(supabase, orgId, resourceId);
+        } else {
+          result = await handleWebhooks(supabase, method, orgId, resourceId, req, isV11);
+        }
         break;
       }
       default:
@@ -341,15 +365,16 @@ Deno.serve(async (req) => {
           JSON.stringify({
             error: "Unknown resource",
             code: "NOT_FOUND",
+            api_version: apiVersion,
             available_resources: ["contacts", "companies", "deals", "tags", "forms", "metrics", "messages", "automations", "conversations", "webhooks"],
           }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
     }
 
-    return new Response(JSON.stringify(result), {
+    return new Response(JSON.stringify({ ...result, api_version: apiVersion }), {
       status: result.error ? 400 : 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json", "X-API-Version": apiVersion },
     });
   } catch (error: unknown) {
     console.error("Public API error:", error);

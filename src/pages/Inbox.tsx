@@ -145,6 +145,13 @@ export default function Inbox() {
   const [instanceFilter, setInstanceFilter] = useState('all');
   const [showDebug, setShowDebug] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [compactMode, setCompactMode] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('inbox:compact') === '1';
+  });
+  useEffect(() => {
+    try { localStorage.setItem('inbox:compact', compactMode ? '1' : '0'); } catch {}
+  }, [compactMode]);
   const [replyingTo, setReplyingTo] = useState<{ id: string; content: string; sender_type: string; external_id?: string | null } | null>(null);
   const [quickReplyOpen, setQuickReplyOpen] = useState(false);
   const [shortcutSuggestions, setShortcutSuggestions] = useState<typeof quickReplies>([]);

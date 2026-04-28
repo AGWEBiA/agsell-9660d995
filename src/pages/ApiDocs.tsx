@@ -11,7 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Search, Code2, Copy, Check, Key, Webhook as WebhookIcon, Send, Users, Building2,
   Briefcase, Tag as TagIcon, Bot, MessagesSquare, FileText, BarChart3, Download,
-  ExternalLink, Shield, Zap, BookOpen, Terminal,
+  ExternalLink, Shield, Zap, BookOpen, Terminal, Rocket,
 } from 'lucide-react';
 import { toast } from 'sonner';
 

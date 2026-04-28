@@ -801,13 +801,13 @@ export default function Inbox() {
                 return (
                   <div
                     key={conversation.id}
-                    className={`flex items-center gap-2.5 px-3 py-2.5 cursor-pointer border-b border-border/50 transition-colors ${
+                    className={`flex items-center cursor-pointer border-b border-border/50 transition-colors ${compactMode ? 'gap-2 px-2 py-1.5' : 'gap-2.5 px-3 py-2.5'} ${
                       isSelected ? 'bg-accent' : hasUnread ? 'bg-success/5 hover:bg-success/10' : 'hover:bg-muted/50'
                     }`}
                     onClick={() => setSelectedId(conversation.id)}
                   >
                     <div className="relative shrink-0">
-                      <Avatar className="h-9 w-9">
+                      <Avatar className={compactMode ? 'h-7 w-7' : 'h-9 w-9'}>
                         <AvatarFallback className="bg-primary/10 text-primary text-xs">
                           {getInitials(conversation.contacts?.first_name, conversation.contacts?.last_name)}
                         </AvatarFallback>

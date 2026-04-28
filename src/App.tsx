@@ -73,6 +73,7 @@ const Permissions = React.lazy(() => import("./pages/Permissions"));
 const Admin = React.lazy(() => import("./pages/Admin"));
 const ApiKeys = React.lazy(() => import("./pages/ApiKeys"));
 const Webhooks = React.lazy(() => import("./pages/Webhooks"));
+const ApiWebhooks = React.lazy(() => import("./pages/ApiWebhooks"));
 const EmailDomain = React.lazy(() => import("./pages/EmailDomain"));
 const EmailInbox = React.lazy(() => import("./pages/EmailInbox"));
 const InboxSettings = React.lazy(() => import("./pages/InboxSettings"));

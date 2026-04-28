@@ -220,10 +220,12 @@ export default function ApiDocs() {
     'CRM · Negócios': <Briefcase className="h-3.5 w-3.5" />,
     'CRM · Tags': <TagIcon className="h-3.5 w-3.5" />,
     'Mensagens': <Send className="h-3.5 w-3.5" />,
+    'Mensagens v1.1': <Send className="h-3.5 w-3.5" />,
     'Automações': <Bot className="h-3.5 w-3.5" />,
     'Inbox': <MessagesSquare className="h-3.5 w-3.5" />,
     'Forms': <FileText className="h-3.5 w-3.5" />,
     'Webhooks': <WebhookIcon className="h-3.5 w-3.5" />,
+    'Webhooks v1.1': <WebhookIcon className="h-3.5 w-3.5" />,
     'Métricas': <BarChart3 className="h-3.5 w-3.5" />,
   };
 

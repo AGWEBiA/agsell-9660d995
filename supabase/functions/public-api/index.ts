@@ -282,12 +282,48 @@ Deno.serve(async (req) => {
         result = await handleMetrics(supabase, orgId, subResource, req);
         break;
       }
+      case "messages": {
+        // POST /v1/messages — send via channel (whatsapp|email|sms)
+        if (method !== "POST") { result = { error: "Method not allowed" }; break; }
+        result = await handleSendMessage(supabase, orgId, req);
+        break;
+      }
+      case "automations": {
+        // POST /v1/automations/:id/trigger
+        if (method === "POST" && pathParts[3] === "trigger" && resourceId) {
+          result = await handleTriggerAutomation(supabase, orgId, resourceId, req);
+        } else if (method === "GET") {
+          result = resourceId
+            ? await (async () => {
+                const { data, error } = await supabase.from("automations").select("*").eq("id", resourceId).eq("organization_id", orgId).single();
+                return error ? { error: "Automation not found" } : { data };
+              })()
+            : await paginatedList(supabase, "automations", orgId, req, "id,name,trigger_type,is_active,executions_count,created_at");
+        } else { result = { error: "Method not allowed" }; }
+        break;
+      }
+      case "conversations": {
+        // GET /v1/conversations — list inbox conversations
+        if (method !== "GET") { result = { error: "Method not allowed" }; break; }
+        result = resourceId
+          ? await (async () => {
+              const { data, error } = await supabase.from("conversations").select("*, contacts(first_name,last_name,email,phone)").eq("id", resourceId).eq("organization_id", orgId).single();
+              return error ? { error: "Conversation not found" } : { data };
+            })()
+          : await paginatedList(supabase, "conversations", orgId, req, "id,channel,status,last_message_at,contact_id,unread_count,created_at");
+        break;
+      }
+      case "webhooks": {
+        // GET/POST/DELETE /v1/webhooks — outbound webhook subscriptions
+        result = await handleWebhooks(supabase, method, orgId, resourceId, req);
+        break;
+      }
       default:
         return new Response(
           JSON.stringify({
             error: "Unknown resource",
             code: "NOT_FOUND",
-            available_resources: ["contacts", "companies", "deals", "tags", "forms", "metrics"],
+            available_resources: ["contacts", "companies", "deals", "tags", "forms", "metrics", "messages", "automations", "conversations", "webhooks"],
           }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );

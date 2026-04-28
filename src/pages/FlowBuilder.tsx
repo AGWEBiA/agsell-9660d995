@@ -892,12 +892,25 @@ export default function FlowBuilder() {
         // Preserve the original trigger node ID so connections remain valid
         const savedTriggerId = (tc?.trigger_node_id as string) || 'trigger-' + existing.id;
 
+        // Preserve ALL trigger config keys except internal flow-builder metadata.
+        // This avoids losing fields like tag_name, event_name, webhook_url, pipeline_id, etc.
+        const internalTriggerKeys = new Set([
+          'channel', 'flow_builder', 'original_trigger', 'trigger_node_id',
+          'position', 'connections',
+        ]);
+        const preservedTriggerConfig: Record<string, unknown> = {};
+        if (tc) {
+          for (const [k, v] of Object.entries(tc)) {
+            if (!internalTriggerKeys.has(k)) preservedTriggerConfig[k] = v;
+          }
+        }
+
         const triggerNode: FlowNode = {
           id: savedTriggerId,
           type: 'trigger',
           subtype: originalTrigger,
           label: trigger?.label || originalTrigger,
-          config: { keyword: tc?.keyword, post_url: tc?.post_url, story_url: tc?.story_url, form_id: tc?.form_id, form_name: tc?.form_name } as Record<string, unknown>,
+          config: preservedTriggerConfig,
           position: (tc?.position as { x: number; y: number }) || { x: 400, y: 50 },
         };
 

@@ -332,6 +332,8 @@ const spec = {
     { name: "Forms", description: "Formulários e submissões" },
     { name: "Webhooks", description: "Assinaturas de eventos" },
     { name: "Metrics", description: "Estatísticas e relatórios" },
+    { name: "Messages v1.1", description: "[v1.1] Envio com tracking, status de entrega e callbacks" },
+    { name: "Webhooks v1.1", description: "[v1.1] Eventos suportados, teste de entrega e rotação de secret" },
   ],
 };
 

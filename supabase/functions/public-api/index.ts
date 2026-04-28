@@ -1166,34 +1166,47 @@ async function handleSendMessage(supabase: any, orgId: string, req: Request, isV
   let trackedMessageId: string | null = null;
   if (isV11) {
     try {
-      // Find or create an outbound conversation for this destination + channel.
-      const { data: existingConv } = await supabase
-        .from("conversations")
-        .select("id")
-        .eq("organization_id", orgId)
-        .eq("channel", channel)
-        .or(`contact_phone.eq.${to},contact_email.eq.${to}`)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // Try to match an existing contact by email or normalized phone in this org.
+      let contactId: string | null = null;
+      if (channel === "email") {
+        const { data: c } = await supabase.from("contacts").select("id")
+          .eq("organization_id", orgId).eq("email", to.toLowerCase()).limit(1).maybeSingle();
+        contactId = c?.id || null;
+      } else {
+        const digits = to.replace(/\D/g, "");
+        if (digits.length >= 10) {
+          const { data: c } = await supabase.from("contacts").select("id, phone, whatsapp")
+            .eq("organization_id", orgId)
+            .or(`phone.ilike.%${digits.slice(-10)}%,whatsapp.ilike.%${digits.slice(-10)}%`)
+            .limit(1).maybeSingle();
+          contactId = c?.id || null;
+        }
+      }
 
-      let conversationId: string | null = existingConv?.id || null;
+      // Find or create an outbound conversation for this contact + channel.
+      let conversationId: string | null = null;
+      if (contactId) {
+        const { data: existingConv } = await supabase.from("conversations")
+          .select("id")
+          .eq("organization_id", orgId)
+          .eq("channel", channel)
+          .eq("contact_id", contactId)
+          .order("created_at", { ascending: false })
+          .limit(1).maybeSingle();
+        conversationId = existingConv?.id || null;
+      }
+
       if (!conversationId) {
         const userId = await getOrgOwnerUserId(supabase, orgId);
-        const { data: newConv } = await supabase
-          .from("conversations")
-          .insert({
-            organization_id: orgId,
-            user_id: userId,
-            channel,
-            status: "open",
-            contact_phone: channel !== "email" ? to : null,
-            contact_email: channel === "email" ? to : null,
+        if (userId) {
+          const { data: newConv } = await supabase.from("conversations").insert({
+            organization_id: orgId, user_id: userId, channel, status: "open",
+            contact_id: contactId,
             last_message_at: new Date().toISOString(),
-          })
-          .select("id")
-          .single();
-        conversationId = newConv?.id || null;
+            metadata: { source: "public_api_v1.1", recipient: to },
+          }).select("id").single();
+          conversationId = newConv?.id || null;
+        }
       }
 
       if (conversationId) {

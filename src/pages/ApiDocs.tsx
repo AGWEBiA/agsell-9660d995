@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { SwaggerEmbed } from '@/components/api/SwaggerEmbed';
 import {
   Search, Code2, Copy, Check, Key, Webhook as WebhookIcon, Send, Users, Building2,
   Briefcase, Tag as TagIcon, Bot, MessagesSquare, FileText, BarChart3, Download,

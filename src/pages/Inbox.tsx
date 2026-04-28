@@ -67,6 +67,26 @@ type QueueTab = 'fila' | 'meus' | 'todos';
 type ChannelFilter = 'all' | 'whatsapp' | 'instagram' | 'email' | 'voip' | 'support';
 type NcStep = 'search' | 'new' | 'device';
 
+const formatConversationTimestamp = (iso?: string | null): string => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  const now = new Date();
+  const sameDay = d.toDateString() === now.toDateString();
+  const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+  const isYesterday = d.toDateString() === yesterday.toDateString();
+  const time = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  if (sameDay) return time;
+  if (isYesterday) return `Ontem ${time}`;
+  const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000);
+  if (diffDays < 7) {
+    const wd = d.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+    return `${wd} ${time}`;
+  }
+  const date = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  return `${date} ${time}`;
+};
+
 const getConversationMetadata = (conversation: any): Record<string, any> => {
   if (!conversation?.metadata || typeof conversation.metadata !== 'object' || Array.isArray(conversation.metadata)) {
     return {};

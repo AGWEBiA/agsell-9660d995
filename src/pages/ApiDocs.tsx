@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Helmet } from 'react-helmet-async';
+
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -189,6 +189,18 @@ export default function ApiDocs() {
     return () => window.removeEventListener('scroll', handler);
   }, []);
 
+  useEffect(() => {
+    document.title = 'API Docs · Agsell — Integração nativa REST';
+    const desc = 'Documentação completa da API REST do Agsell: contatos, deals, mensagens omnichannel, automações e webhooks. Exemplos em cURL, JavaScript, Python e PHP.';
+    let meta = document.querySelector('meta[name="description"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'description');
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', desc);
+  }, []);
+
   const groupIcon: Record<string, JSX.Element> = {
     'CRM · Contatos': <Users className="h-3.5 w-3.5" />,
     'CRM · Empresas': <Building2 className="h-3.5 w-3.5" />,
@@ -204,11 +216,6 @@ export default function ApiDocs() {
 
   return (
     <>
-      <Helmet>
-        <title>API Docs · Agsell — Integração nativa REST</title>
-        <meta name="description" content="Documentação completa da API REST do Agsell: contatos, deals, mensagens omnichannel, automações e webhooks. Exemplos em cURL, JavaScript, Python e PHP." />
-      </Helmet>
-
       <div className="min-h-screen bg-background">
         {/* Top bar */}
         <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

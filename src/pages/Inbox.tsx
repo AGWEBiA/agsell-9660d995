@@ -1070,7 +1070,7 @@ export default function Inbox() {
                         <div className={`flex items-center justify-end gap-1 mt-0.5 text-[10px] text-muted-foreground`}>
                           <span>{new Date(message.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                           {isUser && (() => {
-                            const status = message.delivery_status || 'sent';
+                            const status = message.delivery_status || 'pending';
                             const statusLabel: Record<string, string> = {
                               failed: 'Falha no envio',
                               read: 'Lida',

@@ -15,7 +15,7 @@ import {
   FileAudio, File as FileIcon, X, Loader2, MapPin, UserSquare,
   Hash, ChevronLeft, Inbox as InboxIcon, User, Ticket,
   BarChart3, Brain, Calendar, Users, CheckCircle2,
-  ArrowDownToLine, Instagram, AlertCircle, Clock, Bug, Filter, RefreshCw,
+  ArrowDownToLine, Instagram, AlertCircle, Clock, Bug, Filter, RefreshCw, Ban,
   Reply, Zap, Copy, Download, AtSign, Megaphone, Video,
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
@@ -1070,11 +1070,17 @@ export default function Inbox() {
                         <div className={`flex items-center justify-end gap-1 mt-0.5 text-[10px] text-muted-foreground`}>
                           <span>{new Date(message.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                           {isUser && (() => {
-                            const status = message.delivery_status || 'sent';
-                            const statusLabel: Record<string, string> = { failed: 'Falhou', read: 'Lida', delivered: 'Entregue', sent: 'Enviada', pending: 'Pendente' };
-                            const label = statusLabel[status] || 'Pendente';
+                            const status = message.delivery_status || 'pending';
+                            const statusLabel: Record<string, string> = {
+                              failed: 'Falha no envio',
+                              read: 'Lida',
+                              delivered: 'Entregue no aparelho',
+                              sent: 'Enviada ao WhatsApp',
+                              pending: 'Aguardando confirmação',
+                            };
+                            const label = statusLabel[status] || 'Aguardando confirmação';
                             const icon = (() => {
-                              if (status === 'failed') return <AlertCircle className="h-2.5 w-2.5 text-destructive" />;
+                              if (status === 'failed') return <Ban className="h-2.5 w-2.5 text-destructive" />;
                               if (status === 'read') return <CheckCheck className="h-2.5 w-2.5 text-blue-400" />;
                               if (status === 'delivered') return <CheckCheck className="h-2.5 w-2.5" />;
                               if (status === 'sent') return <Check className="h-2.5 w-2.5" />;

@@ -136,16 +136,23 @@ Deno.serve(async (req) => {
         const status = update?.status;
         if (!msgId || !status) continue;
 
-        // Map Evolution API status to our delivery_status
+        // Map Evolution / WA status to our delivery_status.
+        // WhatsApp ack levels: 0=ERROR, 1=PENDING, 2=SERVER_ACK (sent ✓),
+        // 3=DELIVERY_ACK (delivered ✓✓), 4=READ (azul), 5=PLAYED.
         let deliveryStatus: string | null = null;
-        if (status === "DELIVERY_ACK" || status === "delivered" || status === 3) {
+        const s = typeof status === 'string' ? status.toUpperCase() : status;
+        if (s === "SERVER_ACK" || s === "sent" || s === "SENT" || s === 2) {
+          deliveryStatus = "sent";
+        } else if (s === "DELIVERY_ACK" || s === "delivered" || s === "DELIVERED" || s === 3) {
           deliveryStatus = "delivered";
-        } else if (status === "READ" || status === "read" || status === 4) {
+        } else if (s === "READ" || s === "read" || s === 4) {
           deliveryStatus = "read";
-        } else if (status === "PLAYED" || status === 5) {
+        } else if (s === "PLAYED" || s === 5) {
           deliveryStatus = "read";
-        } else if (status === "ERROR" || status === "failed") {
+        } else if (s === "ERROR" || s === "failed" || s === "FAILED" || s === 0) {
           deliveryStatus = "failed";
+        } else if (s === "PENDING" || s === "pending" || s === 1) {
+          deliveryStatus = "pending";
         }
 
         if (deliveryStatus) {

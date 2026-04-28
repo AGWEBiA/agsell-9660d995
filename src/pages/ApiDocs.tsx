@@ -564,6 +564,33 @@ X-Agsell-Event: contact.created
               </div>
             ))}
 
+            {/* Swagger interativo */}
+            <section data-section="swagger" id="swagger" className="scroll-mt-20">
+              <h2 className="text-2xl font-bold mb-3 flex items-center gap-2"><Code2 className="h-5 w-5" /> Swagger UI — playground interativo</h2>
+              <p className="text-muted-foreground mb-4">
+                Documentação OpenAPI 3.1 renderizada com Swagger UI. Clique em <strong>"Authorize"</strong> e cole sua API Key
+                (header <code className="bg-muted px-1 rounded text-xs">X-API-Key</code>) para executar chamadas <em>Try it out</em> direto do navegador.
+              </p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                <Button variant="outline" size="sm" asChild>
+                  <a href={OPENAPI_URL} target="_blank" rel="noreferrer">
+                    <Download className="h-3.5 w-3.5 mr-1.5" /> Baixar JSON OpenAPI
+                  </a>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <a href={POSTMAN_URL} target="_blank" rel="noreferrer">
+                    <Download className="h-3.5 w-3.5 mr-1.5" /> Baixar coleção Postman
+                  </a>
+                </Button>
+                <Button variant="outline" size="sm" asChild>
+                  <a href={`https://editor.swagger.io/?url=${encodeURIComponent(OPENAPI_URL)}`} target="_blank" rel="noreferrer">
+                    Abrir no Swagger Editor <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
+                  </a>
+                </Button>
+              </div>
+              <SwaggerEmbed specUrl={OPENAPI_URL} />
+            </section>
+
             {/* Footer */}
             <Card className="bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
               <CardContent className="p-6 flex items-center justify-between gap-4 flex-wrap">

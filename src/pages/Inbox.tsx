@@ -15,7 +15,7 @@ import {
   FileAudio, File as FileIcon, X, Loader2, MapPin, UserSquare,
   Hash, ChevronLeft, Inbox as InboxIcon, User, Ticket,
   BarChart3, Brain, Calendar, Users, CheckCircle2,
-  ArrowDownToLine, Instagram, AlertCircle, Clock, Bug, Filter, RefreshCw,
+  ArrowDownToLine, Instagram, AlertCircle, Clock, Bug, Filter, RefreshCw, Ban,
   Reply, Zap, Copy, Download, AtSign, Megaphone, Video,
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';

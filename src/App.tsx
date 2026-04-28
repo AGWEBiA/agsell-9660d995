@@ -73,6 +73,7 @@ const Permissions = React.lazy(() => import("./pages/Permissions"));
 const Admin = React.lazy(() => import("./pages/Admin"));
 const ApiKeys = React.lazy(() => import("./pages/ApiKeys"));
 const Webhooks = React.lazy(() => import("./pages/Webhooks"));
+const ApiWebhooks = React.lazy(() => import("./pages/ApiWebhooks"));
 const EmailDomain = React.lazy(() => import("./pages/EmailDomain"));
 const EmailInbox = React.lazy(() => import("./pages/EmailInbox"));
 const InboxSettings = React.lazy(() => import("./pages/InboxSettings"));
@@ -201,6 +202,7 @@ const App = () => (
                     <Route path="admin" element={<Admin />} />
                     <Route path="api-keys" element={<ApiKeys />} />
                     <Route path="webhooks" element={<Webhooks />} />
+                    <Route path="api-webhooks" element={<ApiWebhooks />} />
                     <Route path="email-domain" element={<FeatureRequiredPage feature="email_marketing" featureLabel="Domínio de E-mail"><EmailDomain /></FeatureRequiredPage>} />
                     <Route path="system-guide" element={<SystemGuide />} />
                     <Route path="help-center" element={<HelpCenter />} />

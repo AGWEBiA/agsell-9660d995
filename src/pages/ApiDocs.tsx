@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 
 const API_BASE = `https://rcxrkvwxlzwzrllwdwgz.supabase.co/functions/v1/public-api/v1`;
 const OPENAPI_URL = `https://rcxrkvwxlzwzrllwdwgz.supabase.co/functions/v1/openapi-spec`;
+const POSTMAN_URL = `https://rcxrkvwxlzwzrllwdwgz.supabase.co/functions/v1/openapi-spec?format=postman`;
 
 type Lang = 'curl' | 'js' | 'python' | 'php';
 

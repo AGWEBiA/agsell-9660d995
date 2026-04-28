@@ -16,7 +16,7 @@ import {
   Hash, ChevronLeft, Inbox as InboxIcon, User, Ticket,
   BarChart3, Brain, Calendar, Users, CheckCircle2,
   ArrowDownToLine, Instagram, AlertCircle, Clock, Bug, Filter, RefreshCw, Ban,
-  Reply, Zap, Copy, Download, AtSign, Megaphone, Video,
+  Reply, Zap, Copy, Download, AtSign, Megaphone, Video, Maximize2, Minimize2,
 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useInbox } from '@/hooks/useInbox';

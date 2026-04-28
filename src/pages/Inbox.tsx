@@ -693,7 +693,7 @@ export default function Inbox() {
       {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar — Conversation List */}
-        <div className={`w-full sm:w-96 border-r flex flex-col shrink-0 bg-background ${selectedId ? 'hidden sm:flex' : 'flex'}`}>
+        <div className={`w-full ${compactMode ? 'sm:w-72 md:w-80' : 'sm:w-80 md:w-96 lg:w-[26rem]'} border-r flex flex-col shrink-0 bg-background ${selectedId ? 'hidden sm:flex' : 'flex'}`}>
           {/* Queue Tabs */}
           <div className="flex border-b shrink-0">
             {([

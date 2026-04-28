@@ -304,6 +304,121 @@ export default function ApiDocs() {
               </div>
             </section>
 
+            {/* Quick Start */}
+            <section data-section="quickstart" id="quickstart" className="scroll-mt-20">
+              <h2 className="text-2xl font-bold mb-3 flex items-center gap-2"><Rocket className="h-5 w-5" /> Guia rápido — primeira chamada em 3 minutos</h2>
+              <p className="text-muted-foreground mb-6">
+                Siga os passos abaixo para gerar sua API Key, ajustar o rate limit e disparar sua primeira requisição via cURL.
+              </p>
+
+              <div className="space-y-4">
+                {/* Step 1 */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">1</div>
+                      <CardTitle className="text-base">Gere sua API Key</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                      <li>Acesse <Link to="/api-keys" className="text-primary underline">API Keys</Link> no menu lateral.</li>
+                      <li>Clique em <strong className="text-foreground">"Nova chave"</strong> e dê um nome descritivo (ex: <code className="bg-muted px-1 rounded text-xs">ERP Produção</code>).</li>
+                      <li>Selecione os escopos (read/write) conforme a integração.</li>
+                      <li><strong className="text-destructive">Copie a chave imediatamente</strong> — ela é mostrada apenas uma vez (armazenamos só o hash SHA-256).</li>
+                    </ol>
+                    <div className="bg-muted/50 border border-border rounded-md p-3">
+                      <p className="text-xs font-semibold text-muted-foreground mb-1">Formato da chave</p>
+                      <code className="text-xs font-mono">ags_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code>
+                    </div>
+                    <Button asChild size="sm" variant="outline">
+                      <Link to="/api-keys"><Key className="h-3.5 w-3.5 mr-1.5" /> Abrir gerenciador de chaves</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Step 2 */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">2</div>
+                      <CardTitle className="text-base">Configure o rate limit</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    <p className="text-muted-foreground">
+                      Cada chave tem um limite padrão de <strong className="text-foreground">60 requisições por minuto</strong>. Você pode ajustar
+                      por chave em <Link to="/api-keys" className="text-primary underline">API Keys</Link> → editar → <em>Rate limit</em>.
+                    </p>
+                    <div className="grid sm:grid-cols-3 gap-2">
+                      <div className="bg-muted/30 rounded p-3 border">
+                        <p className="text-xs text-muted-foreground">Padrão</p>
+                        <p className="font-bold">60 req/min</p>
+                      </div>
+                      <div className="bg-muted/30 rounded p-3 border">
+                        <p className="text-xs text-muted-foreground">Alto volume</p>
+                        <p className="font-bold">300 req/min</p>
+                      </div>
+                      <div className="bg-muted/30 rounded p-3 border">
+                        <p className="text-xs text-muted-foreground">Enterprise</p>
+                        <p className="font-bold">1000+ req/min</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Cada resposta inclui os headers <code className="bg-muted px-1 rounded">X-RateLimit-Limit</code>,
+                      <code className="bg-muted px-1 rounded ml-1">X-RateLimit-Remaining</code> e
+                      <code className="bg-muted px-1 rounded ml-1">X-RateLimit-Reset</code>. Se exceder, retorna <code className="bg-muted px-1 rounded">429 Too Many Requests</code>.
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Step 3 */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm">3</div>
+                      <CardTitle className="text-base">Teste a primeira chamada com cURL</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    <p className="text-muted-foreground">Liste seus contatos para validar a autenticação:</p>
+                    <pre className="bg-zinc-950 text-zinc-100 rounded-md p-3 text-xs overflow-x-auto">
+{`curl -X GET "${API_BASE}/contacts?limit=5" \\
+  -H "X-API-Key: ags_live_SUA_CHAVE_AQUI" \\
+  -H "Content-Type: application/json"`}
+                    </pre>
+                    <p className="text-xs font-semibold text-muted-foreground mt-3">Resposta esperada (200 OK)</p>
+                    <pre className="bg-zinc-950 text-zinc-100 rounded-md p-3 text-xs overflow-x-auto">
+{`{
+  "data": [
+    { "id": "...", "first_name": "João", "email": "joao@ex.com" }
+  ],
+  "pagination": { "page": 1, "limit": 5, "total": 142 }
+}`}
+                    </pre>
+                    <p className="text-muted-foreground">Envie sua primeira mensagem WhatsApp:</p>
+                    <pre className="bg-zinc-950 text-zinc-100 rounded-md p-3 text-xs overflow-x-auto">
+{`curl -X POST "${API_BASE}/messages" \\
+  -H "X-API-Key: ags_live_SUA_CHAVE_AQUI" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "channel": "whatsapp",
+    "to": "5511999999999",
+    "content": "Olá! Mensagem de teste via API."
+  }'`}
+                    </pre>
+                    <div className="bg-success/10 border border-success/30 rounded-md p-3 text-xs">
+                      ✅ Recebeu <code className="bg-muted px-1 rounded">200</code>? Sua integração está pronta. Veja todos os endpoints abaixo.
+                    </div>
+                    <div className="bg-destructive/10 border border-destructive/30 rounded-md p-3 text-xs">
+                      ❌ <strong>401 Unauthorized:</strong> chave inválida ou faltando header <code className="bg-muted px-1 rounded">X-API-Key</code>.<br/>
+                      ❌ <strong>429 Too Many Requests:</strong> aguarde o tempo indicado em <code className="bg-muted px-1 rounded">X-RateLimit-Reset</code>.
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+
             {/* Auth */}
             <section data-section="auth" id="auth" className="scroll-mt-20">
               <h2 className="text-2xl font-bold mb-3 flex items-center gap-2"><Shield className="h-5 w-5" /> Autenticação</h2>

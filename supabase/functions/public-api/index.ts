@@ -1161,7 +1161,7 @@ async function handleTriggerAutomation(supabase: any, orgId: string, automationI
 async function handleWebhooks(supabase: any, method: string, orgId: string, id: string | undefined, req: Request) {
   if (method === "GET") {
     if (id) {
-      const { data, error } = await supabase.from("webhooks").select("*").eq("id", id).eq("organization_id", orgId).single();
+      const { data, error } = await supabase.from("api_webhook_subscriptions").select("*").eq("id", id).eq("organization_id", orgId).single();
       return error ? { error: "Webhook not found" } : { data };
     }
     return paginatedList(supabase, "webhooks", orgId, req);
@@ -1172,14 +1172,14 @@ async function handleWebhooks(supabase: any, method: string, orgId: string, id: 
     const events = Array.isArray(body.events) ? body.events.slice(0, 50) : [];
     if (!url || events.length === 0) return { error: "url and events[] are required" };
     const userId = await getOrgOwnerUserId(supabase, orgId);
-    const { data, error } = await supabase.from("webhooks").insert({
+    const { data, error } = await supabase.from("api_webhook_subscriptions").insert({
       url, events, name: validateString(body.name, 100) || "API Webhook",
       is_active: body.is_active !== false, organization_id: orgId, user_id: userId,
     }).select().single();
     return error ? { error: "Failed to create webhook: " + error.message } : { data };
   }
   if (method === "DELETE" && id) {
-    const { error } = await supabase.from("webhooks").delete().eq("id", id).eq("organization_id", orgId);
+    const { error } = await supabase.from("api_webhook_subscriptions").delete().eq("id", id).eq("organization_id", orgId);
     return error ? { error: "Failed to delete" } : { success: true };
   }
   return { error: "Method not allowed" };

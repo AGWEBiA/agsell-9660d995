@@ -325,10 +325,21 @@ export function useInbox() {
             toast.error(`Erro WhatsApp: ${responseData.error}`);
             await supabase.from('messages').update({ delivery_status: 'failed' }).eq('id', data.id);
           } else {
-            // Save external_id from WhatsApp response for delivery tracking
+            // Save external_id for delivery tracking via webhook (messages.update).
+            // Do NOT mark as 'sent' here — the Evolution API HTTP 200 only means the
+            // request was accepted, not that WhatsApp delivered it. Real status (sent /
+            // delivered / read / failed) comes from the webhook updating delivery_status
+            // based on SERVER_ACK / DELIVERY_ACK / READ events. Initial state stays 'pending'.
             const externalId = responseData?.key?.id || responseData?.messageId || responseData?.id;
-            if (externalId) {
-              await supabase.from('messages').update({ external_id: externalId, delivery_status: 'sent' }).eq('id', data.id);
+            const evoStatus = String(responseData?.status || responseData?.key?.status || '').toUpperCase();
+            const updates: Record<string, any> = {};
+            if (externalId) updates.external_id = externalId;
+            // If Evolution already returned an explicit error/failed status synchronously, mark failed
+            if (evoStatus === 'ERROR' || evoStatus === 'FAILED') {
+              updates.delivery_status = 'failed';
+            }
+            if (Object.keys(updates).length > 0) {
+              await supabase.from('messages').update(updates).eq('id', data.id);
             }
           }
         } catch {

@@ -250,6 +250,9 @@ export default function ApiDocs() {
                 <a href="#intro" className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-md hover:bg-muted ${activeId === 'intro' ? 'bg-muted font-medium' : ''}`}>
                   <BookOpen className="h-3.5 w-3.5" /> Introdução
                 </a>
+                <a href="#quickstart" className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-md hover:bg-muted ${activeId === 'quickstart' ? 'bg-muted font-medium' : ''}`}>
+                  <Rocket className="h-3.5 w-3.5" /> Guia rápido
+                </a>
                 <a href="#auth" className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-md hover:bg-muted ${activeId === 'auth' ? 'bg-muted font-medium' : ''}`}>
                   <Shield className="h-3.5 w-3.5" /> Autenticação
                 </a>

@@ -122,10 +122,18 @@ Deno.serve(async (req) => {
 
   try {
     // Check if this is a public form submission (no API key needed)
+    // Supports: /public-api/forms/:id/submit (legacy) and /public-api/v1[.1]/forms/:id/submit
     const url = new URL(req.url);
     const pathParts = url.pathname.split("/").filter(Boolean);
-    if (pathParts[1] === "forms" && pathParts[2] && pathParts[3] === "submit" && req.method === "POST") {
-      return await handlePublicFormSubmit(supabase, pathParts[2], req);
+    const _maybeVer = (pathParts[1] || "").toLowerCase();
+    const _verOffset = (_maybeVer === "v1" || _maybeVer === "v1.1") ? 1 : 0;
+    if (
+      pathParts[1 + _verOffset] === "forms" &&
+      pathParts[2 + _verOffset] &&
+      pathParts[3 + _verOffset] === "submit" &&
+      req.method === "POST"
+    ) {
+      return await handlePublicFormSubmit(supabase, pathParts[2 + _verOffset], req);
     }
 
     // Extract API key from header

@@ -308,6 +308,24 @@ export default function ApiDocs() {
                 <Card><CardContent className="p-4"><Zap className="h-5 w-5 text-primary mb-2" /><p className="font-semibold text-sm">60 req/min</p><p className="text-xs text-muted-foreground">Rate limit configurável por chave</p></CardContent></Card>
                 <Card><CardContent className="p-4"><Terminal className="h-5 w-5 text-primary mb-2" /><p className="font-semibold text-sm">OpenAPI 3.1</p><p className="text-xs text-muted-foreground">Importe no Postman, Insomnia ou gere SDK</p></CardContent></Card>
               </div>
+              <Card className="mt-4 border-primary/30 bg-primary/5">
+                <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center shrink-0">
+                      <Download className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm">Coleção pronta do Postman</p>
+                      <p className="text-xs text-muted-foreground">Baixe o JSON, importe no Postman/Insomnia e configure as variáveis <code className="bg-muted px-1 rounded">base_url</code> e <code className="bg-muted px-1 rounded">api_key</code>. Todos os endpoints prontos para teste.</p>
+                    </div>
+                  </div>
+                  <Button asChild className="shrink-0">
+                    <a href={POSTMAN_URL} target="_blank" rel="noreferrer">
+                      <Download className="h-4 w-4 mr-1.5" /> Baixar coleção
+                    </a>
+                  </Button>
+                </CardContent>
+              </Card>
             </section>
 
             {/* Quick Start */}

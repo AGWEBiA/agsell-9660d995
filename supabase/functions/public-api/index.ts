@@ -224,18 +224,19 @@ Deno.serve(async (req) => {
       })
       .eq("id", apiKeyData.id);
 
-    // Determine version + resource from already-parsed URL
-    // Path layout: /functions/v1/public-api/<version>/<resource>/<id>/<sub>
-    // pathParts[0] = "public-api", pathParts[1] = version (v1|v1.1), pathParts[2] = resource
-    const apiVersion = (pathParts[1] || "v1").toLowerCase();
+    // Determine version + resource from already-parsed URL.
+    // Supabase pathname is /public-api/<rest>, so pathParts[0] === "public-api".
+    // Supported layouts:
+    //   /public-api/v1/<resource>/<id>/<sub>      (versioned, recommended)
+    //   /public-api/v1.1/<resource>/<id>/<sub>    (versioned v1.1)
+    //   /public-api/<resource>/<id>/<sub>         (legacy, no version)
+    const maybeVersion = (pathParts[1] || "").toLowerCase();
+    const isVersioned = maybeVersion === "v1" || maybeVersion === "v1.1";
+    const apiVersion = isVersioned ? maybeVersion : "v1";
     const isV11 = apiVersion === "v1.1";
-    const resource = pathParts[2] || pathParts[1]; // backward-compat: /v1/contacts OR legacy direct
-    const resourceId = pathParts[3];
-    // For legacy callers without version segment, fall back to old layout
-    const legacyMode = !apiVersion.startsWith("v");
-    const effResource = legacyMode ? pathParts[1] : resource;
-    const effResourceId = legacyMode ? pathParts[2] : resourceId;
-    const effSubResource = legacyMode ? pathParts[3] : pathParts[4];
+    const resource = isVersioned ? pathParts[2] : pathParts[1];
+    const resourceId = isVersioned ? pathParts[3] : pathParts[2];
+    const subResource = isVersioned ? pathParts[4] : pathParts[3];
 
     // Check permissions
     const permissions = apiKeyData.permissions as string[];

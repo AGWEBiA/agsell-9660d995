@@ -237,6 +237,11 @@ export default function ApiDocs() {
                 <Download className="h-3.5 w-3.5 mr-1.5" /> OpenAPI
               </a>
             </Button>
+            <Button variant="outline" size="sm" asChild>
+              <a href={POSTMAN_URL} target="_blank" rel="noreferrer">
+                <Download className="h-3.5 w-3.5 mr-1.5" /> Postman
+              </a>
+            </Button>
             <Button size="sm" asChild>
               <Link to="/api-keys"><Key className="h-3.5 w-3.5 mr-1.5" /> API Keys</Link>
             </Button>

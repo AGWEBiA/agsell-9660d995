@@ -122,10 +122,18 @@ Deno.serve(async (req) => {
 
   try {
     // Check if this is a public form submission (no API key needed)
+    // Supports: /public-api/forms/:id/submit (legacy) and /public-api/v1[.1]/forms/:id/submit
     const url = new URL(req.url);
     const pathParts = url.pathname.split("/").filter(Boolean);
-    if (pathParts[1] === "forms" && pathParts[2] && pathParts[3] === "submit" && req.method === "POST") {
-      return await handlePublicFormSubmit(supabase, pathParts[2], req);
+    const _maybeVer = (pathParts[1] || "").toLowerCase();
+    const _verOffset = (_maybeVer === "v1" || _maybeVer === "v1.1") ? 1 : 0;
+    if (
+      pathParts[1 + _verOffset] === "forms" &&
+      pathParts[2 + _verOffset] &&
+      pathParts[3 + _verOffset] === "submit" &&
+      req.method === "POST"
+    ) {
+      return await handlePublicFormSubmit(supabase, pathParts[2 + _verOffset], req);
     }
 
     // Extract API key from header
@@ -224,9 +232,19 @@ Deno.serve(async (req) => {
       })
       .eq("id", apiKeyData.id);
 
-    // Determine resource from already-parsed URL
-    const resource = pathParts[1];
-    const resourceId = pathParts[2];
+    // Determine version + resource from already-parsed URL.
+    // Supabase pathname is /public-api/<rest>, so pathParts[0] === "public-api".
+    // Supported layouts:
+    //   /public-api/v1/<resource>/<id>/<sub>      (versioned, recommended)
+    //   /public-api/v1.1/<resource>/<id>/<sub>    (versioned v1.1)
+    //   /public-api/<resource>/<id>/<sub>         (legacy, no version)
+    const maybeVersion = (pathParts[1] || "").toLowerCase();
+    const isVersioned = maybeVersion === "v1" || maybeVersion === "v1.1";
+    const apiVersion = isVersioned ? maybeVersion : "v1";
+    const isV11 = apiVersion === "v1.1";
+    const resource = isVersioned ? pathParts[2] : pathParts[1];
+    const resourceId = isVersioned ? pathParts[3] : pathParts[2];
+    const subResource = isVersioned ? pathParts[4] : pathParts[3];
 
     // Check permissions
     const permissions = apiKeyData.permissions as string[];
@@ -269,8 +287,7 @@ Deno.serve(async (req) => {
         break;
       case "forms": {
         // /forms or /forms/:id/submissions
-        const formSubResource = pathParts[3]; // "submissions" or undefined
-        result = await handleFormSubmissions(supabase, method, orgId, resourceId, formSubResource, req);
+        result = await handleFormSubmissions(supabase, method, orgId, resourceId, subResource, req);
         break;
       }
       case "metrics": {
@@ -278,19 +295,33 @@ Deno.serve(async (req) => {
           result = { error: "Method not allowed" };
           break;
         }
-        const subResource = pathParts[2];
-        result = await handleMetrics(supabase, orgId, subResource, req);
+        // /metrics/<type> — `<type>` lives where resourceId would be
+        result = await handleMetrics(supabase, orgId, resourceId, req);
         break;
       }
       case "messages": {
-        // POST /v1/messages — send via channel (whatsapp|email|sms)
-        if (method !== "POST") { result = { error: "Method not allowed" }; break; }
-        result = await handleSendMessage(supabase, orgId, req);
+        // POST /v1/messages — send via channel
+        // v1.1 additions:
+        //   POST   /v1.1/messages              -> send (returns message_id, delivery_status, tracking_url)
+        //   GET    /v1.1/messages/:id          -> fetch a message
+        //   GET    /v1.1/messages/:id/status   -> delivery status w/ timeline
+        //   POST   /v1.1/messages/:id/status   -> provider status callback (signed)
+        if (isV11 && method === "GET" && resourceId && subResource === "status") {
+          result = await handleMessageStatus(supabase, orgId, resourceId);
+        } else if (isV11 && method === "GET" && resourceId) {
+          result = await handleGetMessage(supabase, orgId, resourceId);
+        } else if (isV11 && method === "POST" && resourceId && subResource === "status") {
+          result = await handleMessageStatusCallback(supabase, orgId, resourceId, req);
+        } else if (method === "POST" && !resourceId) {
+          result = await handleSendMessage(supabase, orgId, req, isV11);
+        } else {
+          result = { error: "Method not allowed" };
+        }
         break;
       }
       case "automations": {
         // POST /v1/automations/:id/trigger
-        if (method === "POST" && pathParts[3] === "trigger" && resourceId) {
+        if (method === "POST" && subResource === "trigger" && resourceId) {
           result = await handleTriggerAutomation(supabase, orgId, resourceId, req);
         } else if (method === "GET") {
           result = resourceId
@@ -303,7 +334,6 @@ Deno.serve(async (req) => {
         break;
       }
       case "conversations": {
-        // GET /v1/conversations — list inbox conversations
         if (method !== "GET") { result = { error: "Method not allowed" }; break; }
         result = resourceId
           ? await (async () => {
@@ -314,8 +344,20 @@ Deno.serve(async (req) => {
         break;
       }
       case "webhooks": {
-        // GET/POST/DELETE /v1/webhooks — outbound webhook subscriptions
-        result = await handleWebhooks(supabase, method, orgId, resourceId, req);
+        // v1: GET/POST/DELETE /webhooks(/{id})
+        // v1.1 additions:
+        //   GET  /v1.1/webhooks/events            -> list supported event names
+        //   POST /v1.1/webhooks/:id/test          -> send a test event
+        //   POST /v1.1/webhooks/:id/rotate-secret -> rotate signing secret
+        if (isV11 && method === "GET" && resourceId === "events" && !subResource) {
+          result = handleListWebhookEvents();
+        } else if (isV11 && method === "POST" && resourceId && subResource === "test") {
+          result = await handleTestWebhook(supabase, orgId, resourceId);
+        } else if (isV11 && method === "POST" && resourceId && subResource === "rotate-secret") {
+          result = await handleRotateWebhookSecret(supabase, orgId, resourceId);
+        } else {
+          result = await handleWebhooks(supabase, method, orgId, resourceId, req, isV11);
+        }
         break;
       }
       default:
@@ -323,15 +365,16 @@ Deno.serve(async (req) => {
           JSON.stringify({
             error: "Unknown resource",
             code: "NOT_FOUND",
+            api_version: apiVersion,
             available_resources: ["contacts", "companies", "deals", "tags", "forms", "metrics", "messages", "automations", "conversations", "webhooks"],
           }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
     }
 
-    return new Response(JSON.stringify(result), {
+    return new Response(JSON.stringify({ ...result, api_version: apiVersion }), {
       status: result.error ? 400 : 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json", "X-API-Version": apiVersion },
     });
   } catch (error: unknown) {
     console.error("Public API error:", error);
@@ -1092,14 +1135,16 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
 }
 
 // ===== Send messages via channel =====
+// In v1.1 we also persist the message in `messages` (creating an outbound conversation
+// if needed) so we can return a stable `message_id` and expose delivery status.
 // deno-lint-ignore no-explicit-any
-async function handleSendMessage(supabase: any, orgId: string, req: Request) {
+async function handleSendMessage(supabase: any, orgId: string, req: Request, isV11 = false) {
   const body = await req.json().catch(() => ({}));
   const channel = validateString(body.channel, 20);
   const to = validateString(body.to, 320);
   const message = validateString(body.message, 4096);
-  if (!channel || !to) return { error: "channel and to are required" };
-  if (!["whatsapp", "email", "sms"].includes(channel)) return { error: "channel must be whatsapp|email|sms" };
+  if (!channel || !to) return { error: "channel and to are required", code: "INVALID_REQUEST" };
+  if (!["whatsapp", "email", "sms"].includes(channel)) return { error: "channel must be whatsapp|email|sms", code: "INVALID_CHANNEL" };
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -1117,18 +1162,200 @@ async function handleSendMessage(supabase: any, orgId: string, req: Request) {
     payload = { ...payload, to, message };
   }
 
+  // v1.1: pre-create a tracked message row before invoking the channel function.
+  let trackedMessageId: string | null = null;
+  if (isV11) {
+    try {
+      // Try to match an existing contact by email or normalized phone in this org.
+      let contactId: string | null = null;
+      if (channel === "email") {
+        const { data: c } = await supabase.from("contacts").select("id")
+          .eq("organization_id", orgId).eq("email", to.toLowerCase()).limit(1).maybeSingle();
+        contactId = c?.id || null;
+      } else {
+        const digits = to.replace(/\D/g, "");
+        if (digits.length >= 10) {
+          const { data: c } = await supabase.from("contacts").select("id, phone, whatsapp")
+            .eq("organization_id", orgId)
+            .or(`phone.ilike.%${digits.slice(-10)}%,whatsapp.ilike.%${digits.slice(-10)}%`)
+            .limit(1).maybeSingle();
+          contactId = c?.id || null;
+        }
+      }
+
+      // Find or create an outbound conversation for this contact + channel.
+      let conversationId: string | null = null;
+      if (contactId) {
+        const { data: existingConv } = await supabase.from("conversations")
+          .select("id")
+          .eq("organization_id", orgId)
+          .eq("channel", channel)
+          .eq("contact_id", contactId)
+          .order("created_at", { ascending: false })
+          .limit(1).maybeSingle();
+        conversationId = existingConv?.id || null;
+      }
+
+      if (!conversationId) {
+        const userId = await getOrgOwnerUserId(supabase, orgId);
+        if (userId) {
+          const { data: newConv } = await supabase.from("conversations").insert({
+            organization_id: orgId, user_id: userId, channel, status: "open",
+            contact_id: contactId,
+            last_message_at: new Date().toISOString(),
+            metadata: { source: "public_api_v1.1", recipient: to },
+          }).select("id").single();
+          conversationId = newConv?.id || null;
+        }
+      }
+
+      if (conversationId) {
+        const { data: msgRow } = await supabase
+          .from("messages")
+          .insert({
+            conversation_id: conversationId,
+            sender_type: "agent",
+            content: message || (channel === "email" ? validateString(body.subject, 300) || "" : ""),
+            message_type: body.media_url ? "media" : "text",
+            media_url: body.media_url || null,
+            delivery_status: "pending",
+            metadata: { source: "public_api_v1.1", channel, to },
+          })
+          .select("id")
+          .single();
+        trackedMessageId = msgRow?.id || null;
+      }
+    } catch (e) {
+      console.error("v1.1 send: failed to pre-create message row", e);
+    }
+  }
+
   try {
     const res = await fetch(`${supabaseUrl}/functions/v1/${fnName}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${serviceKey}` },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ ...payload, _tracked_message_id: trackedMessageId }),
     });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) return { error: data?.error || `Failed to send ${channel}`, status: res.status };
+    if (!res.ok) {
+      if (trackedMessageId) {
+        await supabase.from("messages").update({
+          delivery_status: "failed",
+          metadata: { error: data?.error || `Channel error ${res.status}`, source: "public_api_v1.1" },
+        }).eq("id", trackedMessageId);
+      }
+      return { error: data?.error || `Failed to send ${channel}`, code: "CHANNEL_ERROR", status: res.status };
+    }
+
+    // Update tracked row with provider id when available.
+    const externalId = data?.external_id || data?.message_id || data?.id || null;
+    if (trackedMessageId) {
+      await supabase.from("messages").update({
+        delivery_status: "sent",
+        external_id: externalId,
+      }).eq("id", trackedMessageId);
+    }
+
+    if (isV11) {
+      const baseUrl = `${supabaseUrl}/functions/v1/public-api/v1.1`;
+      return {
+        data: {
+          channel,
+          to,
+          message_id: trackedMessageId,
+          external_id: externalId,
+          delivery_status: "sent",
+          tracking_url: trackedMessageId ? `${baseUrl}/messages/${trackedMessageId}/status` : null,
+          provider_response: data,
+          sent_at: new Date().toISOString(),
+        },
+      };
+    }
     return { data: { channel, to, sent: true, ...data } };
   } catch (e) {
-    return { error: `Failed to send: ${(e as Error).message}` };
+    if (trackedMessageId) {
+      await supabase.from("messages").update({ delivery_status: "failed" }).eq("id", trackedMessageId);
+    }
+    return { error: `Failed to send: ${(e as Error).message}`, code: "NETWORK_ERROR" };
   }
+}
+
+// ===== v1.1: GET /messages/:id =====
+// deno-lint-ignore no-explicit-any
+async function handleGetMessage(supabase: any, orgId: string, messageId: string) {
+  const { data, error } = await supabase
+    .from("messages")
+    .select("id, conversation_id, content, message_type, media_url, delivery_status, external_id, created_at, sender_type, metadata, conversations!inner(organization_id, channel, contact_phone, contact_email)")
+    .eq("id", messageId)
+    .eq("conversations.organization_id", orgId)
+    .single();
+  if (error || !data) return { error: "Message not found", code: "NOT_FOUND" };
+  return { data };
+}
+
+// ===== v1.1: GET /messages/:id/status =====
+// deno-lint-ignore no-explicit-any
+async function handleMessageStatus(supabase: any, orgId: string, messageId: string) {
+  const { data, error } = await supabase
+    .from("messages")
+    .select("id, delivery_status, external_id, created_at, metadata, conversations!inner(organization_id, channel)")
+    .eq("id", messageId)
+    .eq("conversations.organization_id", orgId)
+    .single();
+  if (error || !data) return { error: "Message not found", code: "NOT_FOUND" };
+
+  // Build a simple status timeline from metadata.history[] if present.
+  const history = Array.isArray(data.metadata?.history) ? data.metadata.history : [];
+  return {
+    data: {
+      message_id: data.id,
+      external_id: data.external_id,
+      channel: data.conversations?.channel,
+      delivery_status: data.delivery_status,
+      created_at: data.created_at,
+      timeline: [
+        { status: "queued", at: data.created_at },
+        ...history.map((h: Record<string, unknown>) => ({ status: h.status, at: h.at, info: h.info })),
+        { status: data.delivery_status, at: data.metadata?.last_status_at || data.created_at },
+      ],
+    },
+  };
+}
+
+// ===== v1.1: POST /messages/:id/status (provider callback) =====
+// deno-lint-ignore no-explicit-any
+async function handleMessageStatusCallback(supabase: any, orgId: string, messageId: string, req: Request) {
+  const body = await req.json().catch(() => ({}));
+  const status = validateString(body.status, 30);
+  if (!status) return { error: "status is required", code: "INVALID_REQUEST" };
+  const allowed = ["pending", "queued", "sent", "delivered", "read", "failed", "bounced"];
+  if (!allowed.includes(status)) return { error: `status must be one of ${allowed.join(", ")}`, code: "INVALID_STATUS" };
+
+  // Verify ownership through conversation
+  const { data: msg, error: mErr } = await supabase
+    .from("messages")
+    .select("id, metadata, conversations!inner(organization_id)")
+    .eq("id", messageId)
+    .eq("conversations.organization_id", orgId)
+    .single();
+  if (mErr || !msg) return { error: "Message not found", code: "NOT_FOUND" };
+
+  const history = Array.isArray(msg.metadata?.history) ? msg.metadata.history : [];
+  history.push({ status, at: new Date().toISOString(), info: validateString(body.info, 500) });
+
+  const { error: uErr } = await supabase.from("messages").update({
+    delivery_status: status,
+    metadata: { ...(msg.metadata || {}), history, last_status_at: new Date().toISOString() },
+  }).eq("id", messageId);
+
+  if (uErr) return { error: "Failed to update status", code: "UPDATE_ERROR" };
+
+  // Fan-out to subscribed webhooks (event: message.status_updated)
+  fanoutWebhookEvent(supabase, orgId, "message.status_updated", {
+    message_id: messageId, status, updated_at: new Date().toISOString(), info: body.info ?? null,
+  }).catch((e) => console.error("fanout error:", e));
+
+  return { data: { message_id: messageId, delivery_status: status, updated_at: new Date().toISOString() } };
 }
 
 // ===== Trigger automation =====
@@ -1157,30 +1384,176 @@ async function handleTriggerAutomation(supabase: any, orgId: string, automationI
 }
 
 // ===== Outbound Webhook subscriptions =====
+const SUPPORTED_WEBHOOK_EVENTS = [
+  "contact.created", "contact.updated", "contact.deleted", "contact.tagged",
+  "deal.created", "deal.updated", "deal.stage_changed", "deal.won", "deal.lost",
+  "message.received", "message.sent", "message.status_updated",
+  "form.submitted",
+  "automation.completed", "automation.failed",
+  "conversation.assigned", "conversation.closed",
+] as const;
+
+function generateWebhookSecret(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return "whsec_" + Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function handleListWebhookEvents() {
+  return {
+    data: {
+      events: SUPPORTED_WEBHOOK_EVENTS.map((name) => ({ name })),
+      count: SUPPORTED_WEBHOOK_EVENTS.length,
+    },
+  };
+}
+
 // deno-lint-ignore no-explicit-any
-async function handleWebhooks(supabase: any, method: string, orgId: string, id: string | undefined, req: Request) {
+async function handleWebhooks(supabase: any, method: string, orgId: string, id: string | undefined, req: Request, isV11 = false) {
   if (method === "GET") {
     if (id) {
-      const { data, error } = await supabase.from("api_webhook_subscriptions").select("*").eq("id", id).eq("organization_id", orgId).single();
-      return error ? { error: "Webhook not found" } : { data };
+      const { data, error } = await supabase.from("api_webhook_subscriptions")
+        .select("id, name, url, events, is_active, last_triggered_at, failure_count, created_at, updated_at, secret")
+        .eq("id", id).eq("organization_id", orgId).single();
+      if (error) return { error: "Webhook not found" };
+      // Mask secret unless v1.1 explicitly requested
+      if (!isV11) delete (data as Record<string, unknown>).secret;
+      return { data };
     }
-    return paginatedList(supabase, "webhooks", orgId, req);
+    const { data, error, count } = await supabase
+      .from("api_webhook_subscriptions")
+      .select("id, name, url, events, is_active, last_triggered_at, failure_count, created_at", { count: "exact" })
+      .eq("organization_id", orgId)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    return error ? { error: "Failed to fetch webhooks" } : { data, meta: { total: count } };
   }
+
   if (method === "POST") {
     const body = await req.json().catch(() => ({}));
     const url = validateString(body.url, 500);
-    const events = Array.isArray(body.events) ? body.events.slice(0, 50) : [];
-    if (!url || events.length === 0) return { error: "url and events[] are required" };
+    const events = Array.isArray(body.events) ? body.events.slice(0, 50).filter((e: unknown) => typeof e === "string") : [];
+    if (!url || events.length === 0) return { error: "url and events[] are required", code: "INVALID_REQUEST" };
+    if (!/^https?:\/\//i.test(url)) return { error: "url must be a valid http(s) URL", code: "INVALID_URL" };
+
+    // Validate events against supported list (warn-only: store unknown events too)
+    const unknownEvents = events.filter((e: string) => !SUPPORTED_WEBHOOK_EVENTS.includes(e as never));
+
     const userId = await getOrgOwnerUserId(supabase, orgId);
+    const secret = generateWebhookSecret();
     const { data, error } = await supabase.from("api_webhook_subscriptions").insert({
       url, events, name: validateString(body.name, 100) || "API Webhook",
-      is_active: body.is_active !== false, organization_id: orgId, user_id: userId,
+      is_active: body.is_active !== false, organization_id: orgId, user_id: userId, secret,
     }).select().single();
-    return error ? { error: "Failed to create webhook: " + error.message } : { data };
+    if (error) return { error: "Failed to create webhook: " + error.message };
+    // Always return the secret on creation (only chance to capture it).
+    return {
+      data,
+      ...(unknownEvents.length ? { warnings: [`Unknown events (still subscribed): ${unknownEvents.join(", ")}`] } : {}),
+    };
   }
+
   if (method === "DELETE" && id) {
     const { error } = await supabase.from("api_webhook_subscriptions").delete().eq("id", id).eq("organization_id", orgId);
     return error ? { error: "Failed to delete" } : { success: true };
   }
   return { error: "Method not allowed" };
+}
+
+// ===== v1.1: POST /webhooks/:id/test =====
+// deno-lint-ignore no-explicit-any
+async function handleTestWebhook(supabase: any, orgId: string, webhookId: string) {
+  const { data: hook, error } = await supabase
+    .from("api_webhook_subscriptions")
+    .select("id, url, secret, is_active")
+    .eq("id", webhookId).eq("organization_id", orgId).single();
+  if (error || !hook) return { error: "Webhook not found", code: "NOT_FOUND" };
+  if (!hook.is_active) return { error: "Webhook is inactive", code: "INACTIVE" };
+
+  const payload = {
+    event: "webhook.test",
+    timestamp: new Date().toISOString(),
+    organization_id: orgId,
+    data: { message: "Test event from Agsell API v1.1", webhook_id: webhookId },
+  };
+  const signature = await signPayload(JSON.stringify(payload), hook.secret || "");
+
+  try {
+    const res = await fetch(hook.url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "Agsell-Webhook/1.1",
+        "X-Agsell-Event": "webhook.test",
+        "X-Agsell-Signature": signature,
+        "X-Agsell-Timestamp": payload.timestamp,
+      },
+      body: JSON.stringify(payload),
+    });
+    return {
+      data: {
+        delivered: res.ok,
+        status_code: res.status,
+        url: hook.url,
+        sent_at: payload.timestamp,
+      },
+    };
+  } catch (e) {
+    return { error: `Delivery failed: ${(e as Error).message}`, code: "DELIVERY_FAILED" };
+  }
+}
+
+// ===== v1.1: POST /webhooks/:id/rotate-secret =====
+// deno-lint-ignore no-explicit-any
+async function handleRotateWebhookSecret(supabase: any, orgId: string, webhookId: string) {
+  const newSecret = generateWebhookSecret();
+  const { data, error } = await supabase
+    .from("api_webhook_subscriptions")
+    .update({ secret: newSecret })
+    .eq("id", webhookId).eq("organization_id", orgId)
+    .select("id, secret, updated_at").single();
+  if (error || !data) return { error: "Webhook not found", code: "NOT_FOUND" };
+  return { data: { id: data.id, secret: data.secret, rotated_at: data.updated_at } };
+}
+
+// ===== Helpers shared by v1.1 webhooks =====
+async function signPayload(payload: string, secret: string): Promise<string> {
+  if (!secret) return "";
+  const key = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
+  );
+  const sig = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
+  const hex = Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  return `sha256=${hex}`;
+}
+
+// deno-lint-ignore no-explicit-any
+async function fanoutWebhookEvent(supabase: any, orgId: string, eventName: string, data: Record<string, unknown>) {
+  const { data: hooks } = await supabase
+    .from("api_webhook_subscriptions")
+    .select("id, url, secret, events")
+    .eq("organization_id", orgId)
+    .eq("is_active", true);
+  if (!hooks?.length) return;
+  const matching = hooks.filter((h: { events: string[] }) => Array.isArray(h.events) && h.events.includes(eventName));
+  const payload = { event: eventName, timestamp: new Date().toISOString(), organization_id: orgId, data };
+  const body = JSON.stringify(payload);
+  await Promise.allSettled(matching.map(async (h: { id: string; url: string; secret: string }) => {
+    const sig = await signPayload(body, h.secret || "");
+    return fetch(h.url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "Agsell-Webhook/1.1",
+        "X-Agsell-Event": eventName,
+        "X-Agsell-Signature": sig,
+        "X-Agsell-Timestamp": payload.timestamp,
+      },
+      body,
+    }).then((res) => supabase.from("api_webhook_subscriptions").update({
+      last_triggered_at: new Date().toISOString(),
+      failure_count: res.ok ? 0 : undefined,
+    }).eq("id", h.id));
+  }));
 }

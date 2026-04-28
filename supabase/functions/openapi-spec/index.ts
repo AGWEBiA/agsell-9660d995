@@ -5,7 +5,9 @@ const corsHeaders = {
 };
 
 const PROJECT_REF = Deno.env.get("SUPABASE_URL")?.replace("https://", "").split(".")[0] ?? "";
-const SERVER_URL = `https://${PROJECT_REF}.supabase.co/functions/v1/public-api/v1`;
+const SERVER_URL_V1 = `https://${PROJECT_REF}.supabase.co/functions/v1/public-api/v1`;
+const SERVER_URL_V11 = `https://${PROJECT_REF}.supabase.co/functions/v1/public-api/v1.1`;
+const SERVER_URL = SERVER_URL_V1; // default base used by OpenAPI / Postman
 
 const spec = {
   openapi: "3.1.0",
@@ -13,10 +15,19 @@ const spec = {
     title: "Agsell Public API",
     version: "1.1.0",
     description:
-      "REST API oficial do Agsell. Autenticação via header `X-API-Key`. Rate limit: 60 req/min, paginação via cursor.",
+      "REST API oficial do Agsell.\n\n" +
+      "**Autenticação:** header `X-API-Key`.\n" +
+      "**Rate limit:** 60 req/min, paginação por cursor.\n\n" +
+      "**Versões disponíveis:**\n" +
+      "- `v1` — endpoints estáveis (envio simples, CRUD).\n" +
+      "- `v1.1` — endpoints estendidos com tracking de entrega, status de mensagens, " +
+      "webhooks assinados (HMAC SHA-256), test/rotate de webhooks e fan-out de eventos.\n",
     contact: { name: "Agsell Support", url: "https://site.agsell.com.br/support" },
   },
-  servers: [{ url: SERVER_URL, description: "Production" }],
+  servers: [
+    { url: SERVER_URL_V1, description: "Production · v1" },
+    { url: SERVER_URL_V11, description: "Production · v1.1 (recomendado para integrações nativas)" },
+  ],
   security: [{ ApiKeyAuth: [] }],
   components: {
     securitySchemes: {
@@ -89,6 +100,26 @@ const spec = {
       Error: {
         type: "object",
         properties: { error: { type: "string" }, code: { type: "string" } },
+      },
+      MessageStatusUpdate: {
+        type: "object",
+        properties: {
+          status: { type: "string", enum: ["pending", "queued", "sent", "delivered", "read", "failed", "bounced"] },
+          info: { type: "string", description: "Detalhe opcional (motivo de falha, código do provedor, etc.)" },
+        },
+        required: ["status"],
+      },
+      MessageSentV11: {
+        type: "object",
+        properties: {
+          channel: { type: "string", enum: ["whatsapp", "email", "sms"] },
+          to: { type: "string" },
+          message_id: { type: "string", format: "uuid", description: "ID interno (use em /messages/:id/status)" },
+          external_id: { type: "string", nullable: true, description: "ID retornado pelo provedor (ex: WhatsApp wamid)" },
+          delivery_status: { type: "string", example: "sent" },
+          tracking_url: { type: "string", format: "uri", nullable: true },
+          sent_at: { type: "string", format: "date-time" },
+        },
       },
     },
     responses: {
@@ -171,7 +202,19 @@ const spec = {
             },
           },
         },
-        responses: { "200": { description: "Mensagem enfileirada", content: { "application/json": { example: { success: true, message_id: "msg_abc123", queued_at: "2026-04-28T12:00:00Z" } } } } },
+        responses: {
+          "200": {
+            description: "Mensagem enviada (v1: resposta simples · v1.1: tracking completo)",
+            content: { "application/json": {
+              examples: {
+                v1: { summary: "Resposta v1", value: { data: { channel: "whatsapp", to: "+5511999999999", sent: true } } },
+                v11: { summary: "Resposta v1.1", value: { data: { channel: "whatsapp", to: "+5511999999999", message_id: "550e8400-e29b-41d4-a716-446655440000", external_id: "wamid.HBgMNTUx...", delivery_status: "sent", tracking_url: "https://.../v1.1/messages/550e.../status", sent_at: "2026-04-28T12:00:00Z" } } },
+              },
+              schema: { $ref: "#/components/schemas/MessageSentV11" },
+            } },
+          },
+          "400": { description: "Validação falhou", content: { "application/json": { example: { error: "channel must be whatsapp|email|sms", code: "INVALID_CHANNEL" } } } },
+        },
       },
     },
     "/automations": { get: { tags: ["Automations"], summary: "Listar automações", responses: { "200": { description: "OK", content: { "application/json": { example: { data: [{ id: "...", name: "Boas-vindas", is_active: true, executions_count: 142 }] } } } } } } },
@@ -204,6 +247,79 @@ const spec = {
         responses: { "200": { description: "OK", content: { "application/json": { example: { period: "30d", contacts: 142, deals_won: 12, revenue: 45000 } } } } },
       },
     },
+
+    // ================== v1.1 — Integrações Nativas ==================
+    "/messages/{id}": {
+      get: {
+        tags: ["Messages v1.1"], summary: "[v1.1] Buscar mensagem por ID",
+        description: "Retorna o registro completo da mensagem persistida no envio (apenas v1.1).",
+        parameters: [{ $ref: "#/components/parameters/ResourceId" }],
+        responses: {
+          "200": { description: "OK", content: { "application/json": { example: { data: { id: "msg-uuid", conversation_id: "conv-uuid", content: "Olá!", message_type: "text", delivery_status: "delivered", external_id: "wamid.HBg...", created_at: "2026-04-28T12:00:00Z", sender_type: "agent" } } } } },
+          "404": { description: "Mensagem não encontrada" },
+        },
+      },
+    },
+    "/messages/{id}/status": {
+      get: {
+        tags: ["Messages v1.1"], summary: "[v1.1] Status de entrega + timeline",
+        description: "Retorna o status atual e a linha do tempo (`queued → sent → delivered → read` ou `failed`).",
+        parameters: [{ $ref: "#/components/parameters/ResourceId" }],
+        responses: {
+          "200": { description: "Status atual", content: { "application/json": { example: {
+            data: {
+              message_id: "msg-uuid", external_id: "wamid.HBgM...", channel: "whatsapp",
+              delivery_status: "delivered", created_at: "2026-04-28T12:00:00Z",
+              timeline: [
+                { status: "queued", at: "2026-04-28T12:00:00Z" },
+                { status: "sent", at: "2026-04-28T12:00:01Z" },
+                { status: "delivered", at: "2026-04-28T12:00:05Z" },
+              ],
+            },
+          } } } },
+        },
+      },
+      post: {
+        tags: ["Messages v1.1"], summary: "[v1.1] Atualizar status (callback de provedor)",
+        description: "Endpoint para integrações reportarem mudanças de status (delivered/read/failed/bounced).",
+        parameters: [{ $ref: "#/components/parameters/ResourceId" }],
+        requestBody: {
+          required: true,
+          content: { "application/json": { schema: { $ref: "#/components/schemas/MessageStatusUpdate" }, example: { status: "delivered", info: "Entregue ao dispositivo" } } },
+        },
+        responses: {
+          "200": { description: "Atualizado", content: { "application/json": { example: { data: { message_id: "msg-uuid", delivery_status: "delivered", updated_at: "2026-04-28T12:00:05Z" } } } } },
+          "400": { description: "Status inválido" },
+        },
+      },
+    },
+    "/webhooks/events": {
+      get: {
+        tags: ["Webhooks v1.1"], summary: "[v1.1] Listar eventos suportados",
+        responses: { "200": { description: "OK", content: { "application/json": { example: {
+          data: { count: 17, events: [
+            { name: "contact.created" }, { name: "deal.won" }, { name: "message.sent" },
+            { name: "message.status_updated" }, { name: "form.submitted" },
+          ] },
+        } } } } },
+      },
+    },
+    "/webhooks/{id}/test": {
+      post: {
+        tags: ["Webhooks v1.1"], summary: "[v1.1] Disparar evento de teste",
+        description: "Envia evento `webhook.test` assinado (`X-Agsell-Signature: sha256=...`) para a URL cadastrada.",
+        parameters: [{ $ref: "#/components/parameters/ResourceId" }],
+        responses: { "200": { description: "Resultado da entrega", content: { "application/json": { example: { data: { delivered: true, status_code: 200, url: "https://meusite.com/webhook", sent_at: "2026-04-28T12:10:00Z" } } } } } },
+      },
+    },
+    "/webhooks/{id}/rotate-secret": {
+      post: {
+        tags: ["Webhooks v1.1"], summary: "[v1.1] Rotacionar secret HMAC",
+        description: "Gera um novo `secret`. O valor antigo é invalidado imediatamente.",
+        parameters: [{ $ref: "#/components/parameters/ResourceId" }],
+        responses: { "200": { description: "OK", content: { "application/json": { example: { data: { id: "wh_abc123", secret: "whsec_NEW_VALUE_2f8a...", rotated_at: "2026-04-28T12:15:00Z" } } } } } },
+      },
+    },
   },
   tags: [
     { name: "Contacts", description: "Gestão de contatos do CRM" },
@@ -216,6 +332,8 @@ const spec = {
     { name: "Forms", description: "Formulários e submissões" },
     { name: "Webhooks", description: "Assinaturas de eventos" },
     { name: "Metrics", description: "Estatísticas e relatórios" },
+    { name: "Messages v1.1", description: "[v1.1] Envio com tracking, status de entrega e callbacks" },
+    { name: "Webhooks v1.1", description: "[v1.1] Eventos suportados, teste de entrega e rotação de secret" },
   ],
 };
 

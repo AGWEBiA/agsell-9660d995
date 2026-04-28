@@ -17,6 +17,7 @@ import {
 import { toast } from 'sonner';
 
 const API_BASE = `https://rcxrkvwxlzwzrllwdwgz.supabase.co/functions/v1/public-api/v1`;
+const API_BASE_V11 = `https://rcxrkvwxlzwzrllwdwgz.supabase.co/functions/v1/public-api/v1.1`;
 const OPENAPI_URL = `https://rcxrkvwxlzwzrllwdwgz.supabase.co/functions/v1/openapi-spec`;
 const POSTMAN_URL = `https://rcxrkvwxlzwzrllwdwgz.supabase.co/functions/v1/openapi-spec?format=postman`;
 
@@ -49,8 +50,13 @@ const ENDPOINTS: Endpoint[] = [
   // Tags
   { id: 'tags-list', group: 'CRM · Tags', method: 'GET', path: '/tags', title: 'Listar tags', description: 'Lista todas as tags da organização.' },
   { id: 'tags-create', group: 'CRM · Tags', method: 'POST', path: '/tags', title: 'Criar tag', description: 'Cria uma nova etiqueta.', body: { name: 'VIP', color: '#FF0000' } },
-  // Messages
+  // Messages (v1)
   { id: 'messages-send', group: 'Mensagens', method: 'POST', path: '/messages', title: 'Enviar mensagem', description: 'Envia mensagem omnichannel: WhatsApp, Email ou SMS.', body: { channel: 'whatsapp', to: '+5511999999999', message: 'Olá! Sua proposta está pronta.' } },
+  // Messages v1.1 (use base v1.1 — chame com /v1.1/ no lugar de /v1/)
+  { id: 'messages-send-v11', group: 'Mensagens v1.1', method: 'POST', path: '/messages', title: '[v1.1] Enviar com tracking', description: 'Envio v1.1: persiste a mensagem, devolve message_id e tracking_url para acompanhamento de entrega. Use o servidor /v1.1/.', body: { channel: 'whatsapp', to: '+5511999999999', message: 'Olá!' } },
+  { id: 'messages-get-v11', group: 'Mensagens v1.1', method: 'GET', path: '/messages/{id}', title: '[v1.1] Buscar mensagem', description: 'Retorna o registro completo da mensagem.' },
+  { id: 'messages-status-v11', group: 'Mensagens v1.1', method: 'GET', path: '/messages/{id}/status', title: '[v1.1] Status de entrega + timeline', description: 'Status atual (queued/sent/delivered/read/failed) e histórico cronológico.' },
+  { id: 'messages-status-cb-v11', group: 'Mensagens v1.1', method: 'POST', path: '/messages/{id}/status', title: '[v1.1] Callback de status', description: 'Reporta atualização de status vinda do provedor (delivered, read, failed, bounced).', body: { status: 'delivered', info: 'Entregue ao dispositivo do destinatário' } },
   // Automations
   { id: 'automations-list', group: 'Automações', method: 'GET', path: '/automations', title: 'Listar automações', description: 'Retorna todas as automações da organização.' },
   { id: 'automations-trigger', group: 'Automações', method: 'POST', path: '/automations/{id}/trigger', title: 'Disparar automação', description: 'Inicia execução de uma automação ativa, passando dados arbitrários.', body: { contact_id: 'uuid', custom_data: { origem: 'site' } } },
@@ -61,10 +67,14 @@ const ENDPOINTS: Endpoint[] = [
   { id: 'forms-list', group: 'Forms', method: 'GET', path: '/forms', title: 'Listar formulários', description: 'Retorna formulários da organização.' },
   { id: 'forms-submissions', group: 'Forms', method: 'GET', path: '/forms/{id}/submissions', title: 'Listar submissões', description: 'Retorna submissões de um formulário.' },
   { id: 'forms-submit', group: 'Forms', method: 'POST', path: '/forms/{id}/submit', title: 'Submeter formulário (público)', description: 'Endpoint PÚBLICO sem autenticação. Cria contato automaticamente.', body: { data: { nome: 'Cliente', email: 'cliente@email.com', telefone: '+5511999999999' } } },
-  // Webhooks
+  // Webhooks (v1)
   { id: 'webhooks-list', group: 'Webhooks', method: 'GET', path: '/webhooks', title: 'Listar assinaturas', description: 'Lista assinaturas de webhook ativas.' },
-  { id: 'webhooks-create', group: 'Webhooks', method: 'POST', path: '/webhooks', title: 'Criar assinatura', description: 'Inscreve URL externa em eventos do sistema.', body: { name: 'Meu Sistema', url: 'https://meusite.com/webhook', events: ['contact.created', 'deal.won', 'message.received'] } },
+  { id: 'webhooks-create', group: 'Webhooks', method: 'POST', path: '/webhooks', title: 'Criar assinatura', description: 'Inscreve URL externa em eventos. v1.1 retorna o secret HMAC para validação de assinaturas (X-Agsell-Signature).', body: { name: 'Meu Sistema', url: 'https://meusite.com/webhook', events: ['contact.created', 'deal.won', 'message.status_updated'] } },
   { id: 'webhooks-delete', group: 'Webhooks', method: 'DELETE', path: '/webhooks/{id}', title: 'Remover assinatura', description: 'Cancela uma assinatura de webhook.' },
+  // Webhooks v1.1
+  { id: 'webhooks-events-v11', group: 'Webhooks v1.1', method: 'GET', path: '/webhooks/events', title: '[v1.1] Eventos suportados', description: 'Lista todos os event names que podem ser assinados.' },
+  { id: 'webhooks-test-v11', group: 'Webhooks v1.1', method: 'POST', path: '/webhooks/{id}/test', title: '[v1.1] Disparar teste', description: 'Envia um evento webhook.test assinado para a URL cadastrada e retorna o status_code da resposta.' },
+  { id: 'webhooks-rotate-v11', group: 'Webhooks v1.1', method: 'POST', path: '/webhooks/{id}/rotate-secret', title: '[v1.1] Rotacionar secret', description: 'Gera um novo secret HMAC. O valor anterior é invalidado imediatamente.' },
   // Metrics
   { id: 'metrics-overview', group: 'Métricas', method: 'GET', path: '/metrics/overview?period=30d', title: 'Visão geral', description: 'KPIs consolidados do período (today, 7d, 30d, 90d).' },
   { id: 'metrics-leads', group: 'Métricas', method: 'GET', path: '/metrics/leads', title: 'Métricas de leads', description: 'Estatísticas de geração e conversão.' },
@@ -86,7 +96,8 @@ const WEBHOOK_EVENTS = [
 ];
 
 function buildExample(ep: Endpoint, lang: Lang, apiKey = 'YOUR_API_KEY'): string {
-  const url = `${API_BASE}${ep.path.replace('{id}', 'CONTACT_ID')}`;
+  const base = ep.group.includes('v1.1') ? API_BASE_V11 : API_BASE;
+  const url = `${base}${ep.path.replace('{id}', 'RESOURCE_ID')}`;
   const bodyJson = ep.body ? JSON.stringify(ep.body, null, 2) : '';
   const hasBody = !!ep.body && ep.method !== 'GET';
 
@@ -209,10 +220,12 @@ export default function ApiDocs() {
     'CRM · Negócios': <Briefcase className="h-3.5 w-3.5" />,
     'CRM · Tags': <TagIcon className="h-3.5 w-3.5" />,
     'Mensagens': <Send className="h-3.5 w-3.5" />,
+    'Mensagens v1.1': <Send className="h-3.5 w-3.5" />,
     'Automações': <Bot className="h-3.5 w-3.5" />,
     'Inbox': <MessagesSquare className="h-3.5 w-3.5" />,
     'Forms': <FileText className="h-3.5 w-3.5" />,
     'Webhooks': <WebhookIcon className="h-3.5 w-3.5" />,
+    'Webhooks v1.1': <WebhookIcon className="h-3.5 w-3.5" />,
     'Métricas': <BarChart3 className="h-3.5 w-3.5" />,
   };
 

@@ -60,6 +60,10 @@ import { useCompanies } from '@/hooks/useCompanies';
 import { ImportContactsDialog } from '@/components/contacts/ImportContactsDialog';
 import { ImportJobsList } from '@/components/contacts/ImportJobsList';
 import { ContactTagsManager } from '@/components/contacts/ContactTagsManager';
+import { BulkTagsDialog } from '@/components/contacts/BulkTagsDialog';
+import { TagsImportExportDialog } from '@/components/contacts/TagsImportExportDialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Tags, FileSpreadsheet } from 'lucide-react';
 import { PermissionGate } from '@/components/permissions/PermissionGate';
 import { useFeatureCheck } from '@/components/permissions/FeatureGate';
 import { usePaginatedData } from '@/hooks/usePaginatedQuery';
@@ -109,6 +113,9 @@ export default function Contacts() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewContact, setViewContact] = useState<Contact | null>(null);
   const [editContact, setEditContact] = useState<Contact | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkTagsOpen, setBulkTagsOpen] = useState(false);
+  const [tagsCsvOpen, setTagsCsvOpen] = useState(false);
   const [newContact, setNewContact] = useState<CreateContactData>({
     first_name: '',
     last_name: '',
@@ -196,6 +203,16 @@ export default function Contacts() {
             Importar
           </Button>
         </PermissionGate>
+        <Button variant="outline" size="sm" onClick={() => setTagsCsvOpen(true)}>
+          <FileSpreadsheet className="h-4 w-4 mr-2" />
+          Tags CSV
+        </Button>
+        {selectedIds.size > 0 && (
+          <Button size="sm" onClick={() => setBulkTagsOpen(true)}>
+            <Tags className="h-4 w-4 mr-2" />
+            Tags em massa ({selectedIds.size})
+          </Button>
+        )}
         <PermissionGate module="contacts" action="export">
           <Button variant="outline" size="sm" onClick={() => {
             if (contacts.length === 0) {
@@ -387,6 +404,18 @@ export default function Contacts() {
             <Table className="min-w-[700px]">
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[40px]">
+                    <Checkbox
+                      checked={paginatedContacts.length > 0 && paginatedContacts.every(c => selectedIds.has(c.id))}
+                      onCheckedChange={(v) => {
+                        const next = new Set(selectedIds);
+                        if (v) paginatedContacts.forEach(c => next.add(c.id));
+                        else paginatedContacts.forEach(c => next.delete(c.id));
+                        setSelectedIds(next);
+                      }}
+                      aria-label="Selecionar todos"
+                    />
+                  </TableHead>
                   <TableHead>Contato</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Telefone</TableHead>
@@ -399,6 +428,17 @@ export default function Contacts() {
               <TableBody>
                 {paginatedContacts.map((contact) => (
                   <TableRow key={contact.id}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedIds.has(contact.id)}
+                        onCheckedChange={(v) => {
+                          const next = new Set(selectedIds);
+                          if (v) next.add(contact.id); else next.delete(contact.id);
+                          setSelectedIds(next);
+                        }}
+                        aria-label={`Selecionar ${contact.first_name}`}
+                      />
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
@@ -511,6 +551,12 @@ export default function Contacts() {
 
       {/* Import Dialog */}
       <ImportContactsDialog open={isImportOpen} onOpenChange={setIsImportOpen} />
+      <BulkTagsDialog
+        open={bulkTagsOpen}
+        onOpenChange={setBulkTagsOpen}
+        contactIds={Array.from(selectedIds)}
+      />
+      <TagsImportExportDialog open={tagsCsvOpen} onOpenChange={setTagsCsvOpen} />
 
       {/* Import Jobs History */}
       {!isImportOpen && <ImportJobsList />}

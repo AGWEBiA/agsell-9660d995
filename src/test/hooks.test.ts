@@ -18,6 +18,7 @@ const hookPaths = [
   '@/hooks/useContacts',
   '@/hooks/useAutomations',
   '@/hooks/useTags',
+  '@/hooks/useContactTags',
   '@/hooks/usePipeline',
   '@/hooks/useInbox',
   '@/hooks/useEmailCampaigns',

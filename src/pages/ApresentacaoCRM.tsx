@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import agsellLogo from '@/assets/agsell-logo-full-white.png';
+import { VendasPlansBox } from '@/components/vendas/VendasPlansBox';
 
 interface Slide {
   id: string;
@@ -58,12 +59,18 @@ const slides: Slide[] = [
     subtitle: 'Centralize contatos, automatize o pipeline e use IA para fechar mais negócios — em uma única plataforma.',
     accent: 'red',
     body: (
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-8">
-        <StatCard value="360°" label="Visão do contato" />
-        <StatCard value="8" label="Módulos integrados" />
-        <StatCard value="IA" label="Next Best Action" />
-        <StatCard value="∞" label="Campos customizados" />
-      </div>
+      <>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-8">
+          <StatCard value="360°" label="Visão do contato" />
+          <StatCard value="8" label="Módulos integrados" />
+          <StatCard value="IA" label="Next Best Action" />
+          <StatCard value="∞" label="Campos customizados" />
+        </div>
+        <div className="mt-10">
+          <div className="text-xs uppercase tracking-[0.2em] text-white/60 mb-4">Planos disponíveis</div>
+          <VendasPlansBox variant="compact" />
+        </div>
+      </>
     ),
   },
   {
@@ -307,7 +314,9 @@ const slides: Slide[] = [
     body: (
       <div className="mt-10 flex flex-col md:flex-row gap-4 items-center">
         <a
-          href="https://agsell.lovable.app/pricing"
+          href="https://site.agsell.com.br/pricing"
+          target="_blank"
+          rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-white text-red-700 font-bold text-lg hover:bg-white/90 transition"
         >
           Ver Planos <ArrowRight className="w-5 h-5" />
@@ -356,7 +365,7 @@ export default function ApresentacaoCRM() {
         </div>
         <div className="flex items-center gap-3">
           <a
-            href="https://agsell.lovable.app/pricing"
+            href="https://site.agsell.com.br/pricing"
             target="_blank"
             rel="noopener noreferrer"
             className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white text-zinc-900 text-sm font-semibold hover:bg-white/90 transition"

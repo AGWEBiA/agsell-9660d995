@@ -25,7 +25,8 @@ export function CompanyHierarchyPanel() {
 
   const setParent = async () => {
     if (!childId) return;
-    const { error } = await supabase.from('companies').update({ parent_company_id: parentId || null }).eq('id', childId);
+    const newParent = parentId && parentId !== '__none__' ? parentId : null;
+    const { error } = await supabase.from('companies').update({ parent_company_id: newParent }).eq('id', childId);
     if (error) { toast.error(error.message); return; }
     toast.success('Hierarquia atualizada');
     qc.invalidateQueries({ queryKey: ['companies'] });
@@ -62,7 +63,7 @@ export function CompanyHierarchyPanel() {
               <Select value={parentId} onValueChange={setParentId}>
                 <SelectTrigger><SelectValue placeholder="Sem matriz" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">— Sem matriz —</SelectItem>
+                  <SelectItem value="__none__">— Sem matriz —</SelectItem>
                   {companies.filter((c: any) => c.id !== childId).map((c: any) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                 </SelectContent>
               </Select>

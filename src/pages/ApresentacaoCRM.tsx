@@ -7,6 +7,7 @@ import {
   MessageSquare, ArrowRight, Check, Target, Layers, Zap, Activity,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import agsellLogo from '@/assets/agsell-logo-full-white.png';
 
 interface Slide {
   id: string;
@@ -286,7 +287,7 @@ const slides: Slide[] = [
           CRM + Inbox + Automação + IA + WhatsApp Oficial. Sem precisar plugar 5 ferramentas.
         </FeatureRow>
         <FeatureRow icon={Brain} title="IA nativa, sem custo extra">
-          Gemini integrado via Lovable AI Gateway. Sem chave de API, sem mensalidade adicional.
+          Gemini integrado de forma nativa. Sem chave de API e sem precisar contratar serviços externos.
         </FeatureRow>
         <FeatureRow icon={ShieldCheck} title="LGPD by design">
           Exportação JSON, hard delete, unsubscribe granular e auditoria completa.
@@ -349,16 +350,19 @@ export default function ApresentacaoCRM() {
       {/* Top bar */}
       <header className="relative z-10 px-6 md:px-12 py-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-red-600 flex items-center justify-center font-black text-white">A</div>
-          <div>
-            <div className="font-bold leading-tight">AG Sell</div>
-            <div className="text-xs text-white/60">Apresentação CRM</div>
-          </div>
+          <img src={agsellLogo} alt="AG Sell" className="h-8 md:h-9 w-auto object-contain" />
+          <div className="hidden sm:block h-8 w-px bg-white/20" />
+          <div className="hidden sm:block text-xs uppercase tracking-[0.2em] text-white/60">Apresentação CRM</div>
         </div>
         <Badge variant="outline" className="border-white/20 text-white/80">
           {idx + 1} / {slides.length}
         </Badge>
       </header>
+
+      {/* Watermark logo - presente em todos os slides */}
+      <div className="fixed bottom-24 right-6 md:right-10 z-10 opacity-20 pointer-events-none hidden md:block">
+        <img src={agsellLogo} alt="" className="h-10 w-auto object-contain" />
+      </div>
 
       {/* Slide content */}
       <main className="relative z-10 px-6 md:px-16 pb-32 pt-6 max-w-6xl mx-auto" data-slide={slide.id}>

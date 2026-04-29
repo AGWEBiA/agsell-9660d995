@@ -113,6 +113,11 @@ export default function Contacts() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [viewContact, setViewContact] = useState<Contact | null>(null);
   const [editContact, setEditContact] = useState<Contact | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkTagsOpen, setBulkTagsOpen] = useState(false);
+  const [tagsCsvOpen, setTagsCsvOpen] = useState(false);
+  const [viewContact, setViewContact] = useState<Contact | null>(null);
+  const [editContact, setEditContact] = useState<Contact | null>(null);
   const [newContact, setNewContact] = useState<CreateContactData>({
     first_name: '',
     last_name: '',

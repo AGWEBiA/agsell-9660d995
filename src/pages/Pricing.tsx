@@ -584,36 +584,6 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="container mx-auto px-4 pb-20">
-        <div className="text-center mb-12">
-          <Badge variant="outline" className="mb-4">
-            <Sparkles className="h-3 w-3 mr-1" />
-            Recursos Poderosos
-          </Badge>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Tudo que você precisa para <span className="text-primary">vender mais</span>
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Uma plataforma completa de CRM e automação de vendas para impulsionar seus resultados
-          </p>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 max-w-7xl mx-auto">
-          {SYSTEM_FEATURES.map((feature, index) => (
-            <Card key={index} className="border bg-card/50 hover:bg-card hover:shadow-md transition-all">
-              <CardContent className="pt-6">
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <feature.icon className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground">{feature.description}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </section>
-
       {/* Pricing Section Header */}
       <section className="container mx-auto px-4 pb-8 text-center">
         <Badge variant="secondary" className="mb-4">
@@ -667,6 +637,36 @@ export default function Pricing() {
               billingCycle={billingCycle}
               onSelect={() => handleSelectPlan(plan)}
             />
+          ))}
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="container mx-auto px-4 pb-20">
+        <div className="text-center mb-12">
+          <Badge variant="outline" className="mb-4">
+            <Sparkles className="h-3 w-3 mr-1" />
+            Recursos Poderosos
+          </Badge>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            Tudo que você precisa para <span className="text-primary">vender mais</span>
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Uma plataforma completa de CRM e automação de vendas para impulsionar seus resultados
+          </p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 max-w-7xl mx-auto">
+          {SYSTEM_FEATURES.map((feature, index) => (
+            <Card key={index} className="border bg-card/50 hover:bg-card hover:shadow-md transition-all">
+              <CardContent className="pt-6">
+                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <feature.icon className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
+                <p className="text-sm text-muted-foreground">{feature.description}</p>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </section>

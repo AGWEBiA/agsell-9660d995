@@ -29,6 +29,7 @@ const Register = React.lazy(() => import("./pages/Register"));
 const Pricing = React.lazy(() => import("./pages/Pricing"));
 const Features = React.lazy(() => import("./pages/Features"));
 const Apresentacao = React.lazy(() => import("./pages/Apresentacao"));
+const ApresentacaoCRM = React.lazy(() => import("./pages/ApresentacaoCRM"));
 const Vendas = React.lazy(() => import("./pages/Vendas"));
 const SalesPitch = React.lazy(() => import("./pages/SalesPitch"));
 const PurchaseSuccess = React.lazy(() => import("./pages/PurchaseSuccess"));
@@ -154,6 +155,7 @@ const App = () => (
                   <Route path="/pricing" element={<Pricing />} />
                   <Route path="/features" element={<Features />} />
                   <Route path="/apresentacao" element={<Apresentacao />} />
+                  <Route path="/apresentacao-crm" element={<ApresentacaoCRM />} />
                   <Route path="/vendas" element={<Vendas />} />
                   <Route path="/pitch" element={<SalesPitch />} />
                   <Route path="/privacy-policy" element={<PrivacyPolicy />} />

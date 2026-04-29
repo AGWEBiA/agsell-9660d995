@@ -1249,6 +1249,7 @@ export type Database = {
           name: string
           notes: string | null
           organization_id: string | null
+          parent_company_id: string | null
           phone: string | null
           size: string | null
           state: string | null
@@ -1267,6 +1268,7 @@ export type Database = {
           name: string
           notes?: string | null
           organization_id?: string | null
+          parent_company_id?: string | null
           phone?: string | null
           size?: string | null
           state?: string | null
@@ -1285,6 +1287,7 @@ export type Database = {
           name?: string
           notes?: string | null
           organization_id?: string | null
+          parent_company_id?: string | null
           phone?: string | null
           size?: string | null
           state?: string | null
@@ -1294,6 +1297,79 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "companies_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "companies_parent_company_id_fkey"
+            columns: ["parent_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_next_actions: {
+        Row: {
+          action_type: string
+          ai_model: string | null
+          channel: string | null
+          contact_id: string
+          created_at: string
+          description: string | null
+          done_at: string | null
+          id: string
+          organization_id: string
+          priority: string
+          reasoning: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          action_type: string
+          ai_model?: string | null
+          channel?: string | null
+          contact_id: string
+          created_at?: string
+          description?: string | null
+          done_at?: string | null
+          id?: string
+          organization_id: string
+          priority?: string
+          reasoning?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          action_type?: string
+          ai_model?: string | null
+          channel?: string | null
+          contact_id?: string
+          created_at?: string
+          description?: string | null
+          done_at?: string | null
+          id?: string
+          organization_id?: string
+          priority?: string
+          reasoning?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_next_actions_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_next_actions_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1738,6 +1814,155 @@ export type Database = {
           },
         ]
       }
+      custom_field_definitions: {
+        Row: {
+          created_at: string
+          entity_type: string
+          field_key: string
+          field_label: string
+          field_type: string
+          id: string
+          is_required: boolean
+          options: Json | null
+          organization_id: string
+          show_in_list: boolean
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          entity_type: string
+          field_key: string
+          field_label: string
+          field_type: string
+          id?: string
+          is_required?: boolean
+          options?: Json | null
+          organization_id: string
+          show_in_list?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          entity_type?: string
+          field_key?: string
+          field_label?: string
+          field_type?: string
+          id?: string
+          is_required?: boolean
+          options?: Json | null
+          organization_id?: string
+          show_in_list?: boolean
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_field_definitions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_field_values: {
+        Row: {
+          created_at: string
+          entity_id: string
+          entity_type: string
+          field_id: string
+          id: string
+          organization_id: string
+          updated_at: string
+          value: Json | null
+        }
+        Insert: {
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          field_id: string
+          id?: string
+          organization_id: string
+          updated_at?: string
+          value?: Json | null
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          field_id?: string
+          id?: string
+          organization_id?: string
+          updated_at?: string
+          value?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_field_values_field_id_fkey"
+            columns: ["field_id"]
+            isOneToOne: false
+            referencedRelation: "custom_field_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "custom_field_values_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_stage_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          deal_id: string
+          duration_seconds: number | null
+          from_stage_id: string | null
+          id: string
+          organization_id: string
+          to_stage_id: string | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          deal_id: string
+          duration_seconds?: number | null
+          from_stage_id?: string | null
+          id?: string
+          organization_id: string
+          to_stage_id?: string | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          deal_id?: string
+          duration_seconds?: number | null
+          from_stage_id?: string | null
+          id?: string
+          organization_id?: string
+          to_stage_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_stage_history_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deal_stage_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deal_win_scores: {
         Row: {
           created_at: string
@@ -1791,8 +2016,11 @@ export type Database = {
           currency: string | null
           expected_close_date: string | null
           id: string
+          last_stage_change_at: string | null
+          lost_reason: string | null
           notes: string | null
           organization_id: string | null
+          owner_id: string | null
           probability: number | null
           stage_id: string | null
           status: string | null
@@ -1808,8 +2036,11 @@ export type Database = {
           currency?: string | null
           expected_close_date?: string | null
           id?: string
+          last_stage_change_at?: string | null
+          lost_reason?: string | null
           notes?: string | null
           organization_id?: string | null
+          owner_id?: string | null
           probability?: number | null
           stage_id?: string | null
           status?: string | null
@@ -1825,8 +2056,11 @@ export type Database = {
           currency?: string | null
           expected_close_date?: string | null
           id?: string
+          last_stage_change_at?: string | null
+          lost_reason?: string | null
           notes?: string | null
           organization_id?: string | null
+          owner_id?: string | null
           probability?: number | null
           stage_id?: string | null
           status?: string | null
@@ -4361,6 +4595,53 @@ export type Database = {
           },
         ]
       }
+      revenue_goals: {
+        Row: {
+          created_at: string
+          currency: string
+          id: string
+          notes: string | null
+          organization_id: string
+          period_end: string
+          period_start: string
+          target_amount: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          period_end: string
+          period_start: string
+          target_amount?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          period_end?: string
+          period_start?: string
+          target_amount?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_goals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sac_agents: {
         Row: {
           created_at: string
@@ -4886,6 +5167,62 @@ export type Database = {
           },
           {
             foreignKeyName: "site_tracking_sessions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      smart_lists: {
+        Row: {
+          color: string | null
+          created_at: string
+          entity_type: string
+          filters: Json
+          icon: string | null
+          id: string
+          is_shared: boolean
+          name: string
+          organization_id: string
+          pinned: boolean
+          sort_order: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          entity_type: string
+          filters?: Json
+          icon?: string | null
+          id?: string
+          is_shared?: boolean
+          name: string
+          organization_id: string
+          pinned?: boolean
+          sort_order?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          entity_type?: string
+          filters?: Json
+          icon?: string | null
+          id?: string
+          is_shared?: boolean
+          name?: string
+          organization_id?: string
+          pinned?: boolean
+          sort_order?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "smart_lists_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -7044,6 +7381,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      calculate_forecast: {
+        Args: {
+          _end: string
+          _org_id: string
+          _start: string
+          _user_id?: string
+        }
+        Returns: Json
+      }
       check_plan_limit: {
         Args: { _current_count?: number; _org_id: string; _resource: string }
         Returns: Json
@@ -7066,6 +7412,16 @@ export type Database = {
       emit_webhook_event: {
         Args: { _data: Json; _event_type: string; _org_id: string }
         Returns: number
+      }
+      find_duplicate_contacts: {
+        Args: { _org_id: string }
+        Returns: {
+          contact_ids: string[]
+          created_dates: string[]
+          key_value: string
+          match_type: string
+          names: string[]
+        }[]
       }
       get_agency_access_level: {
         Args: { _client_org_id: string; _user_id: string }
@@ -7119,6 +7475,27 @@ export type Database = {
           id: string
           invite_link: string
           sort_order: number
+        }[]
+      }
+      get_rotting_deals: {
+        Args: { _days?: number; _org_id: string }
+        Returns: {
+          contact_id: string
+          days_in_stage: number
+          deal_id: string
+          last_stage_change_at: string
+          owner_id: string
+          stage_id: string
+          title: string
+          value: number
+        }[]
+      }
+      get_stage_avg_time: {
+        Args: { _org_id: string }
+        Returns: {
+          avg_seconds: number
+          deals_count: number
+          stage_id: string
         }[]
       }
       get_ticket_by_protocol: {
@@ -7185,6 +7562,10 @@ export type Database = {
           _resource_type: string
         }
         Returns: undefined
+      }
+      merge_contacts: {
+        Args: { _keep_id: string; _remove_id: string }
+        Returns: Json
       }
       normalize_br_phone: { Args: { phone: string }; Returns: string }
       process_import_job: { Args: { _job_id: string }; Returns: Json }

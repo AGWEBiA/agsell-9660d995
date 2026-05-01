@@ -276,6 +276,10 @@ export default function Admin() {
             <Activity className="h-4 w-4" />
             Integrações
           </TabsTrigger>
+          <TabsTrigger value="webhook-audit" className="flex items-center gap-2">
+            <Bug className="h-4 w-4" />
+            Auditoria Webhooks
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-6">
           {/* KPIs */}

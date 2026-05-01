@@ -55,6 +55,7 @@ import { VoipProviderConfig } from '@/components/admin/VoipProviderConfig';
 import { CommunicationPackagesAdmin } from '@/components/admin/CommunicationPackagesAdmin';
 import { AdminDomainReport } from '@/components/admin/AdminDomainReport';
 import { AdminIntegrationsConfig } from '@/components/admin/AdminIntegrationsConfig';
+import { WebhookAuditDashboard } from '@/components/admin/WebhookAuditDashboard';
 export default function Admin() {
   const { user, isAdmin, loading: isCheckingAdmin } = useAuth();
   const [assignPlanOrg, setAssignPlanOrg] = useState<{ id: string; name: string } | null>(null);

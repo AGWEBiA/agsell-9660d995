@@ -1390,7 +1390,7 @@ async function routeToInbox(
     // Safety check: skip group or broadcast messages
     if (String(senderIdentifier).includes("@g.us") || String(senderIdentifier).includes("@broadcast") || String(senderIdentifier).includes("@newsletter")) {
       console.log(`[routeToInbox] Skipping group/broadcast identifier: ${senderIdentifier}`);
-      return;
+      return { contactId: null, conversationId: null };
     }
 
     // Sanitize inbound display name (push notification name from WhatsApp)

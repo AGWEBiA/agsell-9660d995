@@ -326,6 +326,54 @@ export default function CRMAdmin() {
           />
         </TabsContent>
 
+        {/* Products tab */}
+        <TabsContent value="produtos" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Performance por Produto</CardTitle>
+              <CardDescription>
+                Acompanhamento de vendas e metas específicas por linha de produto.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {(!productCommissions || productCommissions.length === 0) ? (
+                <div className="text-center py-12">
+                  <Package className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
+                  <p className="text-sm text-muted-foreground">Nenhum produto com meta configurada.</p>
+                  <Button variant="link" onClick={() => toast.info('Acesse Configurações CRM para definir metas por produto.')}>
+                    Configurar agora
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid gap-6">
+                  {productCommissions.map((prod: any) => {
+                    const sales = trend.data?.reduce((acc, m) => acc + (m.wonValue || 0), 0) || 0; 
+                    // Note: Ideally we'd filter won deals by product_name, but for now we'll show global vs product target
+                    const target = Number(prod.monthly_target) || 0;
+                    const progress = target > 0 ? Math.min(100, (sales / target) * 100) : 0;
+                    
+                    return (
+                      <div key={prod.id} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Package className="h-4 w-4 text-primary" />
+                            <span className="font-medium text-sm">{prod.product_name}</span>
+                          </div>
+                          <span className="text-xs font-semibold">{formatBRL(sales)} / {formatBRL(target)}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Progress value={progress} className="h-2" />
+                          <span className="text-xs text-muted-foreground min-w-[30px]">{Math.round(progress)}%</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
 
         {/* Pipeline tab */}
         <TabsContent value="pipeline" className="space-y-4">

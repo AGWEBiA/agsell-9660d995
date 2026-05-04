@@ -408,6 +408,56 @@ Deno.serve(async (req) => {
       if (integration) {
         const orgId = integration.organization_id;
         const triggerEvent = (action === "add" || action === "join") ? "on_join" : "on_leave";
+        const flowTriggerType = (action === "add" || action === "join") ? "whatsapp_group_join" : "whatsapp_group_leave";
+
+        // Dispatch Flow Builder Automations
+        const { data: flowAutomations } = await supabase
+          .from("automations")
+          .select("id, trigger_config")
+          .eq("organization_id", orgId)
+          .eq("trigger_type", flowTriggerType)
+          .eq("is_active", true);
+
+        if (flowAutomations && flowAutomations.length > 0) {
+          for (const auto of flowAutomations) {
+            const config = auto.trigger_config as Record<string, unknown> || {};
+            const targetGroup = config.group_name || config.external_group_id;
+            
+            // If specific group is defined in trigger, check it
+            if (targetGroup && targetGroup !== groupJid && !groupJid.includes(String(targetGroup))) continue;
+
+            for (const participant of participants) {
+              const phone = String(participant).replace("@s.whatsapp.net", "").replace("@c.us", "");
+              
+              // Resolve contact
+              const { data: contact } = await supabase
+                .from("contacts")
+                .select("id")
+                .eq("organization_id", orgId)
+                .or(`whatsapp.eq.${phone},phone.eq.${phone}`)
+                .maybeSingle();
+
+              if (contact) {
+                // Dispatch automation
+                fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/process-automation`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                    "X-Internal-Cron": "true",
+                  },
+                  body: JSON.stringify({
+                    automation_id: auto.id,
+                    contact_id: contact.id,
+                    trigger_event: flowTriggerType,
+                    trigger_data: { group_jid: groupJid, participant_phone: phone, action }
+                  }),
+                }).catch(err => console.error("Error dispatching group automation:", err));
+              }
+            }
+          }
+        }
+
 
         // Find active group messages matching this trigger
         const { data: messages } = await supabase
@@ -1121,13 +1171,56 @@ Deno.serve(async (req) => {
           if (isGroupMessage || isBroadcast) {
             await logPhase3Event(
               "skipped",
-              "mention", // reusing kind or adding a new one
+              "mention",
               { reason: isGroupMessage ? "group_message_blocked" : "broadcast_blocked", jid: String(remoteJid).slice(0, 60) },
               integration.organization_id,
               instanceName,
               senderPhone
             );
-            return;
+
+            // Trigger automations for group keywords
+            if (isGroupMessage && messageText) {
+              const { data: keywordAutomations } = await supabase
+                .from("automations")
+                .select("id, trigger_config")
+                .eq("organization_id", integration.organization_id)
+                .eq("trigger_type", "whatsapp_keyword")
+                .eq("is_active", true);
+
+              if (keywordAutomations && keywordAutomations.length > 0) {
+                const { data: contact } = await supabase
+                  .from("contacts")
+                  .select("id")
+                  .eq("organization_id", integration.organization_id)
+                  .or(`whatsapp.eq.${senderPhone},phone.eq.${senderPhone}`)
+                  .maybeSingle();
+
+                if (contact) {
+                  for (const auto of keywordAutomations) {
+                    const config = auto.trigger_config as Record<string, unknown> || {};
+                    const kw = String(config.keyword || "").toLowerCase();
+                    if (kw && messageText.toLowerCase().includes(kw)) {
+                      fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/process-automation`, {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                          "X-Internal-Cron": "true",
+                        },
+                        body: JSON.stringify({
+                          automation_id: auto.id,
+                          contact_id: contact.id,
+                          trigger_event: "whatsapp_keyword",
+                          trigger_data: { message: messageText, is_group: true, group_jid: remoteJid }
+                        }),
+                      }).catch(err => console.error("Error dispatching group keyword automation:", err));
+                    }
+                  }
+                }
+              }
+            }
+
+            return new Response(JSON.stringify({ success: true, message: "Group message processed" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
           }
 
 
@@ -1154,7 +1247,7 @@ Deno.serve(async (req) => {
 
             // For fromMe messages, the senderPhone is the contact we're messaging
             // We route them as "user" sender_type so they appear in the conversation
-            await routeToInbox(supabase, {
+            const { contactId } = await routeToInbox(supabase, {
               organizationId: integration.organization_id,
               userId,
               channel: "whatsapp",
@@ -1175,6 +1268,44 @@ Deno.serve(async (req) => {
               extraMetadata,
               contactName: pushName,
             });
+
+            // Trigger automations for regular WhatsApp messages
+            if (contactId && !isFromMe) {
+              const { data: automations } = await supabase
+                .from("automations")
+                .select("id, trigger_type, trigger_config")
+                .eq("organization_id", integration.organization_id)
+                .in("trigger_type", ["whatsapp_received", "whatsapp_keyword"])
+                .eq("is_active", true);
+
+              if (automations && automations.length > 0) {
+                for (const auto of automations) {
+                  const config = auto.trigger_config as Record<string, unknown> || {};
+                  
+                  // For keyword triggers, check if message matches
+                  if (auto.trigger_type === "whatsapp_keyword") {
+                    const kw = String(config.keyword || "").toLowerCase();
+                    if (!kw || !resolvedText.toLowerCase().includes(kw)) continue;
+                  }
+
+                  fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/process-automation`, {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                      "X-Internal-Cron": "true",
+                    },
+                    body: JSON.stringify({
+                      automation_id: auto.id,
+                      contact_id: contactId,
+                      trigger_event: auto.trigger_type,
+                      trigger_data: { message: resolvedText }
+                    }),
+                  }).catch(err => console.error("Error dispatching WhatsApp automation:", err));
+                }
+              }
+            }
+
           } else if (isGroupMessage) {
             // Log discarded group message
             await supabase.from("whatsapp_webhook_logs").insert({
@@ -1286,14 +1417,15 @@ interface RouteToInboxParams {
 async function routeToInbox(
   supabase: ReturnType<typeof createClient>,
   params: RouteToInboxParams
-) {
+): Promise<{ contactId: string | null; conversationId: string | null }> {
+
   try {
     const { organizationId, userId, channel, senderIdentifier, messageText, sourceInstanceId, sourceInstanceName, contactName } = params;
 
     // Safety check: skip group or broadcast messages
     if (String(senderIdentifier).includes("@g.us") || String(senderIdentifier).includes("@broadcast") || String(senderIdentifier).includes("@newsletter")) {
       console.log(`[routeToInbox] Skipping group/broadcast identifier: ${senderIdentifier}`);
-      return;
+      return { contactId: null, conversationId: null };
     }
 
     // Sanitize inbound display name (push notification name from WhatsApp)
@@ -1530,7 +1662,7 @@ async function routeToInbox(
 
       if (convError) {
         console.error(`Error creating ${channel} conversation:`, convError);
-        return;
+        return { contactId: null, conversationId: null };
       }
       conversationId = newConv.id;
     }
@@ -1545,7 +1677,7 @@ async function routeToInbox(
       
       if (existingMsg) {
         console.log(`Message with external_id ${params.externalMessageId} already exists, skipping insert.`);
-        return;
+        return { contactId, conversationId };
       }
 
       // If it's from me, try to find a message without external_id but same content/conversation
@@ -1570,7 +1702,7 @@ async function routeToInbox(
               instance_name: sourceInstanceName || null
             })
             .eq("id", recentMsg.id);
-          return;
+          return { contactId, conversationId };
         }
       }
     }
@@ -1618,7 +1750,9 @@ async function routeToInbox(
     } else {
       console.log(`${channel} message routed to inbox, conversation: ${conversationId}`);
     }
+    return { contactId, conversationId };
   } catch (err) {
     console.error("Error routing message to inbox:", err);
+    return { contactId: null, conversationId: null };
   }
 }

@@ -57,8 +57,8 @@ export default function ContactPreferencesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Preferências de Contato</h1>
-        <p className="text-muted-foreground">Gestão centralizada de opt-out e descadastro granular por canal</p>
+        <h2 className="text-xl font-bold text-foreground">Preferências de Contato</h2>
+        <p className="text-sm text-muted-foreground">Gestão centralizada de opt-out e descadastro granular</p>
       </div>
 
       {/* Summary Cards */}

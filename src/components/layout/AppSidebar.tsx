@@ -69,14 +69,9 @@ const menuSections: MenuSection[] = [
     label: 'CRM',
     icon: Users,
     items: [
-      { label: 'Painel CRM (Admin)', icon: Briefcase, path: '/crm-admin', orgAdminOnly: true },
-      { label: 'Deals (Lista)', icon: ListChecks, path: '/deals' },
-      { label: 'CRM Intelligence', icon: Brain, path: '/crm-intelligence' },
-      { label: 'Empresas', icon: Building2, path: '/companies' },
-      { label: 'Win Probability', icon: Brain, path: '/win-probability' },
-      { label: 'Sales Routing', icon: Route, path: '/sales-routing' },
-      { label: 'Tags', icon: Tags, path: '/tags' },
-      { label: 'Preferências', icon: ShieldCheck, path: '/contact-preferences' },
+      { label: 'Painel CRM', icon: Briefcase, path: '/crm-admin', orgAdminOnly: true },
+      { label: 'Deals', icon: ListChecks, path: '/deals' },
+      { label: 'Inteligência', icon: Brain, path: '/crm-intelligence-consolidated' },
     ],
   },
   {
@@ -236,11 +231,12 @@ function SectionHeader({
 }
 
 function MenuItemLink({
-  item, isActive, collapsed, onNavigate, isLocked,
+  item, isActive, collapsed, onNavigate, isLocked, isSecondary, sectionId,
 }: {
-  item: MenuItem; isActive: boolean; collapsed: boolean; onNavigate?: () => void; isLocked?: boolean;
+  item: MenuItem; isActive: boolean; collapsed: boolean; onNavigate?: () => void; isLocked?: boolean; isSecondary?: boolean; sectionId?: string;
 }) {
   const Icon = item.icon;
+  const isCrmSection = sectionId === 'crm' || item.path.startsWith('/crm-') || item.path === '/deals' || item.path === '/crm-settings';
 
   const linkContent = (
     <Link
@@ -252,27 +248,36 @@ function MenuItemLink({
         isLocked
           ? 'text-sidebar-foreground/35 hover:text-sidebar-foreground/55 hover:bg-sidebar-accent/40'
           : isActive
-            ? 'bg-gradient-to-r from-primary/15 via-primary/5 to-transparent text-foreground font-semibold'
-            : 'text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+            ? isCrmSection 
+              ? 'bg-[#c0392b] text-white font-semibold shadow-md'
+              : 'bg-gradient-to-r from-primary/15 via-primary/5 to-transparent text-foreground font-semibold'
+            : isSecondary
+              ? 'text-sidebar-foreground/45 hover:text-sidebar-foreground/75 hover:bg-sidebar-accent/30 text-[11px]'
+              : 'text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
       )}
       aria-current={isActive ? 'page' : undefined}
     >
       {/* Indicador vermelho à esquerda (estilo vídeo) */}
-      {isActive && !collapsed && (
+      {isActive && !collapsed && !isSecondary && (
         <span
-          className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-primary"
+          className={cn(
+            "absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full",
+            isCrmSection ? "bg-white/40" : "bg-primary"
+          )}
           aria-hidden="true"
         />
       )}
       <Icon
         className={cn(
           'h-[18px] w-[18px] shrink-0 transition-colors',
-          isActive ? 'text-primary' : 'text-sidebar-foreground/55 group-hover:text-sidebar-foreground/90'
+          isActive 
+            ? isCrmSection ? 'text-white' : 'text-primary' 
+            : isSecondary ? 'h-4 w-4 text-sidebar-foreground/40 group-hover:text-sidebar-foreground/60' : 'text-sidebar-foreground/55 group-hover:text-sidebar-foreground/90'
         )}
       />
       {!collapsed && (
         <>
-          <span className="flex-1 truncate">{item.label}</span>
+          <span className={cn("flex-1 truncate", isSecondary && "text-[12px]")}>{item.label}</span>
           {isLocked && <Lock className="h-3.5 w-3.5 shrink-0 opacity-50" />}
         </>
       )}
@@ -394,8 +399,22 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, isMobile, onClose 
                     collapsed={sidebarCollapsed}
                     onNavigate={navigateCallback}
                     isLocked={!!item.featureRequired && !planFeatures.includes(item.featureRequired)}
+                    sectionId={section.id}
                   />
                 ))}
+                {section.id === 'crm' && (
+                  <>
+                    {!sidebarCollapsed && <Separator className="mx-4 my-2 opacity-30" />}
+                    <MenuItemLink
+                      item={{ label: 'Configurações CRM', icon: Settings, path: '/crm-settings' }}
+                      isActive={location.pathname === '/crm-settings'}
+                      collapsed={sidebarCollapsed}
+                      onNavigate={navigateCallback}
+                      isSecondary
+                      sectionId="crm"
+                    />
+                  </>
+                )}
               </div>
             </div>
           </div>

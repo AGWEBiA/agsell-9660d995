@@ -52,10 +52,10 @@ const NotFound = React.lazy(() => import("./pages/NotFound"));
 // Lazy-loaded protected pages
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 const Contacts = React.lazy(() => import("./pages/Contacts"));
-const Companies = React.lazy(() => import("./pages/Companies"));
-const Pipeline = React.lazy(() => import("./pages/Pipeline"));
+const Companies = React.lazy(() => import("./pages/CRMIntelligenceConsolidated"));
+const Pipeline = React.lazy(() => import("./pages/Deals"));
 const Deals = React.lazy(() => import("./pages/Deals"));
-const Tags = React.lazy(() => import("./pages/Tags"));
+const Tags = React.lazy(() => import("./pages/CRMSettingsConsolidated"));
 const Tasks = React.lazy(() => import("./pages/Tasks"));
 const Inbox = React.lazy(() => import("./pages/Inbox"));
 const Email = React.lazy(() => import("./pages/Email"));
@@ -95,7 +95,7 @@ const SupportTickets = React.lazy(() => import("./pages/SupportTickets"));
 const SupportCenter = React.lazy(() => import("./pages/SupportCenter"));
 const SupportPortalSettingsPage = React.lazy(() => import("./pages/SupportPortalSettings"));
 const WhatsAppTemplates = React.lazy(() => import("./pages/WhatsAppTemplates"));
-const ContactPreferences = React.lazy(() => import("./pages/ContactPreferences"));
+const ContactPreferences = React.lazy(() => import("./pages/CRMSettingsConsolidated"));
 const EventTracking = React.lazy(() => import("./pages/EventTracking"));
 const Attribution = React.lazy(() => import("./pages/Attribution"));
 const LandingPagesPage = React.lazy(() => import("./pages/LandingPages"));
@@ -103,9 +103,9 @@ const AIBuilder = React.lazy(() => import("./pages/AIBuilder"));
 const PredictiveSending = React.lazy(() => import("./pages/PredictiveSending"));
 const SentimentDashboard = React.lazy(() => import("./pages/SentimentDashboard"));
 const SiteTracking = React.lazy(() => import("./pages/SiteTracking"));
-const SalesRouting = React.lazy(() => import("./pages/SalesRouting"));
+const SalesRouting = React.lazy(() => import("./pages/CRMSettingsConsolidated"));
 const Goals = React.lazy(() => import("./pages/Goals"));
-const WinProbability = React.lazy(() => import("./pages/WinProbability"));
+const WinProbability = React.lazy(() => import("./pages/CRMIntelligenceConsolidated"));
 const ConditionalContent = React.lazy(() => import("./pages/ConditionalContent"));
 const CommunicationCampaigns = React.lazy(() => import("./pages/CommunicationCampaigns"));
 const CustomReports = React.lazy(() => import("./pages/CustomReports"));
@@ -123,7 +123,8 @@ const AutomationMetrics = React.lazy(() => import("./pages/AutomationMetrics"));
 const SMSMarketing = React.lazy(() => import("./pages/SMSMarketing"));
 const Notifications = React.lazy(() => import("./pages/Notifications"));
 const CRMAdmin = React.lazy(() => import("./pages/CRMAdmin"));
-const CRMIntelligence = React.lazy(() => import("./pages/CRMIntelligence"));
+const CRMIntelligence = React.lazy(() => import("./pages/CRMIntelligenceConsolidated"));
+const CRMSettings = React.lazy(() => import("./pages/CRMSettingsConsolidated"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -254,6 +255,8 @@ const App = () => (
                     <Route path="notifications" element={<Notifications />} />
                     <Route path="crm-admin" element={<CRMAdmin />} />
                     <Route path="crm-intelligence" element={<CRMIntelligence />} />
+                    <Route path="crm-intelligence-consolidated" element={<CRMIntelligence />} />
+                    <Route path="crm-settings" element={<CRMSettings />} />
                   </Route>
                   
                   {/* Plans accessible even with expired subscription */}

@@ -70,12 +70,12 @@ export default function WinProbability() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <Brain className="h-8 w-8 text-primary" /> Win Probability
-          </h1>
-          <p className="text-muted-foreground">IA analisa seus deals e prevê a probabilidade de fechamento</p>
+          <h2 className="text-xl font-bold text-foreground flex items-center gap-3">
+            <Brain className="h-6 w-6 text-primary" /> Análise de Probabilidade
+          </h2>
+          <p className="text-sm text-muted-foreground">IA analisa seus deals e prevê a probabilidade de fechamento</p>
         </div>
-        <Button onClick={predictAll} disabled={predict.isPending}>
+        <Button size="sm" onClick={predictAll} disabled={predict.isPending}>
           <RefreshCw className="h-4 w-4 mr-2" /> Recalcular Todos
         </Button>
       </div>

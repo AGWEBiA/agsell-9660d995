@@ -14,10 +14,10 @@ import {
   BreadcrumbSeparator 
 } from '@/components/ui/breadcrumb';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import DealsList from './DealsList';
-import DealsKanban from './DealsKanban';
+import DealsList from './Deals'; // I will rename the current Deals.tsx to DealsList.tsx
+import Pipeline from './Pipeline'; // This is the Kanban view
 
-export default function Deals() {
+export default function DealsConsolidated() {
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>(() => {
     const saved = localStorage.getItem('crm-deals-view-mode');
     return (saved as 'list' | 'kanban') || 'list';
@@ -63,7 +63,7 @@ export default function Deals() {
         </div>
       </div>
 
-      {viewMode === 'list' ? <DealsList /> : <DealsKanban />}
+      {viewMode === 'list' ? <DealsList /> : <Pipeline />}
     </div>
   );
 }

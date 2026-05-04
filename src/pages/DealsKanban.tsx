@@ -249,38 +249,14 @@ export default function Pipeline() {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Breadcrumb */}
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/dashboard" className="flex items-center gap-1">
-                <Home className="h-3.5 w-3.5" />
-                Dashboard
-              </Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Pipeline de Vendas</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
+    <div className="space-y-6">
       {/* Page Header */}
       <PageHeader
-        title="Pipeline de Vendas"
-        description="Gerencie suas oportunidades de negócio"
+        title="Visualização Kanban"
+        description="Gerencie suas oportunidades de negócio arrastando os cards"
         helpText="Arraste os deals entre colunas ou use o menu para mover. Cada coluna representa um estágio do seu funil de vendas."
       >
         <div className="flex items-center gap-2">
-          <Button asChild variant="outline">
-            <Link to="/deals">
-              Ver em Lista
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
           <Button variant="outline" onClick={() => setIsHelpOpen(true)}>
             <HelpCircle className="h-4 w-4 mr-2" />
             Como funciona

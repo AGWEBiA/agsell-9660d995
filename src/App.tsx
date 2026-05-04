@@ -255,6 +255,8 @@ const App = () => (
                     <Route path="notifications" element={<Notifications />} />
                     <Route path="crm-admin" element={<CRMAdmin />} />
                     <Route path="crm-intelligence" element={<CRMIntelligence />} />
+                    <Route path="crm-intelligence-consolidated" element={<CRMIntelligence />} />
+                    <Route path="crm-settings" element={<CRMSettings />} />
                   </Route>
                   
                   {/* Plans accessible even with expired subscription */}

@@ -437,19 +437,6 @@ export default function CRMAdmin() {
             </Card>
           </div>
         </TabsContent>
-                          <Progress value={progress} className="h-2" />
-                          <span className="text-xs text-muted-foreground min-w-[30px]">{Math.round(progress)}%</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-
         {/* Pipeline tab */}
         <TabsContent value="pipeline" className="space-y-4">
           <Card>

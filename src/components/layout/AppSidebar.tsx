@@ -231,11 +231,12 @@ function SectionHeader({
 }
 
 function MenuItemLink({
-  item, isActive, collapsed, onNavigate, isLocked, isSecondary,
+  item, isActive, collapsed, onNavigate, isLocked, isSecondary, sectionId,
 }: {
-  item: MenuItem; isActive: boolean; collapsed: boolean; onNavigate?: () => void; isLocked?: boolean; isSecondary?: boolean;
+  item: MenuItem; isActive: boolean; collapsed: boolean; onNavigate?: () => void; isLocked?: boolean; isSecondary?: boolean; sectionId?: string;
 }) {
   const Icon = item.icon;
+  const isCrmSection = sectionId === 'crm' || item.path.startsWith('/crm-') || item.path === '/deals' || item.path === '/crm-settings';
 
   const linkContent = (
     <Link
@@ -247,7 +248,9 @@ function MenuItemLink({
         isLocked
           ? 'text-sidebar-foreground/35 hover:text-sidebar-foreground/55 hover:bg-sidebar-accent/40'
           : isActive
-            ? 'bg-[#c0392b] text-white font-semibold shadow-md'
+            ? isCrmSection 
+              ? 'bg-[#c0392b] text-white font-semibold shadow-md'
+              : 'bg-gradient-to-r from-primary/15 via-primary/5 to-transparent text-foreground font-semibold'
             : isSecondary
               ? 'text-sidebar-foreground/45 hover:text-sidebar-foreground/75 hover:bg-sidebar-accent/30 text-[11px]'
               : 'text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'

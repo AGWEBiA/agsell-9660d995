@@ -979,7 +979,7 @@ function CTASection() {
           </p>
           <a href="#planos" className="inline-block w-full sm:w-auto px-4 sm:px-0">
             <Button size="lg" className="h-12 sm:h-14 px-6 sm:px-10 text-sm sm:text-base font-semibold rounded-full bg-[hsl(2,76%,53%)] hover:bg-[hsl(2,76%,45%)] text-white shadow-lg shadow-[hsl(2,76%,53%)]/20 w-full sm:w-auto">
-              Começar agora — a partir de R$ 197/mês
+              Começar agora
               <ArrowRight className="ml-2 h-4 sm:h-5 w-4 sm:w-5 shrink-0" />
             </Button>
           </a>

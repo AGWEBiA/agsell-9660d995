@@ -379,9 +379,12 @@ export default function Pipeline() {
                         setNewDeal({
                           ...newDeal,
                           title: prod.product_name,
-                          commission_rate: Number(prod.commission_rate)
+                          commission_rate: Number(prod.commission_rate),
+                          product_id: prod.id
                         });
                       }
+                    } else {
+                      setNewDeal({ ...newDeal, product_id: '' });
                     }
                   }}
                 >

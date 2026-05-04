@@ -15,6 +15,7 @@ import {
   TrendingUp,
   Target,
   ArrowUpRight,
+  ArrowRight,
   ArrowDownRight,
   Activity,
   CheckCircle2,

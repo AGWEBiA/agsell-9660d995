@@ -4615,6 +4615,44 @@ export type Database = {
           },
         ]
       }
+      product_commissions: {
+        Row: {
+          commission_rate: number
+          created_at: string
+          id: string
+          monthly_target: number | null
+          organization_id: string
+          product_name: string
+          updated_at: string
+        }
+        Insert: {
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          monthly_target?: number | null
+          organization_id: string
+          product_name: string
+          updated_at?: string
+        }
+        Update: {
+          commission_rate?: number
+          created_at?: string
+          id?: string
+          monthly_target?: number | null
+          organization_id?: string
+          product_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_commissions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null

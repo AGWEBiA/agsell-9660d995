@@ -88,7 +88,7 @@ export function VoipPackagesAdmin() {
           Pacotes VoIP — Configuração de Checkout
         </CardTitle>
         <CardDescription>
-          Configure as URLs de checkout da Kiwify e/ou os Price IDs do Stripe para cada pacote de créditos.
+          Configure as URLs de checkout da Kiwify para cada pacote de créditos.
         </CardDescription>
       </CardHeader>
       <CardContent>

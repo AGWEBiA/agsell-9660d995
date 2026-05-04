@@ -212,7 +212,7 @@ export function PlanCheckout({ plan, open, onOpenChange }: PlanCheckoutProps) {
           {/* Security Note */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Shield className="h-4 w-4" />
-            Pagamento seguro processado {paymentProvider === 'kiwify' ? 'pela Kiwify' : 'pelo Stripe'}
+            Pagamento seguro processado pela Kiwify
           </div>
         </div>
 

@@ -133,7 +133,7 @@ export function KiwifyConfig() {
           Configuração Kiwify
         </h2>
         <p className="text-muted-foreground">
-          Configure a Kiwify como meio de pagamento alternativo ao Stripe para os planos do AG Sell.
+          Configure a Kiwify como meio de pagamento para os planos do AG Sell.
         </p>
       </div>
 

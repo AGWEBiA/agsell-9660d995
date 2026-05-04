@@ -184,8 +184,8 @@ export function FormPreview({ fields, settings, formName = 'Pré-visualização'
 
     if (s.labelPosition === 'left' && showLabel) {
       return (
-        <div className="flex items-center gap-3">
-          <Label className="w-1/3 text-right text-sm shrink-0" style={labelStyle}>
+        <div className="agsell-field flex items-center gap-3">
+          <Label className="agsell-label w-1/3 text-right text-sm shrink-0" style={labelStyle}>
             {field.label}
             {field.required && <span className="text-destructive ml-1">*</span>}
           </Label>
@@ -195,9 +195,9 @@ export function FormPreview({ fields, settings, formName = 'Pré-visualização'
     }
 
     return (
-      <div style={{ gap: `${parseInt(s.fieldGap) / 4}px` }}>
+      <div className="agsell-field" style={{ gap: `${parseInt(s.fieldGap) / 4}px` }}>
         {showLabel && (
-          <Label className="mb-1.5 block" style={labelStyle}>
+          <Label className="agsell-label mb-1.5 block" style={labelStyle}>
             {field.label}
             {field.required && <span className="text-destructive ml-1">*</span>}
           </Label>

@@ -512,7 +512,10 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
         <div className="flex items-center gap-2">
           <Badge variant="secondary">{nodes.length} blocos</Badge>
           <Badge variant="secondary">{rules.length} regras</Badge>
-          <Button size="sm" onClick={handleSave}><Save className="h-4 w-4 mr-1" />Salvar</Button>
+          <Button size="sm" onClick={handleSave} disabled={isSaving}>
+            {isSaving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+            {isSaving ? 'Salvando...' : 'Salvar'}
+          </Button>
         </div>
       </div>
 

@@ -55,6 +55,7 @@ export interface CreateDealData {
   notes?: string;
   commission_rate?: number;
   payment_link?: string;
+  product_id?: string;
 }
 
 export function usePipelineStages() {

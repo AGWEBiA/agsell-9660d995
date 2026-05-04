@@ -6196,6 +6196,53 @@ export type Database = {
         }
         Relationships: []
       }
+      system_logs: {
+        Row: {
+          created_at: string | null
+          event: string
+          id: string
+          level: string
+          message: string | null
+          metadata: Json | null
+          organization_id: string | null
+          payload: Json | null
+          source: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event: string
+          id?: string
+          level?: string
+          message?: string | null
+          metadata?: Json | null
+          organization_id?: string | null
+          payload?: Json | null
+          source: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event?: string
+          id?: string
+          level?: string
+          message?: string | null
+          metadata?: Json | null
+          organization_id?: string | null
+          payload?: Json | null
+          source?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tags: {
         Row: {
           color: string | null
@@ -6773,6 +6820,7 @@ export type Database = {
         Row: {
           created_at: string
           error_message: string | null
+          error_stack: string | null
           event_type: string
           id: string
           organization_id: string | null
@@ -6780,10 +6828,12 @@ export type Database = {
           processed: boolean | null
           processed_at: string | null
           source: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
           error_message?: string | null
+          error_stack?: string | null
           event_type: string
           id?: string
           organization_id?: string | null
@@ -6791,10 +6841,12 @@ export type Database = {
           processed?: boolean | null
           processed_at?: string | null
           source: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
           error_message?: string | null
+          error_stack?: string | null
           event_type?: string
           id?: string
           organization_id?: string | null
@@ -6802,6 +6854,7 @@ export type Database = {
           processed?: boolean | null
           processed_at?: string | null
           source?: string
+          user_id?: string | null
         }
         Relationships: [
           {

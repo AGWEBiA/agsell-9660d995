@@ -516,7 +516,7 @@ Deno.serve(async (req) => {
 
           if (newStatus) {
             // Only upgrade status (never downgrade): pending < sent < delivered < read
-            const rank: Record<string, number> = { pending: 0, sent: 1, delivered: 2, read: 3, failed: -1 };
+            const rank: Record<string, number> = { 'failed': -1, 'pending': 0, 'sent': 1, 'delivered': 2, 'read': 3, 'played': 3 };
             const { data: existingMsg } = await supabase
               .from("messages")
               .select("id, delivery_status")

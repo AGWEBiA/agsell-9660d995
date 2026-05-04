@@ -71,6 +71,7 @@ export default function FormView() {
     textColor: urlText || dbSettings.textColor,
     borderRadius: urlRadius || dbSettings.borderRadius,
     fontFamily: urlFont || dbSettings.fontFamily,
+    customCss: urlCss ? `${dbSettings.customCss}\n${atob(urlCss)}` : dbSettings.customCss,
   };
 
   // Multi-step: 2 fields per step

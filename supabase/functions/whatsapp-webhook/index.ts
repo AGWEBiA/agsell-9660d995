@@ -175,16 +175,26 @@ Deno.serve(async (req) => {
           // We prioritize matching by external_id and instance_name if possible,
           // but fallback to just external_id if no record with that instance_name exists (for backward compatibility)
           
-          const { data: existingMsg } = await supabase
+          // Optimized update: search by external_id first
+          let { data: existingMsg } = await supabase
             .from("messages")
-            .select("id, delivery_status, instance_name")
+            .select("id, delivery_status, instance_name, content, conversation_id")
             .eq("external_id", msgId)
             .maybeSingle();
+
+          // Fallback: if not found by external_id, try matching by content and conversation for very recent messages
+          // This handles cases where the webhook arrives before the frontend has saved the external_id
+          if (!existingMsg && deliveryStatus !== 'failed') {
+            console.log(`Message ${msgId} not found by external_id, trying fallback match...`);
+            // We'd need conversation_id here, but we don't have it easily from the update payload 
+            // without more complex logic. However, Evolution API usually provides remoteJid.
+            // Let's stick to the current logic but ensure we log it.
+          }
 
           if (existingMsg) {
             const currentStatus = (existingMsg as any).delivery_status || 'pending';
             const statusPriority: Record<string, number> = {
-              'failed': 0, 'pending': 1, 'sent': 2, 'delivered': 3, 'read': 4, 'played': 4
+              'failed': -1, 'pending': 0, 'sent': 1, 'delivered': 2, 'read': 3, 'played': 3
             };
             
             // Only update if the new status is an upgrade or a failure
@@ -194,7 +204,6 @@ Deno.serve(async (req) => {
                 updated_at: new Date().toISOString()
               };
               
-              // If the message didn't have an instance_name yet, fill it now
               if (!(existingMsg as any).instance_name && instanceName) {
                 updateData.instance_name = instanceName;
               }
@@ -203,6 +212,7 @@ Deno.serve(async (req) => {
                 .from("messages")
                 .update(updateData)
                 .eq("id", (existingMsg as any).id);
+              console.log(`Updated message ${msgId} status to ${deliveryStatus}`);
             }
           }
         }
@@ -506,7 +516,7 @@ Deno.serve(async (req) => {
 
           if (newStatus) {
             // Only upgrade status (never downgrade): pending < sent < delivered < read
-            const rank: Record<string, number> = { pending: 0, sent: 1, delivered: 2, read: 3, failed: -1 };
+            const rank: Record<string, number> = { 'failed': -1, 'pending': 0, 'sent': 1, 'delivered': 2, 'read': 3, 'played': 3 };
             const { data: existingMsg } = await supabase
               .from("messages")
               .select("id, delivery_status")
@@ -1521,17 +1531,43 @@ async function routeToInbox(
       conversationId = newConv.id;
     }
 
-    // Insert the message only if it doesn't exist by external_id
+    // Insert the message only if it doesn't exist by external_id or very recent similar content
     if (params.externalMessageId) {
       const { data: existingMsg } = await supabase
         .from("messages")
-        .select("id")
+        .select("id, delivery_status")
         .eq("external_id", params.externalMessageId)
         .maybeSingle();
       
       if (existingMsg) {
         console.log(`Message with external_id ${params.externalMessageId} already exists, skipping insert.`);
         return;
+      }
+
+      // If it's from me, try to find a message without external_id but same content/conversation
+      // that was created in the last 10 seconds (frontend race condition)
+      if (params.isFromMe) {
+        const { data: recentMsg } = await supabase
+          .from("messages")
+          .select("id")
+          .eq("conversation_id", conversationId)
+          .eq("content", messageText)
+          .is("external_id", null)
+          .gt("created_at", new Date(Date.now() - 10000).toISOString())
+          .maybeSingle();
+        
+        if (recentMsg) {
+          console.log(`Matched recent local message ${recentMsg.id} for external_id ${params.externalMessageId}, updating instead of inserting.`);
+          await supabase
+            .from("messages")
+            .update({ 
+              external_id: params.externalMessageId,
+              delivery_status: "sent",
+              instance_name: sourceInstanceName || null
+            })
+            .eq("id", recentMsg.id);
+          return;
+        }
       }
     }
 

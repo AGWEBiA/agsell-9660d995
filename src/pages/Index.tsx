@@ -229,8 +229,7 @@ function CostComparisonSection() {
             <Logo variant="red" size="sm" showText />
             <p className="text-sm text-[hsl(0,0%,63%)] mb-2 mt-3">Tudo isso junto + funcionalidades exclusivas</p>
             <div className="flex items-baseline justify-center gap-1">
-              <span className="text-3xl sm:text-4xl md:text-5xl font-bold text-[hsl(2,76%,53%)]">A partir de R$ 197</span>
-              <span className="text-[hsl(0,0%,63%)]">/mês</span>
+              <span className="text-3xl sm:text-4xl md:text-5xl font-bold text-[hsl(2,76%,53%)]">Planos flexíveis</span>
             </div>
             <p className="text-xs text-[hsl(0,0%,63%)] mt-2">
               Economize mais de <strong className="text-white">R$ 1.650/mês</strong> — em real, sem surpresas

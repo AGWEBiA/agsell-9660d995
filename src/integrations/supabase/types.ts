@@ -3493,6 +3493,7 @@ export type Database = {
           external_id: string | null
           file_name: string | null
           id: string
+          instance_name: string | null
           is_read: boolean | null
           media_mime_type: string | null
           media_url: string | null
@@ -3512,6 +3513,7 @@ export type Database = {
           external_id?: string | null
           file_name?: string | null
           id?: string
+          instance_name?: string | null
           is_read?: boolean | null
           media_mime_type?: string | null
           media_url?: string | null
@@ -3531,6 +3533,7 @@ export type Database = {
           external_id?: string | null
           file_name?: string | null
           id?: string
+          instance_name?: string | null
           is_read?: boolean | null
           media_mime_type?: string | null
           media_url?: string | null

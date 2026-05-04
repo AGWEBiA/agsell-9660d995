@@ -109,6 +109,7 @@ export default function CRMAdmin() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <CRMSettingsDialog />
           <ScheduledExportDialog />
           <Select value={period} onValueChange={(v: any) => setPeriod(v)}>
             <SelectTrigger className="w-[150px]">

@@ -223,6 +223,11 @@ export default function Deals() {
           )}
         </CardContent>
       </Card>
+
+      <DealDetailDialog 
+        dealId={selectedDealId} 
+        onClose={() => setSelectedDealId(null)} 
+      />
     </div>
   );
 }

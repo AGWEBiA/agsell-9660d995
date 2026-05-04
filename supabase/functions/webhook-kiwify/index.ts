@@ -383,6 +383,7 @@ Deno.serve(async (req) => {
           await activateSubscription(supabase, {
             organizationId: membership.organization_id,
             planId: plan.id,
+            planSlug: plan.slug,
             kiwifyOrderId: payload.order_id,
             kiwifySubscriptionId: payload.Subscription?.id,
             billingCycle: detectBillingCycle(payload),
@@ -446,6 +447,7 @@ Deno.serve(async (req) => {
             await activateSubscription(supabase, {
               organizationId: newOrg.id,
               planId: plan.id,
+              planSlug: plan.slug,
               kiwifyOrderId: payload.order_id,
               kiwifySubscriptionId: payload.Subscription?.id,
               billingCycle: detectBillingCycle(payload),
@@ -490,7 +492,11 @@ Deno.serve(async (req) => {
           email: customerEmail,
           password,
           email_confirm: true,
-          user_metadata: { name: customerName, full_name: customerName },
+          user_metadata: { 
+            name: customerName, 
+            full_name: customerName,
+            credentials_emailed_at: new Date().toISOString()
+          },
         });
 
         if (authError) {
@@ -511,7 +517,12 @@ Deno.serve(async (req) => {
           // Create organization directly (RPC uses auth.uid() which is null in service context)
           const { data: newOrg, error: orgError } = await supabase
             .from('organizations')
-            .insert({ name: orgName, slug: `${slug}-${Date.now()}`, plan_id: plan.id })
+            .insert({ 
+              name: orgName, 
+              slug: `${slug}-${Date.now()}`, 
+              plan_id: plan.id,
+              plan: plan.slug
+            })
             .select('id')
             .single();
 
@@ -527,6 +538,7 @@ Deno.serve(async (req) => {
             await activateSubscription(supabase, {
               organizationId: orgId,
               planId: plan.id,
+              planSlug: plan.slug,
               kiwifyOrderId: payload.order_id,
               kiwifySubscriptionId: payload.Subscription?.id,
               billingCycle: detectBillingCycle(payload),

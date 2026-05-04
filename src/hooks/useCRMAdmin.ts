@@ -185,6 +185,8 @@ export function useSalesRepPerformance(period: 'day' | 'week' | 'month' | 'all' 
         supabase.from('messages').select('user_id').eq('organization_id', orgId),
       ]);
 
+      const defaultOrgRate = (currentOrganization as any)?.sales_commission_rule?.default_rate || 0;
+
       return members.map(m => {
         const profile = profiles?.find(p => p.user_id === m.user_id);
         const userDeals = (deals || []).filter(d => d.user_id === m.user_id);
@@ -193,7 +195,16 @@ export function useSalesRepPerformance(period: 'day' | 'week' | 'month' | 'all' 
         const lost = userDeals.filter(d => d.status === 'lost');
         const pipelineValue = open.reduce((s, d) => s + (d.value || 0), 0);
         const wonValue = won.reduce((s, d) => s + (d.value || 0), 0);
-        const commissionValue = won.reduce((s, d) => s + (Number(d.commission_value) || 0), 0);
+        
+        // Calculate commission: 
+        // 1. If d.commission_value exists and > 0, use it.
+        // 2. Otherwise, use seller's rate * deal value.
+        // 3. Otherwise, use org default rate * deal value.
+        const commissionValue = won.reduce((sum, d) => {
+          if (d.commission_value && Number(d.commission_value) > 0) return sum + Number(d.commission_value);
+          const rate = m.commission_rate || defaultOrgRate;
+          return sum + ((d.value || 0) * (rate / 100));
+        }, 0);
         const decided = won.length + lost.length;
         return {
           user_id: m.user_id,

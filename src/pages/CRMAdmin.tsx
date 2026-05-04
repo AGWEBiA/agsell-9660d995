@@ -615,6 +615,44 @@ function SalesRepDetailDialog({ userId, onClose, period }: { userId: string | nu
                         </TableRow>
                       ))
 
+                      rep.sales.map((sale) => (
+                        <TableRow 
+                          key={sale.id} 
+                          className="cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={() => setSelectedDealId(sale.id)}
+                        >
+                          <TableCell className="text-xs font-medium">{sale.title}</TableCell>
+                          <TableCell className="text-right text-xs">{formatBRL(sale.value)}</TableCell>
+                          <TableCell className="text-right text-xs text-orange-600">{formatBRL(sale.commission_value)}</TableCell>
+                          <TableCell>
+                            <Badge variant={sale.payment_status === 'paid' ? 'default' : 'outline'} className="text-[10px]">
+                              {sale.payment_status || 'Pendente'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {sale.payment_link ? (
+                              <Button variant="ghost" size="icon" asChild className="h-7 w-7">
+                                <a href={sale.payment_link} target="_blank" rel="noopener noreferrer">
+                                  <ArrowUpRight className="h-3 w-3" />
+                                </a>
+                              </Button>
+                            ) : '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ScheduledExportDialog() {
   const { currentOrganization } = useOrganization();
   const queryClient = useQueryClient();
   const config = (currentOrganization as any)?.scheduled_export_config || {
@@ -754,25 +792,7 @@ function SalesRepDetailDialog({ userId, onClose, period }: { userId: string | nu
     </Dialog>
   );
 }
-                                <a href={sale.payment_link} target="_blank" rel="noopener noreferrer">
-                                  <ArrowUpRight className="h-3 w-3" />
-                                </a>
-                              </Button>
-                            ) : '-'}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          </div>
-        ) : null}
-      </DialogContent>
-    </Dialog>
-  );
-}
+
 
 function DealDetailDialog({ dealId, onClose }: { dealId: string | null; onClose: () => void }) {
   const { data: deal, isLoading } = useQuery({

@@ -195,41 +195,6 @@ export function PlanCheckout({ plan, open, onOpenChange }: PlanCheckoutProps) {
             </div>
           </RadioGroup>
 
-          {/* Payment Provider Selection */}
-          {showProviderSelection && (
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">Forma de Pagamento</Label>
-              <RadioGroup
-                value={paymentProvider}
-                onValueChange={(v) => setPaymentProvider(v as PaymentProvider)}
-                className="grid grid-cols-2 gap-3"
-              >
-                <div className="relative">
-                  <RadioGroupItem value="stripe" id="pay-stripe" className="peer sr-only" />
-                  <Label
-                    htmlFor="pay-stripe"
-                    className="flex flex-col items-center gap-2 rounded-lg border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-                  >
-                    <CreditCard className="h-5 w-5" />
-                    <span className="text-sm font-medium">Stripe</span>
-                    <span className="text-xs text-muted-foreground">Crédito internacional</span>
-                  </Label>
-                </div>
-
-                <div className="relative">
-                  <RadioGroupItem value="kiwify" id="pay-kiwify" className="peer sr-only" />
-                  <Label
-                    htmlFor="pay-kiwify"
-                    className="flex flex-col items-center gap-2 rounded-lg border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-                  >
-                    <span className="text-lg font-bold text-green-600">K</span>
-                    <span className="text-sm font-medium">Kiwify</span>
-                    <span className="text-xs text-muted-foreground">PIX, Boleto ou Cartão</span>
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
-          )}
 
           {/* Features */}
           <div className="bg-muted/50 rounded-lg p-4">

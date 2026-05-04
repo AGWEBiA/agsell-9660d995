@@ -482,7 +482,7 @@ export const tutorialPresentations: Record<string, TutorialPresentationData> = {
         title: 'Integrações prontas',
         bullets: [
           'Explore o **Marketplace de Integrações** para conectores prontos',
-          'Stripe, Hotmart, Kiwify, Eduzz e Shopify já estão integrados',
+          'Hotmart, Kiwify, Eduzz e Shopify já estão integrados',
           'Configure cada integração com poucos cliques',
         ],
         route: '/integrations',
@@ -589,7 +589,7 @@ export const tutorialPresentations: Record<string, TutorialPresentationData> = {
       {
         title: 'Conecte uma integração',
         bullets: [
-          'Clique na integração desejada (ex: Stripe, Hotmart, Shopify)',
+          'Clique na integração desejada (ex: Kiwify, Hotmart, Shopify)',
           'Insira as **credenciais** ou **chave de API** solicitada',
           'Configure os **webhooks** automáticos quando disponível',
           'Teste a conexão com o botão **"Verificar"**',

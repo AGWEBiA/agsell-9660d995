@@ -89,7 +89,7 @@ export const helpArticles: HelpArticle[] = [
 - **Analisar métricas** e resultados com dashboards completos e relatórios do SAC
 - **Usar Inteligência Artificial** para respostas automáticas, análises e agentes autônomos
 - **Gamificar a equipe** com pontos, níveis, conquistas e ranking
-- **Integrar ferramentas** como Stripe, Hotmart, Eduzz, Kiwify e Shopify
+- **Integrar ferramentas** como Hotmart, Eduzz, Kiwify e Shopify
 
 [screenshot:Dashboard principal do AG Sell|/dashboard]
 
@@ -171,7 +171,7 @@ O AG Sell oferece planos com diferentes níveis de recursos e limites.
 2. Compare os recursos de cada plano (número de contatos, envios, automações, etc.)
 3. Selecione o plano ideal para seu negócio
 4. Clique em **"Assinar"**
-5. Complete o pagamento via **Stripe** ou **Kiwify** (Pix, Boleto ou Cartão)
+5. Complete o pagamento via **Kiwify** (Pix, Boleto ou Cartão)
 6. Os recursos são liberados **imediatamente**
 
 💡 **Dica**: Comece com o plano que atende suas necessidades atuais. Você pode fazer upgrade a qualquer momento sem perder dados.
@@ -1904,7 +1904,7 @@ Uma automação é composta por:
 - **Formulário submetido** — Quando alguém preenche um formulário
 
 ### Webhooks
-- **Evento de webhook** — Quando um webhook de entrada é acionado (Stripe, Hotmart, etc.)
+- **Evento de webhook** — Quando um webhook de entrada é acionado (Hotmart, etc.)
 
 ## Ações disponíveis (20+)
 
@@ -3360,7 +3360,7 @@ Cada organização mantém seus dados **completamente isolados**:
 
 1. Selecione o plano desejado
 2. Clique em **"Assinar"** ou **"Upgrade"**
-3. Complete o pagamento via **Stripe** ou **Kiwify** (Pix, Boleto ou Cartão)
+3. Complete o pagamento via **Kiwify** (Pix, Boleto ou Cartão)
 4. Os recursos são liberados **imediatamente**
 5. Você recebe confirmação por e-mail
 
@@ -3625,7 +3625,7 @@ Webhooks de entrada permitem que sistemas externos enviem dados para o AG Sell q
    - **URL do endpoint** — Endereço único para receber dados
    - **Token de segurança** — Para autenticação (envie no header)
 4. Configure:
-   - **Nome** — Identificação (ex: "Webhook Stripe", "Webhook Hotmart")
+   - **Nome** — Identificação (ex: "Webhook Kiwify", "Webhook Hotmart")
    - **Descrição** — Para que serve
    - **Mapeamento de campos** — Como traduzir os dados recebidos para campos do CRM
    - **Ação alvo** — O que fazer quando receber dados:
@@ -3678,7 +3678,7 @@ O AG Sell tem webhooks pré-configurados para:
     categoryId: 'settings',
     title: 'Integrações',
     icon: LinkIcon,
-    description: 'Guia completo: Stripe, Hotmart, Eduzz, Kiwify, Evolution API, Z-API e domínio de e-mail.',
+    description: 'Guia completo: Hotmart, Eduzz, Kiwify, Evolution API, Z-API e domínio de e-mail.',
     readTime: '5 min',
     content: `O AG Sell se integra com diversas ferramentas e plataformas do mercado para automatizar seu negócio.
 
@@ -3759,7 +3759,7 @@ Após configurar, sempre teste:
 
 > Cada integração tem seu próprio fluxo de configuração. Siga os passos indicados na tela e consulte a documentação da ferramenta externa se necessário.
 
-💡 **Dica**: Configure as integrações de pagamento (Stripe, Hotmart) primeiro se seu negócio depende de vendas online. Isso automatiza a criação de contatos e deals.`,
+💡 **Dica**: Configure as integrações de pagamento (Hotmart) primeiro se seu negócio depende de vendas online. Isso automatiza a criação de contatos e deals.`,
   },
   {
     id: 'support-portal',
@@ -4344,7 +4344,7 @@ https://[seu-projeto].supabase.co/functions/v1/paid-groups-webhook?org=[id-da-or
 \`\`\`
 
 **Gateways suportados (20+):**
-- 💳 **Stripe** — \`gateway=stripe\`
+- 💳 **Stripe** — \`gateway=kiwify\`
 - 🟢 **Kiwify** — \`gateway=kiwify\`
 - 🔥 **Hotmart** — \`gateway=hotmart\`
 - 📦 **Eduzz** — \`gateway=eduzz\`
@@ -4689,7 +4689,7 @@ Contato visita \`/produto-x\` → Adiciona tag "interesse-produto-x" → Insere 
 - Zapier, Make (Integromat), n8n, Pabbly Connect
 
 ### 💳 Payments
-- Stripe, Mercado Pago, PagSeguro, PayPal, Asaas
+- Mercado Pago, PagSeguro, PayPal, Asaas
 
 ### 🛒 E-commerce
 - Shopify, WooCommerce, Nuvemshop, Yampi

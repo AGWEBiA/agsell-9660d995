@@ -284,7 +284,27 @@ serve(async (req) => {
             }
             await logTimeline(actionType, 'WhatsApp Grupo', 'success');
             break;
+          case 'send_whatsapp_campaign': {
+            const contact = await getContact();
+            const phone = (action.config.to as string) || contact?.whatsapp || contact?.phone;
+            const message = replaceVars(action.config.message as string, contact);
+            if (phone && message) {
+              const resp = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+                body: JSON.stringify({
+                  organization_id: automation.organization_id,
+                  to: phone,
+                  message,
+                  message_kind: 'text'
+                }),
+              });
+              actionResult = await resp.json();
+            }
+            await logTimeline(actionType, 'Campanha WA', 'success');
+            break;
           }
+
 
           case 'send_sms': {
             const contact = await getContact();

@@ -391,56 +391,72 @@ export default function Forms() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Formulário</DialogTitle>
-            <DialogDescription>Atualize campos, layout e aparência do formulário.</DialogDescription>
+            <DialogDescription>Atualize os campos, estilo e configurações do seu formulário.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Nome</Label>
-                <Input value={editingForm?.name ?? ''} onChange={(e) => setEditingForm(prev => prev ? { ...prev, name: e.target.value } : null)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Descrição</Label>
-                <Input value={editingForm?.description ?? ''} onChange={(e) => setEditingForm(prev => prev ? { ...prev, description: e.target.value } : null)} />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="space-y-4">
+          {editingForm && (
+            <Tabs defaultValue="fields" className="mt-2">
+              <TabsList className="grid grid-cols-3 w-full">
+                <TabsTrigger value="fields" className="gap-1.5">
+                  <List className="h-4 w-4" />Campos
+                </TabsTrigger>
+                <TabsTrigger value="style" className="gap-1.5">
+                  <Palette className="h-4 w-4" />Estilo & Presets
+                </TabsTrigger>
+                <TabsTrigger value="preview" className="gap-1.5">
+                  <MonitorSmartphone className="h-4 w-4" />Pré-visualização
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="fields" className="mt-4 space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-name">Nome</Label>
+                    <Input id="edit-name" value={editingForm.name} onChange={(e) => setEditingForm(prev => prev ? ({ ...prev, name: e.target.value }) : null)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-description">Descrição (opcional)</Label>
+                    <Input id="edit-description" value={editingForm.description} onChange={(e) => setEditingForm(prev => prev ? ({ ...prev, description: e.target.value }) : null)} />
+                  </div>
+                </div>
                 <FormFieldEditor
-                  fields={editingForm?.fields ?? []}
-                  onChange={(fields) => setEditingForm(prev => prev ? { ...prev, fields } : null)}
+                  fields={editingForm.fields}
+                  onChange={(fields) => setEditingForm(prev => prev ? ({ ...prev, fields }) : null)}
                 />
-                <div>
+              </TabsContent>
+
+              <TabsContent value="style" className="mt-4 space-y-6">
+                <div className="space-y-4">
                   <Label className="text-sm font-semibold mb-3 block">Aparência & Layout</Label>
                   <FormStyleEditor
-                    settings={editingForm?.settings ?? DEFAULT_SETTINGS}
-                    onChange={(settings) => setEditingForm(prev => prev ? { ...prev, settings } : null)}
+                    settings={editingForm.settings}
+                    onChange={(settings) => setEditingForm(prev => prev ? ({ ...prev, settings }) : null)}
+                  />
+                  <FormTagSelector
+                    tagId={editingForm.settings.tag_id}
+                    tagName={editingForm.settings.tag_name}
+                    onChange={({ tag_id, tag_name }) =>
+                      setEditingForm(prev => prev ? ({ ...prev, settings: { ...prev.settings, tag_id, tag_name } }) : null)
+                    }
                   />
                 </div>
-                <FormTagSelector
-                  tagId={editingForm?.settings?.tag_id}
-                  tagName={editingForm?.settings?.tag_name}
-                  onChange={({ tag_id, tag_name }) =>
-                    setEditingForm(prev => prev ? { ...prev, settings: { ...prev.settings, tag_id, tag_name } } : null)
-                  }
-                />
-              </div>
-              <div>
-                <Label className="text-sm font-semibold mb-3 block">Pré-visualização</Label>
+              </TabsContent>
+
+              <TabsContent value="preview" className="mt-4">
                 <FormPreview
-                  fields={editingForm?.fields ?? []}
-                  settings={editingForm?.settings ?? DEFAULT_SETTINGS}
-                  formName={editingForm?.name}
-                  formDescription={editingForm?.description}
+                  fields={editingForm.fields}
+                  settings={editingForm.settings}
+                  formName={editingForm.name}
+                  formDescription={editingForm.description}
                 />
-              </div>
-            </div>
-          </div>
+              </TabsContent>
+            </Tabs>
+          )}
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingForm(null)}>Cancelar</Button>
             <Button onClick={handleEdit} disabled={updateForm.isPending}>
-              {updateForm.isPending ? 'Salvando...' : 'Salvar'}
+              {updateForm.isPending ? 'Salvando...' : 'Salvar Alterações'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -448,41 +464,61 @@ export default function Forms() {
 
       {/* Submissions Dialog */}
       <Dialog open={!!submissionsData} onOpenChange={(open) => !open && setSubmissionsData(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Submissões — {submissionsData?.formName}</DialogTitle>
-            <DialogDescription>{submissionsData?.items.length ?? 0} submissões recebidas</DialogDescription>
+            <DialogTitle>Submissões: {submissionsData?.formName}</DialogTitle>
+            <DialogDescription>Veja todos os contatos capturados por este formulário.</DialogDescription>
           </DialogHeader>
-          {loadingSubs ? (
-            <Skeleton className="h-32 w-full" />
-          ) : submissionsData?.items.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Nenhuma submissão ainda.</p>
-          ) : (
-            <div className="space-y-3">
-              {submissionsData?.items.map((sub) => (
-                <Card key={sub.id}>
-                  <CardContent className="pt-4 text-sm">
-                    <p className="text-xs text-muted-foreground mb-2">{format(new Date(sub.created_at), 'dd/MM/yyyy HH:mm')}</p>
-                    <pre className="whitespace-pre-wrap break-all bg-muted p-2 rounded text-xs">
-                      {JSON.stringify(sub.data, null, 2)}
-                    </pre>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+          
+          <div className="mt-4">
+            {submissionsData?.items.length === 0 ? (
+              <div className="text-center py-12 bg-muted/30 rounded-lg border border-dashed">
+                <Users className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground">Nenhuma submissão encontrada para este formulário.</p>
+              </div>
+            ) : (
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Data</TableHead>
+                      <TableHead>Dados</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {submissionsData?.items.map((sub) => (
+                      <TableRow key={sub.id}>
+                        <TableCell className="whitespace-nowrap font-medium">
+                          {format(new Date(sub.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-2">
+                            {Object.entries(sub.data as Record<string, any>).map(([key, val]) => (
+                              <Badge key={key} variant="outline" className="font-normal">
+                                <span className="font-bold mr-1">{key}:</span> {String(val)}
+                              </Badge>
+                            ))}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
       {/* Integration Dialog */}
-      {integrationForm && (
-        <FormIntegrationDialog
-          open={!!integrationForm}
-          onOpenChange={(open) => !open && setIntegrationForm(null)}
-          formId={integrationForm.id}
-          formName={integrationForm.name}
-        />
-      )}
+      <FormIntegrationDialog
+        open={!!integrationForm}
+        onOpenChange={(open) => !open && setIntegrationForm(null)}
+        formId={integrationForm?.id || ''}
+        formName={integrationForm?.name || ''}
+      />
     </div>
   );
 }
+
+import { ptBR } from 'date-fns/locale';

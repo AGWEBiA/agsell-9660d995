@@ -383,7 +383,19 @@ export function useInbox() {
         return (current ?? []).map((conversation) => {
           if (conversation.id !== newMessage.conversation_id) return conversation;
 
-          const nextMessages = [...(conversation.messages ?? []), newMessage];
+          // Avoid duplicates: check if this message is already in the list
+          const messages = conversation.messages ?? [];
+          const exists = messages.some((m: any) => m.id === newMessage.id);
+          
+          let nextMessages;
+          if (exists) {
+            // Update the existing message in the list
+            nextMessages = messages.map((m: any) => m.id === newMessage.id ? { ...m, ...newMessage } : m);
+          } else {
+            // Add as new message
+            nextMessages = [...messages, newMessage];
+          }
+
           return {
             ...conversation,
             messages: nextMessages,

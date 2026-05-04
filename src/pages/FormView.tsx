@@ -130,7 +130,8 @@ export default function FormView() {
   };
 
   const labelStyle: React.CSSProperties = {
-    ...(s.textColor && { color: s.textColor }),
+    ...(s.textColor && s.textColor !== 'inherit' && { color: s.textColor }),
+    ...(isInherited && { color: 'inherit' }),
     ...(s.labelPosition === 'hidden' && { display: 'none' }),
   };
 

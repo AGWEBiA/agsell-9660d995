@@ -393,6 +393,18 @@ export function AppSidebar({ collapsed, onToggle, mobileOpen, isMobile, onClose 
                     isLocked={!!item.featureRequired && !planFeatures.includes(item.featureRequired)}
                   />
                 ))}
+                {section.id === 'crm' && (
+                  <>
+                    {!sidebarCollapsed && <Separator className="mx-4 my-2 opacity-30" />}
+                    <MenuItemLink
+                      item={{ label: 'Configurações CRM', icon: Settings, path: '/crm-settings' }}
+                      isActive={location.pathname === '/crm-settings'}
+                      collapsed={sidebarCollapsed}
+                      onNavigate={navigateCallback}
+                      isSecondary
+                    />
+                  </>
+                )}
               </div>
             </div>
           </div>

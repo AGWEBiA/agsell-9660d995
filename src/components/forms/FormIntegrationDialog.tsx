@@ -84,7 +84,6 @@ export function FormIntegrationDialog({ open, onOpenChange, formId, formName }: 
 
   const baseUrl = window.location.origin;
   const formUrl = `${baseUrl}/forms/${formId}`;
-  const apiUrl = `${baseUrl.replace('://', '://').replace(window.location.host, import.meta.env.VITE_SUPABASE_URL?.replace('https://', '') || window.location.host)}/functions/v1/public-api/forms/${formId}/submit`;
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
   const apiEndpoint = `${supabaseUrl}/functions/v1/public-api/forms/${formId}/submit`;
 
@@ -352,6 +351,8 @@ Content-Type: application/json
               <p className="text-xs text-blue-700 dark:text-blue-300">
                 ✨ <strong>Customização Avançada:</strong> Para herdar fonte/cores use <strong>"Transparente"</strong>. Para controle total via CSS, use <strong>"Layout Livre (Raw)"</strong>. Ambos em <strong>Aparência → Presets</strong>.
               </p>
+            </div>
+          </TabsContent>
 
           {/* SCRIPT JS */}
           <TabsContent value="script" className="space-y-4 mt-4">

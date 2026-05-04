@@ -1667,7 +1667,7 @@ async function routeToInbox(
               instance_name: sourceInstanceName || null
             })
             .eq("id", recentMsg.id);
-          return;
+          return { contactId, conversationId };
         }
       }
     }

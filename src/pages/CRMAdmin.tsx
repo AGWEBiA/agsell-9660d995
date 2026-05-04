@@ -1082,30 +1082,50 @@ function CRMSettingsDialog() {
 
           <TabsContent value="vendedores" className="space-y-4 py-4">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-semibold">Metas Individuais por Vendedor</h4>
+              <h4 className="text-sm font-semibold">Metas e Comissões Individuais por Vendedor</h4>
               <Badge variant="secondary">{members?.length || 0} Membros</Badge>
             </div>
             <div className="grid gap-3">
               {members?.map(m => (
-                <div key={m.user_id} className="flex items-center justify-between gap-4 bg-muted/30 p-4 rounded-xl border border-border/50 transition-all hover:bg-muted/50">
+                <div key={m.user_id} className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-muted/30 p-4 rounded-xl border border-border/50 transition-all hover:bg-muted/50">
                   <div className="flex items-center gap-3 flex-1">
                     <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
                       {m.name.substring(0,2).toUpperCase()}
                     </div>
                     <div>
                       <p className="text-sm font-medium">{m.name}</p>
-                      <p className="text-[10px] text-muted-foreground">ID: {m.user_id.slice(-8)}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase">{currentOrganization?.name}</p>
                     </div>
                   </div>
-                  <div className="w-48 relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="number"
-                      className="h-10 pl-9"
-                      placeholder="Meta R$"
-                      value={repGoals[m.user_id] || 0}
-                      onChange={e => setRepGoals({ ...repGoals, [m.user_id]: Number(e.target.value) })}
-                    />
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="w-32 space-y-1">
+                      <Label className="text-[10px] font-bold uppercase opacity-60">Meta (R$)</Label>
+                      <div className="relative">
+                        <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                        <Input
+                          type="number"
+                          className="h-9 pl-8 text-sm"
+                          placeholder="Meta R$"
+                          value={repGoals[m.user_id] || 0}
+                          onChange={e => setRepGoals({ ...repGoals, [m.user_id]: Number(e.target.value) })}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="w-24 space-y-1">
+                      <Label className="text-[10px] font-bold uppercase opacity-60">Comissão (%)</Label>
+                      <div className="relative">
+                        <TrendingUp className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                        <Input
+                          type="number"
+                          className="h-9 pl-8 text-sm"
+                          placeholder="Rate %"
+                          value={repCommissions[m.user_id] || 0}
+                          onChange={e => setRepCommissions({ ...repCommissions, [m.user_id]: Number(e.target.value) })}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}

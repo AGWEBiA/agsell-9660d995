@@ -3360,7 +3360,7 @@ Cada organização mantém seus dados **completamente isolados**:
 
 1. Selecione o plano desejado
 2. Clique em **"Assinar"** ou **"Upgrade"**
-3. Complete o pagamento via **Stripe** (cartão de crédito)
+3. Complete o pagamento via **Stripe** ou **Kiwify** (Pix, Boleto ou Cartão)
 4. Os recursos são liberados **imediatamente**
 5. Você recebe confirmação por e-mail
 

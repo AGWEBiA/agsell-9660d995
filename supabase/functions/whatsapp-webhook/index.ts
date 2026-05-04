@@ -1247,7 +1247,7 @@ Deno.serve(async (req) => {
 
             // For fromMe messages, the senderPhone is the contact we're messaging
             // We route them as "user" sender_type so they appear in the conversation
-            await routeToInbox(supabase, {
+            const { contactId } = await routeToInbox(supabase, {
               organizationId: integration.organization_id,
               userId,
               channel: "whatsapp",
@@ -1268,6 +1268,44 @@ Deno.serve(async (req) => {
               extraMetadata,
               contactName: pushName,
             });
+
+            // Trigger automations for regular WhatsApp messages
+            if (contactId && !isFromMe) {
+              const { data: automations } = await supabase
+                .from("automations")
+                .select("id, trigger_type, trigger_config")
+                .eq("organization_id", integration.organization_id)
+                .in("trigger_type", ["whatsapp_received", "whatsapp_keyword"])
+                .eq("is_active", true);
+
+              if (automations && automations.length > 0) {
+                for (const auto of automations) {
+                  const config = auto.trigger_config as Record<string, unknown> || {};
+                  
+                  // For keyword triggers, check if message matches
+                  if (auto.trigger_type === "whatsapp_keyword") {
+                    const kw = String(config.keyword || "").toLowerCase();
+                    if (!kw || !resolvedText.toLowerCase().includes(kw)) continue;
+                  }
+
+                  fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/process-automation`, {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                      "X-Internal-Cron": "true",
+                    },
+                    body: JSON.stringify({
+                      automation_id: auto.id,
+                      contact_id: contactId,
+                      trigger_event: auto.trigger_type,
+                      trigger_data: { message: resolvedText }
+                    }),
+                  }).catch(err => console.error("Error dispatching WhatsApp automation:", err));
+                }
+              }
+            }
+
           } else if (isGroupMessage) {
             // Log discarded group message
             await supabase.from("whatsapp_webhook_logs").insert({

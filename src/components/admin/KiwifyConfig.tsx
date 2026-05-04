@@ -133,7 +133,7 @@ export function KiwifyConfig() {
           Configuração Kiwify
         </h2>
         <p className="text-muted-foreground">
-          Configure a Kiwify como meio de pagamento alternativo ao Stripe para os planos do AG Sell.
+          Configure a Kiwify como meio de pagamento para os planos do AG Sell.
         </p>
       </div>
 
@@ -457,7 +457,7 @@ export function KiwifyConfig() {
         <AlertDescription className="space-y-2">
           <p>
             Quando um plano tem a <strong>URL de checkout da Kiwify</strong> configurada, os clientes verão a opção 
-            de pagar via Kiwify (PIX, Boleto, Cartão) além do Stripe na tela de checkout.
+            de pagar via Kiwify (PIX, Boleto, Cartão) na tela de checkout.
           </p>
           <p>
             O webhook da Kiwify processa automaticamente: criação de conta, ativação de assinatura, 

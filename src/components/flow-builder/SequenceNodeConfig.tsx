@@ -60,7 +60,7 @@ export function SequenceNodeConfig({ config, onChange, subtype }: SequenceNodeCo
               <SelectItem value="hotmart">Hotmart</SelectItem>
               <SelectItem value="kiwify">Kiwify</SelectItem>
               <SelectItem value="eduzz">Eduzz</SelectItem>
-              <SelectItem value="stripe">Stripe</SelectItem>
+              
               <SelectItem value="shopify">Shopify</SelectItem>
             </SelectContent>
           </Select>

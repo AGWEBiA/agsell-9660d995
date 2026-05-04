@@ -15,7 +15,7 @@ interface SmsPackageRow {
   price_cents: number;
   kiwify_checkout_url: string | null;
   kiwify_product_id: string | null;
-  stripe_price_id: string | null;
+  
   sort_order: number;
   is_active: boolean;
 }
@@ -44,7 +44,7 @@ export function SmsPackagesAdmin() {
         .update({
           kiwify_checkout_url: values.kiwify_checkout_url || null,
           kiwify_product_id: values.kiwify_product_id || null,
-          stripe_price_id: values.stripe_price_id || null,
+          
         })
         .eq('id', id);
       if (error) throw error;
@@ -63,7 +63,7 @@ export function SmsPackagesAdmin() {
     setEditValues({
       kiwify_checkout_url: pkg.kiwify_checkout_url || '',
       kiwify_product_id: pkg.kiwify_product_id || '',
-      stripe_price_id: pkg.stripe_price_id || '',
+      
     });
   };
 
@@ -86,7 +86,7 @@ export function SmsPackagesAdmin() {
           Pacotes SMS — Configuração de Checkout
         </CardTitle>
         <CardDescription>
-          Configure as URLs de checkout da Kiwify e/ou os Price IDs do Stripe para cada pacote de créditos SMS.
+          Configure as URLs de checkout da Kiwify para cada pacote de créditos SMS.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -97,7 +97,7 @@ export function SmsPackagesAdmin() {
               <TableHead>Preço</TableHead>
               <TableHead>Kiwify Checkout URL</TableHead>
               <TableHead>Kiwify Product ID</TableHead>
-              <TableHead>Stripe Price ID</TableHead>
+              
               <TableHead className="w-[100px]">Ações</TableHead>
             </TableRow>
           </TableHeader>
@@ -139,18 +139,6 @@ export function SmsPackagesAdmin() {
                   </TableCell>
                   <TableCell>
                     {isEditing ? (
-                      <Input
-                        value={editValues.stripe_price_id || ''}
-                        onChange={(e) => setEditValues((v) => ({ ...v, stripe_price_id: e.target.value }))}
-                        placeholder="price_..."
-                        className="text-xs"
-                      />
-                    ) : (
-                      <span className="text-xs text-muted-foreground">{pkg.stripe_price_id || '—'}</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {isEditing ? (
                       <div className="flex gap-1">
                         <Button
                           size="sm"
@@ -176,8 +164,8 @@ export function SmsPackagesAdmin() {
         </Table>
 
         <div className="mt-4 p-3 rounded-lg bg-muted/50 border text-sm text-muted-foreground">
-          <p><strong>💡 Dica:</strong> Para Kiwify, cole a URL completa de checkout do produto. Para Stripe, informe o Price ID (ex: <code>price_1Abc...</code>). 
-          O sistema utilizará o gateway padrão configurado em "Gateway" para processar compras de créditos SMS.</p>
+          <p><strong>💡 Dica:</strong> Cole a URL completa de checkout do produto da Kiwify. 
+          O sistema utilizará a Kiwify para processar compras de créditos SMS.</p>
         </div>
       </CardContent>
     </Card>

@@ -122,8 +122,8 @@ const ALL_FEATURES = [
     color: 'text-teal-500',
     bgColor: 'bg-teal-500/10',
     features: [
-      { icon: Globe, name: 'Stripe', desc: 'Checkout, assinaturas, webhooks e customer portal integrados.', plans: ['starter', 'professional', 'enterprise', 'agencia'] },
-      { icon: Globe, name: 'Hotmart / Kiwify / Eduzz', desc: 'Webhooks de compra que criam contatos, aplicam tags e disparam automações.', plans: ['professional', 'enterprise', 'agencia'] },
+      { icon: Globe, name: 'Kiwify', desc: 'Checkout, assinaturas e webhooks integrados para PIX, boleto e cartão.', plans: ['starter', 'professional', 'enterprise', 'agencia'] },
+      { icon: Globe, name: 'Hotmart / Eduzz', desc: 'Webhooks de compra que criam contatos, aplicam tags e disparam automações.', plans: ['professional', 'enterprise', 'agencia'] },
       { icon: Globe, name: 'Shopify', desc: 'Sincronização de pedidos, clientes e status de compra.', plans: ['professional', 'enterprise', 'agencia'] },
       { icon: Globe, name: 'Resend / SES / SendGrid', desc: 'Provedores de e-mail configuráveis com verificação de domínio.', plans: ['starter', 'professional', 'enterprise', 'agencia'] },
       { icon: Globe, name: 'Twilio / Vonage', desc: 'Provedores de SMS para envio e recebimento bidirecional.', plans: ['starter', 'professional', 'enterprise', 'agencia'] },

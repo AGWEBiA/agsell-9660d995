@@ -66,7 +66,7 @@ export function PlanCheckout({ plan, open, onOpenChange }: PlanCheckoutProps) {
         .select('value')
         .eq('key', 'payment_gateway')
         .maybeSingle();
-      return data?.value as { stripe_enabled: boolean; kiwify_enabled: boolean; default_gateway: 'stripe' | 'kiwify' } | null;
+      return data?.value as {  kiwify_enabled: boolean; default_gateway: 'kiwify' } | null;
     },
     enabled: open,
   });
@@ -81,22 +81,11 @@ export function PlanCheckout({ plan, open, onOpenChange }: PlanCheckoutProps) {
   const showProviderSelection = showStripe && showKiwify;
 
   // Determine initial provider based on platform config
-  const [paymentProvider, setPaymentProvider] = useState<PaymentProvider>(defaultGateway);
+  const [paymentProvider, setPaymentProvider] = useState<PaymentProvider>('kiwify');
   // Update when settings load
   React.useEffect(() => {
-    if (gatewaySettings) {
-      // If only one gateway is active, force it
-      if (showKiwify && !showStripe) {
-        setPaymentProvider('kiwify');
-      } else if (showStripe && !showKiwify) {
-        setPaymentProvider('stripe');
-      } else if (gatewaySettings.default_gateway === 'kiwify' && showKiwify) {
-        setPaymentProvider('kiwify');
-      } else if (gatewaySettings.default_gateway === 'stripe' && showStripe) {
-        setPaymentProvider('stripe');
-      }
-    }
-  }, [gatewaySettings, showKiwify, showStripe]);
+    setPaymentProvider('kiwify');
+  }, [gatewaySettings]);
 
   const price = billingCycle === 'monthly' ? plan.price_monthly : plan.price_yearly;
   const monthlyEquivalent = billingCycle === 'yearly' ? plan.price_yearly / 12 : plan.price_monthly;
@@ -206,41 +195,6 @@ export function PlanCheckout({ plan, open, onOpenChange }: PlanCheckoutProps) {
             </div>
           </RadioGroup>
 
-          {/* Payment Provider Selection */}
-          {showProviderSelection && (
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">Forma de Pagamento</Label>
-              <RadioGroup
-                value={paymentProvider}
-                onValueChange={(v) => setPaymentProvider(v as PaymentProvider)}
-                className="grid grid-cols-2 gap-3"
-              >
-                <div className="relative">
-                  <RadioGroupItem value="stripe" id="pay-stripe" className="peer sr-only" />
-                  <Label
-                    htmlFor="pay-stripe"
-                    className="flex flex-col items-center gap-2 rounded-lg border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-                  >
-                    <CreditCard className="h-5 w-5" />
-                    <span className="text-sm font-medium">Stripe</span>
-                    <span className="text-xs text-muted-foreground">Crédito internacional</span>
-                  </Label>
-                </div>
-
-                <div className="relative">
-                  <RadioGroupItem value="kiwify" id="pay-kiwify" className="peer sr-only" />
-                  <Label
-                    htmlFor="pay-kiwify"
-                    className="flex flex-col items-center gap-2 rounded-lg border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
-                  >
-                    <span className="text-lg font-bold text-green-600">K</span>
-                    <span className="text-sm font-medium">Kiwify</span>
-                    <span className="text-xs text-muted-foreground">PIX, Boleto ou Cartão</span>
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
-          )}
 
           {/* Features */}
           <div className="bg-muted/50 rounded-lg p-4">
@@ -258,7 +212,7 @@ export function PlanCheckout({ plan, open, onOpenChange }: PlanCheckoutProps) {
           {/* Security Note */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Shield className="h-4 w-4" />
-            Pagamento seguro processado {paymentProvider === 'kiwify' ? 'pela Kiwify' : 'pelo Stripe'}
+            Pagamento seguro processado pela Kiwify
           </div>
         </div>
 

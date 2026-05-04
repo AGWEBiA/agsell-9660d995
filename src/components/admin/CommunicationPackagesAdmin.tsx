@@ -16,7 +16,7 @@ interface PackageRow {
   price_cents: number;
   kiwify_checkout_url: string | null;
   kiwify_product_id: string | null;
-  stripe_price_id: string | null;
+  
   sort_order: number;
   is_active: boolean;
 }
@@ -45,7 +45,7 @@ export function CommunicationPackagesAdmin() {
         .update({
           kiwify_checkout_url: values.kiwify_checkout_url || null,
           kiwify_product_id: values.kiwify_product_id || null,
-          stripe_price_id: values.stripe_price_id || null,
+          
         })
         .eq('id', id);
       if (error) throw error;
@@ -63,7 +63,7 @@ export function CommunicationPackagesAdmin() {
     setEditValues({
       kiwify_checkout_url: pkg.kiwify_checkout_url || '',
       kiwify_product_id: pkg.kiwify_product_id || '',
-      stripe_price_id: pkg.stripe_price_id || '',
+      
     });
   };
 
@@ -84,7 +84,7 @@ export function CommunicationPackagesAdmin() {
           Pacotes de Créditos de Comunicação
         </CardTitle>
         <CardDescription>
-          Configure URLs de checkout Kiwify e Stripe Price IDs para cada pacote unificado (SMS + VoIP)
+          Configure URLs de checkout Kiwify para cada pacote unificado (SMS + VoIP)
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -97,7 +97,7 @@ export function CommunicationPackagesAdmin() {
               <TableHead>Status</TableHead>
               <TableHead>Kiwify URL</TableHead>
               <TableHead>Kiwify Product ID</TableHead>
-              <TableHead>Stripe Price ID</TableHead>
+              
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>
@@ -136,18 +136,6 @@ export function CommunicationPackagesAdmin() {
                     />
                   ) : (
                     <span className="text-xs text-muted-foreground">{pkg.kiwify_product_id || '-'}</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {editingId === pkg.id ? (
-                    <Input
-                      value={editValues.stripe_price_id || ''}
-                      onChange={(e) => setEditValues({ ...editValues, stripe_price_id: e.target.value })}
-                      placeholder="price_xxx"
-                      className="w-32"
-                    />
-                  ) : (
-                    <span className="text-xs text-muted-foreground">{pkg.stripe_price_id || '-'}</span>
                   )}
                 </TableCell>
                 <TableCell>

@@ -26,7 +26,7 @@ const MANUAL_CONTENT = `# MANUAL TÉCNICO COMPLETO — AG SELL
 5. Sistema de Autenticação
 6. Sistema de Acesso e Monetização
 7. Planos e Assinaturas
-8. Integração Stripe
+8. Sistema de Pagamentos Kiwify
 9. Sistema de IA
 10. Telemetria e Logs
 11. Painel Administrativo
@@ -56,7 +56,7 @@ O AG Sell é uma plataforma SaaS de CRM, automação de marketing e atendimento 
 
 - Modelo SaaS estritamente pago (sem plano gratuito ativo para público)
 - 4 níveis: Starter (R$197), Professional (R$397), Enterprise (R$797), Agência (R$1.297)
-- Cobrança via Stripe com ciclos mensal e anual (desconto 17% anual)
+- Cobrança via Kiwify com ciclos mensal e anual (desconto 17% anual)
 - WhatsApp ilimitado em todos os planos
 
 ## 1.4 Limites do Sistema
@@ -80,7 +80,7 @@ O sistema é uma plataforma de gestão e automação. Não efetua operações fi
 | **Auth** | Supabase Auth (email/senha) |
 | **Edge Functions** | Deno (Supabase Edge Functions) |
 | **IA** | Lovable AI Gateway (Gemini, GPT-5) |
-| **Pagamentos** | Stripe (checkout, webhooks, assinaturas) |
+| **Pagamentos** | Kiwify (checkout, webhooks, assinaturas) |
 | **E-mail** | Resend / SendGrid / Amazon SES (configurável pelo admin) |
 | **Gráficos** | Recharts |
 | **Notificações** | Sonner (toasts) |
@@ -661,7 +661,7 @@ Automatizar a gestão de membros em grupos de WhatsApp com base em pagamentos re
   - Retorna JID, subject e tamanho de cada grupo
 
 ### Gateways Suportados (20)
-Stripe, Kiwify, Hotmart, Eduzz, Monetizze, PerfectPay, Braip, Guru, Lastlink, Pepper, Yampi, Ticto, Kirvano, Payt, Greenn, CartPanda, HeroSpark, AppMax, Doppus e Webhook Genérico.
+Kiwify, Kiwify, Hotmart, Eduzz, Monetizze, PerfectPay, Braip, Guru, Lastlink, Pepper, Yampi, Ticto, Kirvano, Payt, Greenn, CartPanda, HeroSpark, AppMax, Doppus e Webhook Genérico.
 
 ### Eventos Processados
 - \`add\` — Compra aprovada, assinatura ativa → adiciona membro ao grupo
@@ -879,8 +879,8 @@ Hook \`useSubscriptionStatus\`:
 | \`plan_id\` | uuid | Plano contratado |
 | \`status\` | text | active, canceled, past_due, trialing, paused |
 | \`billing_cycle\` | text | monthly, yearly |
-| \`stripe_subscription_id\` | text | ID da assinatura no Stripe |
-| \`stripe_customer_id\` | text | ID do cliente no Stripe |
+| \`stripe_subscription_id\` | text | ID da assinatura no Kiwify |
+| \`stripe_customer_id\` | text | ID do cliente no Kiwify |
 | \`current_period_start\` | timestamp | Início do período |
 | \`current_period_end\` | timestamp | Fim do período |
 | \`cancel_at_period_end\` | boolean | Cancelar ao fim do período |
@@ -888,7 +888,7 @@ Hook \`useSubscriptionStatus\`:
 ## 7.3 Ciclo de Vida
 
 \`\`\`
-Checkout → Stripe Session → Webhook checkout.session.completed
+Checkout → Kiwify Session → Webhook checkout.session.completed
   → Cria/atualiza subscription + organization.plan_id
   → customer.subscription.updated → Sincroniza datas e status
   → invoice.payment_failed → Status → past_due
@@ -903,9 +903,9 @@ Checkout → Stripe Session → Webhook checkout.session.completed
 
 | Função | Objetivo |
 |--------|----------|
-| \`create-checkout\` | Cria Stripe Checkout Session para assinatura |
+| \`create-checkout\` | Cria Kiwify Checkout Session para assinatura |
 | \`guest-checkout\` | Checkout para usuários não cadastrados (cria conta automaticamente) |
-| \`stripe-webhook\` | Processa eventos do Stripe |
+| \`stripe-webhook\` | Processa eventos do Kiwify |
 
 ## 8.2 Eventos Processados
 
@@ -923,7 +923,7 @@ Checkout → Stripe Session → Webhook checkout.session.completed
 - Secrets: \`STRIPE_SECRET_KEY\`, \`STRIPE_WEBHOOK_SECRET\`
 
 ## 8.4 Guest Checkout
-- Novo usuário: Stripe → Webhook → \`handleNewUserSignup\`
+- Novo usuário: Kiwify → Webhook → \`handleNewUserSignup\`
   - Cria user via \`auth.admin.createUser\`
   - Cria organização via RPC \`create_organization_with_owner\`
   - Envia e-mail de boas-vindas com credenciais temporárias (Resend)
@@ -1158,7 +1158,7 @@ Checkout → Stripe Session → Webhook checkout.session.completed
 - Verificação \`is_org_member\` antes de operações sensíveis
 - Propagação do token do usuário em chamadas internas (não service_role_key)
 
-## 13.3 Stripe Webhook
+## 13.3 Kiwify Webhook
 - Verificação de assinatura HMAC (\`constructEvent\`)
 - Rejeição sem \`STRIPE_WEBHOOK_SECRET\`
 
@@ -1309,12 +1309,12 @@ Facilitar a migração de dados de outras plataformas (ManyChat, ActiveCampaign,
 | \`ai-chat\` | Chat IA (assistente + agentes custom) |
 | \`ai-builder\` | Geração de conteúdo IA (e-mails, fluxos, brand kit, segmentos) |
 | \`analyze-sentiment\` | Análise de sentimento de mensagens via IA |
-| \`create-checkout\` | Checkout Stripe para usuários logados |
+| \`create-checkout\` | Checkout Kiwify para usuários logados |
 | \`guest-checkout\` | Checkout para novos usuários |
-| \`stripe-webhook\` | Processa eventos Stripe |
+| \`stripe-webhook\` | Processa eventos Kiwify |
 | \`create-kiwify-checkout\` | Checkout via Kiwify |
-| \`customer-portal\` | Portal de gerenciamento de assinatura Stripe |
-| \`test-stripe-connection\` | Teste de conexão Stripe |
+| \`customer-portal\` | Portal de gerenciamento de assinatura Kiwify |
+| \`test-stripe-connection\` | Teste de conexão Kiwify |
 | \`send-email\` | Envio multi-provedor (Resend/SES/SendGrid) |
 | \`send-whatsapp\` | Envio WhatsApp |
 | \`send-sms\` | Envio SMS (Twilio/Vonage) |
@@ -1345,7 +1345,7 @@ Facilitar a migração de dados de outras plataformas (ManyChat, ActiveCampaign,
 | \`webhook-kiwify\` | Webhook Kiwify |
 | \`webhook-eduzz\` | Webhook Eduzz |
 | \`webhook-shopify\` | Webhook Shopify |
-| \`webhook-stripe\` | Webhook Stripe (pagamentos) |
+| \`webhook-stripe\` | Webhook Kiwify (pagamentos) |
 | \`paid-groups-webhook\` | Webhook multi-gateway para grupos pagos |
 | \`group-rotator\` | Redirecionamento inteligente de grupos |
 | \`admin-manage-users\` | Gestão de usuários (admin) |
@@ -1714,7 +1714,7 @@ Unificar campanhas de VoIP e SMS em uma única interface com créditos de comuni
 
 ## 20.5 Créditos de Comunicação
 - Saldo unificado para VoIP e SMS
-- Pacotes de créditos via Stripe/Kiwify
+- Pacotes de créditos via Kiwify/Kiwify
 - Histórico de transações
 
 ---

@@ -152,16 +152,21 @@ function NodeConfigEditor({ node, onUpdate, allNodes }: { node: ChatbotNode; onU
           <Label className="text-xs">Opções</Label>
           {((c.options as any[]) || []).map((opt: any, i: number) => (
             <div key={i} className="flex gap-1">
-              <Input value={opt.label} onChange={e => { const opts = [...(c.options as any[])]; opts[i] = { ...opt, label: e.target.value }; updateConfig({ options: opts }); }} className="h-7 text-xs" />
+              <Input value={opt.label} onChange={e => { 
+                const opts = [...((c.options as any[]) || [])]; 
+                opts[i] = { ...opt, label: e.target.value }; 
+                updateConfig({ options: opts }); 
+              }} className="h-7 text-xs" />
               <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => {
-                const opts = (c.options as any[]).filter((_: any, j: number) => j !== i);
+                const opts = ((c.options as any[]) || []).filter((_: any, j: number) => j !== i);
                 const conns = node.connections.filter((_, j) => j !== i);
                 onUpdate({ ...node, config: { ...c, options: opts }, connections: conns });
               }}><Trash2 className="h-3 w-3" /></Button>
             </div>
           ))}
           <Button size="sm" variant="outline" className="w-full text-xs" onClick={() => {
-            const opts = [...(c.options as any[]), { label: `Opção ${(c.options as any[]).length + 1}`, value: String((c.options as any[]).length + 1) }];
+            const currentOpts = (c.options as any[]) || [];
+            const opts = [...currentOpts, { label: `Opção ${currentOpts.length + 1}`, value: String(currentOpts.length + 1) }];
             const conns = [...node.connections, { label: `Opção ${opts.length}`, targetId: null }];
             onUpdate({ ...node, config: { ...c, options: opts }, connections: conns });
           }}><Plus className="h-3 w-3 mr-1" />Adicionar Opção</Button>

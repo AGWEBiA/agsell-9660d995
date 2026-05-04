@@ -10,16 +10,7 @@ import { CompanyHierarchyPanel } from '@/components/crm/CompanyHierarchyPanel';
 
 export default function CRMIntelligence() {
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center gap-3">
-        <Sparkles className="h-7 w-7 text-primary" />
-        <div>
-          <h1 className="text-2xl font-bold">CRM Intelligence</h1>
-          <p className="text-sm text-muted-foreground">
-            Pipeline inteligente, forecast, duplicatas, campos customizados, listas e hierarquia de empresas
-          </p>
-        </div>
-      </div>
+    <div className="space-y-6">
 
       <Tabs defaultValue="rotting" className="w-full">
         <TabsList className="w-full justify-start overflow-x-auto">

@@ -173,6 +173,36 @@ export const STYLE_PRESETS: Preset[] = [
 .agsell-button { border-radius: 999px; height: 44px; padding: 0 24px; }`,
     },
   },
+  {
+    id: 'raw-unstyled',
+    name: 'Layout Livre (Raw)',
+    description: 'Remove todos os estilos padrões. Ideal para quem quer escrever todo o CSS do zero.',
+    swatch: { background: 'transparent', border: '1px dashed #94a3b8' },
+    settings: {
+      bgColor: '',
+      bgOpacity: 0,
+      textColor: 'inherit',
+      primaryColor: '',
+      borderRadius: '0',
+      padding: '0',
+      fieldGap: '12',
+      showBorder: false,
+      shadow: 'none',
+      showTitle: false,
+      showDescription: false,
+      fontFamily: 'inherit',
+      customCss: `/* O formulário agora está limpo para seu CSS */
+.agsell-form {
+  /* adicione seu layout aqui */
+}
+.agsell-input {
+  /* adicione seu estilo de campos */
+}
+.agsell-button {
+  /* adicione seu estilo de botão */
+}`,
+    },
+  },
 ];
 
 export function FormStylePresets({ current, onApply }: Props) {

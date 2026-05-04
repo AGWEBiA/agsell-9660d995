@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { StatCard } from '@/components/ui/stat-card';
@@ -21,7 +21,7 @@ import {
   DollarSign, Trophy, TrendingUp, Clock, Target, Users, Briefcase,
   ShieldAlert, ArrowUpRight, BarChart3, PieChart as PieIcon,
   Download, FileText, AlertCircle, History, Calendar, Mail as MailIcon,
-  CheckCircle2,
+  CheckCircle2, Settings,
 } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import {
@@ -35,7 +35,7 @@ import {
 import { useSalesRepDetail } from '@/hooks/useSalesRepDetail';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
+import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { DealDetailDialog } from '@/components/crm/DealDetailDialog';

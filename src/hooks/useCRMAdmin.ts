@@ -185,26 +185,6 @@ export function useSalesRepPerformance(period: 'day' | 'week' | 'month' | 'all' 
         supabase.from('messages').select('user_id').eq('organization_id', orgId),
       ]);
 
-    queryFn: async (): Promise<SalesRepPerformance[]> => {
-      if (!currentOrganization?.id) return [];
-      const orgId = currentOrganization.id;
-
-      const { data: members } = await supabase
-        .from('organization_members')
-        .select('user_id, role')
-        .eq('organization_id', orgId);
-      if (!members?.length) return [];
-
-      const userIds = members.map(m => m.user_id);
-      const [{ data: profiles }, { data: deals }, { data: contacts }, { data: tasks }, { data: activities }, { data: messages }] = await Promise.all([
-        supabase.from('profiles').select('user_id, full_name, avatar_url').in('user_id', userIds),
-        supabase.from('deals').select('user_id, value, status, commission_value').eq('organization_id', orgId),
-        supabase.from('contacts').select('user_id').eq('organization_id', orgId),
-        supabase.from('tasks').select('user_id, status').eq('organization_id', orgId).eq('status', 'completed'),
-        supabase.from('activities').select('user_id, type').eq('organization_id', orgId).in('type', ['meeting', 'call']),
-        supabase.from('messages').select('user_id').eq('organization_id', orgId),
-      ]);
-
       return members.map(m => {
         const profile = profiles?.find(p => p.user_id === m.user_id);
         const userDeals = (deals || []).filter(d => d.user_id === m.user_id);

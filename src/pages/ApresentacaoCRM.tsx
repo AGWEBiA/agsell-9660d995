@@ -272,7 +272,7 @@ const slides: Slide[] = [
           ['SMS', 'Zenvia'],
           ['Inbox', 'Omnichannel'],
           ['Forms', 'Captura de leads'],
-          ['Webhooks', 'Stripe / Kiwify'],
+          ['Webhooks', 'Kiwify'],
           ['Automações', 'Flow Builder'],
         ].map(([name, desc]) => (
           <div key={name} className="rounded-xl bg-white/5 border border-white/10 p-4">

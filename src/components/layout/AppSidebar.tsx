@@ -257,17 +257,22 @@ function MenuItemLink({
       )}
       aria-current={isActive ? 'page' : undefined}
     >
-      {/* Indicador vermelho à esquerda (estilo vídeo) - Removed for explicit active background */}
+      {/* Indicador vermelho à esquerda (estilo vídeo) */}
       {isActive && !collapsed && !isSecondary && (
         <span
-          className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full bg-white/40"
+          className={cn(
+            "absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r-full",
+            isCrmSection ? "bg-white/40" : "bg-primary"
+          )}
           aria-hidden="true"
         />
       )}
       <Icon
         className={cn(
           'h-[18px] w-[18px] shrink-0 transition-colors',
-          isActive ? 'text-white' : isSecondary ? 'h-4 w-4 text-sidebar-foreground/40 group-hover:text-sidebar-foreground/60' : 'text-sidebar-foreground/55 group-hover:text-sidebar-foreground/90'
+          isActive 
+            ? isCrmSection ? 'text-white' : 'text-primary' 
+            : isSecondary ? 'h-4 w-4 text-sidebar-foreground/40 group-hover:text-sidebar-foreground/60' : 'text-sidebar-foreground/55 group-hover:text-sidebar-foreground/90'
         )}
       />
       {!collapsed && (

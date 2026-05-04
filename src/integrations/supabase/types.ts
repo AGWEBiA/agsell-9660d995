@@ -1022,7 +1022,7 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
+      },
       chatbots: {
         Row: {
           channel: string

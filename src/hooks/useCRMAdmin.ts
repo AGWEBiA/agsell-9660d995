@@ -208,6 +208,7 @@ export function useSalesRepPerformance(period: 'day' | 'week' | 'month' | 'all' 
           return sum + ((d.value || 0) * (rate / 100));
         }, 0);
         const decided = won.length + lost.length;
+        const target = (goals || []).find(g => g.user_id === m.user_id)?.target_amount || 0;
         return {
           user_id: m.user_id,
           full_name: profile?.full_name || 'Sem nome',
@@ -220,6 +221,7 @@ export function useSalesRepPerformance(period: 'day' | 'week' | 'month' | 'all' 
           pipelineValue,
           wonValue,
           commissionValue,
+          target_amount: Number(target),
           conversionRate: decided > 0 ? Math.round((won.length / decided) * 100) : 0,
           avgDealValue: won.length > 0 ? Math.round(wonValue / won.length) : 0,
           contactsOwned: (contacts || []).filter(c => c.user_id === m.user_id).length,

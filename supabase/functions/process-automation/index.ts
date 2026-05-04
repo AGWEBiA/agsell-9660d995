@@ -129,7 +129,18 @@ serve(async (req) => {
         status,
         details,
         organization_id: automation.organization_id,
-      }).then(() => {});
+      });
+
+      // Also log to system_logs for admin monitoring
+      await logToSystem(supabase, {
+        organization_id: automation.organization_id,
+        source: "process-automation",
+        event: "automation_step",
+        message: `${nodeLabel}: ${status}`,
+        level: status === 'error' ? 'error' : 'info',
+        payload: { automation_id, contact_id, action_type: actionType, ...details },
+        metadata: { execution_id: executionId, step: currentStep }
+      });
     };
 
     // Helper: send WhatsApp via send-whatsapp edge function (supports text/buttons/list/presence)

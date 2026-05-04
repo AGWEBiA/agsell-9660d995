@@ -1121,13 +1121,56 @@ Deno.serve(async (req) => {
           if (isGroupMessage || isBroadcast) {
             await logPhase3Event(
               "skipped",
-              "mention", // reusing kind or adding a new one
+              "mention",
               { reason: isGroupMessage ? "group_message_blocked" : "broadcast_blocked", jid: String(remoteJid).slice(0, 60) },
               integration.organization_id,
               instanceName,
               senderPhone
             );
-            return;
+
+            // Trigger automations for group keywords
+            if (isGroupMessage && messageText) {
+              const { data: keywordAutomations } = await supabase
+                .from("automations")
+                .select("id, trigger_config")
+                .eq("organization_id", integration.organization_id)
+                .eq("trigger_type", "whatsapp_keyword")
+                .eq("is_active", true);
+
+              if (keywordAutomations && keywordAutomations.length > 0) {
+                const { data: contact } = await supabase
+                  .from("contacts")
+                  .select("id")
+                  .eq("organization_id", integration.organization_id)
+                  .or(`whatsapp.eq.${senderPhone},phone.eq.${senderPhone}`)
+                  .maybeSingle();
+
+                if (contact) {
+                  for (const auto of keywordAutomations) {
+                    const config = auto.trigger_config as Record<string, unknown> || {};
+                    const kw = String(config.keyword || "").toLowerCase();
+                    if (kw && messageText.toLowerCase().includes(kw)) {
+                      fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/process-automation`, {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                          "X-Internal-Cron": "true",
+                        },
+                        body: JSON.stringify({
+                          automation_id: auto.id,
+                          contact_id: contact.id,
+                          trigger_event: "whatsapp_keyword",
+                          trigger_data: { message: messageText, is_group: true, group_jid: remoteJid }
+                        }),
+                      }).catch(err => console.error("Error dispatching group keyword automation:", err));
+                    }
+                  }
+                }
+              }
+            }
+
+            return new Response(JSON.stringify({ success: true, message: "Group message processed" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
           }
 
 

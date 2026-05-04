@@ -480,7 +480,7 @@ const channelConfig: Record<string, {
     triggerChannels: ['whatsapp', 'crm', 'pagamento', 'site'],
     triggerIds: undefined,
     title: 'Fluxos Individuais',
-    subtitle: 'Automações de mensagem no privado (WhatsApp, CRM, Pagamento)',
+    subtitle: 'Automações 1:1 (WhatsApp, E-mail e SMS)',
     allowedActions: [
       'timer', 'warmup', 'send_whatsapp', 'send_whatsapp_oficial', 'send_sms', 'send_email_performance', 'send_email_marketing', 'voice_torpedo', 'send_voip_call',
       'add_tag', 'remove_tag', 'update_score', 'send_notification', 'create_task', 'wait',

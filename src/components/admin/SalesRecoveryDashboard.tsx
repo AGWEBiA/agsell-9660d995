@@ -30,7 +30,7 @@ import { ptBR } from 'date-fns/locale';
 
 const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: React.ElementType }> = {
   started: { label: 'Iniciado', variant: 'outline', icon: Clock },
-  redirected_to_stripe: { label: 'Redirecionado Stripe', variant: 'secondary', icon: CreditCard },
+  redirected_to_stripe: { label: 'Cartão Internacional', variant: 'secondary', icon: CreditCard },
   redirected_to_kiwify: { label: 'Redirecionado Kiwify', variant: 'secondary', icon: ExternalLink },
   waiting_payment: { label: 'Aguardando Pagamento', variant: 'outline', icon: Clock },
   boleto_generated: { label: 'Boleto Gerado', variant: 'outline', icon: Receipt },

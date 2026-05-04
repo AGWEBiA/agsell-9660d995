@@ -3642,7 +3642,7 @@ Webhooks de entrada permitem que sistemas externos enviem dados para o AG Sell q
 
 O AG Sell tem webhooks pré-configurados para:
 
-**Stripe:**
+**Kiwify:**
 - Pagamento aprovado → Cria contato + Deal ganho
 - Assinatura criada → Tag "cliente-ativo"
 - Assinatura cancelada → Tag "churn"
@@ -3671,7 +3671,7 @@ O AG Sell tem webhooks pré-configurados para:
 - 🔄 **Rotacione chaves** — Troque periodicamente por segurança
 - 📝 **Documente integrações** — Registre o que cada chave/webhook faz
 
-💡 **Dica**: Combine webhooks com automações para criar fluxos como: "Quando receber pagamento no Stripe, criar contato, mover para pipeline de clientes e enviar e-mail de boas-vindas".`,
+💡 **Dica**: Combine webhooks com automações para criar fluxos como: "Quando receber pagamento na Kiwify, criar contato, mover para pipeline de clientes e enviar e-mail de boas-vindas".`,
   },
   {
     id: 'integrations',
@@ -3688,11 +3688,11 @@ O AG Sell tem webhooks pré-configurados para:
 
 ### 💳 Provedores de pagamento
 
-**Stripe:**
+**Kiwify:**
 - Pagamentos e assinaturas internacionais
 - Webhook automático para criação de contatos
 - Sincronização de status de pagamento
-- Configuração: API Key do Stripe
+- Configuração: Token do Webhook Kiwify
 
 **Hotmart:**
 - Vendas de infoprodutos
@@ -4278,7 +4278,7 @@ Formulário preenchido → Contato criado automaticamente → Tags aplicadas →
 
 O fluxo é simples:
 
-1. **Cliente paga** em qualquer gateway (Kiwify, Hotmart, Stripe, etc.)
+1. **Cliente paga** em qualquer gateway (Kiwify, Hotmart, Eduzz, etc.)
 2. **Webhook é enviado** para a AG Sell automaticamente
 3. **Sistema identifica** o produto e o grupo vinculado
 4. **Membro é adicionado** ao grupo de WhatsApp via Evolution API
@@ -4344,7 +4344,7 @@ https://[seu-projeto].supabase.co/functions/v1/paid-groups-webhook?org=[id-da-or
 \`\`\`
 
 **Gateways suportados (20+):**
-- 💳 **Stripe** — \`gateway=kiwify\`
+- 💳 **Kiwify** — \`gateway=kiwify\`
 - 🟢 **Kiwify** — \`gateway=kiwify\`
 - 🔥 **Hotmart** — \`gateway=hotmart\`
 - 📦 **Eduzz** — \`gateway=eduzz\`

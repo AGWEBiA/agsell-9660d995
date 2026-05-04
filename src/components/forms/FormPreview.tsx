@@ -117,11 +117,11 @@ export function FormPreview({ fields, settings, formName = 'Pré-visualização'
     const fieldContent = (() => {
       switch (field.type) {
         case 'textarea':
-          return <Textarea className="pointer-events-none" placeholder={field.placeholder || ''} style={inputStyle} readOnly />;
+          return <Textarea className="agsell-input pointer-events-none" placeholder={field.placeholder || ''} style={inputStyle} readOnly />;
         case 'select':
           return (
             <Select disabled>
-              <SelectTrigger style={inputStyle}><SelectValue placeholder="Selecione..." /></SelectTrigger>
+              <SelectTrigger className="agsell-input" style={inputStyle}><SelectValue placeholder="Selecione..." /></SelectTrigger>
               <SelectContent>
                 {(field.options || []).map(opt => (
                   <SelectItem key={opt} value={opt}>{opt}</SelectItem>
@@ -131,11 +131,11 @@ export function FormPreview({ fields, settings, formName = 'Pré-visualização'
           );
         case 'radio':
           return (
-            <RadioGroup className="flex flex-col gap-3 pointer-events-none">
+            <RadioGroup className="agsell-radio-group flex flex-col gap-3 pointer-events-none">
               {(field.options || []).map(opt => (
                 <div key={opt} className="flex items-center gap-2">
                   <RadioGroupItem value={opt} id={`preview-${field.name}-${opt}`} />
-                  <Label htmlFor={`preview-${field.name}-${opt}`} className="text-sm font-normal">{opt}</Label>
+                  <Label htmlFor={`preview-${field.name}-${opt}`} className="agsell-label text-sm font-normal">{opt}</Label>
                 </div>
               ))}
             </RadioGroup>
@@ -143,20 +143,20 @@ export function FormPreview({ fields, settings, formName = 'Pré-visualização'
         case 'checkbox':
           if (field.options && field.options.length > 0) {
             return (
-              <div className="flex flex-col gap-3 pointer-events-none">
+              <div className="agsell-checkbox-group flex flex-col gap-3 pointer-events-none">
                 {field.options.map(opt => (
                   <div key={opt} className="flex items-center gap-2">
                     <Checkbox />
-                    <Label className="text-sm font-normal">{opt}</Label>
+                    <Label className="agsell-label text-sm font-normal">{opt}</Label>
                   </div>
                 ))}
               </div>
             );
           }
           return (
-            <div className="flex items-center gap-2 pointer-events-none">
+            <div className="agsell-field-checkbox flex items-center gap-2 pointer-events-none">
               <Checkbox />
-              <span className="text-sm">{field.placeholder || field.label}</span>
+              <span className="agsell-label text-sm">{field.placeholder || field.label}</span>
             </div>
           );
         default: {
@@ -170,11 +170,12 @@ export function FormPreview({ fields, settings, formName = 'Pré-visualização'
                 onChange={() => {}}
                 placeholder={field.placeholder || '(00) 00000-0000'}
                 style={inputStyle}
+                className="agsell-input"
                 readOnly
               />
             );
           }
-          return <Input className="pointer-events-none" type={field.type || 'text'} placeholder={field.placeholder || (s.labelPosition === 'hidden' ? field.label : '')} style={inputStyle} readOnly />;
+          return <Input className="agsell-input pointer-events-none" type={field.type || 'text'} placeholder={field.placeholder || (s.labelPosition === 'hidden' ? field.label : '')} style={inputStyle} readOnly />;
         }
       }
     })();

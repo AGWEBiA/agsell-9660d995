@@ -74,6 +74,9 @@ export default function FormView() {
     customCss: urlCss ? `${dbSettings.customCss}\n${atob(urlCss)}` : dbSettings.customCss,
   };
 
+  // Check if we should inherit from parent (transparent mode)
+  const isInherited = s.bgColor === '' || s.bgOpacity === 0;
+
   // Multi-step: 2 fields per step
   const FIELDS_PER_STEP = 2;
   const steps = s.layout === 'multi-step'

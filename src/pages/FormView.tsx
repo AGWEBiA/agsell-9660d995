@@ -42,6 +42,7 @@ export default function FormView() {
   const urlText = searchParams.get('text') ? `#${searchParams.get('text')}` : undefined;
   const urlRadius = searchParams.get('radius') || undefined;
   const urlFont = searchParams.get('font') || undefined;
+  const urlCss = searchParams.get('css') || undefined;
 
   const { data: form, isLoading, error } = useQuery({
     queryKey: ['public-form', formId],

@@ -50,9 +50,15 @@ interface KiwifyPayload {
   [key: string]: unknown;
 }
 
-const logStep = (step: string, details?: unknown) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[KIWIFY-WEBHOOK] ${step}${detailsStr}`);
+const logStep = async (supabase: SupabaseClient, step: string, details?: unknown, level: "info" | "warning" | "error" = "info", organization_id?: string) => {
+  await logToSystem(supabase, {
+    source: "webhook-kiwify",
+    event: step,
+    message: typeof details === "string" ? details : JSON.stringify(details),
+    payload: details,
+    level,
+    organization_id
+  });
 };
 
 // Extract product_id from various payload locations
@@ -73,12 +79,14 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  let webhookEventId: string | undefined;
+
   try {
     const url = new URL(req.url);
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
     const rawBody = await req.text();
     const payload = JSON.parse(rawBody) as KiwifyPayload;
     const signature = req.headers.get("x-kiwify-signature");
@@ -86,7 +94,22 @@ Deno.serve(async (req) => {
     const productId = extractProductId(payload);
     const customerEmail = payload.Customer?.email?.toLowerCase();
 
-    logStep("Webhook received", { status: payload.order_status, email: customerEmail, product: productId, checkoutLink: payload.checkout_link });
+    // --- Store webhook event early ---
+    const { data: webhookEvent, error: webhookError } = await supabase
+      .from("webhook_events")
+      .insert({
+        source: "kiwify",
+        event_type: "received",
+        payload: payload,
+        processed: false,
+      })
+      .select()
+      .single();
+
+    if (webhookError) throw webhookError;
+    webhookEventId = webhookEvent.id;
+
+    await logStep(supabase, "Webhook received", { status: payload.order_status, email: customerEmail, product: productId, checkoutLink: payload.checkout_link });
 
     // --- Signature verification ---
     const kiwifySecret = Deno.env.get("KIWIFY_WEBHOOK_SECRET");
@@ -99,12 +122,13 @@ Deno.serve(async (req) => {
       const expectedSignature = encodeHex(new Uint8Array(signatureBuffer));
 
       if (signature !== expectedSignature) {
-        logStep("ERROR: Invalid signature");
+        await logStep(supabase, "ERROR: Invalid signature", { received: signature }, "error");
+        if (webhookEventId) await updateWebhookEvent(supabase, webhookEventId, { processed: true, error_message: "Invalid signature" });
         return new Response(JSON.stringify({ error: "Invalid signature" }), {
           status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      logStep("Signature verified");
+      await logStep(supabase, "Signature verified");
     }
 
     // --- Map Kiwify status ---

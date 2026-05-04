@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Logo } from '@/components/ui/Logo';
 import { CompetitorComparison } from '@/components/pricing/CompetitorComparison';
+import { useActivePlans, Plan } from '@/hooks/useActivePlans';
 
 // Features do sistema
 const SYSTEM_FEATURES = [
@@ -82,23 +83,6 @@ const SYSTEM_FEATURES = [
   },
 ];
 
-interface Plan {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  price_monthly: number;
-  price_yearly: number;
-  max_users: number;
-  max_contacts: number;
-  max_emails_per_month: number;
-  max_whatsapp_messages: number;
-  max_automations: number;
-  max_forms: number;
-  max_ai_requests_per_month: number;
-  features: string[];
-  kiwify_checkout_url?: string | null;
-}
 
 const FEATURE_LABELS: Record<string, string> = {
   crm_basico: 'CRM Básico',
@@ -479,47 +463,12 @@ function GuestCheckoutDialog({
 }
 
 export default function Pricing() {
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { plans, isLoading } = useActivePlans();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
   const [searchParams] = useSearchParams();
 
-  useEffect(() => {
-    const fetchPlans = async () => {
-      const { data, error } = await supabase
-        .from('plans_public' as any)
-        .select('*')
-        .eq('is_active', true)
-        .order('price_monthly', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching plans:', error);
-        toast.error('Erro ao carregar planos');
-      } else {
-        setPlans(((data as any[]) || [])
-          .filter((p: any) => p.is_active === true)
-          .map((p: any) => ({
-            ...p,
-            features: Array.isArray(p.features) ? p.features as string[] : [],
-            price_monthly: p.price_monthly || 0,
-            price_yearly: p.price_yearly || 0,
-            max_users: p.max_users || 1,
-            max_contacts: p.max_contacts || 100,
-            max_emails_per_month: p.max_emails_per_month || 500,
-            max_whatsapp_messages: p.max_whatsapp_messages || 100,
-            max_automations: p.max_automations || 5,
-            max_forms: p.max_forms || 3,
-            max_ai_requests_per_month: (p as any).max_ai_requests_per_month || 0,
-            kiwify_checkout_url: (p as any).kiwify_checkout_url || null,
-          })));
-      }
-      setIsLoading(false);
-    };
-
-    fetchPlans();
-  }, []);
 
   useEffect(() => {
     if (searchParams.get('success') === 'true') {

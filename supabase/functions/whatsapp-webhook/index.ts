@@ -1084,10 +1084,26 @@ Deno.serve(async (req) => {
           // Ignore delivery/read status updates that are not real inbound messages
           const isStatusOnly = !messageText && !hasMedia && !isLocation && !isContact;
 
-          // Skip group messages (they are handled elsewhere)
-          const isGroupMessage = String(remoteJid).includes("@g.us") || String(remoteJid).includes("@broadcast");
+          // Allow group messages to be routed to the inbox
+          const isBroadcast = String(remoteJid).includes("@broadcast");
+          const isGroupMessage = String(remoteJid).includes("@g.us");
 
-          if (senderPhone && !isStatusOnly && !isGroupMessage) {
+          // For group messages, we want to know who the participant was
+          if (isGroupMessage && !extraMetadata.participant) {
+            const participantJid = keyData.participant || data.participant || messageData.participant || null;
+            if (participantJid) {
+              const participantPhone = String(participantJid)
+                .replace("@s.whatsapp.net", "")
+                .replace("@c.us", "")
+                .replace("@lid", "");
+              extraMetadata.participant = {
+                jid: participantJid,
+                phone: participantPhone
+              };
+            }
+          }
+
+          if (senderPhone && !isStatusOnly && !isBroadcast) {
             const locName = (extraMetadata.location as Record<string, unknown> | undefined)?.name as string | undefined;
             const contactName = (extraMetadata.contact as Record<string, unknown> | undefined)?.display_name as string | undefined
               || ((extraMetadata.contacts as Record<string, unknown>[] | undefined)?.[0]?.display_name as string | undefined);

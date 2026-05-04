@@ -125,6 +125,7 @@ const Notifications = React.lazy(() => import("./pages/Notifications"));
 const CRMAdmin = React.lazy(() => import("./pages/CRMAdmin"));
 const CRMIntelligence = React.lazy(() => import("./pages/CRMIntelligenceConsolidated"));
 const CRMSettings = React.lazy(() => import("./pages/CRMSettingsConsolidated"));
+const SystemLogs = React.lazy(() => import("./pages/SystemLogs"));
 
 const queryClient = new QueryClient({
   defaultOptions: {

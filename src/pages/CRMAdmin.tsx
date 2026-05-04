@@ -295,7 +295,6 @@ export default function CRMAdmin() {
             period={period}
           />
         </TabsContent>
-        </TabsContent>
 
         {/* Pipeline tab */}
         <TabsContent value="pipeline" className="space-y-4">
@@ -454,6 +453,35 @@ export default function CRMAdmin() {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle>Receita Ganha por Mês</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {trend.isLoading ? (
+                <Skeleton className="h-64 w-full" />
+              ) : (
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={trend.data || []}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                    <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 12 }} />
+                    <Tooltip
+                      contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                      formatter={(value: any) => formatBRL(value)}
+                    />
+                    <Bar dataKey="wonValue" name="Receita Ganha" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
 function SalesRepDetailDialog({ userId, onClose, period }: { userId: string | null; onClose: () => void; period: 'day' | 'week' | 'month' | 'all' }) {
   const { data: rep, isLoading } = useSalesRepDetail(userId, period);
 
@@ -495,8 +523,8 @@ function SalesRepDetailDialog({ userId, onClose, period }: { userId: string | nu
                 <ResponsiveContainer width="100%" height={200}>
                   <LineChart data={rep.monthlyEvolution}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="month" hide />
-                    <YAxis hide />
+                    <XAxis dataKey="month" />
+                    <YAxis tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
                     <Tooltip formatter={(v: any) => formatBRL(v)} />
                     <Line type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
                   </LineChart>
@@ -505,7 +533,17 @@ function SalesRepDetailDialog({ userId, onClose, period }: { userId: string | nu
             </Card>
 
             <div className="space-y-2">
-              <h4 className="text-sm font-semibold">Vendas Computadas</h4>
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold">Vendas Computadas</h4>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="h-7 text-[10px]">
+                    <Download className="h-3 w-3 mr-1" /> PDF
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-7 text-[10px]">
+                    <Download className="h-3 w-3 mr-1" /> CSV
+                  </Button>
+                </div>
+              </div>
               <div className="border rounded-md">
                 <Table>
                   <TableHeader>
@@ -553,34 +591,5 @@ function SalesRepDetailDialog({ userId, onClose, period }: { userId: string | nu
         ) : null}
       </DialogContent>
     </Dialog>
-  );
-}
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Receita Ganha por Mês</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {trend.isLoading ? (
-                <Skeleton className="h-64 w-full" />
-              ) : (
-                <ResponsiveContainer width="100%" height={280}>
-                  <BarChart data={trend.data || []}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-                    <YAxis tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 12 }} />
-                    <Tooltip
-                      contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
-                      formatter={(value: any) => formatBRL(value)}
-                    />
-                    <Bar dataKey="wonValue" name="Receita Ganha" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
   );
 }

@@ -52,10 +52,10 @@ const NotFound = React.lazy(() => import("./pages/NotFound"));
 // Lazy-loaded protected pages
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 const Contacts = React.lazy(() => import("./pages/Contacts"));
-const Companies = React.lazy(() => import("./pages/Companies"));
-const Pipeline = React.lazy(() => import("./pages/Pipeline"));
+const Companies = React.lazy(() => import("./pages/CRMIntelligenceConsolidated"));
+const Pipeline = React.lazy(() => import("./pages/Deals"));
 const Deals = React.lazy(() => import("./pages/Deals"));
-const Tags = React.lazy(() => import("./pages/Tags"));
+const Tags = React.lazy(() => import("./pages/CRMSettingsConsolidated"));
 const Tasks = React.lazy(() => import("./pages/Tasks"));
 const Inbox = React.lazy(() => import("./pages/Inbox"));
 const Email = React.lazy(() => import("./pages/Email"));

@@ -78,6 +78,7 @@ import {
 import { useContacts } from '@/hooks/useContacts';
 import { useContactLastSacMessage } from '@/hooks/useSacLeads';
 // SacLeadsPanel moved to Deals page
+import { DealDetailDialog } from '@/components/crm/DealDetailDialog';
 import { DealSourceBadge } from '@/components/pipeline/DealSourceBadge';
 import { DealCard } from '@/components/pipeline/DealCard';
 import { PageHeader, FormField } from '@/components/ui/help-tooltip';
@@ -96,6 +97,7 @@ export default function Pipeline() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [draggedDealId, setDraggedDealId] = useState<string | null>(null);
   const [dragOverStageId, setDragOverStageId] = useState<string | null>(null);
+  const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
   const [newDeal, setNewDeal] = useState<CreateDealData>({
     title: '',
     value: 0,
@@ -522,6 +524,7 @@ export default function Pipeline() {
                             onMove={handleMoveDeal}
                             onDelete={(id) => setDeleteId(id)}
                             onEdit={(deal) => setEditingDeal(deal)}
+                            onClick={(deal) => setSelectedDealId(deal.id)}
                           />
                         ))
                       )}
@@ -672,6 +675,11 @@ export default function Pipeline() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DealDetailDialog 
+        dealId={selectedDealId} 
+        onClose={() => setSelectedDealId(null)} 
+      />
     </div>
   );
 }

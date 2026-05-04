@@ -107,10 +107,25 @@ export default function Pipeline() {
     commission_rate: 0,
     payment_link: '',
   });
+  const [selectedProduct, setSelectedProduct] = useState<string>('custom');
 
   const { data: stages = [], isLoading: stagesLoading } = usePipelineStages();
   const { data: deals = [], isLoading: dealsLoading } = useDeals();
   const { data: contacts = [] } = useContacts();
+  const { currentOrganization } = useOrganization();
+  const { data: productCommissions = [] } = useQuery({
+    queryKey: ['product-commissions', currentOrganization?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('product_commissions')
+        .select('*')
+        .eq('organization_id', currentOrganization?.id || '');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentOrganization?.id,
+  });
+
   const createDeal = useCreateDeal();
   const updateDeal = useUpdateDeal();
   const deleteDeal = useDeleteDeal();

@@ -220,26 +220,39 @@ export function FormStylePresets({ current, onApply }: Props) {
         Cada preset ajusta apenas a aparência (cores, sombras, fonte, fundo). Layout e campos são preservados.
       </p>
       <div className="grid grid-cols-2 gap-2">
-        {STYLE_PRESETS.map((preset) => (
-          <button
-            key={preset.id}
-            type="button"
-            onClick={() => apply(preset)}
-            className="group flex items-stretch gap-2 rounded-lg border border-border p-2 text-left transition-all hover:border-primary/50 hover:shadow-sm"
-          >
-            <div
-              className="h-12 w-12 shrink-0 rounded-md border border-border/50"
-              style={preset.swatch}
-              aria-hidden
-            />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-xs font-semibold group-hover:text-primary">{preset.name}</p>
-              <p className="line-clamp-2 text-[10px] leading-tight text-muted-foreground">
-                {preset.description}
-              </p>
-            </div>
-          </button>
-        ))}
+        {STYLE_PRESETS.map((preset) => {
+          // Check if this preset matches current settings
+          const isActive = Object.entries(preset.settings).every(([key, value]) => {
+            return current[key as keyof FormSettings] === value;
+          });
+
+          return (
+            <button
+              key={preset.id}
+              type="button"
+              onClick={() => apply(preset)}
+              className={`group flex items-stretch gap-2 rounded-lg border p-2 text-left transition-all hover:shadow-sm ${
+                isActive 
+                  ? 'border-primary bg-primary/5 ring-1 ring-primary' 
+                  : 'border-border hover:border-primary/50'
+              }`}
+            >
+              <div
+                className="h-12 w-12 shrink-0 rounded-md border border-border/50"
+                style={preset.swatch}
+                aria-hidden
+              />
+              <div className="min-w-0 flex-1">
+                <p className={`truncate text-xs font-semibold ${isActive ? 'text-primary' : 'group-hover:text-primary'}`}>
+                  {preset.name}
+                </p>
+                <p className="line-clamp-2 text-[10px] leading-tight text-muted-foreground">
+                  {preset.description}
+                </p>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

@@ -36,6 +36,28 @@ export function FormPreview({ fields, settings, formName = 'Pré-visualização'
 
   const s: FormSettings = { ...DEFAULT_SETTINGS, ...settings };
 
+  // Inject custom CSS into preview
+  React.useEffect(() => {
+    if (!s.customCss) return;
+    const styleId = 'form-preview-custom-css';
+    let styleTag = document.getElementById(styleId);
+    if (!styleTag) {
+      styleTag = document.createElement('style');
+      styleTag.id = styleId;
+      document.head.appendChild(styleTag);
+    }
+    styleTag.textContent = s.customCss;
+    return () => {
+      // Don't necessarily remove it if we want it to stay until next update,
+      // but cleaning up is safer.
+    };
+  }, [s.customCss]);
+
+  const [device, setDevice] = useState<DeviceSize>('desktop');
+  const [currentStep, setCurrentStep] = useState(0);
+
+  const s: FormSettings = { ...DEFAULT_SETTINGS, ...settings };
+
   // Compute opacity-aware background
   const opacity = s.bgOpacity ?? 100;
   const bgWithOpacity = (() => {

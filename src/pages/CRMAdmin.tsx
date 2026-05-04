@@ -12,7 +12,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger, Close as DialogClose,
 } from '@/components/ui/dialog';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -1173,9 +1173,9 @@ function CRMSettingsDialog() {
         </div>
 
         <DialogFooter className="mt-6 gap-2">
-          <DialogTrigger asChild>
+          <DialogClose asChild>
             <Button variant="outline" className="flex-1 rounded-lg">Cancelar</Button>
-          </DialogTrigger>
+          </DialogClose>
           <Button 
             className="flex-1 rounded-lg shadow-lg shadow-primary/20" 
             onClick={() => updateSettings.mutate({ target, commissionRate, repGoals, products })}

@@ -232,7 +232,8 @@ function MenuItemLink({
   item: MenuItem; isActive: boolean; collapsed: boolean; onNavigate?: () => void; isLocked?: boolean; isSecondary?: boolean; sectionId?: string;
 }) {
   const Icon = item.icon;
-  const isCrmSection = sectionId === 'crm' || item.path.startsWith('/crm-') || item.path === '/deals' || item.path === '/crm-settings';
+  const isRedSection = sectionId === 'crm' || sectionId === 'automations' || item.path.startsWith('/crm-') || item.path === '/deals' || item.path === '/crm-settings' || item.path.includes('/flow-builder') || item.path === '/chatbot-builder';
+  const isCrmSection = isRedSection; // Keeping for compatibility with logic below
 
   const linkContent = (
     <Link

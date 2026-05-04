@@ -106,6 +106,7 @@ export default function Pipeline() {
     expected_close_date: '',
     commission_rate: 0,
     payment_link: '',
+    product_id: '',
   });
   const [selectedProduct, setSelectedProduct] = useState<string>('custom');
 

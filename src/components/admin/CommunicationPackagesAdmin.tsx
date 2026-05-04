@@ -97,7 +97,7 @@ export function CommunicationPackagesAdmin() {
               <TableHead>Status</TableHead>
               <TableHead>Kiwify URL</TableHead>
               <TableHead>Kiwify Product ID</TableHead>
-              <TableHead>Stripe Price ID</TableHead>
+              
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>

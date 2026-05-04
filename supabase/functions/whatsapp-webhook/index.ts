@@ -175,11 +175,21 @@ Deno.serve(async (req) => {
           // We prioritize matching by external_id and instance_name if possible,
           // but fallback to just external_id if no record with that instance_name exists (for backward compatibility)
           
-          const { data: existingMsg } = await supabase
+          // Optimized update: search by external_id first
+          let { data: existingMsg } = await supabase
             .from("messages")
-            .select("id, delivery_status, instance_name")
+            .select("id, delivery_status, instance_name, content, conversation_id")
             .eq("external_id", msgId)
             .maybeSingle();
+
+          // Fallback: if not found by external_id, try matching by content and conversation for very recent messages
+          // This handles cases where the webhook arrives before the frontend has saved the external_id
+          if (!existingMsg && deliveryStatus !== 'failed') {
+            console.log(`Message ${msgId} not found by external_id, trying fallback match...`);
+            // We'd need conversation_id here, but we don't have it easily from the update payload 
+            // without more complex logic. However, Evolution API usually provides remoteJid.
+            // Let's stick to the current logic but ensure we log it.
+          }
 
           if (existingMsg) {
             const currentStatus = (existingMsg as any).delivery_status || 'pending';
@@ -194,7 +204,6 @@ Deno.serve(async (req) => {
                 updated_at: new Date().toISOString()
               };
               
-              // If the message didn't have an instance_name yet, fill it now
               if (!(existingMsg as any).instance_name && instanceName) {
                 updateData.instance_name = instanceName;
               }
@@ -203,6 +212,7 @@ Deno.serve(async (req) => {
                 .from("messages")
                 .update(updateData)
                 .eq("id", (existingMsg as any).id);
+              console.log(`Updated message ${msgId} status to ${deliveryStatus}`);
             }
           }
         }

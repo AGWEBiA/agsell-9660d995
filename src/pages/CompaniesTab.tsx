@@ -121,12 +121,12 @@ export default function Companies() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Empresas</h1>
-          <p className="text-muted-foreground">Gerencie suas empresas e organizações</p>
+          <h2 className="text-xl font-bold text-foreground">Gestão de Empresas</h2>
+          <p className="text-sm text-muted-foreground">Gerencie suas empresas e organizações</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>

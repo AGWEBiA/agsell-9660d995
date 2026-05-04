@@ -383,6 +383,7 @@ Deno.serve(async (req) => {
           await activateSubscription(supabase, {
             organizationId: membership.organization_id,
             planId: plan.id,
+            planSlug: plan.slug,
             kiwifyOrderId: payload.order_id,
             kiwifySubscriptionId: payload.Subscription?.id,
             billingCycle: detectBillingCycle(payload),
@@ -446,6 +447,7 @@ Deno.serve(async (req) => {
             await activateSubscription(supabase, {
               organizationId: newOrg.id,
               planId: plan.id,
+              planSlug: plan.slug,
               kiwifyOrderId: payload.order_id,
               kiwifySubscriptionId: payload.Subscription?.id,
               billingCycle: detectBillingCycle(payload),
@@ -490,7 +492,11 @@ Deno.serve(async (req) => {
           email: customerEmail,
           password,
           email_confirm: true,
-          user_metadata: { name: customerName, full_name: customerName },
+          user_metadata: { 
+            name: customerName, 
+            full_name: customerName,
+            credentials_emailed_at: new Date().toISOString()
+          },
         });
 
         if (authError) {
@@ -511,7 +517,12 @@ Deno.serve(async (req) => {
           // Create organization directly (RPC uses auth.uid() which is null in service context)
           const { data: newOrg, error: orgError } = await supabase
             .from('organizations')
-            .insert({ name: orgName, slug: `${slug}-${Date.now()}`, plan_id: plan.id })
+            .insert({ 
+              name: orgName, 
+              slug: `${slug}-${Date.now()}`, 
+              plan_id: plan.id,
+              plan: plan.slug
+            })
             .select('id')
             .single();
 
@@ -527,6 +538,7 @@ Deno.serve(async (req) => {
             await activateSubscription(supabase, {
               organizationId: orgId,
               planId: plan.id,
+              planSlug: plan.slug,
               kiwifyOrderId: payload.order_id,
               kiwifySubscriptionId: payload.Subscription?.id,
               billingCycle: detectBillingCycle(payload),
@@ -694,11 +706,12 @@ function detectBillingCycle(payload: KiwifyPayload): "monthly" | "yearly" {
 async function activateSubscription(supabase: any, params: {
   organizationId: string;
   planId: string;
+  planSlug?: string;
   kiwifyOrderId: string;
   kiwifySubscriptionId?: string;
   billingCycle: "monthly" | "yearly";
 }) {
-  const { organizationId, planId, kiwifyOrderId, kiwifySubscriptionId, billingCycle } = params;
+  const { organizationId, planId, planSlug, kiwifyOrderId, kiwifySubscriptionId, billingCycle } = params;
 
   // Check if there's an existing subscription with a different provider
   const { data: existingSub } = await supabase
@@ -725,7 +738,9 @@ async function activateSubscription(supabase: any, params: {
   }
 
   // Update org plan
-  await supabase.from("organizations").update({ plan_id: planId }).eq("id", organizationId);
+  const orgUpdate: Record<string, any> = { plan_id: planId };
+  if (planSlug) orgUpdate.plan = planSlug;
+  await supabase.from("organizations").update(orgUpdate).eq("id", organizationId);
 
   const periodDays = billingCycle === "yearly" ? 365 : 30;
   const subData = {
@@ -818,9 +833,11 @@ async function callSyncUser(userId: string, shouldBeActive: boolean) {
 }
 
 function generatePassword(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%';
+  // Simpler password character set to avoid issues with special characters in some contexts
+  // and make it easier for users to type/copy
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
   let password = '';
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 10; i++) {
     password += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return password;

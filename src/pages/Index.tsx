@@ -870,7 +870,7 @@ function PlansSection() {
                     </div>
                   </>
                 )}
-                <div className="flex items-center gap-2 text-xs text-muted-foreground"><Shield className="h-4 w-4" />{isFree ? 'Seus dados estão protegidos' : `Pagamento seguro via ${defaultGateway === 'kiwify' ? 'Kiwify' : 'Stripe'}`}</div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground"><Shield className="h-4 w-4" />{isFree ? 'Seus dados estão protegidos' : 'Pagamento seguro via Kiwify'}</div>
                 <DialogFooter className="gap-2">
                   <Button type="button" variant="outline" onClick={() => setShowCheckout(false)}>Cancelar</Button>
                   <Button type="submit" disabled={isSubmitting}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{isFree ? 'Criar Conta' : 'Continuar para Pagamento'}</Button>

@@ -880,15 +880,19 @@ function CRMSettingsDialog() {
   });
 
   const [repGoals, setRepGoals] = useState<{ [key: string]: number }>({});
+  const [repCommissions, setRepCommissions] = useState<{ [key: string]: number }>({});
   const [products, setProducts] = useState<{ id?: string; product_name: string; commission_rate: number; monthly_target: number }[]>([]);
 
   useEffect(() => {
     if (members) {
       const goals: { [key: string]: number } = {};
+      const commissions: { [key: string]: number } = {};
       members.forEach(m => {
         goals[m.user_id] = m.target;
+        commissions[m.user_id] = m.commission_rate;
       });
       setRepGoals(goals);
+      setRepCommissions(commissions);
     }
   }, [members]);
 

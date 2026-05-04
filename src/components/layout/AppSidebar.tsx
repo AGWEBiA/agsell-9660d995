@@ -69,7 +69,7 @@ const menuSections: MenuSection[] = [
     label: 'CRM',
     icon: Users,
     items: [
-      { label: 'Painel CRM', icon: Briefcase, path: '/crm-admin', orgAdminOnly: true },
+      { label: 'Painel CRM', icon: BarChart3, path: '/crm-admin', orgAdminOnly: true },
       { label: 'Deals', icon: ListChecks, path: '/deals' },
       { label: 'Inteligência', icon: Brain, path: '/crm-intelligence-consolidated' },
     ],

@@ -71,19 +71,36 @@ function NewCampaignModal({ open, onClose, onCreate, onImportCode }: {
 
   const handleImport = () => {
     if (!importCode.trim()) return;
+    
+    // Helper to validate flow object
+    const isValidFlow = (obj: any) => obj && (Array.isArray(obj.nodes) || Array.isArray(obj.connections));
+
     try {
-      const decoded = JSON.parse(atob(importCode.trim()));
-      if (onImportCode) onImportCode(name || decoded.name || 'Fluxo Importado', importCode.trim());
-      onClose();
-    } catch {
-      try {
-        JSON.parse(importCode.trim());
-        if (onImportCode) onImportCode(name || 'Fluxo Importado', importCode.trim());
+      // Try Base64 first
+      const decodedStr = atob(importCode.trim());
+      const decoded = JSON.parse(decodedStr);
+      if (isValidFlow(decoded)) {
+        if (onImportCode) onImportCode(name || decoded.name || 'Fluxo Importado', importCode.trim());
         onClose();
-      } catch {
-        alert('Código inválido. Verifique e tente novamente.');
+        return;
       }
+    } catch (e) {
+      // Not base64 or not valid JSON after decoding
     }
+
+    try {
+      // Try plain JSON
+      const parsed = JSON.parse(importCode.trim());
+      if (isValidFlow(parsed)) {
+        if (onImportCode) onImportCode(name || parsed.name || 'Fluxo Importado', importCode.trim());
+        onClose();
+        return;
+      }
+    } catch (e) {
+      // Not valid JSON
+    }
+
+    alert('Código inválido ou malformatado. Verifique se copiou o código completo do fluxo.');
   };
 
   return (

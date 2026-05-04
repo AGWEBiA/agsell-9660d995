@@ -1217,7 +1217,7 @@ function CRMSettingsDialog() {
           </DialogClose>
           <Button 
             className="flex-1 rounded-lg shadow-lg shadow-primary/20" 
-            onClick={() => updateSettings.mutate({ target, commissionRate, repGoals, products })}
+            onClick={() => updateSettings.mutate({ target, commissionRate, repGoals, repCommissions, products })}
             disabled={updateSettings.isPending}
           >
             {updateSettings.isPending ? 'Sincronizando...' : 'Salvar Estratégia'}

@@ -171,20 +171,40 @@ Deno.serve(async (req) => {
           // For simplicity in edge function, we'll fetch current status first or just update 
           // but we prioritize fixing the 'reloginho' by ensuring 'sent' is set.
           
-          let updateQuery = supabase
-            .from("messages")
-            .update({ 
-              delivery_status: deliveryStatus,
-              updated_at: new Date().toISOString()
-            })
-            .eq("external_id", msgId);
-
-            
-          if (instanceName) {
-            updateQuery = updateQuery.eq("instance_name", instanceName);
-          }
+          // Update the message status
+          // We prioritize matching by external_id and instance_name if possible,
+          // but fallback to just external_id if no record with that instance_name exists (for backward compatibility)
           
-          await updateQuery;
+          const { data: existingMsg } = await supabase
+            .from("messages")
+            .select("id, delivery_status, instance_name")
+            .eq("external_id", msgId)
+            .maybeSingle();
+
+          if (existingMsg) {
+            const currentStatus = (existingMsg as any).delivery_status || 'pending';
+            const statusPriority: Record<string, number> = {
+              'failed': 0, 'pending': 1, 'sent': 2, 'delivered': 3, 'read': 4, 'played': 4
+            };
+            
+            // Only update if the new status is an upgrade or a failure
+            if (deliveryStatus === 'failed' || (statusPriority[deliveryStatus] || 0) > (statusPriority[currentStatus] || 0)) {
+              const updateData: Record<string, any> = { 
+                delivery_status: deliveryStatus,
+                updated_at: new Date().toISOString()
+              };
+              
+              // If the message didn't have an instance_name yet, fill it now
+              if (!(existingMsg as any).instance_name && instanceName) {
+                updateData.instance_name = instanceName;
+              }
+              
+              await supabase
+                .from("messages")
+                .update(updateData)
+                .eq("id", (existingMsg as any).id);
+            }
+          }
         }
       }
     }

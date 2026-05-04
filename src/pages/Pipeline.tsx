@@ -47,6 +47,7 @@ import {
   FileText,
   Handshake,
   Trophy,
+  ArrowRight,
 } from 'lucide-react';
 import {
   DropdownMenu,

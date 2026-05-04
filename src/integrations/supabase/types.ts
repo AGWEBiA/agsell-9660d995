@@ -1705,6 +1705,41 @@ export type Database = {
           },
         ]
       }
+      crm_exports: {
+        Row: {
+          created_at: string | null
+          file_url: string | null
+          format: string
+          id: string
+          organization_id: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_url?: string | null
+          format: string
+          id?: string
+          organization_id?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          file_url?: string | null
+          format?: string
+          id?: string
+          organization_id?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_exports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       csat_responses: {
         Row: {
           agent_id: string | null
@@ -1911,6 +1946,44 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      deal_activities: {
+        Row: {
+          created_at: string | null
+          deal_id: string | null
+          description: string | null
+          id: string
+          metadata: Json | null
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          deal_id?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          deal_id?: string | null
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deal_activities_deal_id_fkey"
+            columns: ["deal_id"]
+            isOneToOne: false
+            referencedRelation: "deals"
             referencedColumns: ["id"]
           },
         ]
@@ -3827,6 +3900,7 @@ export type Database = {
           plan: string | null
           plan_id: string | null
           sales_commission_rule: Json | null
+          scheduled_export_config: Json | null
           settings: Json | null
           slug: string
           updated_at: string
@@ -3840,6 +3914,7 @@ export type Database = {
           plan?: string | null
           plan_id?: string | null
           sales_commission_rule?: Json | null
+          scheduled_export_config?: Json | null
           settings?: Json | null
           slug: string
           updated_at?: string
@@ -3853,6 +3928,7 @@ export type Database = {
           plan?: string | null
           plan_id?: string | null
           sales_commission_rule?: Json | null
+          scheduled_export_config?: Json | null
           settings?: Json | null
           slug?: string
           updated_at?: string

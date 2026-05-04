@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { StatCard } from '@/components/ui/stat-card';
@@ -12,7 +12,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -20,7 +20,8 @@ import {
 import {
   DollarSign, Trophy, TrendingUp, Clock, Target, Users, Briefcase,
   ShieldAlert, ArrowUpRight, BarChart3, PieChart as PieIcon,
-  Download, FileText, AlertCircle,
+  Download, FileText, AlertCircle, History, Calendar, Mail as MailIcon,
+  CheckCircle2,
 } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import {
@@ -32,6 +33,14 @@ import {
   PieChart, Pie, Cell, LineChart, Line,
 } from '@/lib/recharts';
 import { useSalesRepDetail } from '@/hooks/useSalesRepDetail';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { toast } from 'sonner';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 
 const formatBRL = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(n || 0);
@@ -51,6 +60,8 @@ export default function CRMAdmin() {
   const overview = useCRMOverview();
   const reps = useSalesRepPerformance(period);
   const [selectedRepId, setSelectedRepId] = React.useState<string | null>(null);
+  const [selectedDealId, setSelectedDealId] = React.useState<string | null>(null);
+
 
   const byStage = useDealsByStageAdmin();
   const bySource = useDealsBySource();
@@ -97,6 +108,7 @@ export default function CRMAdmin() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <ScheduledExportDialog />
           <Select value={period} onValueChange={(v: any) => setPeriod(v)}>
             <SelectTrigger className="w-[150px]">
               <SelectValue placeholder="Período" />
@@ -108,6 +120,7 @@ export default function CRMAdmin() {
               <SelectItem value="all">Todo período</SelectItem>
             </SelectContent>
           </Select>
+
           <Button asChild variant="outline" size="sm">
             <Link to="/pipeline">Ver Pipeline</Link>
           </Button>
@@ -304,7 +317,12 @@ export default function CRMAdmin() {
             onClose={() => setSelectedRepId(null)} 
             period={period}
           />
+          <DealDetailDialog
+            dealId={selectedDealId}
+            onClose={() => setSelectedDealId(null)}
+          />
         </TabsContent>
+
 
         {/* Pipeline tab */}
         <TabsContent value="pipeline" className="space-y-4">
@@ -572,7 +590,11 @@ function SalesRepDetailDialog({ userId, onClose, period }: { userId: string | nu
                       </TableRow>
                     ) : (
                       rep.sales.map((sale) => (
-                        <TableRow key={sale.id}>
+                        <TableRow 
+                          key={sale.id} 
+                          className="cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={() => setSelectedDealId(sale.id)}
+                        >
                           <TableCell className="text-xs font-medium">{sale.title}</TableCell>
                           <TableCell className="text-right text-xs">{formatBRL(sale.value)}</TableCell>
                           <TableCell className="text-right text-xs text-orange-600">{formatBRL(sale.commission_value)}</TableCell>
@@ -595,6 +617,249 @@ function SalesRepDetailDialog({ userId, onClose, period }: { userId: string | nu
                     )}
                   </TableBody>
                 </Table>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ScheduledExportDialog() {
+  const { currentOrganization } = useOrganization();
+  const queryClient = useQueryClient();
+  const config = (currentOrganization as any)?.scheduled_export_config || {
+    enabled: false,
+    frequency: 'weekly',
+    format: 'pdf',
+    emails: [],
+  };
+
+  const [formData, setFormData] = useState(config);
+  const [emailInput, setEmailInput] = useState('');
+
+  const updateConfig = useMutation({
+    mutationFn: async (newConfig: any) => {
+      const { error } = await supabase
+        .from('organizations')
+        .update({ scheduled_export_config: newConfig })
+        .eq('id', currentOrganization?.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['organizations'] });
+      toast.success('Configuração de exportação atualizada!');
+    },
+  });
+
+  const handleAddEmail = () => {
+    if (emailInput && !formData.emails.includes(emailInput)) {
+      setFormData({ ...formData, emails: [...formData.emails, emailInput] });
+      setEmailInput('');
+    }
+  };
+
+  const handleRemoveEmail = (email: string) => {
+    setFormData({ ...formData, emails: formData.emails.filter((e: string) => e !== email) });
+  };
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Calendar className="h-4 w-4 mr-2" /> Exportação Agendada
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Agendar Relatórios Automáticos</DialogTitle>
+          <DialogDescription>
+            Receba relatórios de performance diretamente no e-mail dos administradores.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6 py-4">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="export-enabled">Ativar Relatórios Automáticos</Label>
+            <Switch
+              id="export-enabled"
+              checked={formData.enabled}
+              onCheckedChange={(checked) => setFormData({ ...formData, enabled: checked })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Frequência</Label>
+            <Select
+              value={formData.frequency}
+              onValueChange={(val) => setFormData({ ...formData, frequency: val })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="daily">Diário</SelectItem>
+                <SelectItem value="weekly">Semanal</SelectItem>
+                <SelectItem value="monthly">Mensal</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Formato</Label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="format"
+                  checked={formData.format === 'pdf'}
+                  onChange={() => setFormData({ ...formData, format: 'pdf' })}
+                />
+                <span className="text-sm">PDF</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="format"
+                  checked={formData.format === 'csv'}
+                  onChange={() => setFormData({ ...formData, format: 'csv' })}
+                />
+                <span className="text-sm">CSV</span>
+              </label>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>E-mails dos Destinatários</Label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="exemplo@email.com"
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+              />
+              <Button type="button" onClick={handleAddEmail} size="sm">Adicionar</Button>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {formData.emails.map((email: string) => (
+                <Badge key={email} variant="secondary" className="flex items-center gap-1">
+                  {email}
+                  <button onClick={() => handleRemoveEmail(email)} className="ml-1 hover:text-destructive">
+                    ×
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button
+            className="w-full"
+            onClick={() => updateConfig.mutate(formData)}
+            disabled={updateConfig.isPending}
+          >
+            {updateConfig.isPending ? 'Salvando...' : 'Salvar Configuração'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
+function DealDetailDialog({ dealId, onClose }: { dealId: string | null; onClose: () => void }) {
+  const { data: deal, isLoading } = useQuery({
+    queryKey: ['deal-detail', dealId],
+    queryFn: async () => {
+      if (!dealId) return null;
+      const { data, error } = await supabase
+        .from('deals')
+        .select('*, contact:contacts(first_name, last_name)')
+        .eq('id', dealId)
+        .single();
+      if (error) throw error;
+      
+      const { data: activities } = await supabase
+        .from('deal_activities')
+        .select('*')
+        .eq('deal_id', dealId)
+        .order('created_at', { ascending: false });
+        
+      return { ...data, activities: activities || [] };
+    },
+    enabled: !!dealId,
+  });
+
+  return (
+    <Dialog open={!!dealId} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Detalhes da Venda: {deal?.title}</DialogTitle>
+          <DialogDescription>
+            Informações detalhadas e linha do tempo do deal.
+          </DialogDescription>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-40 w-full" />
+          </div>
+        ) : deal ? (
+          <div className="space-y-6 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground uppercase font-semibold">Valor da Venda</p>
+                <p className="text-lg font-bold">{formatBRL(Number(deal.value))}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground uppercase font-semibold">Comissão</p>
+                <p className="text-lg font-bold text-orange-600">{formatBRL(Number(deal.commission_value))}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground uppercase font-semibold">Status de Pagamento</p>
+                <Badge>{deal.payment_status || 'Pendente'}</Badge>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground uppercase font-semibold">Link de Pagamento</p>
+                {deal.payment_link ? (
+                  <a href={deal.payment_link} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline flex items-center gap-1">
+                    Abrir Checkout <ArrowUpRight className="h-3 w-3" />
+                  </a>
+                ) : <span className="text-sm text-muted-foreground">Não gerado</span>}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold flex items-center gap-2">
+                <History className="h-4 w-4" /> Timeline do Status
+              </h4>
+              <div className="relative space-y-4 before:absolute before:inset-y-0 before:left-2.5 before:w-0.5 before:bg-muted ml-1">
+                {deal.activities.length === 0 ? (
+                  <p className="text-xs text-muted-foreground ml-6 italic">Sem atividades registradas.</p>
+                ) : (
+                  deal.activities.map((act: any) => (
+                    <div key={act.id} className="relative pl-8">
+                      <div className="absolute left-0 top-1.5 h-5 w-5 rounded-full border-4 border-background bg-primary" />
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium leading-none">{act.description}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(act.created_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                )}
+                <div className="relative pl-8">
+                  <div className="absolute left-0 top-1.5 h-5 w-5 rounded-full border-4 border-background bg-muted-foreground" />
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium leading-none">Deal Criado</p>
+                    <p className="text-xs text-muted-foreground">
+                      {format(new Date(deal.created_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -21,13 +21,68 @@ import { useActivePlans, Plan } from '@/hooks/useActivePlans';
 
 // Features do sistema
 const SYSTEM_FEATURES = [
-...
+  {
+    icon: Users,
+    title: 'CRM Completo',
+    description: 'Gerencie contatos, empresas e negociações em um só lugar com visão 360° do cliente.'
+  },
+  {
+    icon: Target,
+    title: 'Pipeline de Vendas',
+    description: 'Visualize e gerencie todo seu funil de vendas com drag & drop intuitivo.'
+  },
+  {
+    icon: Bot,
+    title: 'Automações Inteligentes',
+    description: 'Automatize tarefas repetitivas, follow-ups e nutrição de leads automaticamente.'
+  },
+  {
+    icon: MessageSquare,
+    title: 'WhatsApp Integrado',
+    description: 'Envie mensagens, receba notificações e gerencie conversas diretamente no CRM.'
+  },
+  {
+    icon: Mail,
+    title: 'E-mail Marketing',
+    description: 'Crie campanhas, templates personalizados e acompanhe métricas de engajamento.'
+  },
+  {
+    icon: BarChart3,
+    title: 'Analytics Avançado',
+    description: 'Dashboards em tempo real com métricas de vendas, conversão e performance.'
+  },
+  {
+    icon: Sparkles,
+    title: 'Lead Scoring',
+    description: 'Pontue leads automaticamente e foque nos contatos com maior potencial.'
+  },
+  {
+    icon: FileText,
+    title: 'Formulários Web',
+    description: 'Capture leads com formulários personalizados integrados ao seu site.'
+  },
+  {
+    icon: Calendar,
+    title: 'Gestão de Tarefas',
+    description: 'Organize atividades, defina prioridades e nunca perca um follow-up.'
+  },
+  {
+    icon: Inbox,
+    title: 'Inbox Unificada',
+    description: 'Todas as conversas de e-mail e WhatsApp centralizadas em uma só tela.'
+  },
+  {
+    icon: Globe,
+    title: 'API & Integrações',
+    description: 'Conecte com outras ferramentas via API REST ou webhooks customizados.'
+  },
   {
     icon: Clock,
     title: 'Histórico Completo',
     description: 'Timeline de atividades com todo o histórico de interações com cada contato.'
   },
 ];
+
 
 const FEATURE_LABELS: Record<string, string> = {
   crm_basico: 'CRM Básico',

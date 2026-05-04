@@ -558,6 +558,7 @@ export default function CRMAdmin() {
                     <Tooltip formatter={(v: any) => formatBRL(v)} />
                     <Legend />
                     <Bar dataKey="wonValue" name="Receita Ganha" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="target_amount" name="Meta Individual" fill="#22c55e" radius={[0, 4, 4, 0]} />
                     <Bar dataKey="pipelineValue" name="Pipeline Aberto" fill="#3b82f6" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>

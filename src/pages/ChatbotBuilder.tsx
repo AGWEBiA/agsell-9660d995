@@ -497,7 +497,6 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
 
   const handleSave = () => {
     onSave({ ...chatbot, name, nodes, rules });
-    toast.success('Chatbot salvo!');
   };
 
   const categories = [...new Set(nodeTypes.map(n => n.category))];

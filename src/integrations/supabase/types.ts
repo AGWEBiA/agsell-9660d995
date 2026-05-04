@@ -1022,7 +1022,7 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
+      },
       chatbots: {
         Row: {
           channel: string
@@ -1064,7 +1064,7 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
-      }
+      },
       checkout_leads: {
         Row: {
           billing_cycle: string | null

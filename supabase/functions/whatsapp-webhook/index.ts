@@ -1290,6 +1290,12 @@ async function routeToInbox(
   try {
     const { organizationId, userId, channel, senderIdentifier, messageText, sourceInstanceId, sourceInstanceName, contactName } = params;
 
+    // Safety check: skip group or broadcast messages
+    if (String(senderIdentifier).includes("@g.us") || String(senderIdentifier).includes("@broadcast") || String(senderIdentifier).includes("@newsletter")) {
+      console.log(`[routeToInbox] Skipping group/broadcast identifier: ${senderIdentifier}`);
+      return;
+    }
+
     // Sanitize inbound display name (push notification name from WhatsApp)
     const isPhoneLikeName = (name: string | null | undefined) =>
       !name || /^\+?\d[\d\s\-\.\(\)]+$/.test(String(name).trim());

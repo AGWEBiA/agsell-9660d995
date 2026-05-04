@@ -1715,7 +1715,9 @@ async function routeToInbox(
     } else {
       console.log(`${channel} message routed to inbox, conversation: ${conversationId}`);
     }
+    return { contactId, conversationId };
   } catch (err) {
     console.error("Error routing message to inbox:", err);
+    return { contactId: null, conversationId: null };
   }
 }

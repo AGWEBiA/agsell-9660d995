@@ -235,7 +235,7 @@ export function PlanCheckout({ plan, open, onOpenChange }: PlanCheckoutProps) {
                   >
                     <span className="text-lg font-bold text-green-600">K</span>
                     <span className="text-sm font-medium">Kiwify</span>
-                    <span className="text-xs text-muted-foreground">PIX, Boleto, Cartão</span>
+                    <span className="text-xs text-muted-foreground">PIX, Boleto ou Cartão</span>
                   </Label>
                 </div>
               </RadioGroup>

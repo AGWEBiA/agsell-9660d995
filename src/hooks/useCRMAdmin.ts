@@ -159,7 +159,7 @@ export function useSalesRepPerformance(period: 'day' | 'week' | 'month' | 'all' 
 
       const { data: members } = await supabase
         .from('organization_members')
-        .select('user_id, role')
+        .select('user_id, role, commission_rate')
         .eq('organization_id', orgId);
       if (!members?.length) return [];
 

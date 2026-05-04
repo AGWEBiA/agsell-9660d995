@@ -215,6 +215,7 @@ export default function CRMAdmin() {
       <Tabs defaultValue="reps" className="w-full">
         <TabsList>
           <TabsTrigger value="reps">Vendedores</TabsTrigger>
+          <TabsTrigger value="produtos">Produtos</TabsTrigger>
           <TabsTrigger value="comparativo">Comparativo</TabsTrigger>
           <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
           <TabsTrigger value="origens">Origens</TabsTrigger>

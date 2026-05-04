@@ -120,7 +120,8 @@ export default function FormView() {
 
   const inputStyle: React.CSSProperties = {
     ...(s.borderRadius && { borderRadius: `${s.borderRadius}px` }),
-    ...(s.textColor && { color: s.textColor }),
+    ...(s.textColor && s.textColor !== 'inherit' && { color: s.textColor }),
+    ...(isInherited && { backgroundColor: 'rgba(0,0,0,0.03)', borderColor: 'rgba(0,0,0,0.1)' }),
   };
 
   const buttonStyle: React.CSSProperties = {

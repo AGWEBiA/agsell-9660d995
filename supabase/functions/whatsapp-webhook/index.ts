@@ -1627,7 +1627,7 @@ async function routeToInbox(
 
       if (convError) {
         console.error(`Error creating ${channel} conversation:`, convError);
-        return;
+        return { contactId: null, conversationId: null };
       }
       conversationId = newConv.id;
     }
@@ -1642,7 +1642,7 @@ async function routeToInbox(
       
       if (existingMsg) {
         console.log(`Message with external_id ${params.externalMessageId} already exists, skipping insert.`);
-        return;
+        return { contactId, conversationId };
       }
 
       // If it's from me, try to find a message without external_id but same content/conversation

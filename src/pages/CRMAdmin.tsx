@@ -68,6 +68,19 @@ export default function CRMAdmin() {
   const bySource = useDealsBySource();
   const trend = useMonthlyTrend();
 
+  const { data: productCommissions } = useQuery({
+    queryKey: ['product-commissions', currentOrganization?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('product_commissions')
+        .select('*')
+        .eq('organization_id', currentOrganization?.id || '');
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentOrganization?.id,
+  });
+
   if (!isOrgAdmin) {
     return (
       <div className="container mx-auto p-6">

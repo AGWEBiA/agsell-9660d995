@@ -42,6 +42,7 @@ export default function FormView() {
   const urlText = searchParams.get('text') ? `#${searchParams.get('text')}` : undefined;
   const urlRadius = searchParams.get('radius') || undefined;
   const urlFont = searchParams.get('font') || undefined;
+  const urlCss = searchParams.get('css') || undefined;
 
   const { data: form, isLoading, error } = useQuery({
     queryKey: ['public-form', formId],
@@ -70,6 +71,7 @@ export default function FormView() {
     textColor: urlText || dbSettings.textColor,
     borderRadius: urlRadius || dbSettings.borderRadius,
     fontFamily: urlFont || dbSettings.fontFamily,
+    customCss: urlCss ? `${dbSettings.customCss}\n${atob(urlCss)}` : dbSettings.customCss,
   };
 
   // Multi-step: 2 fields per step
@@ -229,10 +231,17 @@ export default function FormView() {
   // Inject custom CSS
   React.useEffect(() => {
     if (!s.customCss) return;
-    const style = document.createElement('style');
-    style.textContent = s.customCss;
-    document.head.appendChild(style);
-    return () => { document.head.removeChild(style); };
+    const styleId = 'agsell-custom-form-css';
+    let styleTag = document.getElementById(styleId);
+    if (!styleTag) {
+      styleTag = document.createElement('style');
+      styleTag.id = styleId;
+      document.head.appendChild(styleTag);
+    }
+    styleTag.textContent = s.customCss;
+    return () => {
+      if (styleTag) styleTag.textContent = '';
+    };
   }, [s.customCss]);
 
   const renderField = (field: FormField) => {
@@ -256,11 +265,11 @@ export default function FormView() {
           );
         case 'radio':
           return (
-            <RadioGroup value={value} onValueChange={onChangeFn} className="flex flex-col gap-3">
+            <RadioGroup value={value} onValueChange={onChangeFn} className="agsell-radio-group flex flex-col gap-3">
               {(field.options || []).map(opt => (
                 <div key={opt} className="flex items-center gap-2">
                   <RadioGroupItem value={opt} id={`${field.name}-${opt}`} />
-                  <Label htmlFor={`${field.name}-${opt}`} className="text-sm font-normal cursor-pointer">{opt}</Label>
+                  <Label htmlFor={`${field.name}-${opt}`} className="agsell-label text-sm font-normal cursor-pointer">{opt}</Label>
                 </div>
               ))}
             </RadioGroup>
@@ -269,7 +278,7 @@ export default function FormView() {
           if (field.options && field.options.length > 0) {
             const selected = value ? value.split(',').map(s => s.trim()) : [];
             return (
-              <div className="flex flex-col gap-3">
+              <div className="agsell-checkbox-group flex flex-col gap-3">
                 {field.options.map(opt => (
                   <div key={opt} className="flex items-center gap-2">
                     <Checkbox
@@ -282,16 +291,16 @@ export default function FormView() {
                       }}
                       id={`${field.name}-${opt}`}
                     />
-                    <Label htmlFor={`${field.name}-${opt}`} className="text-sm font-normal cursor-pointer">{opt}</Label>
+                    <Label htmlFor={`${field.name}-${opt}`} className="agsell-label text-sm font-normal cursor-pointer">{opt}</Label>
                   </div>
                 ))}
               </div>
             );
           }
           return (
-            <div className="flex items-center gap-2">
+            <div className="agsell-field-checkbox flex items-center gap-2">
               <Checkbox checked={value === 'true'} onCheckedChange={(c) => onChangeFn(c ? 'true' : 'false')} />
-              <span className="text-sm">{field.placeholder || field.label}</span>
+              <span className="agsell-label text-sm">{field.placeholder || field.label}</span>
             </div>
           );
         default: {
@@ -355,8 +364,8 @@ export default function FormView() {
   if (error || !form) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4" style={containerStyle}>
-        <Card className={cn("w-full max-w-lg", opacity < 100 && "bg-transparent")} style={cardStyle}>
-          <CardContent className="pt-6 text-center">
+        <Card className={cn("agsell-card w-full max-w-lg", opacity < 100 && "bg-transparent")} style={cardStyle}>
+          <CardContent className="agsell-content pt-6 text-center">
             <p className="text-muted-foreground">Formulário não encontrado ou desativado.</p>
           </CardContent>
         </Card>
@@ -367,10 +376,10 @@ export default function FormView() {
   if (submitted) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4" style={containerStyle}>
-        <Card className={cn("w-full max-w-lg", opacity < 100 && "bg-transparent")} style={cardStyle}>
-          <CardContent className="pt-6 text-center space-y-4">
-            <CheckCircle className="h-16 w-16 mx-auto" style={{ color: s.primaryColor || '#22c55e' }} />
-            <h2 className="text-2xl font-bold" style={s.textColor ? { color: s.textColor } : undefined}>
+        <Card className={cn("agsell-card w-full max-w-lg", opacity < 100 && "bg-transparent")} style={cardStyle}>
+          <CardContent className="agsell-content pt-6 text-center space-y-4">
+            <CheckCircle className="agsell-success-icon h-16 w-16 mx-auto" style={{ color: s.primaryColor || '#22c55e' }} />
+            <h2 className="agsell-success-title text-2xl font-bold" style={s.textColor ? { color: s.textColor } : undefined}>
               {s.successMessage || 'Enviado com sucesso!'}
             </h2>
           </CardContent>
@@ -383,7 +392,7 @@ export default function FormView() {
   if (s.layout === 'inline') {
     return (
       <div className="agsell-form flex items-center justify-center p-2" style={containerStyle}>
-        <form onSubmit={handleSubmit} className="flex items-end gap-2 flex-wrap" style={cardStyle}>
+        <form onSubmit={handleSubmit} className="agsell-fields-form flex items-end gap-2 flex-wrap" style={cardStyle}>
           {fields.map((field) => (
             <div key={field.name} className="agsell-field">
               {s.labelPosition !== 'hidden' && (
@@ -416,61 +425,54 @@ export default function FormView() {
 
   return (
     <div className="agsell-form min-h-screen flex items-center justify-center p-4" style={containerStyle}>
-      <Card className={cn("w-full max-w-lg", opacity < 100 && "bg-transparent")} style={cardStyle}>
+      <Card className={cn("agsell-card w-full max-w-lg", opacity < 100 && "bg-transparent")} style={cardStyle}>
         {(s.showTitle !== false || (s.showDescription !== false && form.description)) && (
-          <CardHeader>
+          <CardHeader className="agsell-header">
             {s.showTitle !== false && (
-              <CardTitle style={s.textColor ? { color: s.textColor } : undefined}>{form.name}</CardTitle>
+              <CardTitle className="agsell-title" style={s.textColor ? { color: s.textColor } : undefined}>{form.name}</CardTitle>
             )}
-            {s.showDescription !== false && form.description && <CardDescription>{form.description}</CardDescription>}
+            {s.showDescription !== false && form.description && <CardDescription className="agsell-description">{form.description}</CardDescription>}
           </CardHeader>
         )}
-        <CardContent>
+        <CardContent className="agsell-content">
           {s.layout === 'multi-step' && totalSteps > 1 && (
-            <div className="mb-6 space-y-2">
+            <div className="agsell-progress-container mb-6 space-y-2">
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Etapa {currentStep + 1} de {totalSteps}</span>
                 <span>{Math.round(((currentStep + 1) / totalSteps) * 100)}%</span>
               </div>
-              <Progress value={((currentStep + 1) / totalSteps) * 100} className="h-2" />
+              <Progress value={((currentStep + 1) / totalSteps) * 100} className="agsell-progress h-2" />
             </div>
           )}
 
-          <form onSubmit={handleSubmit}>
-            <div className={fieldGridClass} style={{ gap: `${s.fieldGap}px` }}>
+          <form onSubmit={handleSubmit} className="agsell-fields-form">
+            <div className={cn("agsell-fields-grid", fieldGridClass)} style={{ gap: `${s.fieldGap}px` }}>
               {displayFields.map((field) => (
-                <div key={field.name} className="space-y-1.5">
+                <div key={field.name} className="agsell-field-wrapper space-y-1.5">
                   {renderField(field)}
                 </div>
               ))}
             </div>
 
             {fields.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-4">Este formulário não possui campos configurados.</p>
+              <p className="agsell-no-fields text-sm text-muted-foreground text-center py-4">Este formulário não possui campos configurados.</p>
             )}
 
-            <div className={`flex gap-2 mt-6 ${s.layout === 'multi-step' && currentStep > 0 ? 'justify-between' : 'justify-end'}`}>
+            <div className={`agsell-actions flex gap-2 mt-6 ${s.layout === 'multi-step' && currentStep > 0 ? 'justify-between' : 'justify-end'}`}>
               {s.layout === 'multi-step' && currentStep > 0 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setCurrentStep(currentStep - 1)}
-                  style={inputStyle}
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" />Voltar
+                <Button type="button" variant="outline" size="sm" onClick={() => setCurrentStep(currentStep - 1)} style={inputStyle} className="agsell-back-button">
+                  <ChevronLeft className="h-3.5 w-3.5 mr-1" />Voltar
                 </Button>
               )}
               <Button
                 type="submit"
-                className={`agsell-button ${s.layout !== 'multi-step' ? 'w-full' : 'flex-1'}`}
+                className={cn("agsell-button", s.layout !== 'multi-step' ? 'w-full' : 'flex-1')}
                 disabled={submitting || fields.length === 0}
                 style={buttonStyle}
               >
-                {submitting
-                  ? 'Enviando...'
-                  : s.layout === 'multi-step' && currentStep < totalSteps - 1
-                    ? <>Próximo<ChevronRight className="h-4 w-4 ml-1" /></>
-                    : s.buttonText
+                {submitting 
+                  ? 'Enviando...' 
+                  : (s.layout === 'multi-step' && currentStep < totalSteps - 1 ? <span className="flex items-center">Próximo<ChevronRight className="h-3.5 w-3.5 ml-1" /></span> : s.buttonText)
                 }
               </Button>
             </div>

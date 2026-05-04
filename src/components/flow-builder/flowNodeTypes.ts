@@ -113,6 +113,8 @@ export const nodeCategories = [
       { id: 'send_email_marketing', label: 'Marketing', icon: Mail, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
       { id: 'voice_torpedo', label: 'Torp. de Voz', icon: Volume2, color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300' },
       { id: 'send_voip_call', label: 'Ligação VoIP', icon: Phone, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
+      { id: 'send_telegram', label: 'Telegram', icon: Send, color: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300' },
+      { id: 'send_whatsapp_campaign', label: 'Campanha WA', icon: Megaphone, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
     ],
   },
   {

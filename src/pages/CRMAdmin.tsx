@@ -341,53 +341,8 @@ export default function CRMAdmin() {
 
         {/* Products tab */}
         <TabsContent value="produtos" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Performance por Produto</CardTitle>
-              <CardDescription>
-                Acompanhamento de vendas e metas específicas por linha de produto.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {(!productCommissions || productCommissions.length === 0) ? (
-                <div className="text-center py-12">
-                  <Package className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
-                  <p className="text-sm text-muted-foreground">Nenhum produto com meta configurada.</p>
-                  <Button variant="link" onClick={() => toast.info('Acesse Configurações CRM para definir metas por produto.')}>
-                    Configurar agora
-                  </Button>
-                </div>
-              ) : (
-                <div className="grid gap-6">
-                  {productCommissions.map((prod: any) => {
-                    const sales = trend.data?.reduce((acc, m) => acc + (m.wonValue || 0), 0) || 0; 
-                    // Note: Ideally we'd filter won deals by product_name, but for now we'll show global vs product target
-                    const target = Number(prod.monthly_target) || 0;
-                    const progress = target > 0 ? Math.min(100, (sales / target) * 100) : 0;
-                    
-                    return (
-                      <div key={prod.id} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Package className="h-4 w-4 text-primary" />
-                            <span className="font-medium text-sm">{prod.product_name}</span>
-                          </div>
-                          <span className="text-xs font-semibold">{formatBRL(sales)} / {formatBRL(target)}</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <Progress value={progress} className="h-2" />
-                          <span className="text-xs text-muted-foreground min-w-[30px]">{Math.round(progress)}%</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <ProductPerformanceTab productCommissions={productCommissions} />
         </TabsContent>
-
-
         {/* Pipeline tab */}
         <TabsContent value="pipeline" className="space-y-4">
           <Card>
@@ -509,6 +464,7 @@ export default function CRMAdmin() {
                     <Tooltip formatter={(v: any) => formatBRL(v)} />
                     <Legend />
                     <Bar dataKey="wonValue" name="Receita Ganha" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="target_amount" name="Meta Individual" fill="#22c55e" radius={[0, 4, 4, 0]} />
                     <Bar dataKey="pipelineValue" name="Pipeline Aberto" fill="#3b82f6" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
@@ -841,7 +797,7 @@ function CRMSettingsDialog() {
     queryFn: async () => {
       const { data: membersData } = await supabase
         .from('organization_members')
-        .select('user_id')
+        .select('user_id, commission_rate')
         .eq('organization_id', currentOrganization?.id || '');
       
       const userIds = (membersData || []).map(m => m.user_id);
@@ -860,6 +816,7 @@ function CRMSettingsDialog() {
         name: profiles?.find(p => p.user_id === m.user_id)?.full_name || 'Sem nome',
         target: goals?.find(g => g.user_id === m.user_id)?.target_amount || 0,
         goal_id: goals?.find(g => g.user_id === m.user_id)?.id,
+        commission_rate: m.commission_rate || 0,
       }));
     },
     enabled: !!currentOrganization?.id,
@@ -879,15 +836,19 @@ function CRMSettingsDialog() {
   });
 
   const [repGoals, setRepGoals] = useState<{ [key: string]: number }>({});
+  const [repCommissions, setRepCommissions] = useState<{ [key: string]: number }>({});
   const [products, setProducts] = useState<{ id?: string; product_name: string; commission_rate: number; monthly_target: number }[]>([]);
 
   useEffect(() => {
     if (members) {
       const goals: { [key: string]: number } = {};
+      const commissions: { [key: string]: number } = {};
       members.forEach(m => {
         goals[m.user_id] = m.target;
+        commissions[m.user_id] = m.commission_rate;
       });
       setRepGoals(goals);
+      setRepCommissions(commissions);
     }
   }, [members]);
 
@@ -912,7 +873,13 @@ function CRMSettingsDialog() {
   };
 
   const updateSettings = useMutation({
-    mutationFn: async (data: { target: number; commissionRate: number; repGoals: { [key: string]: number }; products: typeof products }) => {
+    mutationFn: async (data: { 
+      target: number; 
+      commissionRate: number; 
+      repGoals: { [key: string]: number }; 
+      repCommissions: { [key: string]: number };
+      products: typeof products 
+    }) => {
       // 1. Update Organization
       const { error: orgError } = await supabase
         .from('organizations')
@@ -923,14 +890,22 @@ function CRMSettingsDialog() {
         .eq('id', currentOrganization?.id);
       if (orgError) throw orgError;
 
-      // 2. Update individual goals
+      // 2. Update individual goals and seller commission rates
       const start = startOfMonth(new Date());
       const end = endOfMonth(new Date());
 
       for (const userId in data.repGoals) {
         const goalAmount = data.repGoals[userId];
+        const sellerComm = data.repCommissions[userId] || 0;
         const existing = members?.find(m => m.user_id === userId);
         
+        // Update member commission rate
+        await supabase
+          .from('organization_members')
+          .update({ commission_rate: sellerComm })
+          .eq('organization_id', currentOrganization?.id || '')
+          .eq('user_id', userId);
+
         if (existing?.goal_id) {
           await supabase
             .from('revenue_goals')
@@ -1063,30 +1038,50 @@ function CRMSettingsDialog() {
 
           <TabsContent value="vendedores" className="space-y-4 py-4">
             <div className="flex items-center justify-between">
-              <h4 className="text-sm font-semibold">Metas Individuais por Vendedor</h4>
+              <h4 className="text-sm font-semibold">Metas e Comissões Individuais por Vendedor</h4>
               <Badge variant="secondary">{members?.length || 0} Membros</Badge>
             </div>
             <div className="grid gap-3">
               {members?.map(m => (
-                <div key={m.user_id} className="flex items-center justify-between gap-4 bg-muted/30 p-4 rounded-xl border border-border/50 transition-all hover:bg-muted/50">
+                <div key={m.user_id} className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-muted/30 p-4 rounded-xl border border-border/50 transition-all hover:bg-muted/50">
                   <div className="flex items-center gap-3 flex-1">
                     <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
                       {m.name.substring(0,2).toUpperCase()}
                     </div>
                     <div>
                       <p className="text-sm font-medium">{m.name}</p>
-                      <p className="text-[10px] text-muted-foreground">ID: {m.user_id.slice(-8)}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase">{currentOrganization?.name}</p>
                     </div>
                   </div>
-                  <div className="w-48 relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="number"
-                      className="h-10 pl-9"
-                      placeholder="Meta R$"
-                      value={repGoals[m.user_id] || 0}
-                      onChange={e => setRepGoals({ ...repGoals, [m.user_id]: Number(e.target.value) })}
-                    />
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="w-32 space-y-1">
+                      <Label className="text-[10px] font-bold uppercase opacity-60">Meta (R$)</Label>
+                      <div className="relative">
+                        <DollarSign className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                        <Input
+                          type="number"
+                          className="h-9 pl-8 text-sm"
+                          placeholder="Meta R$"
+                          value={repGoals[m.user_id] || 0}
+                          onChange={e => setRepGoals({ ...repGoals, [m.user_id]: Number(e.target.value) })}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="w-24 space-y-1">
+                      <Label className="text-[10px] font-bold uppercase opacity-60">Comissão (%)</Label>
+                      <div className="relative">
+                        <TrendingUp className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                        <Input
+                          type="number"
+                          className="h-9 pl-8 text-sm"
+                          placeholder="Rate %"
+                          value={repCommissions[m.user_id] || 0}
+                          onChange={e => setRepCommissions({ ...repCommissions, [m.user_id]: Number(e.target.value) })}
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1178,7 +1173,7 @@ function CRMSettingsDialog() {
           </DialogClose>
           <Button 
             className="flex-1 rounded-lg shadow-lg shadow-primary/20" 
-            onClick={() => updateSettings.mutate({ target, commissionRate, repGoals, products })}
+            onClick={() => updateSettings.mutate({ target, commissionRate, repGoals, repCommissions, products })}
             disabled={updateSettings.isPending}
           >
             {updateSettings.isPending ? 'Sincronizando...' : 'Salvar Estratégia'}
@@ -1189,3 +1184,111 @@ function CRMSettingsDialog() {
   );
 }
 
+
+function ProductPerformanceTab({ productCommissions }: { productCommissions: any[] | undefined }) {
+  const { currentOrganization } = useOrganization();
+  
+  const { data: salesByProduct } = useQuery({
+    queryKey: ['sales-by-product', currentOrganization?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('deals')
+        .select('product_id, value')
+        .eq('organization_id', currentOrganization?.id || '')
+        .eq('status', 'won');
+      if (error) throw error;
+      
+      const stats: { [key: string]: number } = {};
+      data.forEach(d => {
+        if (d.product_id) {
+          stats[d.product_id] = (stats[d.product_id] || 0) + (Number(d.value) || 0);
+        }
+      });
+      return stats;
+    },
+    enabled: !!currentOrganization?.id,
+  });
+
+  if (!productCommissions || productCommissions.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <Package className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
+        <p className="text-sm text-muted-foreground">Nenhum produto com meta configurada.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid md:grid-cols-3 gap-6">
+      <Card className="md:col-span-2">
+        <CardHeader>
+          <CardTitle>Performance por Linha de Produto</CardTitle>
+          <CardDescription>Vendas reais vs Metas definidas.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {productCommissions.map((prod: any) => {
+              const target = Number(prod.monthly_target) || 0;
+              const sales = salesByProduct?.[prod.id] || 0;
+              const progress = target > 0 ? Math.min(100, (sales / target) * 100) : 0;
+              
+              return (
+                <div key={prod.id} className="space-y-3 p-4 rounded-xl border bg-muted/30 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Package className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <span className="font-bold text-sm">{prod.product_name}</span>
+                        <p className="text-[10px] text-muted-foreground">Taxa: {prod.commission_rate}%</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-semibold block">{formatBRL(sales)}</span>
+                      <span className="text-[10px] text-muted-foreground">Meta: {formatBRL(target)}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-[10px] font-medium">
+                      <span>Atingimento</span>
+                      <span>{Math.round(progress)}%</span>
+                    </div>
+                    <Progress value={progress} className="h-2 bg-secondary" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Mix de Faturamento (Meta)</CardTitle>
+        </CardHeader>
+        <CardContent className="h-[250px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={productCommissions}
+                dataKey="monthly_target"
+                nameKey="product_name"
+                cx="50%"
+                cy="50%"
+                outerRadius={70}
+                innerRadius={40}
+                paddingAngle={5}
+              >
+                {productCommissions.map((_: any, index: number) => (
+                  <Cell key={`cell-${index}`} fill={SOURCE_COLORS[index % SOURCE_COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(v: any) => formatBRL(v)} />
+            </PieChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

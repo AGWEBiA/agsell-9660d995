@@ -106,6 +106,7 @@ export default function Pipeline() {
     expected_close_date: '',
     commission_rate: 0,
     payment_link: '',
+    product_id: '',
   });
   const [selectedProduct, setSelectedProduct] = useState<string>('custom');
 
@@ -155,7 +156,7 @@ export default function Pipeline() {
       contact_id: newDeal.contact_id || undefined,
     });
     setIsDialogOpen(false);
-    setNewDeal({ title: '', value: 0, stage_id: '', contact_id: '', expected_close_date: '', commission_rate: 0, payment_link: '' });
+    setNewDeal({ title: '', value: 0, stage_id: '', contact_id: '', expected_close_date: '', commission_rate: 0, payment_link: '', product_id: '' });
   };
 
   const handleUpdateDeal = async () => {
@@ -378,9 +379,12 @@ export default function Pipeline() {
                         setNewDeal({
                           ...newDeal,
                           title: prod.product_name,
-                          commission_rate: Number(prod.commission_rate)
+                          commission_rate: Number(prod.commission_rate),
+                          product_id: prod.id
                         });
                       }
+                    } else {
+                      setNewDeal({ ...newDeal, product_id: '' });
                     }
                   }}
                 >

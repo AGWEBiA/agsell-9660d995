@@ -32,6 +32,7 @@ export interface SalesRepPerformance {
   pipelineValue: number;
   wonValue: number;
   commissionValue: number;
+  target_amount: number;
   conversionRate: number;
   avgDealValue: number;
   contactsOwned: number;
@@ -159,7 +160,7 @@ export function useSalesRepPerformance(period: 'day' | 'week' | 'month' | 'all' 
 
       const { data: members } = await supabase
         .from('organization_members')
-        .select('user_id, role')
+        .select('user_id, role, commission_rate')
         .eq('organization_id', orgId);
       if (!members?.length) return [];
 
@@ -176,14 +177,17 @@ export function useSalesRepPerformance(period: 'day' | 'week' | 'month' | 'all' 
         dealsQuery = dealsQuery.gte('updated_at', startOfMonth(now).toISOString()).lte('updated_at', endOfMonth(now).toISOString());
       }
 
-      const [{ data: profiles }, { data: deals }, { data: contacts }, { data: tasks }, { data: activities }, { data: messages }] = await Promise.all([
+      const [{ data: profiles }, { data: deals }, { data: contacts }, { data: tasks }, { data: activities }, { data: messages }, { data: goals }] = await Promise.all([
         supabase.from('profiles').select('user_id, full_name, avatar_url').in('user_id', userIds),
         dealsQuery,
         supabase.from('contacts').select('user_id').eq('organization_id', orgId),
         supabase.from('tasks').select('user_id, status').eq('organization_id', orgId).eq('status', 'completed'),
         supabase.from('activities').select('user_id, type').eq('organization_id', orgId).in('type', ['meeting', 'call']),
         supabase.from('messages').select('user_id').eq('organization_id', orgId),
+        supabase.from('revenue_goals').select('user_id, target_amount').eq('organization_id', orgId),
       ]);
+
+      const defaultOrgRate = (currentOrganization as any)?.sales_commission_rule?.default_rate || 0;
 
       return members.map(m => {
         const profile = profiles?.find(p => p.user_id === m.user_id);
@@ -193,8 +197,18 @@ export function useSalesRepPerformance(period: 'day' | 'week' | 'month' | 'all' 
         const lost = userDeals.filter(d => d.status === 'lost');
         const pipelineValue = open.reduce((s, d) => s + (d.value || 0), 0);
         const wonValue = won.reduce((s, d) => s + (d.value || 0), 0);
-        const commissionValue = won.reduce((s, d) => s + (Number(d.commission_value) || 0), 0);
+        
+        // Calculate commission: 
+        // 1. If d.commission_value exists and > 0, use it.
+        // 2. Otherwise, use seller's rate * deal value.
+        // 3. Otherwise, use org default rate * deal value.
+        const commissionValue = won.reduce((sum, d) => {
+          if (d.commission_value && Number(d.commission_value) > 0) return sum + Number(d.commission_value);
+          const rate = m.commission_rate || defaultOrgRate;
+          return sum + ((d.value || 0) * (rate / 100));
+        }, 0);
         const decided = won.length + lost.length;
+        const target = (goals || []).find(g => g.user_id === m.user_id)?.target_amount || 0;
         return {
           user_id: m.user_id,
           full_name: profile?.full_name || 'Sem nome',
@@ -207,6 +221,7 @@ export function useSalesRepPerformance(period: 'day' | 'week' | 'month' | 'all' 
           pipelineValue,
           wonValue,
           commissionValue,
+          target_amount: Number(target),
           conversionRate: decided > 0 ? Math.round((won.length / decided) * 100) : 0,
           avgDealValue: won.length > 0 ? Math.round(wonValue / won.length) : 0,
           contactsOwned: (contacts || []).filter(c => c.user_id === m.user_id).length,

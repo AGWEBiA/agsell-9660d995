@@ -2100,6 +2100,7 @@ export type Database = {
           payment_link: string | null
           payment_status: string | null
           probability: number | null
+          product_id: string | null
           stage_id: string | null
           status: string | null
           title: string
@@ -2125,6 +2126,7 @@ export type Database = {
           payment_link?: string | null
           payment_status?: string | null
           probability?: number | null
+          product_id?: string | null
           stage_id?: string | null
           status?: string | null
           title: string
@@ -2150,6 +2152,7 @@ export type Database = {
           payment_link?: string | null
           payment_status?: string | null
           probability?: number | null
+          product_id?: string | null
           stage_id?: string | null
           status?: string | null
           title?: string
@@ -2177,6 +2180,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "deals_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "product_commissions"
             referencedColumns: ["id"]
           },
           {
@@ -3797,6 +3807,7 @@ export type Database = {
       }
       organization_members: {
         Row: {
+          commission_rate: number | null
           created_at: string
           id: string
           invited_at: string | null
@@ -3808,6 +3819,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          commission_rate?: number | null
           created_at?: string
           id?: string
           invited_at?: string | null
@@ -3819,6 +3831,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          commission_rate?: number | null
           created_at?: string
           id?: string
           invited_at?: string | null

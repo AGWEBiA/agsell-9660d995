@@ -346,7 +346,8 @@ export function useInbox() {
             }
 
             if (Object.keys(updates).length > 0) {
-              await supabase.from('messages').update(updates).eq('id', data.id);
+              const { data: updatedData } = await supabase.from('messages').update(updates).eq('id', data.id).select().single();
+              if (updatedData) return updatedData;
             }
           }
         } catch {

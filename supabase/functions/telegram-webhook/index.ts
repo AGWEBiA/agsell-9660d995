@@ -148,6 +148,41 @@ serve(async (req) => {
       .update({ last_message_at: new Date().toISOString() })
       .eq("id", conversationId);
 
+    // Trigger Flow Builder Automations
+    const { data: automations } = await supabase
+      .from("automations")
+      .select("id, trigger_type, trigger_config")
+      .eq("organization_id", bot.organization_id)
+      .in("trigger_type", ["telegram_message", "telegram_keyword"])
+      .eq("is_active", true);
+
+    if (automations && automations.length > 0 && contactId) {
+      for (const auto of automations) {
+        const config = auto.trigger_config as Record<string, unknown> || {};
+        
+        // For keyword triggers, check if message matches
+        if (auto.trigger_type === "telegram_keyword") {
+          const kw = String(config.keyword || "").toLowerCase();
+          if (!kw || !text.toLowerCase().includes(kw)) continue;
+        }
+
+        fetch(`${supabaseUrl}/functions/v1/process-automation`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${serviceKey}`,
+            "X-Internal-Cron": "true",
+          },
+          body: JSON.stringify({
+            automation_id: auto.id,
+            contact_id: contactId,
+            trigger_event: auto.trigger_type,
+            trigger_data: { message: text }
+          }),
+        }).catch(err => console.error("Error dispatching Telegram automation:", err));
+      }
+    }
+
     // Check if AI agent should respond
     const { data: agents } = await supabase
       .from("ai_agents")

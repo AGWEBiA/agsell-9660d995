@@ -779,9 +779,15 @@ function CRMSettingsDialog() {
     queryFn: async () => {
       const { data: membersData } = await supabase
         .from('organization_members')
-        .select('user_id, profiles(full_name)')
+        .select('user_id')
         .eq('organization_id', currentOrganization?.id || '');
       
+      const userIds = (membersData || []).map(m => m.user_id);
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name')
+        .in('user_id', userIds);
+
       const { data: goals } = await supabase
         .from('revenue_goals')
         .select('*')
@@ -789,7 +795,7 @@ function CRMSettingsDialog() {
         
       return (membersData || []).map((m: any) => ({
         user_id: m.user_id,
-        name: m.profiles?.full_name || 'Sem nome',
+        name: profiles?.find(p => p.user_id === m.user_id)?.full_name || 'Sem nome',
         target: goals?.find(g => g.user_id === m.user_id)?.target_amount || 0,
         goal_id: goals?.find(g => g.user_id === m.user_id)?.id,
       }));

@@ -102,19 +102,20 @@ export default function FormView() {
   })();
 
   const containerStyle: React.CSSProperties = {
-    ...(bgWithOpacity ? { backgroundColor: bgWithOpacity } : s.bgColor ? { backgroundColor: s.bgColor } : {}),
-    ...(s.textColor && { color: s.textColor }),
-    ...(s.fontFamily && { fontFamily: s.fontFamily }),
+    ...(bgWithOpacity && !isInherited ? { backgroundColor: bgWithOpacity } : s.bgColor && !isInherited ? { backgroundColor: s.bgColor } : { backgroundColor: 'transparent' }),
+    ...(s.textColor && s.textColor !== 'inherit' && { color: s.textColor }),
+    ...(s.fontFamily && s.fontFamily !== 'inherit' && { fontFamily: s.fontFamily }),
   };
 
   const cardStyle: React.CSSProperties = {
-    ...(bgWithOpacity ? { backgroundColor: bgWithOpacity } : s.bgColor ? { backgroundColor: s.bgColor } : {}),
+    ...(bgWithOpacity && !isInherited ? { backgroundColor: bgWithOpacity } : s.bgColor && !isInherited ? { backgroundColor: s.bgColor } : { backgroundColor: 'transparent' }),
     ...(s.borderRadius && { borderRadius: `${s.borderRadius}px` }),
     ...(s.padding && { padding: `${s.padding}px` }),
-    ...(!s.showBorder && { border: 'none' }),
-    ...(s.shadow === 'none' && { boxShadow: 'none' }),
-    ...(s.shadow === 'sm' && { boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)' }),
-    ...(s.shadow === 'lg' && { boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }),
+    ...((!s.showBorder || isInherited) && { border: 'none' }),
+    ...((s.shadow === 'none' || isInherited) && { boxShadow: 'none' }),
+    ...(s.shadow === 'sm' && !isInherited && { boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)' }),
+    ...(s.shadow === 'md' && !isInherited && { boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }),
+    ...(s.shadow === 'lg' && !isInherited && { boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }),
   };
 
   const inputStyle: React.CSSProperties = {

@@ -1184,3 +1184,111 @@ function CRMSettingsDialog() {
   );
 }
 
+
+function ProductPerformanceTab({ productCommissions }: { productCommissions: any[] | undefined }) {
+  const { currentOrganization } = useOrganization();
+  
+  const { data: salesByProduct } = useQuery({
+    queryKey: ['sales-by-product', currentOrganization?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('deals')
+        .select('product_id, value')
+        .eq('organization_id', currentOrganization?.id || '')
+        .eq('status', 'won');
+      if (error) throw error;
+      
+      const stats: { [key: string]: number } = {};
+      data.forEach(d => {
+        if (d.product_id) {
+          stats[d.product_id] = (stats[d.product_id] || 0) + (Number(d.value) || 0);
+        }
+      });
+      return stats;
+    },
+    enabled: !!currentOrganization?.id,
+  });
+
+  if (!productCommissions || productCommissions.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <Package className="h-12 w-12 text-muted-foreground/20 mx-auto mb-4" />
+        <p className="text-sm text-muted-foreground">Nenhum produto com meta configurada.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid md:grid-cols-3 gap-6">
+      <Card className="md:col-span-2">
+        <CardHeader>
+          <CardTitle>Performance por Linha de Produto</CardTitle>
+          <CardDescription>Vendas reais vs Metas definidas.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            {productCommissions.map((prod: any) => {
+              const target = Number(prod.monthly_target) || 0;
+              const sales = salesByProduct?.[prod.id] || 0;
+              const progress = target > 0 ? Math.min(100, (sales / target) * 100) : 0;
+              
+              return (
+                <div key={prod.id} className="space-y-3 p-4 rounded-xl border bg-muted/30 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="p-2 bg-primary/10 rounded-lg">
+                        <Package className="h-4 w-4 text-primary" />
+                      </div>
+                      <div>
+                        <span className="font-bold text-sm">{prod.product_name}</span>
+                        <p className="text-[10px] text-muted-foreground">Taxa: {prod.commission_rate}%</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-semibold block">{formatBRL(sales)}</span>
+                      <span className="text-[10px] text-muted-foreground">Meta: {formatBRL(target)}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-[10px] font-medium">
+                      <span>Atingimento</span>
+                      <span>{Math.round(progress)}%</span>
+                    </div>
+                    <Progress value={progress} className="h-2 bg-secondary" />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm">Mix de Faturamento (Meta)</CardTitle>
+        </CardHeader>
+        <CardContent className="h-[250px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={productCommissions}
+                dataKey="monthly_target"
+                nameKey="product_name"
+                cx="50%"
+                cy="50%"
+                outerRadius={70}
+                innerRadius={40}
+                paddingAngle={5}
+              >
+                {productCommissions.map((_: any, index: number) => (
+                  <Cell key={`cell-${index}`} fill={SOURCE_COLORS[index % SOURCE_COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(v: any) => formatBRL(v)} />
+            </PieChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

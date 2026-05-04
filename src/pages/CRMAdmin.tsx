@@ -21,7 +21,7 @@ import {
   DollarSign, Trophy, TrendingUp, Clock, Target, Users, Briefcase,
   ShieldAlert, ArrowUpRight, BarChart3, PieChart as PieIcon,
   Download, FileText, AlertCircle, History, Calendar, Mail as MailIcon,
-  CheckCircle2, Settings,
+  CheckCircle2, Settings, Package, Plus, Trash2,
 } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import {

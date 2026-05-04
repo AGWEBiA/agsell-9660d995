@@ -29,7 +29,7 @@ export function DealDetailDialog({ dealId, onClose }: DealDetailDialogProps) {
       if (!dealId) return null;
       const { data, error } = await supabase
         .from('deals')
-        .select('*, contact:contacts(first_name, last_name)')
+        .select('*, contact:contacts(first_name, last_name), product:product_commissions(product_name)')
         .eq('id', dealId)
         .single();
       if (error) throw error;

@@ -38,7 +38,11 @@ export function FormPreview({ fields, settings, formName = 'Pré-visualização'
 
   // Inject custom CSS into preview
   React.useEffect(() => {
-    if (!s.customCss) return;
+    if (!s.customCss) {
+      const existing = document.getElementById('form-preview-custom-css');
+      if (existing) existing.textContent = '';
+      return;
+    }
     const styleId = 'form-preview-custom-css';
     let styleTag = document.getElementById(styleId);
     if (!styleTag) {
@@ -47,16 +51,7 @@ export function FormPreview({ fields, settings, formName = 'Pré-visualização'
       document.head.appendChild(styleTag);
     }
     styleTag.textContent = s.customCss;
-    return () => {
-      // Don't necessarily remove it if we want it to stay until next update,
-      // but cleaning up is safer.
-    };
   }, [s.customCss]);
-
-  const [device, setDevice] = useState<DeviceSize>('desktop');
-  const [currentStep, setCurrentStep] = useState(0);
-
-  const s: FormSettings = { ...DEFAULT_SETTINGS, ...settings };
 
   // Compute opacity-aware background
   const opacity = s.bgOpacity ?? 100;
@@ -135,7 +130,7 @@ export function FormPreview({ fields, settings, formName = 'Pré-visualização'
               {(field.options || []).map(opt => (
                 <div key={opt} className="flex items-center gap-2">
                   <RadioGroupItem value={opt} id={`preview-${field.name}-${opt}`} />
-                  <Label htmlFor={`preview-${field.name}-${opt}`} className="agsell-label text-sm font-normal">{opt}</Label>
+                  <Label htmlFor={`preview-${field.name}-${opt}`} className="agsell-label text-sm font-normal cursor-pointer">{opt}</Label>
                 </div>
               ))}
             </RadioGroup>
@@ -147,7 +142,7 @@ export function FormPreview({ fields, settings, formName = 'Pré-visualização'
                 {field.options.map(opt => (
                   <div key={opt} className="flex items-center gap-2">
                     <Checkbox />
-                    <Label className="agsell-label text-sm font-normal">{opt}</Label>
+                    <Label className="agsell-label text-sm font-normal cursor-pointer">{opt}</Label>
                   </div>
                 ))}
               </div>
@@ -223,15 +218,15 @@ export function FormPreview({ fields, settings, formName = 'Pré-visualização'
             backgroundSize: '16px 16px',
           }}
         >
-          <div className="p-4" style={containerStyle}>
+          <div className="agsell-form p-4" style={containerStyle}>
             <div className="flex items-end gap-2 flex-wrap" style={cardStyle}>
               {fields.map((field) => (
-                <div key={field.name}>
+                <div key={field.name} className="agsell-field">
                   {s.labelPosition !== 'hidden' && (
-                    <Label className="text-xs mb-1 block" style={labelStyle}>{field.label}</Label>
+                    <Label className="agsell-label text-xs mb-1 block" style={labelStyle}>{field.label}</Label>
                   )}
                   <Input
-                    className="h-9 w-auto min-w-[160px] pointer-events-none"
+                    className="agsell-input h-9 w-auto min-w-[160px] pointer-events-none"
                     type={field.type || 'text'}
                     placeholder={field.placeholder || field.label}
                     style={inputStyle}
@@ -239,7 +234,7 @@ export function FormPreview({ fields, settings, formName = 'Pré-visualização'
                   />
                 </div>
               ))}
-              <Button className="h-9 pointer-events-none" style={buttonStyle}>
+              <Button className="agsell-button h-9 pointer-events-none" style={buttonStyle}>
                 {s.buttonText}
               </Button>
             </div>
@@ -260,30 +255,30 @@ export function FormPreview({ fields, settings, formName = 'Pré-visualização'
           backgroundSize: '16px 16px',
         }}
       >
-        <div className="flex items-center justify-center p-4" style={containerStyle}>
-          <Card className="w-full max-w-lg" style={cardStyle}>
+        <div className="agsell-form flex items-center justify-center p-4" style={containerStyle}>
+          <Card className="w-full max-w-lg agsell-card" style={cardStyle}>
             {(s.showTitle !== false || (s.showDescription !== false && formDescription)) && (
-              <CardHeader className="pb-3">
+              <CardHeader className="agsell-header pb-3">
                 {s.showTitle !== false && (
-                  <CardTitle className="text-lg" style={s.textColor ? { color: s.textColor } : undefined}>{formName}</CardTitle>
+                  <CardTitle className="agsell-title text-lg" style={s.textColor ? { color: s.textColor } : undefined}>{formName}</CardTitle>
                 )}
-                {s.showDescription !== false && formDescription && <CardDescription className="text-xs">{formDescription}</CardDescription>}
+                {s.showDescription !== false && formDescription && <CardDescription className="agsell-description text-xs">{formDescription}</CardDescription>}
               </CardHeader>
             )}
-            <CardContent>
+            <CardContent className="agsell-content">
               {s.layout === 'multi-step' && totalSteps > 1 && (
-                <div className="mb-4 space-y-1.5">
+                <div className="agsell-progress-container mb-4 space-y-1.5">
                   <div className="flex justify-between text-xs text-muted-foreground">
                     <span>Etapa {currentStep + 1} de {totalSteps}</span>
                     <span>{Math.round(((currentStep + 1) / totalSteps) * 100)}%</span>
                   </div>
-                  <Progress value={((currentStep + 1) / totalSteps) * 100} className="h-1.5" />
+                  <Progress value={((currentStep + 1) / totalSteps) * 100} className="agsell-progress h-1.5" />
                 </div>
               )}
 
-              <div className={fieldGridClass} style={{ gap: `${s.fieldGap}px` }}>
+              <div className={cn("agsell-fields-grid", fieldGridClass)} style={{ gap: `${s.fieldGap}px` }}>
                 {displayFields.map((field) => (
-                  <div key={field.name} className="space-y-1.5">
+                  <div key={field.name} className="agsell-field-wrapper space-y-1.5">
                     {renderField(field)}
                   </div>
                 ))}
@@ -293,14 +288,14 @@ export function FormPreview({ fields, settings, formName = 'Pré-visualização'
                 <p className="text-sm text-muted-foreground text-center py-4">Adicione campos ao formulário.</p>
               )}
 
-              <div className={`flex gap-2 mt-4 ${s.layout === 'multi-step' && currentStep > 0 ? 'justify-between' : 'justify-end'}`}>
+              <div className={`agsell-actions flex gap-2 mt-4 ${s.layout === 'multi-step' && currentStep > 0 ? 'justify-between' : 'justify-end'}`}>
                 {s.layout === 'multi-step' && currentStep > 0 && (
-                  <Button type="button" variant="outline" size="sm" onClick={() => setCurrentStep(currentStep - 1)} style={inputStyle}>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setCurrentStep(currentStep - 1)} style={inputStyle} className="agsell-back-button">
                     <ChevronLeft className="h-3.5 w-3.5 mr-1" />Voltar
                   </Button>
                 )}
                 <Button
-                  className={cn(s.layout !== 'multi-step' ? 'w-full' : 'flex-1')}
+                  className={cn("agsell-button", s.layout !== 'multi-step' ? 'w-full' : 'flex-1')}
                   size="sm"
                   style={buttonStyle}
                   onClick={() => {
@@ -310,7 +305,7 @@ export function FormPreview({ fields, settings, formName = 'Pré-visualização'
                   }}
                 >
                   {s.layout === 'multi-step' && currentStep < totalSteps - 1
-                    ? <>Próximo<ChevronRight className="h-3.5 w-3.5 ml-1" /></>
+                    ? <span className="flex items-center">Próximo<ChevronRight className="h-3.5 w-3.5 ml-1" /></span>
                     : s.buttonText
                   }
                 </Button>

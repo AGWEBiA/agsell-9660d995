@@ -408,6 +408,56 @@ Deno.serve(async (req) => {
       if (integration) {
         const orgId = integration.organization_id;
         const triggerEvent = (action === "add" || action === "join") ? "on_join" : "on_leave";
+        const flowTriggerType = (action === "add" || action === "join") ? "whatsapp_group_join" : "whatsapp_group_leave";
+
+        // Dispatch Flow Builder Automations
+        const { data: flowAutomations } = await supabase
+          .from("automations")
+          .select("id, trigger_config")
+          .eq("organization_id", orgId)
+          .eq("trigger_type", flowTriggerType)
+          .eq("is_active", true);
+
+        if (flowAutomations && flowAutomations.length > 0) {
+          for (const auto of flowAutomations) {
+            const config = auto.trigger_config as Record<string, unknown> || {};
+            const targetGroup = config.group_name || config.external_group_id;
+            
+            // If specific group is defined in trigger, check it
+            if (targetGroup && targetGroup !== groupJid && !groupJid.includes(String(targetGroup))) continue;
+
+            for (const participant of participants) {
+              const phone = String(participant).replace("@s.whatsapp.net", "").replace("@c.us", "");
+              
+              // Resolve contact
+              const { data: contact } = await supabase
+                .from("contacts")
+                .select("id")
+                .eq("organization_id", orgId)
+                .or(`whatsapp.eq.${phone},phone.eq.${phone}`)
+                .maybeSingle();
+
+              if (contact) {
+                // Dispatch automation
+                fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/process-automation`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                    "X-Internal-Cron": "true",
+                  },
+                  body: JSON.stringify({
+                    automation_id: auto.id,
+                    contact_id: contact.id,
+                    trigger_event: flowTriggerType,
+                    trigger_data: { group_jid: groupJid, participant_phone: phone, action }
+                  }),
+                }).catch(err => console.error("Error dispatching group automation:", err));
+              }
+            }
+          }
+        }
+
 
         // Find active group messages matching this trigger
         const { data: messages } = await supabase

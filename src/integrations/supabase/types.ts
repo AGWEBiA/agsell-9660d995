@@ -3822,9 +3822,11 @@ export type Database = {
           created_at: string
           id: string
           logo_url: string | null
+          monthly_sales_target: number | null
           name: string
           plan: string | null
           plan_id: string | null
+          sales_commission_rule: Json | null
           settings: Json | null
           slug: string
           updated_at: string
@@ -3833,9 +3835,11 @@ export type Database = {
           created_at?: string
           id?: string
           logo_url?: string | null
+          monthly_sales_target?: number | null
           name: string
           plan?: string | null
           plan_id?: string | null
+          sales_commission_rule?: Json | null
           settings?: Json | null
           slug: string
           updated_at?: string
@@ -3844,9 +3848,11 @@ export type Database = {
           created_at?: string
           id?: string
           logo_url?: string | null
+          monthly_sales_target?: number | null
           name?: string
           plan?: string | null
           plan_id?: string | null
+          sales_commission_rule?: Json | null
           settings?: Json | null
           slug?: string
           updated_at?: string

@@ -12,8 +12,15 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
+import {
   DollarSign, Trophy, TrendingUp, Clock, Target, Users, Briefcase,
   ShieldAlert, ArrowUpRight, BarChart3, PieChart as PieIcon,
+  Download, FileText, AlertCircle,
 } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import {
@@ -24,6 +31,7 @@ import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   PieChart, Pie, Cell, LineChart, Line,
 } from '@/lib/recharts';
+import { useSalesRepDetail } from '@/hooks/useSalesRepDetail';
 
 const formatBRL = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(n || 0);
@@ -39,8 +47,11 @@ export default function CRMAdmin() {
   // Permission gate: only owner/admin of the org (or global admin) can see this
   const isOrgAdmin = currentRole === 'owner' || currentRole === 'admin';
 
+  const [period, setPeriod] = React.useState<'day' | 'week' | 'month' | 'all'>('all');
   const overview = useCRMOverview();
-  const reps = useSalesRepPerformance();
+  const reps = useSalesRepPerformance(period);
+  const [selectedRepId, setSelectedRepId] = React.useState<string | null>(null);
+
   const byStage = useDealsByStageAdmin();
   const bySource = useDealsBySource();
   const trend = useMonthlyTrend();
@@ -85,7 +96,18 @@ export default function CRMAdmin() {
             Visão consolidada de deals, vendedores e performance da operação de {currentOrganization?.name || 'sua conta'}.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
+          <Select value={period} onValueChange={(v: any) => setPeriod(v)}>
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="Período" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="day">Hoje</SelectItem>
+              <SelectItem value="week">Esta semana</SelectItem>
+              <SelectItem value="month">Este mês</SelectItem>
+              <SelectItem value="all">Todo período</SelectItem>
+            </SelectContent>
+          </Select>
           <Button asChild variant="outline" size="sm">
             <Link to="/pipeline">Ver Pipeline</Link>
           </Button>
@@ -118,27 +140,38 @@ export default function CRMAdmin() {
               icon={<Trophy className="h-5 w-5" />}
             />
             <StatCard
-              title="Receita do Mês"
-              value={formatBRL(data?.wonValueThisMonth || 0)}
-              description={`${data?.wonThisMonth || 0} ganhos este mês`}
+              title="Metas & Performance"
+              value={currentOrganization?.monthly_sales_target ? `${Math.round(((data?.wonValueThisMonth || 0) / Number(currentOrganization.monthly_sales_target)) * 100)}%` : '0%'}
+              description={currentOrganization?.monthly_sales_target ? `Meta: ${formatBRL(Number(currentOrganization.monthly_sales_target))}` : 'Meta não definida'}
               trend={data?.lastMonthWonValue ? { value: data.monthlyGrowth, label: 'vs mês passado' } : undefined}
-              icon={<TrendingUp className="h-5 w-5" />}
+              icon={<Target className="h-5 w-5 text-primary" />}
             />
             <StatCard
               title="Taxa de Conversão"
               value={`${data?.conversionRate || 0}%`}
               description={`Ciclo médio: ${data?.avgSalesCycleDays || 0} dias`}
-              icon={<Target className="h-5 w-5" />}
-            />
-            <StatCard
-              title="Total Comissões"
-              value={formatBRL(repsData.reduce((s, r) => s + (r.commissionValue || 0), 0))}
-              description="Soma das comissões de deals ganhos"
-              icon={<DollarSign className="h-5 w-5 text-orange-500" />}
+              icon={<TrendingUp className="h-5 w-5" />}
             />
           </>
         )}
       </div>
+
+      {/* Alerts / Notifications */}
+      {repsData.some(r => r.wonValue === 0 && period !== 'day') && (
+        <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900/30">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-semibold text-amber-900 dark:text-amber-400">Atenção: Vendedores sem Vendas</h4>
+                <p className="text-xs text-amber-700 dark:text-amber-500 mt-1">
+                  Existem vendedores que ainda não computaram vendas neste período. Verifique o ranking abaixo.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Secondary metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -148,9 +181,9 @@ export default function CRMAdmin() {
           icon={<DollarSign className="h-5 w-5" />}
         />
         <StatCard
-          title="Novos Deals (mês)"
-          value={data?.newDealsThisMonth || 0}
-          icon={<ArrowUpRight className="h-5 w-5" />}
+          title="Total Comissões"
+          value={formatBRL(repsData.reduce((s, r) => s + (r.commissionValue || 0), 0))}
+          icon={<DollarSign className="h-5 w-5 text-orange-500" />}
         />
         <StatCard
           title="Total Vendedores"
@@ -167,6 +200,7 @@ export default function CRMAdmin() {
       <Tabs defaultValue="reps" className="w-full">
         <TabsList>
           <TabsTrigger value="reps">Vendedores</TabsTrigger>
+          <TabsTrigger value="comparativo">Comparativo</TabsTrigger>
           <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
           <TabsTrigger value="origens">Origens</TabsTrigger>
           <TabsTrigger value="tendencia">Tendência</TabsTrigger>
@@ -213,7 +247,11 @@ export default function CRMAdmin() {
                       {repsData.map((rep, idx) => {
                         const share = totalWonByReps > 0 ? (rep.wonValue / totalWonByReps) * 100 : 0;
                         return (
-                          <TableRow key={rep.user_id}>
+                          <TableRow 
+                            key={rep.user_id} 
+                            className="cursor-pointer hover:bg-muted/50 transition-colors"
+                            onClick={() => setSelectedRepId(rep.user_id)}
+                          >
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <span className="text-xs font-bold text-muted-foreground w-5">{idx + 1}º</span>
@@ -260,6 +298,12 @@ export default function CRMAdmin() {
               )}
             </CardContent>
           </Card>
+
+          <SalesRepDetailDialog 
+            userId={selectedRepId} 
+            onClose={() => setSelectedRepId(null)} 
+            period={period}
+          />
         </TabsContent>
 
         {/* Pipeline tab */}
@@ -364,6 +408,33 @@ export default function CRMAdmin() {
           </div>
         </TabsContent>
 
+        {/* Performance Comparison tab */}
+        <TabsContent value="comparativo" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Comparativo de Performance</CardTitle>
+              <CardDescription>Visualização gráfica da receita gerada por cada vendedor.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {reps.isLoading ? (
+                <Skeleton className="h-80 w-full" />
+              ) : (
+                <ResponsiveContainer width="100%" height={400}>
+                  <BarChart data={repsData} layout="vertical" margin={{ left: 40, right: 40 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                    <XAxis type="number" tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
+                    <YAxis dataKey="full_name" type="category" width={100} tick={{ fontSize: 12 }} />
+                    <Tooltip formatter={(v: any) => formatBRL(v)} />
+                    <Legend />
+                    <Bar dataKey="wonValue" name="Receita Ganha" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="pipelineValue" name="Pipeline Aberto" fill="#3b82f6" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Trend tab */}
         <TabsContent value="tendencia" className="space-y-4">
           <Card>
@@ -418,5 +489,117 @@ export default function CRMAdmin() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function SalesRepDetailDialog({ userId, onClose, period }: { userId: string | null; onClose: () => void; period: 'day' | 'week' | 'month' | 'all' }) {
+  const { data: rep, isLoading } = useSalesRepDetail(userId, period);
+
+  return (
+    <Dialog open={!!userId} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
+              {rep?.avatar_url && <AvatarImage src={rep.avatar_url} />}
+              <AvatarFallback>{rep ? getInitials(rep.full_name) : '?'}</AvatarFallback>
+            </Avatar>
+            Detalhes do Vendedor: {rep?.full_name}
+          </DialogTitle>
+          <DialogDescription>
+            Performance detalhada e histórico de vendas para o período selecionado.
+          </DialogDescription>
+        </DialogHeader>
+
+        {isLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-48 w-full" />
+          </div>
+        ) : rep ? (
+          <div className="space-y-6 py-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <StatCard title="Total Ganho" value={formatBRL(rep.stats.totalWon)} icon={<Trophy className="h-4 w-4" />} />
+              <StatCard title="Comissões" value={formatBRL(rep.stats.totalCommission)} icon={<DollarSign className="h-4 w-4" />} />
+              <StatCard title="Conversão" value={`${rep.stats.conversionRate}%`} icon={<Target className="h-4 w-4" />} />
+              <StatCard title="Ticket Médio" value={formatBRL(rep.stats.avgDealValue)} icon={<TrendingUp className="h-4 w-4" />} />
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">Evolução de Vendas (Mensal)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={200}>
+                  <LineChart data={rep.monthlyEvolution}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="month" />
+                    <YAxis tickFormatter={(v) => `R$${(v/1000).toFixed(0)}k`} />
+                    <Tooltip formatter={(v: any) => formatBRL(v)} />
+                    <Line type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold">Vendas Computadas</h4>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="h-7 text-[10px]">
+                    <Download className="h-3 w-3 mr-1" /> PDF
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-7 text-[10px]">
+                    <Download className="h-3 w-3 mr-1" /> CSV
+                  </Button>
+                </div>
+              </div>
+              <div className="border rounded-md">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Deal</TableHead>
+                      <TableHead className="text-right">Valor</TableHead>
+                      <TableHead className="text-right">Comissão</TableHead>
+                      <TableHead>Status Pgto</TableHead>
+                      <TableHead>Link</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rep.sales.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-4 text-muted-foreground text-xs">Nenhuma venda no período.</TableCell>
+                      </TableRow>
+                    ) : (
+                      rep.sales.map((sale) => (
+                        <TableRow key={sale.id}>
+                          <TableCell className="text-xs font-medium">{sale.title}</TableCell>
+                          <TableCell className="text-right text-xs">{formatBRL(sale.value)}</TableCell>
+                          <TableCell className="text-right text-xs text-orange-600">{formatBRL(sale.commission_value)}</TableCell>
+                          <TableCell>
+                            <Badge variant={sale.payment_status === 'paid' ? 'default' : 'outline'} className="text-[10px]">
+                              {sale.payment_status || 'Pendente'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {sale.payment_link ? (
+                              <Button variant="ghost" size="icon" asChild className="h-7 w-7">
+                                <a href={sale.payment_link} target="_blank" rel="noopener noreferrer">
+                                  <ArrowUpRight className="h-3 w-3" />
+                                </a>
+                              </Button>
+                            ) : '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </DialogContent>
+    </Dialog>
   );
 }

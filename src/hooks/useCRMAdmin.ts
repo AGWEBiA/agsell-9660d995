@@ -32,6 +32,7 @@ export interface SalesRepPerformance {
   pipelineValue: number;
   wonValue: number;
   commissionValue: number;
+  target_amount: number;
   conversionRate: number;
   avgDealValue: number;
   contactsOwned: number;

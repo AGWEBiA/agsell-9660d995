@@ -243,7 +243,13 @@ export function FlowCanvas({
     };
     
     console.log('[FlowCanvas] Adding new node from drop:', newNode);
-    onNodesChange(currentNodes => [...currentNodes, newNode]);
+    onNodesChange(currentNodes => {
+      if (newNode.type === 'trigger') {
+        // Replace existing trigger if any
+        return [newNode, ...currentNodes.filter(n => n.type !== 'trigger')];
+      }
+      return [...currentNodes, newNode];
+    });
     onSidebarDragConsume?.();
   }, [screenToCanvas, onNodesChange, onSidebarDragConsume, sidebarDragPayload]);
 

@@ -1489,7 +1489,12 @@ export default function FlowBuilder() {
           />
           {/* Trigger selector overlay when no trigger exists (not for groups) */}
           {!hasTrigger && showTriggerSelector && !isGroupsChannel && (
-            <div className="absolute inset-0 overflow-auto bg-background/95 z-20">
+            <div 
+              className={cn(
+                "absolute inset-0 overflow-auto bg-background/95 z-20 transition-opacity",
+                sidebarDragPayload ? "pointer-events-none opacity-40" : "opacity-100"
+              )}
+            >
               <TriggerSelector onSelect={handleSelectTrigger} channelFilter={channelFilter} />
             </div>
           )}

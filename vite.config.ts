@@ -21,24 +21,13 @@ export default defineConfig(({ mode }) => ({
     target: "es2020",
     minify: "esbuild",
     cssCodeSplit: true,
-    chunkSizeWarningLimit: 5000,
+    chunkSizeWarningLimit: 2000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor': [
-            'react', 
-            'react-dom', 
-            'react-router-dom', 
-            '@tanstack/react-query',
-            '@supabase/supabase-js'
-          ],
-          'ui-core': [
-            '@radix-ui/react-slot',
-            '@radix-ui/react-label',
-            'class-variance-authority',
-            'tailwind-merge',
-            'clsx'
-          ]
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
         }
       }
     }

@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
+// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
@@ -17,33 +18,29 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  logLevel: 'info',
-  clearScreen: false,
   build: {
-    target: "esnext",
+    target: "es2020",
     minify: "esbuild",
     cssCodeSplit: true,
-    chunkSizeWarningLimit: 2000,
+    chunkSizeWarningLimit: 3000,
     reportCompressedSize: false,
+    emptyOutDir: true,
     rollupOptions: {
       output: {
+        // Simplified chunking strategy for better stability
         manualChunks: (id) => {
           if (id.includes('node_modules')) {
+            // Group heavy libraries to avoid too many small files
             if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
-              return 'vendor-react';
+              return 'vendor-core';
             }
-            if (id.includes('@radix-ui')) {
+            if (id.includes('@radix-ui') || id.includes('lucide-react')) {
               return 'vendor-ui';
             }
-            if (id.includes('lucide-react')) {
-              return 'vendor-icons';
+            if (id.includes('@supabase') || id.includes('@tanstack')) {
+              return 'vendor-lib';
             }
-            if (id.includes('@supabase')) {
-              return 'vendor-supabase';
-            }
-            if (id.includes('@tanstack') || id.includes('zod') || id.includes('date-fns')) {
-              return 'vendor-utils';
-            }
+            // All other node_modules go into a single vendor chunk
             return 'vendor';
           }
         },

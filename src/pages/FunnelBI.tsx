@@ -2,36 +2,39 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, FunnelChart, Cell, LabelList } from 'recharts';
-import { ArrowDown, TrendingDown, TrendingUp, Users, DollarSign, Target, BarChart3 } from 'lucide-react';
-
-const mockFunnelData = [
-  { name: 'Visitantes', value: 10000, fill: '#3B82F6' },
-  { name: 'Leads', value: 3200, fill: '#8B5CF6' },
-  { name: 'Qualificados', value: 1800, fill: '#F59E0B' },
-  { name: 'Oportunidades', value: 900, fill: '#10B981' },
-  { name: 'Clientes', value: 320, fill: '#EF4444' },
-];
-
-const dropOffData = mockFunnelData.map((stage, i, arr) => ({
-  ...stage,
-  dropOff: i > 0 ? Math.round((1 - stage.value / arr[i - 1].value) * 100) : 0,
-  conversionRate: i > 0 ? Math.round((stage.value / arr[i - 1].value) * 100) : 100,
-}));
-
-const channelPerformance = [
-  { channel: 'WhatsApp', leads: 1500, conversions: 180, rate: 12 },
-  { channel: 'E-mail', leads: 1200, conversions: 96, rate: 8 },
-  { channel: 'Instagram', leads: 800, conversions: 40, rate: 5 },
-  { channel: 'SMS', leads: 300, conversions: 12, rate: 4 },
-];
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { ArrowDown, TrendingDown, TrendingUp, Users, DollarSign, Target, BarChart3, Loader2 } from 'lucide-react';
+import { useFunnelMetrics } from '@/hooks/useFunnelMetrics';
 
 export default function FunnelBI() {
   const [period, setPeriod] = useState('30d');
+  const { funnelStats, automationMetrics } = useFunnelMetrics();
 
-  const totalConversion = mockFunnelData.length > 1
-    ? ((mockFunnelData[mockFunnelData.length - 1].value / mockFunnelData[0].value) * 100).toFixed(1)
-    : '0';
+  const isLoading = funnelStats.isLoading || automationMetrics.isLoading;
+
+  const funnelData = funnelStats.data?.map(stat => ({
+    name: stat.out_stage_name,
+    value: Number(stat.out_deal_count),
+    totalValue: Number(stat.out_total_value),
+    fill: stat.out_color || '#3B82F6',
+    position: stat.out_position
+  })) || [];
+
+  const dropOffData = funnelData.map((stage, i, arr) => ({
+    ...stage,
+    dropOff: i > 0 && arr[i - 1].value > 0 ? Math.round((1 - stage.value / arr[i - 1].value) * 100) : 0,
+    conversionRate: i > 0 && arr[i - 1].value > 0 ? Math.round((stage.value / arr[i - 1].value) * 100) : 100,
+  }));
+
+  const channelPerformance = automationMetrics.data?.map(m => ({
+    channel: m.out_status,
+    events: Number(m.out_event_count)
+  })) || [];
+
+  const totalConversions = funnelData.length > 0 ? funnelData[funnelData.length - 1].value : 0;
+  const totalLeads = funnelData.length > 0 ? funnelData[0].value : 0;
+  const totalConversionRate = totalLeads > 0 ? ((totalConversions / totalLeads) * 100).toFixed(1) : '0';
+
 
   return (
     <div className="space-y-6">

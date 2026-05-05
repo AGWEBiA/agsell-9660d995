@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logToSystem } from "../_shared/logger.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -128,7 +129,18 @@ serve(async (req) => {
         status,
         details,
         organization_id: automation.organization_id,
-      }).then(() => {});
+      });
+
+      // Also log to system_logs for admin monitoring
+      await logToSystem(supabase, {
+        organization_id: automation.organization_id,
+        source: "process-automation",
+        event: "automation_step",
+        message: `${nodeLabel}: ${status}`,
+        level: status === 'error' ? 'error' : 'info',
+        payload: { automation_id, contact_id, action_type: actionType, ...details },
+        metadata: { execution_id: executionId, step: currentStep }
+      });
     };
 
     // Helper: send WhatsApp via send-whatsapp edge function (supports text/buttons/list/presence)

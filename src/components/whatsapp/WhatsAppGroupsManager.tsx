@@ -72,7 +72,7 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
   const [filterTag, setFilterTag] = useState<string>('all');
   const [deleteConfirmGroup, setDeleteConfirmGroup] = useState<WhatsAppGroup | null>(null);
   const [editingGroup, setEditingGroup] = useState<WhatsAppGroup | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', description: '', tags: [] as string[] });
+  const [editForm, setEditForm] = useState({ name: '', description: '', tags: [] as string[], external_group_id: '' });
   const [newTagInput, setNewTagInput] = useState('');
   const [editTagInput, setEditTagInput] = useState('');
   const [sendMessageText, setSendMessageText] = useState('');
@@ -290,7 +290,7 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
 
   const handleEditGroup = (group: WhatsAppGroup) => {
     setEditingGroup(group);
-    setEditForm({ name: group.name, description: group.description || '', tags: group.tags || [] });
+    setEditForm({ name: group.name, description: group.description || '', tags: group.tags || [], external_group_id: group.external_group_id || '' });
     setEditTagInput('');
     const settings = (group.settings || {}) as Record<string, unknown>;
     setEditLeadTags((settings.lead_tags as string[]) || []);
@@ -307,6 +307,7 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
       name: editForm.name,
       description: editForm.description,
       tags: editForm.tags,
+      external_group_id: editForm.external_group_id || null,
       settings: {
         ...currentSettings,
         lead_tags: editLeadTags,

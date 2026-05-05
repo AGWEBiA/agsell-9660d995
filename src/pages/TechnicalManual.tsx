@@ -966,20 +966,17 @@ Checkout → Kiwify Session → Webhook checkout.session.completed
 
 # 10. TELEMETRIA E LOGS
 
-## 10.1 Tabelas de Tracking
+## 10.1 Sistema de Logs Consolidado (Versão 2.5)
 
-| Tabela | Finalidade |
-|--------|-----------|
-| \`activities\` | Timeline de ações do usuário (criação, edição, ligações, notas) |
-| \`automation_executions\` | Execuções de automações com steps e resultados |
-| \`instagram_automation_logs\` | Logs de automações do Instagram |
-| \`notifications\` | Notificações internas (Realtime) |
+A partir da versão 2.5, o sistema implementa uma camada de telemetria robusta para facilitar o debugging de processos assíncronos (Webhooks e Automações).
 
-## 10.2 Campos de \`activities\`
-- \`activity_type\` — tipo (call, note, email, meeting, etc.)
-- \`title\`, \`description\`
-- \`contact_id\`, \`deal_id\`, \`company_id\` — vinculações
-- \`metadata\` — JSON com dados adicionais
+### Tabelas Principais
+- **\`system_logs\`**: Tabela centralizada para logs de aplicação.
+- **\`webhook_events\`**: Registro de todos os payloads recebidos.
+
+## 10.2 Monitoramento em Tempo Real
+
+Os administradores podem acessar a rota **\`/system-logs\`** para visualizar a execução do core do sistema.
 
 ## 10.3 Execuções de Automação
 - Status tracking: pending → running → completed / completed_with_errors

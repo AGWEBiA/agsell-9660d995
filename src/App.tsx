@@ -83,6 +83,7 @@ const EmailInbox = React.lazy(() => import("./pages/EmailInbox"));
 const InboxSettings = React.lazy(() => import("./pages/InboxSettings"));
 const InboxReports = React.lazy(() => import("./pages/InboxReports"));
 const SystemGuide = React.lazy(() => import("./pages/SystemGuide"));
+const SystemLogs = React.lazy(() => import("./pages/SystemLogs"));
 const HelpCenter = React.lazy(() => import("./pages/HelpCenter"));
 const AgencyClients = React.lazy(() => import("./pages/AgencyClients"));
 const ABTests = React.lazy(() => import("./pages/ABTests"));
@@ -215,6 +216,7 @@ const App = () => (
                     <Route path="api-webhooks" element={<ApiWebhooks />} />
                     <Route path="email-domain" element={<FeatureRequiredPage feature="email_marketing" featureLabel="Domínio de E-mail"><EmailDomain /></FeatureRequiredPage>} />
                     <Route path="system-guide" element={<SystemGuide />} />
+                    <Route path="system-logs" element={<SystemLogs />} />
                     <Route path="help-center" element={<HelpCenter />} />
                     <Route path="agency-clients" element={<FeatureRequiredPage feature="agency_management" featureLabel="Gestão de Agência"><AgencyClients /></FeatureRequiredPage>} />
                     <Route path="ab-tests" element={<ABTests />} />
@@ -260,15 +262,11 @@ const App = () => (
                   </Route>
                   
                   {/* Plans accessible even with expired subscription */}
-                  <Route path="/renew-plans" element={<ProtectedRoute allowExpired><DashboardLayout /></ProtectedRoute>}>
-                    <Route index element={<Plans />} />
-                    <Route path="permissions" element={<Permissions />} />
-                    <Route path="admin" element={<Admin />} />
-                    <Route path="api-keys" element={<ApiKeys />} />
-                    <Route path="webhooks" element={<Webhooks />} />
-                    <Route path="email-domain" element={<EmailDomain />} />
+                  <Route element={<ProtectedRoute allowExpired><DashboardLayout /></ProtectedRoute>}>
+                    <Route path="plans" element={<Plans />} />
+                    <Route path="organization" element={<Organization />} />
                   </Route>
-                  
+
                   <Route path="*" element={<NotFound />} />
                 </Routes>
                 </Suspense>

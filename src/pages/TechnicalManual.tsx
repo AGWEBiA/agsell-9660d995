@@ -9,11 +9,11 @@ import { Loader2 } from 'lucide-react';
 const MANUAL_CONTENT = `# MANUAL TÉCNICO COMPLETO — AG SELL
 ## Plataforma CRM + Automação Omnichannel + IA
 
-**Versão:** 2.1  
-**Data:** Abril 2026  
+**Versão:** 2.2  
+**Data:** Maio 2026  
 **Classificação:** Documentação Interna — Uso Técnico e Estratégico
 
-> **Novidades 2.1:** SAC com cópia de mensagens (com citação e metadados), exportação do histórico de conversa em PDF, seleção livre de texto nas bolhas, citação automática nas respostas e bucket público \`inbox-attachments\` para mídias. Agente de Suporte AG Sell (RAG) e Chatbot Builder com IA documentados.
+> **Novidades 2.2:** Dashboards de BI com dados reais (Funnel BI e Métricas de Automação), RPCs para agregação de métricas, hardening de segurança com `search_path` em funções PostgreSQL e índices de performance em tabelas críticas (deals, webhooks, wa_sync_queue). SAC com cópia de mensagens, exportação PDF e Agente de Suporte AG Sell (RAG) integrados.
 
 ---
 

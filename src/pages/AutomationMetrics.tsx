@@ -3,18 +3,20 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAutomations } from '@/hooks/useAutomations';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { CheckCircle2, XCircle, Clock, AlertTriangle, MessageSquare, Mail, Phone, TrendingUp, Loader2 } from 'lucide-react';
+import { MessageSquare, TrendingUp, Loader2, Globe } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { useFunnelMetrics } from '@/hooks/useFunnelMetrics';
 
 const COLORS = ['hsl(142, 76%, 36%)', 'hsl(0, 84%, 60%)', 'hsl(45, 93%, 47%)', 'hsl(220, 90%, 56%)'];
 
 export default function AutomationMetrics() {
   const { currentOrganization } = useOrganization();
+  const { automationMetrics: webhookStats } = useFunnelMetrics();
   const { automations } = useAutomations();
+
   const [selectedAutomation, setSelectedAutomation] = useState<string>('all');
 
   const { data: metrics, isLoading } = useQuery({

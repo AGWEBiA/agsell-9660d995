@@ -886,8 +886,6 @@ export default function FlowBuilder() {
       console.warn('[FlowBuilder] Failed to set drag image', err);
     }
   };
-    if (showTriggerSelector) setShowTriggerSelector(false);
-  };
 
   const handleDragEnd = (e: React.DragEvent) => {
     console.log('[FlowBuilder] Drag end');

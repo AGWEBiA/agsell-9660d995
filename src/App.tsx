@@ -48,6 +48,9 @@ const GroupRedirect = React.lazy(() => import("./pages/GroupRedirect"));
 const TechnicalManual = React.lazy(() => import("./pages/TechnicalManual"));
 const SystemStatus = React.lazy(() => import("./pages/SystemStatus"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
+const DeployStatus = React.lazy(() => import("./pages/DeployStatus"));
+const HealthCheck = React.lazy(() => import("./pages/HealthCheck"));
+
 
 // Lazy-loaded protected pages
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
@@ -179,6 +182,9 @@ const App = () => (
                   <Route path="/manual-tecnico" element={<TechnicalManual />} />
                   <Route path="/status" element={<SystemStatus />} />
                   <Route path="/subscription-expired" element={<ProtectedRoute allowExpired><SubscriptionExpired /></ProtectedRoute>} />
+                  <Route path="/deploy-status" element={<DeployStatus />} />
+                  <Route path="/healthcheck" element={<HealthCheck />} />
+
                   
                   {/* Protected Routes */}
                   <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>

@@ -31,7 +31,7 @@ export function useActivePlans() {
     const fetchPlans = async () => {
       try {
         const { data, error } = await supabase
-          .from('plans_public' as any)
+          .from('plans' as any)
           .select('*')
           .eq('is_active', true)
           .order('price_monthly', { ascending: true });

@@ -26,14 +26,11 @@ export default defineConfig(({ mode }) => ({
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react')) return 'vendor-react';
-            if (id.includes('lucide')) return 'vendor-lucide';
-            if (id.includes('radix-ui')) return 'vendor-radix';
-            if (id.includes('supabase')) return 'vendor-supabase';
-            return 'vendor';
-          }
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-utils': ['@tanstack/react-query', 'lucide-react', 'date-fns', 'zod'],
+          'vendor-ui': ['@radix-ui/react-accordion', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-popover', '@radix-ui/react-select', '@radix-ui/react-tabs', '@radix-ui/react-tooltip'],
+          'vendor-supabase': ['@supabase/supabase-js'],
         },
       },
     },

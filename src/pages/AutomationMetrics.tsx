@@ -22,23 +22,23 @@ export default function AutomationMetrics() {
     queryFn: async () => {
       if (!currentOrganization?.id) return null;
 
-      let query = supabase
+      const { data: logs, error } = await supabase
         .from('wa_sync_logs')
         .select('*')
         .eq('organization_id', currentOrganization.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(500);
 
-      const { data: logs, error } = await query;
       if (error) throw error;
 
-      // Group by action type and status
       const summary = {
         whatsapp: { total: 0, success: 0, fail: 0 },
-        system: { total: 0, success: 0, fail: 0 }
+        system: { total: 0, success: 0, fail: 0 },
+        logs: logs || []
       };
 
       logs?.forEach(log => {
-        const cat = log.action_type?.includes('whatsapp') ? 'whatsapp' : 'system';
+        const cat = log.action_type?.includes('whatsapp') || log.action_type?.includes('group') ? 'whatsapp' : 'system';
         summary[cat].total++;
         if (log.status === 'success' || log.status === 'completed') summary[cat].success++;
         else if (log.status === 'error' || log.status === 'failed') summary[cat].fail++;
@@ -71,8 +71,13 @@ export default function AutomationMetrics() {
   ];
 
   const pieData = [
-    { name: 'Sucesso', value: metrics?.whatsapp.success || 0 + (metrics?.system.success || 0) },
-    { name: 'Falha', value: metrics?.whatsapp.fail || 0 + (metrics?.system.fail || 0) },
+    { name: 'Sucesso', value: (metrics?.whatsapp.success || 0) + (metrics?.system.success || 0) },
+    { name: 'Falha', value: (metrics?.whatsapp.fail || 0) + (metrics?.system.fail || 0) },
+  ];
+
+  const chartData = [
+    { name: 'WhatsApp', success: metrics?.whatsapp.success || 0, fail: metrics?.whatsapp.fail || 0 },
+    { name: 'Sistema', success: metrics?.system.success || 0, fail: metrics?.system.fail || 0 },
   ];
 
   if (isLoading) {
@@ -83,25 +88,16 @@ export default function AutomationMetrics() {
     );
   }
 
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Métricas de Automação</h1>
-          <p className="text-muted-foreground">Sucesso/falha granular por canal e etapa</p>
+          <p className="text-muted-foreground">Monitoramento em tempo real do WhatsApp Sync</p>
         </div>
-        <Select value={selectedAutomation} onValueChange={setSelectedAutomation}>
-          <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as Automações</SelectItem>
-            {automations.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
       </div>
 
-      {/* Channel Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {channelSummary.map(ch => {
           const Icon = ch.icon;
           return (
@@ -128,26 +124,24 @@ export default function AutomationMetrics() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chart */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-base">Sucesso vs Falha por Etapa</CardTitle>
+            <CardTitle className="text-base">Performance por Categoria</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="step" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
+                <XAxis dataKey="name" />
+                <YAxis />
                 <Tooltip />
-                <Bar dataKey="delivered" fill="hsl(142, 76%, 36%)" name="Sucesso" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="failed" fill="hsl(0, 84%, 60%)" name="Falha" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="success" fill="hsl(142, 76%, 36%)" name="Sucesso" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="fail" fill="hsl(0, 84%, 60%)" name="Falha" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Pie */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Distribuição Geral</CardTitle>
@@ -173,43 +167,36 @@ export default function AutomationMetrics() {
         </Card>
       </div>
 
-      {/* Detailed Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Detalhamento por Etapa</CardTitle>
-          <CardDescription>Métricas granulares de cada passo da automação</CardDescription>
+          <CardTitle className="text-base">Logs Recentes de Sincronização</CardTitle>
+          <CardDescription>Últimos 500 eventos processados pela fila inteligente</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Etapa</TableHead>
-                  <TableHead>Canal</TableHead>
-                  <TableHead className="text-right">Enviados</TableHead>
-                  <TableHead className="text-right">Entregues</TableHead>
-                  <TableHead className="text-right">Falhas</TableHead>
-                  <TableHead className="text-right">Abertos</TableHead>
-                  <TableHead className="text-right">Clicados</TableHead>
-                  <TableHead className="text-right">Taxa</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Ação</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Detalhes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {stepMetrics.map((s, i) => (
-                  <TableRow key={i}>
-                    <TableCell className="font-medium text-sm">{s.step}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-[10px]">{s.channel}</Badge>
+                {metrics?.logs.map((log: any) => (
+                  <TableRow key={log.id}>
+                    <TableCell className="text-xs whitespace-nowrap">
+                      {new Date(log.created_at).toLocaleString('pt-BR')}
                     </TableCell>
-                    <TableCell className="text-right">{s.sent}</TableCell>
-                    <TableCell className="text-right text-green-600">{s.delivered}</TableCell>
-                    <TableCell className="text-right text-red-600">{s.failed > 0 ? s.failed : '-'}</TableCell>
-                    <TableCell className="text-right">{s.opened > 0 ? s.opened : '-'}</TableCell>
-                    <TableCell className="text-right">{s.clicked > 0 ? s.clicked : '-'}</TableCell>
-                    <TableCell className="text-right">
-                      <Badge variant={s.successRate >= 90 ? 'default' : s.successRate >= 70 ? 'secondary' : 'destructive'} className="text-[10px]">
-                        {s.successRate}%
+                    <TableCell className="font-medium text-xs">{log.action_type}</TableCell>
+                    <TableCell>
+                      <Badge variant={log.status === 'success' || log.status === 'completed' ? 'default' : 'destructive'} className="text-[10px]">
+                        {log.status}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-xs max-w-xs truncate" title={JSON.stringify(log.details)}>
+                      {typeof log.details === 'string' ? log.details : JSON.stringify(log.details)}
                     </TableCell>
                   </TableRow>
                 ))}

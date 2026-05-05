@@ -27,13 +27,8 @@ export default defineConfig(({ mode }) => ({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            // Agrupamos bibliotecas pesadas e independentes primeiro
-            if (id.includes('lucide-react')) return 'vendor-icons';
-            if (id.includes('recharts')) return 'vendor-charts';
-            if (id.includes('jspdf')) return 'vendor-pdf';
-            if (id.includes('@supabase')) return 'vendor-supabase';
-            
-            // Todas as outras dependências ficam em um único vendor para evitar circularidade
+            // Unificamos tudo em um vendor para garantir que o Vite resolva
+            // as dependências corretamente sem circularidade
             return 'vendor';
           }
         },

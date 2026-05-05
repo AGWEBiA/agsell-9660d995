@@ -299,7 +299,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    logStep("Plan lookup", { productId, found: !!plan, planName: plan?.name });
+    await logStep(supabase, "Plan lookup", {
+      productId,
+      found: !!plan,
+      planName: plan?.name,
+    });
 
     // --- Update webhook event with mapped type ---
     if (webhookEventId) {
@@ -321,7 +325,7 @@ Deno.serve(async (req) => {
       payload.order_status === "waiting_payment";
 
     if (!plan && isApprovedOrPending) {
-      logStep("SKIPPED: product is not an AG Sell plan", {
+      await logStep(supabase, "SKIPPED: product is not an AG Sell plan", {
         productId,
         productName: payload.Product?.product_name || payload.product_name,
         checkoutLink,
@@ -433,7 +437,7 @@ Deno.serve(async (req) => {
           .from("checkout_leads")
           .update(leadUpdate)
           .eq("id", existingLead.id);
-        logStep("checkout_leads updated", {
+        await logStep(supabase, "checkout_leads updated", {
           email: customerEmail,
           status: leadStatus,
         });
@@ -449,7 +453,7 @@ Deno.serve(async (req) => {
           converted_at:
             leadStatus === "converted" ? new Date().toISOString() : null,
         });
-        logStep("checkout_leads created", {
+        await logStep(supabase, "checkout_leads created", {
           email: customerEmail,
           status: leadStatus,
         });
@@ -473,9 +477,13 @@ Deno.serve(async (req) => {
         .maybeSingle();
 
       if (alreadyProcessed) {
-        logStep("SKIPPED: order already processed (idempotency)", {
-          orderId: payload.order_id,
-        });
+        await logStep(
+          supabase,
+          "SKIPPED: order already processed (idempotency)",
+          {
+            orderId: payload.order_id,
+          },
+        );
         if (webhookEventId)
           await supabase
             .from("webhook_events")
@@ -491,7 +499,7 @@ Deno.serve(async (req) => {
         );
       }
 
-      logStep("Processing approved purchase");
+      await logStep(supabase, "Processing approved purchase");
 
       // Find existing user by email
       const { data: userData } = await supabase.auth.admin.listUsers();
@@ -501,7 +509,9 @@ Deno.serve(async (req) => {
 
       if (existingUser) {
         // Existing user — activate/update subscription
-        logStep("Found existing user", { userId: existingUser.id });
+        await logStep(supabase, "Found existing user", {
+          userId: existingUser.id,
+        });
 
         // Find user's organization
         const { data: membership } = await supabase
@@ -520,7 +530,7 @@ Deno.serve(async (req) => {
             kiwifySubscriptionId: payload.Subscription?.id,
             billingCycle: detectBillingCycle(payload),
           });
-          logStep("Subscription activated for existing user");
+          await logStep(supabase, "Subscription activated for existing user");
 
           const hasLoggedIn = !!existingUser.last_sign_in_at;
           const alreadyEmailed =
@@ -542,7 +552,8 @@ Deno.serve(async (req) => {
               });
 
             if (passwordError) {
-              logStep(
+              await logStep(
+                supabase,
                 "ERROR updating temporary password for existing user",
                 passwordError.message,
               );
@@ -561,14 +572,18 @@ Deno.serve(async (req) => {
                 organizationName: organizationData?.name || "AG Sell",
               });
 
-              logStep("Credentials email sent for existing user onboarding", {
-                email: customerEmail,
-              });
+              await logStep(
+                supabase,
+                "Credentials email sent for existing user onboarding",
+                {
+                  email: customerEmail,
+                },
+              );
             }
           }
         } else if (!membership && plan) {
           // Existing user without organization — create org + subscription + send email
-          logStep("Existing user without org, creating one");
+          await logStep(supabase, "Existing user without org, creating one");
           const customerName =
             existingUser.user_metadata?.full_name ||
             payload.Customer.full_name ||
@@ -628,20 +643,28 @@ Deno.serve(async (req) => {
                   planName: plan.name,
                   organizationName: orgName,
                 });
-                logStep("Credentials email sent for existing user (new org)", {
-                  email: customerEmail,
-                });
+                await logStep(
+                  supabase,
+                  "Credentials email sent for existing user (new org)",
+                  {
+                    email: customerEmail,
+                  },
+                );
               }
             }
 
-            logStep("Org + subscription created for existing user", {
-              orgId: newOrg.id,
-            });
+            await logStep(
+              supabase,
+              "Org + subscription created for existing user",
+              {
+                orgId: newOrg.id,
+              },
+            );
           }
         }
       } else if (plan) {
         // New user — create account + org + subscription
-        logStep("Creating new user account");
+        await logStep(supabase, "Creating new user account");
 
         const customerName = payload.Customer.full_name || "Usuário Kiwify";
         const orgName =
@@ -662,7 +685,7 @@ Deno.serve(async (req) => {
           });
 
         if (authError) {
-          logStep("ERROR creating user", authError.message);
+          await logStep(supabase, "ERROR creating user", authError.message);
           // If user already exists but wasn't found (edge case), try to continue
           if (!authError.message.includes("already been registered")) {
             throw authError;
@@ -692,7 +715,11 @@ Deno.serve(async (req) => {
 
           const orgId = newOrg?.id;
           if (orgError || !orgId) {
-            logStep("ERROR creating organization", orgError?.message);
+            await logStep(
+              supabase,
+              "ERROR creating organization",
+              orgError?.message,
+            );
           } else {
             // Add user as owner
             await supabase.from("organization_members").insert({
@@ -719,10 +746,14 @@ Deno.serve(async (req) => {
               organizationName: orgName,
             });
 
-            logStep("New account created and subscription activated", {
-              userId,
-              orgId,
-            });
+            await logStep(
+              supabase,
+              "New account created and subscription activated",
+              {
+                userId,
+                orgId,
+              },
+            );
           }
         }
       }
@@ -754,7 +785,7 @@ Deno.serve(async (req) => {
         payload.order_status === "chargedback") &&
       customerEmail
     ) {
-      logStep("Processing cancellation/refund", {
+      await logStep(supabase, "Processing cancellation/refund", {
         orderId: payload.order_id,
         subscriptionId: payload.Subscription?.id,
       });
@@ -812,7 +843,10 @@ Deno.serve(async (req) => {
 
             if (subs && subs.length === 1) {
               targetSub = subs[0];
-              logStep("Matched single active kiwify subscription as fallback");
+              await logStep(
+                supabase,
+                "Matched single active kiwify subscription as fallback",
+              );
             } else {
               logStep(
                 "WARNING: Could not determine which subscription to cancel",
@@ -843,7 +877,7 @@ Deno.serve(async (req) => {
           .update({ plan_id: null })
           .eq("id", targetSub.organization_id);
 
-        logStep("Subscription deactivated and plan removed", {
+        await logStep(supabase, "Subscription deactivated and plan removed", {
           orgId: targetSub.organization_id,
           status: newStatus,
           reason: payload.order_status,

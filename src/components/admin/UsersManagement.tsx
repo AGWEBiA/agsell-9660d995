@@ -56,8 +56,8 @@ export function UsersManagement() {
         .select('id, plan_id, plans:plan_id(name, slug)');
       if (error) throw error;
       const mapping: Record<string, string> = {};
-      for (const org of data || []) {
-        mapping[org.id] = (org as any).plans?.name || 'Free';
+      for (const org of (data || []) as any[]) {
+        mapping[org.id] = org.plans?.name || 'Free';
       }
       return mapping;
     },

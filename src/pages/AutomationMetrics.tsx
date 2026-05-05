@@ -3,18 +3,20 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAutomations } from '@/hooks/useAutomations';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { CheckCircle2, XCircle, Clock, AlertTriangle, MessageSquare, Mail, Phone, TrendingUp, Loader2 } from 'lucide-react';
+import { MessageSquare, TrendingUp, Loader2, Globe } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
+import { useFunnelMetrics } from '@/hooks/useFunnelMetrics';
 
 const COLORS = ['hsl(142, 76%, 36%)', 'hsl(0, 84%, 60%)', 'hsl(45, 93%, 47%)', 'hsl(220, 90%, 56%)'];
 
 export default function AutomationMetrics() {
   const { currentOrganization } = useOrganization();
+  const { automationMetrics: webhookStats } = useFunnelMetrics();
   const { automations } = useAutomations();
+
   const [selectedAutomation, setSelectedAutomation] = useState<string>('all');
 
   const { data: metrics, isLoading } = useQuery({
@@ -97,7 +99,7 @@ export default function AutomationMetrics() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {channelSummary.map(ch => {
           const Icon = ch.icon;
           return (
@@ -121,6 +123,30 @@ export default function AutomationMetrics() {
             </Card>
           );
         })}
+        
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-muted"><Globe className="h-6 w-6 text-purple-600" /></div>
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">Webhooks Ativos</p>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-2xl font-bold">
+                    {webhookStats.data?.reduce((acc, curr) => acc + Number(curr.out_event_count), 0) || 0}
+                  </p>
+                  <span className="text-xs text-muted-foreground">eventos totais</span>
+                </div>
+                <div className="flex gap-2 mt-1 text-[10px] overflow-hidden truncate">
+                  {webhookStats.data?.map(s => (
+                    <span key={s.out_status} className={s.out_status === 'Success' ? 'text-green-600' : 'text-amber-600'}>
+                      {s.out_status}: {s.out_event_count}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

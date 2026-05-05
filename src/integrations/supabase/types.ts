@@ -7812,6 +7812,13 @@ export type Database = {
         Args: { _client_org_id: string; _user_id: string }
         Returns: string
       }
+      get_automation_metrics: {
+        Args: never
+        Returns: {
+          out_event_count: number
+          out_status: string
+        }[]
+      }
       get_form_by_id: {
         Args: { _form_id: string }
         Returns: {
@@ -7835,6 +7842,16 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_funnel_stats: {
+        Args: { p_user_id: string }
+        Returns: {
+          out_color: string
+          out_deal_count: number
+          out_position: number
+          out_stage_name: string
+          out_total_value: number
+        }[]
       }
       get_org_role: {
         Args: { _org_id: string; _user_id: string }

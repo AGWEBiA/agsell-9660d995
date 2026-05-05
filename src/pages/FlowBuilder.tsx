@@ -836,15 +836,29 @@ export default function FlowBuilder() {
   const handleDragStart = (e: React.DragEvent, nodeType: string, subtype: string) => {
     const payload = { nodeType: nodeType as FlowNode['type'], subtype };
     isDraggingFromSidebarRef.current = true;
+    
+    // Set state immediately to ensure it's available for the drop event
+    setSidebarDragPayload(payload);
 
     console.log('[FlowBuilder] Drag start from sidebar', payload);
 
     // Set drag data immediately — this MUST happen synchronously in dragstart
     try {
       const payloadStr = JSON.stringify(payload);
+      // Use multiple types for compatibility
       e.dataTransfer.setData('application/flow-node', payloadStr);
       e.dataTransfer.setData('text/plain', payloadStr);
-      e.dataTransfer.effectAllowed = 'copyMove';
+      e.dataTransfer.setData('text', payloadStr);
+      e.dataTransfer.effectAllowed = 'copy';
+      
+      // Some browsers require this to allow drop
+      if (e.dataTransfer.items && e.dataTransfer.items.add) {
+        try {
+          e.dataTransfer.items.add(payloadStr, 'application/flow-node');
+        } catch (err) {
+          // Ignore if not supported
+        }
+      }
     } catch (err) {
       console.error('[FlowBuilder] Error setting drag data:', err);
     }
@@ -858,10 +872,11 @@ export default function FlowBuilder() {
       clone.style.left = '-9999px';
       clone.style.opacity = '0.8';
       clone.style.zIndex = '1000';
+      clone.style.pointerEvents = 'none';
       document.body.appendChild(clone);
       e.dataTransfer.setDragImage(clone, 20, 20);
       
-      // Remove clone after a short delay so browser can use it
+      // Remove clone after a short delay
       setTimeout(() => {
         if (document.body.contains(clone)) {
           document.body.removeChild(clone);
@@ -870,10 +885,6 @@ export default function FlowBuilder() {
     } catch (err) {
       console.warn('[FlowBuilder] Failed to set drag image', err);
     }
-
-    // Defer React state updates to avoid interfering with synchronous drag start
-    setSidebarDragPayload(payload);
-    if (showTriggerSelector) setShowTriggerSelector(false);
   };
 
   const handleDragEnd = (e: React.DragEvent) => {

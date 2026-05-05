@@ -2,36 +2,47 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, FunnelChart, Cell, LabelList } from 'recharts';
-import { ArrowDown, TrendingDown, TrendingUp, Users, DollarSign, Target, BarChart3 } from 'lucide-react';
-
-const mockFunnelData = [
-  { name: 'Visitantes', value: 10000, fill: '#3B82F6' },
-  { name: 'Leads', value: 3200, fill: '#8B5CF6' },
-  { name: 'Qualificados', value: 1800, fill: '#F59E0B' },
-  { name: 'Oportunidades', value: 900, fill: '#10B981' },
-  { name: 'Clientes', value: 320, fill: '#EF4444' },
-];
-
-const dropOffData = mockFunnelData.map((stage, i, arr) => ({
-  ...stage,
-  dropOff: i > 0 ? Math.round((1 - stage.value / arr[i - 1].value) * 100) : 0,
-  conversionRate: i > 0 ? Math.round((stage.value / arr[i - 1].value) * 100) : 100,
-}));
-
-const channelPerformance = [
-  { channel: 'WhatsApp', leads: 1500, conversions: 180, rate: 12 },
-  { channel: 'E-mail', leads: 1200, conversions: 96, rate: 8 },
-  { channel: 'Instagram', leads: 800, conversions: 40, rate: 5 },
-  { channel: 'SMS', leads: 300, conversions: 12, rate: 4 },
-];
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { ArrowDown, TrendingDown, TrendingUp, Users, DollarSign, Target, BarChart3, Loader2 } from 'lucide-react';
+import { useFunnelMetrics } from '@/hooks/useFunnelMetrics';
 
 export default function FunnelBI() {
   const [period, setPeriod] = useState('30d');
+  const { funnelStats, automationMetrics } = useFunnelMetrics();
 
-  const totalConversion = mockFunnelData.length > 1
-    ? ((mockFunnelData[mockFunnelData.length - 1].value / mockFunnelData[0].value) * 100).toFixed(1)
-    : '0';
+  const isLoading = funnelStats.isLoading || automationMetrics.isLoading;
+
+  const funnelData = funnelStats.data?.map(stat => ({
+    name: stat.out_stage_name,
+    value: Number(stat.out_deal_count),
+    totalValue: Number(stat.out_total_value),
+    fill: stat.out_color || '#3B82F6',
+    position: stat.out_position
+  })) || [];
+
+  const dropOffData = funnelData.map((stage, i, arr) => ({
+    ...stage,
+    dropOff: i > 0 && arr[i - 1].value > 0 ? Math.round((1 - stage.value / arr[i - 1].value) * 100) : 0,
+    conversionRate: i > 0 && arr[i - 1].value > 0 ? Math.round((stage.value / arr[i - 1].value) * 100) : 100,
+  }));
+
+  const channelPerformance = automationMetrics.data?.map(m => ({
+    channel: m.out_status,
+    events: Number(m.out_event_count)
+  })) || [];
+
+  const totalConversions = funnelData.length > 0 ? funnelData[funnelData.length - 1].value : 0;
+  const totalLeads = funnelData.length > 0 ? funnelData[0].value : 0;
+  const totalConversionRate = totalLeads > 0 ? ((totalConversions / totalLeads) * 100).toFixed(1) : '0';
+
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[400px] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -56,8 +67,8 @@ export default function FunnelBI() {
           <CardContent className="flex items-center gap-4 pt-6">
             <div className="p-3 rounded-lg bg-blue-500/10"><Users className="h-6 w-6 text-blue-500" /></div>
             <div>
-              <p className="text-sm text-muted-foreground">Visitantes</p>
-              <p className="text-2xl font-bold">{mockFunnelData[0].value.toLocaleString()}</p>
+              <p className="text-sm text-muted-foreground">Total Leads (Topo)</p>
+              <p className="text-2xl font-bold">{totalLeads.toLocaleString()}</p>
             </div>
           </CardContent>
         </Card>
@@ -65,8 +76,8 @@ export default function FunnelBI() {
           <CardContent className="flex items-center gap-4 pt-6">
             <div className="p-3 rounded-lg bg-purple-500/10"><Target className="h-6 w-6 text-purple-500" /></div>
             <div>
-              <p className="text-sm text-muted-foreground">Leads</p>
-              <p className="text-2xl font-bold">{mockFunnelData[1].value.toLocaleString()}</p>
+              <p className="text-sm text-muted-foreground">Etapa Atual</p>
+              <p className="text-2xl font-bold">{funnelData.length} Etapas</p>
             </div>
           </CardContent>
         </Card>
@@ -74,8 +85,8 @@ export default function FunnelBI() {
           <CardContent className="flex items-center gap-4 pt-6">
             <div className="p-3 rounded-lg bg-green-500/10"><DollarSign className="h-6 w-6 text-green-500" /></div>
             <div>
-              <p className="text-sm text-muted-foreground">Clientes</p>
-              <p className="text-2xl font-bold">{mockFunnelData[mockFunnelData.length - 1].value.toLocaleString()}</p>
+              <p className="text-sm text-muted-foreground">Conversões (Fundo)</p>
+              <p className="text-2xl font-bold">{totalConversions.toLocaleString()}</p>
             </div>
           </CardContent>
         </Card>
@@ -84,7 +95,7 @@ export default function FunnelBI() {
             <div className="p-3 rounded-lg bg-amber-500/10"><TrendingUp className="h-6 w-6 text-amber-500" /></div>
             <div>
               <p className="text-sm text-muted-foreground">Conversão Total</p>
-              <p className="text-2xl font-bold">{totalConversion}%</p>
+              <p className="text-2xl font-bold">{totalConversionRate}%</p>
             </div>
           </CardContent>
         </Card>
@@ -98,17 +109,19 @@ export default function FunnelBI() {
         </CardHeader>
         <CardContent>
           <div className="max-w-[500px] mx-auto space-y-0">
-            {dropOffData.map((stage, i) => {
-              const widthPercent = Math.max((stage.value / dropOffData[0].value) * 100, 20);
+            {dropOffData.length === 0 ? (
+              <div className="py-10 text-center text-muted-foreground">Nenhum dado encontrado para o pipeline atual.</div>
+            ) : dropOffData.map((stage, i) => {
+              const widthPercent = totalLeads > 0 ? Math.max((stage.value / totalLeads) * 100, 20) : 100;
               return (
                 <div key={stage.name}>
                   <div className="relative flex flex-col items-center">
                     <div
                       className="rounded-lg py-3 px-4 text-center text-white font-medium transition-all"
-                      style={{ width: `${widthPercent}%`, backgroundColor: stage.fill, minWidth: '120px' }}
+                      style={{ width: `${widthPercent}%`, backgroundColor: stage.fill, minWidth: '150px' }}
                     >
                       <p className="text-sm font-bold">{stage.name}</p>
-                      <p className="text-xs opacity-90">{stage.value.toLocaleString()}</p>
+                      <p className="text-xs opacity-90">{stage.value.toLocaleString()} deals</p>
                     </div>
                   </div>
                   {i < dropOffData.length - 1 && (
@@ -135,7 +148,7 @@ export default function FunnelBI() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Performance por Canal</CardTitle>
+            <CardTitle className="text-base">Eventos de Webhook por Status</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -144,8 +157,7 @@ export default function FunnelBI() {
                 <XAxis dataKey="channel" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip />
-                <Bar dataKey="leads" fill="hsl(var(--primary))" name="Leads" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="conversions" fill="hsl(142 76% 36%)" name="Conversões" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="events" fill="hsl(var(--primary))" name="Total Eventos" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -153,21 +165,27 @@ export default function FunnelBI() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Taxa de Conversão por Canal</CardTitle>
+            <CardTitle className="text-base">Distribuição de Eventos</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {channelPerformance.map(ch => (
-                <div key={ch.channel} className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="font-medium">{ch.channel}</span>
-                    <span className="text-muted-foreground">{ch.rate}%</span>
+              {channelPerformance.length === 0 ? (
+                <div className="text-center text-muted-foreground py-4">Aguardando dados de webhooks...</div>
+              ) : channelPerformance.map(ch => {
+                const total = channelPerformance.reduce((acc, curr) => acc + curr.events, 0);
+                const rate = total > 0 ? Math.round((ch.events / total) * 100) : 0;
+                return (
+                  <div key={ch.channel} className="space-y-1">
+                    <div className="flex justify-between text-sm">
+                      <span className="font-medium">{ch.channel}</span>
+                      <span className="text-muted-foreground">{rate}% ({ch.events})</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted overflow-hidden">
+                      <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${rate}%` }} />
+                    </div>
                   </div>
-                  <div className="h-2 rounded-full bg-muted overflow-hidden">
-                    <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${ch.rate * 5}%` }} />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>

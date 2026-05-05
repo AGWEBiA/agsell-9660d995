@@ -290,7 +290,7 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
 
   const handleEditGroup = (group: WhatsAppGroup) => {
     setEditingGroup(group);
-    setEditForm({ name: group.name, description: group.description || '', tags: group.tags || [] });
+    setEditForm({ name: group.name, description: group.description || '', tags: group.tags || [], external_group_id: group.external_group_id || '' });
     setEditTagInput('');
     const settings = (group.settings || {}) as Record<string, unknown>;
     setEditLeadTags((settings.lead_tags as string[]) || []);

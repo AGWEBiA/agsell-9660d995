@@ -321,6 +321,7 @@ export function FlowCanvas({
       onWheel={handleWheel}
       onDrop={handleCanvasDrop}
       onDragOver={handleCanvasDragOver}
+      onDragEnter={handleCanvasDragEnter}
       onDragLeave={() => setDragOverCanvas(false)}
     >
       {/* Transform layer — drops handled by outer canvas div only */}

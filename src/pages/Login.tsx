@@ -21,25 +21,37 @@ export default function Login() {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await signIn(email, password);
+    try {
+      const { error } = await signIn(email, password);
 
-    if (error) {
+      if (error) {
+        toast({
+          title: 'Erro ao entrar',
+          description: error.message === 'Invalid login credentials'
+            ? 'Email ou senha incorretos'
+            : error.message,
+          variant: 'destructive',
+        });
+        setLoading(false);
+      } else {
+        toast({
+          title: 'Bem-vindo!',
+          description: 'Login realizado com sucesso.',
+        });
+        // Give a small delay for the toast to be visible before navigating
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 100);
+      }
+    } catch (error: any) {
+      console.error('Login error:', error);
       toast({
-        title: 'Erro ao entrar',
-        description: error.message === 'Invalid login credentials'
-          ? 'Email ou senha incorretos'
-          : error.message,
+        title: 'Erro inesperado',
+        description: 'Ocorreu um erro ao tentar fazer login. Tente novamente.',
         variant: 'destructive',
       });
-    } else {
-      toast({
-        title: 'Bem-vindo!',
-        description: 'Login realizado com sucesso.',
-      });
-      navigate('/dashboard');
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (

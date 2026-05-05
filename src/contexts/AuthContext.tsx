@@ -104,7 +104,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (currentSession?.user) {
           const checkId = ++adminCheckRef.current;
-          await checkAdminRole(currentSession.user.id, checkId);
+          // Don't await admin check during initialization to avoid blocking the app
+          checkAdminRole(currentSession.user.id, checkId);
         }
       } catch (error) {
         console.error('Error during initial auth setup:', error);

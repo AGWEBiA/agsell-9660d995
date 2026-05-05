@@ -1,22 +1,25 @@
 version: "3.9"
+
 services:
-  deployhub:
+  agsell:
     build:
       context: .
       args:
         VITE_SUPABASE_URL: ${VITE_SUPABASE_URL}
         VITE_SUPABASE_ANON_KEY: ${VITE_SUPABASE_ANON_KEY}
+        VITE_SUPABASE_PUBLISHABLE_KEY: ${VITE_SUPABASE_PUBLISHABLE_KEY}
     ports:
       - "80"
     networks:
       - dokploy-network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.deployhub-web.rule=Host(`${DEPLOY_DOMAIN:-agsell.com.br}`) || Host(`${DEPLOY_WWW_DOMAIN:-www.agsell.com.br}`)"
-      - "traefik.http.routers.deployhub-web.entrypoints=websecure"
-      - "traefik.http.routers.deployhub-web.tls.certResolver=letsencrypt"
-      - "traefik.http.services.deployhub-web.loadbalancer.server.port=80"
+      - "traefik.http.routers.agsell-web.rule=Host(`agsell.com.br`) || Host(`www.agsell.com.br`)"
+      - "traefik.http.routers.agsell-web.entrypoints=websecure"
+      - "traefik.http.routers.agsell-web.tls.certResolver=letsencrypt"
+      - "traefik.http.services.agsell-web.loadbalancer.server.port=80"
     restart: unless-stopped
+
 networks:
   dokploy-network:
     external: true

@@ -1235,7 +1235,7 @@ export default function FlowBuilder() {
                   return (
                     <div
                       draggable="true"
-                      unselectable="on"
+                      // Removed unselectable="on" to avoid blocking native drag behavior in some browsers
                       onDragStart={e => handleDragStart(e, 'trigger', 'tag_added')}
                        onDragEnd={handleDragEnd}
                       onClick={() => handleClickToAdd('trigger', 'tag_added')}

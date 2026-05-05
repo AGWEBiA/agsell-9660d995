@@ -19,21 +19,26 @@ export default defineConfig(({ mode }) => ({
   },
   logLevel: 'info', // Ativa logs detalhados
   build: {
-    target: "es2020",
+    target: "esnext",
     minify: "esbuild",
     cssCodeSplit: true,
-    chunkSizeWarningLimit: 2000,
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            // Unificamos tudo em um vendor para garantir que o Vite resolva
-            // as dependências corretamente sem circularidade
-            return 'vendor';
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'vendor-react';
+            }
+            if (id.includes('lucide-react') || id.includes('recharts') || id.includes('@radix-ui')) {
+              return 'vendor-ui';
+            }
+            if (id.includes('@supabase')) {
+              return 'vendor-supabase';
+            }
+            return 'vendor-others';
           }
         },
-        chunkFileNames: 'assets/[name]-[hash].js',
-        entryFileNames: 'assets/[name]-[hash].js',
       }
     }
   },

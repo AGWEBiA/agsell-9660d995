@@ -1235,7 +1235,7 @@ export default function FlowBuilder() {
                   return (
                     <div
                       draggable="true"
-                      // Removed unselectable="on" to avoid blocking native drag behavior in some browsers
+                      // Removed  to avoid blocking native drag behavior in some browsers
                       onDragStart={e => handleDragStart(e, 'trigger', 'tag_added')}
                        onDragEnd={handleDragEnd}
                       onClick={() => handleClickToAdd('trigger', 'tag_added')}
@@ -1254,7 +1254,7 @@ export default function FlowBuilder() {
                 <p className="text-[7px] font-semibold text-white/30 uppercase tracking-wider text-center mb-1 mt-3">— Agendamento —</p>
                 <div
                   draggable="true"
-                  unselectable="on"
+                  
                   onDragStart={e => handleDragStart(e, 'action', 'timer')}
                   onDragEnd={handleDragEnd}
                   onClick={() => handleClickToAdd('action', 'timer')}
@@ -1271,7 +1271,7 @@ export default function FlowBuilder() {
                 <p className="text-[7px] font-semibold text-white/30 uppercase tracking-wider text-center mb-1 mt-3">— Grupos —</p>
                 <div
                   draggable="true"
-                  unselectable="on"
+                  
                   onDragStart={e => handleDragStart(e, 'action', 'edit_whatsapp_group')}
                   onDragEnd={handleDragEnd}
                   onClick={() => handleClickToAdd('action', 'edit_whatsapp_group')}
@@ -1288,7 +1288,7 @@ export default function FlowBuilder() {
                 <p className="text-[7px] font-semibold text-white/30 uppercase tracking-wider text-center mb-1 mt-3">— Disparos —</p>
                 <div
                   draggable="true"
-                  unselectable="on"
+                  
                   onDragStart={e => handleDragStart(e, 'action', 'send_whatsapp_group')}
                   onDragEnd={handleDragEnd}
                   onClick={() => handleClickToAdd('action', 'send_whatsapp_group')}
@@ -1305,7 +1305,7 @@ export default function FlowBuilder() {
                 <p className="text-[7px] font-semibold text-white/30 uppercase tracking-wider text-center mb-1 mt-3">— Extras —</p>
                 <div
                   draggable="true"
-                  unselectable="on"
+                  
                   onDragStart={e => handleDragStart(e, 'action', 'note')}
                   onDragEnd={handleDragEnd}
                   onClick={() => handleClickToAdd('action', 'note')}
@@ -1369,7 +1369,7 @@ export default function FlowBuilder() {
                           <div
                             key={opt.id}
                             draggable="true"
-                            unselectable="on"
+                            
                             onDragStart={e => handleDragStart(e, 'trigger', opt.id)}
                             onDragEnd={handleDragEnd}
                             onClick={() => handleClickToAdd('trigger', opt.id)}
@@ -1408,7 +1408,7 @@ export default function FlowBuilder() {
                           <div
                             key={opt.id}
                             draggable="true"
-                            unselectable="on"
+                            
                             onDragStart={e => handleDragStart(e, getNodeType(opt.id), opt.id)}
                             onDragEnd={handleDragEnd}
                             onClick={() => handleClickToAdd(getNodeType(opt.id), opt.id)}
@@ -1444,7 +1444,7 @@ export default function FlowBuilder() {
                           <div
                             key={opt.id}
                             draggable="true"
-                            unselectable="on"
+                            
                             onDragStart={e => handleDragStart(e, 'condition', opt.id)}
                             onDragEnd={handleDragEnd}
                             onClick={() => handleClickToAdd('condition', opt.id)}

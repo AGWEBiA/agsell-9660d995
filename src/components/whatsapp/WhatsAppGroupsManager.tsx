@@ -307,6 +307,7 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
       name: editForm.name,
       description: editForm.description,
       tags: editForm.tags,
+      external_group_id: editForm.external_group_id || null,
       settings: {
         ...currentSettings,
         lead_tags: editLeadTags,

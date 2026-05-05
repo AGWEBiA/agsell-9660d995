@@ -1222,7 +1222,7 @@ export default function FlowBuilder() {
       </div>
 
       {/* Main content area */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden" onDragOver={e => e.preventDefault()}>
         {/* Sidebar with draggable nodes */}
         <div className={cn("shrink-0 border-r bg-[#1a1a2e] overflow-y-auto overflow-x-hidden", isGroupsChannel ? "w-[80px]" : "w-[160px]")} style={{ touchAction: 'none' }}>
           <div className="p-2">
@@ -1239,11 +1239,10 @@ export default function FlowBuilder() {
                   return (
                     <div
                       draggable="true"
-                      // Removed  to avoid blocking native drag behavior in some browsers
                       onDragStart={e => handleDragStart(e, 'trigger', 'tag_added')}
-                       onDragEnd={handleDragEnd}
+                      onDragEnd={handleDragEnd}
                       onClick={() => handleClickToAdd('trigger', 'tag_added')}
-                      className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-grab active:cursor-grabbing group select-none"
+                      className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-grab active:cursor-grabbing group select-none relative z-[5]"
                       title="Tag — Clique ou arraste para adicionar"
                     >
                       <div className="flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-gradient-to-br from-emerald-500 to-green-600 text-white pointer-events-none">

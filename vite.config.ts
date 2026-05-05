@@ -27,16 +27,20 @@ export default defineConfig(({ mode }) => ({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('@radix-ui')) return 'vendor-radix';
+            // Agrupamento por bibliotecas maiores para reduzir número de arquivos e evitar dependências circulares
             if (id.includes('lucide-react')) return 'vendor-icons';
-            if (id.includes('@supabase')) return 'vendor-supabase';
-            if (id.includes('react')) return 'vendor-core';
             if (id.includes('recharts')) return 'vendor-charts';
             if (id.includes('jspdf')) return 'vendor-pdf';
+            if (id.includes('@supabase')) return 'vendor-supabase';
+            
+            // Core libs ficam juntas para evitar problemas de hoisting/circularidade
+            if (id.includes('react') || id.includes('@radix-ui') || id.includes('scheduler')) {
+              return 'vendor-core';
+            }
+            
             return 'vendor';
           }
         },
-        // Forçar nomes consistentes para evitar erros de cache e facilitar diagnóstico
         chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
       }

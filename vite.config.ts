@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  logLevel: 'info', // Ativa logs detalhados
   build: {
     target: "es2020",
     minify: "esbuild",
@@ -26,9 +27,13 @@ export default defineConfig(({ mode }) => ({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
+            // Unificamos tudo em um vendor para garantir que o Vite resolva
+            // as dependências corretamente sem circularidade
             return 'vendor';
           }
-        }
+        },
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
       }
     }
   },

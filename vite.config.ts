@@ -17,18 +17,25 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  logLevel: 'info', // Ativa logs detalhados
+  logLevel: 'info',
+  clearScreen: false,
   build: {
     target: "esnext",
     minify: "esbuild",
     cssCodeSplit: true,
-    chunkSizeWarningLimit: 2500, // Aumentado para evitar avisos em projetos grandes
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        // Desativamos manualChunks para deixar o Vite/Rollup gerenciar as dependências
-        // Isso elimina erros de circularidade que travam a publicação
-        manualChunks: undefined,
-      }
-    }
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react')) return 'vendor-react';
+            if (id.includes('lucide')) return 'vendor-lucide';
+            if (id.includes('radix-ui')) return 'vendor-radix';
+            if (id.includes('supabase')) return 'vendor-supabase';
+            return 'vendor';
+          }
+        },
+      },
+    },
   },
 }));

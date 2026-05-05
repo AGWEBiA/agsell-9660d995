@@ -848,7 +848,8 @@ Deno.serve(async (req) => {
                 "Matched single active kiwify subscription as fallback",
               );
             } else {
-              logStep(
+              await logStep(
+                supabase,
                 "WARNING: Could not determine which subscription to cancel",
                 {
                   activeSubs: subs?.length || 0,
@@ -895,7 +896,8 @@ Deno.serve(async (req) => {
           }
         }
       } else {
-        logStep(
+        await logStep(
+          supabase,
           "WARNING: No matching subscription found for refund/chargeback",
           { orderId, subscriptionId },
         );

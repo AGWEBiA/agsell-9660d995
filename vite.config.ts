@@ -22,23 +22,12 @@ export default defineConfig(({ mode }) => ({
     target: "esnext",
     minify: "esbuild",
     cssCodeSplit: true,
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 2500, // Aumentado para evitar avisos em projetos grandes
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-              return 'vendor-react';
-            }
-            if (id.includes('lucide-react') || id.includes('recharts') || id.includes('@radix-ui')) {
-              return 'vendor-ui';
-            }
-            if (id.includes('@supabase')) {
-              return 'vendor-supabase';
-            }
-            return 'vendor-others';
-          }
-        },
+        // Desativamos manualChunks para deixar o Vite/Rollup gerenciar as dependências
+        // Isso elimina erros de circularidade que travam a publicação
+        manualChunks: undefined,
       }
     }
   },

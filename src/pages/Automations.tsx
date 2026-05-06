@@ -86,12 +86,18 @@ export default function Automations() {
     trigger_type: '',
     channel: '',
     form_id: '',
+    keyword: '',
+    match_type: 'contains',
   });
   const [editActions, setEditActions] = useState<Action[]>([]);
+
+  const KEYWORD_TRIGGERS = ['whatsapp_received', 'instagram_dm', 'instagram_comment'];
+  const requiresKeyword = KEYWORD_TRIGGERS.includes(newAutomation.trigger_type);
 
   const handleCreate = () => {
     if (!newAutomation.name || !newAutomation.trigger_type || !newAutomation.channel) return;
     if (newAutomation.trigger_type === 'form_submitted' && !newAutomation.form_id) return;
+    if (requiresKeyword && !newAutomation.keyword.trim()) return;
     createAutomation.mutate({
       name: newAutomation.name,
       trigger_type: newAutomation.trigger_type,
@@ -102,9 +108,12 @@ export default function Automations() {
         ...(newAutomation.trigger_type === 'form_submitted' && newAutomation.form_id
           ? { form_id: newAutomation.form_id, form_name: forms.find(f => f.id === newAutomation.form_id)?.name || '' }
           : {}),
+        ...(requiresKeyword
+          ? { keyword: newAutomation.keyword.trim(), match_type: newAutomation.match_type }
+          : {}),
       },
     });
-    setNewAutomation({ name: '', trigger_type: '', channel: '', form_id: '' });
+    setNewAutomation({ name: '', trigger_type: '', channel: '', form_id: '', keyword: '', match_type: 'contains' });
     setIsDialogOpen(false);
   };
 
@@ -266,6 +275,32 @@ export default function Automations() {
                   </Select>
                 </FormField>
               )}
+              {requiresKeyword && (
+                <>
+                  <FormField label="Palavra-chave" required helpText="A automação só dispara quando a mensagem recebida contiver esta palavra-chave">
+                    <Input
+                      placeholder="Ex: INFO, QUERO, PROMO"
+                      value={newAutomation.keyword}
+                      onChange={(e) => setNewAutomation(prev => ({ ...prev, keyword: e.target.value }))}
+                    />
+                  </FormField>
+                  <FormField label="Correspondência" helpText="Como comparar a palavra-chave com a mensagem recebida">
+                    <Select
+                      value={newAutomation.match_type}
+                      onValueChange={(value) => setNewAutomation(prev => ({ ...prev, match_type: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="contains">Contém</SelectItem>
+                        <SelectItem value="exact">Exata</SelectItem>
+                        <SelectItem value="starts_with">Começa com</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormField>
+                </>
+              )}
               <FormField label="Canal" required helpText="Por qual canal a automação vai atuar">
                 <div className="grid grid-cols-3 gap-2">
                   {channelTypes.map((ch) => {
@@ -296,7 +331,7 @@ export default function Automations() {
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleCreate} disabled={createAutomation.isPending}>
+              <Button onClick={handleCreate} disabled={createAutomation.isPending || (requiresKeyword && !newAutomation.keyword.trim())}>
                 {createAutomation.isPending ? 'Criando...' : 'Criar Automação'}
               </Button>
             </DialogFooter>

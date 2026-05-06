@@ -46,6 +46,8 @@ interface ChatbotRule {
   includeTags: string[];
   excludeTags: string[];
   channels: string[];
+  keywords: string[];
+  keywordMatch: 'any' | 'exact' | 'starts_with';
   isActive: boolean;
 }
 

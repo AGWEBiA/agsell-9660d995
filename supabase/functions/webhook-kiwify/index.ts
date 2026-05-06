@@ -356,36 +356,50 @@ Deno.serve(async (req) => {
     // Upsert gateway product for automation triggers
     const kiwifyProductName =
       payload.Product?.product_name || payload.product_name;
-    if (kiwifyProductName) {
-      // Find org from checkout_leads or use any matching integration
-      let productOrgId: string | undefined;
-      if (customerEmail) {
-        const { data: leadOrg } = await supabase
-          .from("checkout_leads")
-          .select("organization_id")
-          .ilike("email", customerEmail)
-          .not("organization_id", "is", null)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        productOrgId = leadOrg?.organization_id || undefined;
-      }
-      // Also try from org_id query param
-      const kiwifyOrgId = url.searchParams.get("org_id") || productOrgId;
-      if (kiwifyOrgId) {
-        await supabase.from("gateway_products").upsert(
-          {
-            organization_id: kiwifyOrgId,
-            gateway: "kiwify",
-            external_product_id: productId || "",
-            product_name: kiwifyProductName,
-            price: orderValue || null,
-            currency: "BRL",
-            last_seen_at: new Date().toISOString(),
-          },
-          { onConflict: "organization_id,gateway,external_product_id" },
-        );
-      }
+    
+    // Resolve organization ID for this event
+    let targetOrgId: string | undefined;
+    
+    // 1. Try from query param (best for multi-tenancy)
+    targetOrgId = url.searchParams.get("org_id") || undefined;
+    
+    // 2. Try from checkout_leads
+    if (!targetOrgId && customerEmail) {
+      const { data: leadOrg } = await supabase
+        .from("checkout_leads")
+        .select("organization_id")
+        .ilike("email", customerEmail)
+        .not("organization_id", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      targetOrgId = leadOrg?.organization_id || undefined;
+    }
+
+    // 3. Fallback: find any org that has this product ID in their integrations or plans
+    // (We'll refine this as needed, but for now we prioritize explicit links)
+
+    if (kiwifyProductName && targetOrgId) {
+      await supabase.from("gateway_products").upsert(
+        {
+          organization_id: targetOrgId,
+          gateway: "kiwify",
+          external_product_id: productId || "",
+          product_name: kiwifyProductName,
+          price: orderValue || null,
+          currency: "BRL",
+          last_seen_at: new Date().toISOString(),
+        },
+        { onConflict: "organization_id,gateway,external_product_id" },
+      );
+    }
+
+    // Update webhook_events with resolved organization_id early
+    if (webhookEventId && targetOrgId) {
+      await supabase
+        .from("webhook_events")
+        .update({ organization_id: targetOrgId })
+        .eq("id", webhookEventId);
     }
 
     // customerEmail already defined above

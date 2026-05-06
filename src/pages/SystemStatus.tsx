@@ -111,6 +111,35 @@ function IncidentCard({ incident }: { incident: SystemIncident }) {
 
 export default function SystemStatus() {
   const { overallStatus, services, getServiceStatus, recentIncidents, isLoading } = useSystemStatus();
+  const { isAdmin } = usePermissions();
+
+  // Admin-only metrics
+  const { data: healthMetrics } = useQuery({
+    queryKey: ['system-health-metrics'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('system_health_metrics' as any)
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      return data || [];
+    },
+    enabled: isAdmin
+  });
+
+  const { data: lastExecution } = useQuery({
+    queryKey: ['last-automation-execution'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('automation_executions')
+        .select('created_at, status')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: isAdmin
+  });
 
   if (isLoading) {
     return (

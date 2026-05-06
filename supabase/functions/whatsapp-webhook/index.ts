@@ -1295,58 +1295,80 @@ Deno.serve(async (req) => {
               contactName: pushName,
             });
 
-            // Trigger automations for regular WhatsApp messages
-            if (contactId && !isFromMe) {
-              const { data: automations } = await supabase
-                .from("automations")
-                .select("id, trigger_type, trigger_config, name")
-                .eq("organization_id", integration.organization_id)
-                .in("trigger_type", ["whatsapp_received", "whatsapp_keyword"])
-                .eq("is_active", true);
+            // ────────────────────────────────────────────────────────────────
+            // GLOBAL AUTOMATION ENGINE (Phase 4)
+            // ────────────────────────────────────────────────────────────────
+            // Previously, we only searched for automations in the instance's org.
+            // Now we search in ALL organizations where this phone is a registered contact.
+            // This is critical for "AG Sell" where customers buy from different users
+            // but might message a central number.
+            
+            if (!isFromMe) {
+              // 1. Get all organizations where this phone is a contact
+              const { data: contactEntries } = await supabase
+                .from("contacts")
+                .select("id, organization_id")
+                .or(`whatsapp.eq.${cleanPhone},phone.eq.${cleanPhone},whatsapp.eq.+${cleanPhone},phone.eq.+${cleanPhone}`);
+              
+              const orgIds = new Set<string>();
+              if (integration.organization_id) orgIds.add(integration.organization_id);
+              if (contactEntries) {
+                contactEntries.forEach(c => orgIds.add(c.organization_id));
+              }
+              
+              if (orgIds.size > 0) {
+                const { data: allAutomations } = await supabase
+                  .from("automations")
+                  .select("id, trigger_type, trigger_config, name, organization_id")
+                  .in("organization_id", Array.from(orgIds))
+                  .in("trigger_type", ["whatsapp_received", "whatsapp_keyword"])
+                  .eq("is_active", true);
 
-              if (automations && automations.length > 0) {
-                for (const auto of automations) {
-                  const config = auto.trigger_config as Record<string, unknown> || {};
-                  
-                  // For keyword triggers, check if message matches
-                  if (auto.trigger_type === "whatsapp_keyword") {
-                    const kw = String(config.keyword || "").toLowerCase();
-                    if (!kw || !resolvedText.toLowerCase().includes(kw)) {
-                      await logAudit(supabase, {
-                        orgId: integration.organization_id,
-                        source: "whatsapp-webhook",
-                        event: "automation_skipped",
-                        status: "skipped",
-                        message: `Keyword "${kw}" not found in message`,
-                        payload: { automation_id: auto.id, automation_name: auto.name }
-                      });
-                      continue;
+                if (allAutomations && allAutomations.length > 0) {
+                  for (const auto of allAutomations) {
+                    const config = auto.trigger_config as Record<string, unknown> || {};
+                    
+                    // For keyword triggers, check if message matches
+                    if (auto.trigger_type === "whatsapp_keyword") {
+                      const kw = String(config.keyword || "").toLowerCase();
+                      if (!kw || !resolvedText.toLowerCase().includes(kw)) {
+                        continue; 
+                      }
                     }
+
+                    // Find the specific contact ID for THIS automation's organization
+                    const targetContact = contactEntries?.find(c => c.organization_id === auto.organization_id);
+                    const effectiveContactId = targetContact?.id || contactId; // fallback to instance-org contact if not found
+
+                    await logAudit(supabase, {
+                      orgId: auto.organization_id,
+                      source: "whatsapp-webhook",
+                      event: "automation_triggered",
+                      status: "success",
+                      message: `Global trigger: ${auto.name} (from instance ${instanceName})`,
+                      payload: { 
+                        automation_id: auto.id, 
+                        trigger: auto.trigger_type,
+                        instance_org: integration.organization_id,
+                        target_org: auto.organization_id
+                      }
+                    });
+
+                    fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/process-automation`, {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                        "X-Internal-Cron": "true",
+                      },
+                      body: JSON.stringify({
+                        automation_id: auto.id,
+                        contact_id: effectiveContactId,
+                        trigger_event: auto.trigger_type,
+                        trigger_data: { message: resolvedText }
+                      }),
+                    }).catch(err => console.error("Error dispatching WhatsApp automation:", err));
                   }
-
-                  await logAudit(supabase, {
-                    orgId: integration.organization_id,
-                    source: "whatsapp-webhook",
-                    event: "automation_triggered",
-                    status: "success",
-                    message: `Triggering automation: ${auto.name}`,
-                    payload: { automation_id: auto.id, trigger: auto.trigger_type }
-                  });
-
-                  fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/process-automation`, {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
-                      "X-Internal-Cron": "true",
-                    },
-                    body: JSON.stringify({
-                      automation_id: auto.id,
-                      contact_id: contactId,
-                      trigger_event: auto.trigger_type,
-                      trigger_data: { message: resolvedText }
-                    }),
-                  }).catch(err => console.error("Error dispatching WhatsApp automation:", err));
                 }
               }
             }

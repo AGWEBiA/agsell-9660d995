@@ -356,36 +356,50 @@ Deno.serve(async (req) => {
     // Upsert gateway product for automation triggers
     const kiwifyProductName =
       payload.Product?.product_name || payload.product_name;
-    if (kiwifyProductName) {
-      // Find org from checkout_leads or use any matching integration
-      let productOrgId: string | undefined;
-      if (customerEmail) {
-        const { data: leadOrg } = await supabase
-          .from("checkout_leads")
-          .select("organization_id")
-          .ilike("email", customerEmail)
-          .not("organization_id", "is", null)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        productOrgId = leadOrg?.organization_id || undefined;
-      }
-      // Also try from org_id query param
-      const kiwifyOrgId = url.searchParams.get("org_id") || productOrgId;
-      if (kiwifyOrgId) {
-        await supabase.from("gateway_products").upsert(
-          {
-            organization_id: kiwifyOrgId,
-            gateway: "kiwify",
-            external_product_id: productId || "",
-            product_name: kiwifyProductName,
-            price: orderValue || null,
-            currency: "BRL",
-            last_seen_at: new Date().toISOString(),
-          },
-          { onConflict: "organization_id,gateway,external_product_id" },
-        );
-      }
+    
+    // Resolve organization ID for this event
+    let targetOrgId: string | undefined;
+    
+    // 1. Try from query param (best for multi-tenancy)
+    targetOrgId = url.searchParams.get("org_id") || undefined;
+    
+    // 2. Try from checkout_leads
+    if (!targetOrgId && customerEmail) {
+      const { data: leadOrg } = await supabase
+        .from("checkout_leads")
+        .select("organization_id")
+        .ilike("email", customerEmail)
+        .not("organization_id", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      targetOrgId = leadOrg?.organization_id || undefined;
+    }
+
+    // 3. Fallback: find any org that has this product ID in their integrations or plans
+    // (We'll refine this as needed, but for now we prioritize explicit links)
+
+    if (kiwifyProductName && targetOrgId) {
+      await supabase.from("gateway_products").upsert(
+        {
+          organization_id: targetOrgId,
+          gateway: "kiwify",
+          external_product_id: productId || "",
+          product_name: kiwifyProductName,
+          price: orderValue || null,
+          currency: "BRL",
+          last_seen_at: new Date().toISOString(),
+        },
+        { onConflict: "organization_id,gateway,external_product_id" },
+      );
+    }
+
+    // Update webhook_events with resolved organization_id early
+    if (webhookEventId && targetOrgId) {
+      await supabase
+        .from("webhook_events")
+        .update({ organization_id: targetOrgId })
+        .eq("id", webhookEventId);
     }
 
     // customerEmail already defined above
@@ -522,8 +536,9 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (membership && plan) {
+          targetOrgId = membership.organization_id;
           await activateSubscription(supabase, {
-            organizationId: membership.organization_id,
+            organizationId: targetOrgId,
             planId: plan.id,
             planSlug: plan.slug,
             kiwifyOrderId: payload.order_id,
@@ -531,6 +546,9 @@ Deno.serve(async (req) => {
             billingCycle: detectBillingCycle(payload),
           });
           await logStep(supabase, "Subscription activated for existing user");
+
+          // Trigger automations for purchase
+          await triggerPurchaseAutomation(supabase, targetOrgId, customerEmail, payload);
 
           const hasLoggedIn = !!existingUser.last_sign_in_at;
           const alreadyEmailed =
@@ -561,7 +579,7 @@ Deno.serve(async (req) => {
               const { data: organizationData } = await supabase
                 .from("organizations")
                 .select("name")
-                .eq("id", membership.organization_id)
+                .eq("id", targetOrgId)
                 .maybeSingle();
 
               await sendWelcomeEmail(supabase, {
@@ -607,19 +625,23 @@ Deno.serve(async (req) => {
             .single();
 
           if (newOrg?.id) {
+            targetOrgId = newOrg.id;
             await supabase.from("organization_members").insert({
-              organization_id: newOrg.id,
+              organization_id: targetOrgId,
               user_id: existingUser.id,
               role: "owner",
             });
             await activateSubscription(supabase, {
-              organizationId: newOrg.id,
+              organizationId: targetOrgId,
               planId: plan.id,
               planSlug: plan.slug,
               kiwifyOrderId: payload.order_id,
               kiwifySubscriptionId: payload.Subscription?.id,
               billingCycle: detectBillingCycle(payload),
             });
+
+            // Trigger automations for purchase
+            await triggerPurchaseAutomation(supabase, targetOrgId, customerEmail, payload);
 
             // Send credentials email for existing user without org
             const hasLoggedIn = !!existingUser.last_sign_in_at;
@@ -657,7 +679,7 @@ Deno.serve(async (req) => {
               supabase,
               "Org + subscription created for existing user",
               {
-                orgId: newOrg.id,
+                orgId: targetOrgId,
               },
             );
           }
@@ -713,29 +735,32 @@ Deno.serve(async (req) => {
             .select("id")
             .single();
 
-          const orgId = newOrg?.id;
-          if (orgError || !orgId) {
+          if (orgError || !newOrg?.id) {
             await logStep(
               supabase,
               "ERROR creating organization",
               orgError?.message,
             );
           } else {
+            targetOrgId = newOrg.id;
             // Add user as owner
             await supabase.from("organization_members").insert({
-              organization_id: orgId,
+              organization_id: targetOrgId,
               user_id: userId,
               role: "owner",
             });
 
             await activateSubscription(supabase, {
-              organizationId: orgId,
+              organizationId: targetOrgId,
               planId: plan.id,
               planSlug: plan.slug,
               kiwifyOrderId: payload.order_id,
               kiwifySubscriptionId: payload.Subscription?.id,
               billingCycle: detectBillingCycle(payload),
             });
+
+            // Trigger automations for purchase
+            await triggerPurchaseAutomation(supabase, targetOrgId, customerEmail, payload);
 
             // Send welcome email
             await sendWelcomeEmail(supabase, {
@@ -751,7 +776,7 @@ Deno.serve(async (req) => {
               "New account created and subscription activated",
               {
                 userId,
-                orgId,
+                orgId: targetOrgId,
               },
             );
           }
@@ -759,8 +784,8 @@ Deno.serve(async (req) => {
       }
 
       // Create/update contact
-      if (plan) {
-        await upsertContact(supabase, payload, plan.name);
+      if (plan && targetOrgId) {
+        await upsertContact(supabase, payload, plan.name, targetOrgId);
       }
 
       if (webhookEventId) {
@@ -769,6 +794,7 @@ Deno.serve(async (req) => {
           .update({
             processed: true,
             processed_at: new Date().toISOString(),
+            organization_id: targetOrgId || null,
           })
           .eq("id", webhookEventId);
       }
@@ -1043,22 +1069,12 @@ async function upsertContact(
   supabase: any,
   payload: KiwifyPayload,
   planName: string,
+  organization_id: string,
 ) {
   const customer = payload.Customer;
-  if (!customer?.email) return;
+  if (!customer?.email || !organization_id) return;
 
-  // Find an org that has this kiwify product configured
-  const { data: orgIntegration } = await supabase
-    .from("organization_integrations")
-    .select("organization_id")
-    .eq("integration_type", "kiwify")
-    .eq("is_active", true)
-    .limit(1)
-    .maybeSingle();
-
-  if (!orgIntegration) return;
-
-  const orgId = orgIntegration.organization_id;
+  const orgId = organization_id;
 
   const { data: owner } = await supabase
     .from("organization_members")
@@ -1066,9 +1082,12 @@ async function upsertContact(
     .eq("organization_id", orgId)
     .eq("role", "owner")
     .limit(1)
-    .single();
+    .maybeSingle();
 
-  if (!owner) return;
+  if (!owner) {
+    console.warn(`[upsertContact] No owner found for org ${orgId}`);
+    return;
+  }
 
   const nameParts = customer.full_name.split(" ");
 
@@ -1117,6 +1136,64 @@ async function callSyncUser(userId: string, shouldBeActive: boolean) {
     console.log("WhatsApp group sync result", result);
   } catch (err) {
     console.error("Error calling subscription-whatsapp-groups", err);
+  }
+}
+
+// deno-lint-ignore no-explicit-any
+async function triggerPurchaseAutomation(
+  supabase: any,
+  organizationId: string,
+  email: string,
+  payload: KiwifyPayload,
+) {
+  try {
+    // 1. Find the contact in this organization
+    const { data: contact } = await supabase
+      .from("contacts")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .ilike("email", email)
+      .maybeSingle();
+
+    if (!contact) {
+      console.warn(`[triggerPurchaseAutomation] Contact not found for ${email} in org ${organizationId}`);
+      return;
+    }
+
+    // 2. Find active automations for purchase
+    const eventType = payload.order_status === "paid" ? "kiwify_purchase_approved" : "kiwify_subscription_renewed";
+    
+    const { data: automations } = await supabase
+      .from("automations")
+      .select("id, name")
+      .eq("organization_id", organizationId)
+      .eq("is_active", true)
+      .in("trigger_type", [eventType, "purchase_approved"]); // Supporting both names
+
+    if (automations && automations.length > 0) {
+      for (const auto of automations) {
+        await logStep(supabase, `Triggering purchase automation: ${auto.name}`, {
+          automation_id: auto.id,
+          event: eventType,
+        }, "info", organizationId);
+
+        fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/process-automation`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({
+            automation_id: auto.id,
+            contact_id: contact.id,
+            trigger_event: eventType,
+            trigger_data: payload,
+          }),
+        }).catch(err => console.error("Error dispatching purchase automation:", err));
+      }
+    }
+  } catch (err) {
+    console.error("Error in triggerPurchaseAutomation:", err);
   }
 }
 

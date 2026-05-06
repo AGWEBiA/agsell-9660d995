@@ -295,15 +295,44 @@ export default function Forms() {
 
       {/* Table */}
       <Card>
-        <CardHeader><CardTitle>Meus Formulários</CardTitle></CardHeader>
+        <CardHeader>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <CardTitle>Meus Formulários</CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 md:w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar formulários..."
+                  className="pl-9 h-9"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="h-9 w-9 shrink-0" 
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                title="Atualizar lista"
+              >
+                <RotateCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
         <CardContent>
-          {forms.length === 0 ? (
+          {filteredForms.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Nenhum formulário criado ainda</p>
-              <Button className="mt-4" onClick={() => setIsCreateOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />Criar Primeiro Formulário
-              </Button>
+              <p className="text-muted-foreground">
+                {searchQuery ? 'Nenhum formulário encontrado para sua busca' : 'Nenhum formulário criado ainda'}
+              </p>
+              {!searchQuery && (
+                <Button className="mt-4" onClick={() => setIsCreateOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />Criar Primeiro Formulário
+                </Button>
+              )}
             </div>
           ) : (
             <Table>

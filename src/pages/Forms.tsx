@@ -30,6 +30,7 @@ import { FormStyleEditor } from '@/components/forms/FormStyleEditor';
 import { FormPreview } from '@/components/forms/FormPreview';
 import { FormTagSelector } from '@/components/forms/FormTagSelector';
 
+// Component for managing web forms with search and refresh capabilities
 export default function Forms() {
   const { forms, isLoading, createForm, updateForm, toggleForm, deleteForm, getFormSubmissions } = useForms();
   const [isCreateOpen, setIsCreateOpen] = useState(false);

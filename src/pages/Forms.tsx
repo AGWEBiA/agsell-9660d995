@@ -347,7 +347,7 @@ export default function Forms() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {forms.map((form) => {
+                {filteredForms.map((form) => {
                   const fieldsCount = Array.isArray(form.fields) ? form.fields.length : 0;
                   const formSettings = form.settings as unknown as Partial<FormSettings> | null;
                   const layout = formSettings?.layout || 'single';

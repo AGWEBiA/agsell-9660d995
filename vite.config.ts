@@ -1,13 +1,19 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 // Custom plugin for detailed build logging
-const buildLogger = () => ({
+const buildLogger = (envStatus: { mode: string; command: string; missing: string[] }) => ({
   name: 'build-logger',
   buildStart() {
-    console.log('🚀 Iniciando processo de build...');
+    console.log(`🚀 Iniciando ${envStatus.command} em modo ${envStatus.mode}...`);
+    if (envStatus.command === 'build') {
+      if (envStatus.missing.length > 0) {
+        throw new Error(`Variáveis VITE ausentes no build: ${envStatus.missing.join(', ')}`);
+      }
+      console.log('🔐 Variáveis VITE obrigatórias encontradas para o build.');
+    }
   },
   resolveId(source) {
     if (source.includes('jspdf') || source.includes('recharts')) {
@@ -30,7 +36,12 @@ const buildLogger = () => ({
 });
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode, command }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  const requiredEnv = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_PUBLISHABLE_KEY'];
+  const missing = requiredEnv.filter((key) => !env[key] && !process.env[key]);
+
+  return ({
   server: {
     host: "::",
     port: 8080,
@@ -41,7 +52,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === "development" && componentTagger(),
-    buildLogger(),
+    buildLogger({ mode, command, missing }),
   ].filter(Boolean),
   resolve: {
     alias: {
@@ -91,4 +102,5 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
-}));
+});
+});

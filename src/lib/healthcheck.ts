@@ -4,7 +4,7 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://rcxrkvwxlzwzrl
 const supabaseAnonKey =
   import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIcmN4cmt2d3hsenJsbHdkd2d6IiwicmVmIjoicmN4cmt2d3hsenJsbHdkd2d6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTY1NTUsImV4cCI6MjA4OTY3MjU1NX0.aat2diT5-nOUUxszbpO9k9iuwpemhK_CgqfX6ZEqT4s';
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIcmN4cmt2dnd4bHp3enJsbHdkd2d6IiwicmVmIjoicmN4cmt2dnd4bHp3enJsbHdkd2d6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTY1NTUsImV4cCI6MjA4OTY3MjU1NX0.aat2diT5-nOUUxszbpO9k9iuwpemhK_CgqfX6ZEqT4s';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 

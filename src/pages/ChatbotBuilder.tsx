@@ -452,6 +452,31 @@ function RulesEditor({ rules, onUpdate }: { rules: ChatbotRule[]; onUpdate: (rul
               <Label className="text-xs text-red-600">Tags Exclusão (vírgula)</Label>
               <Input value={rule.excludeTags.join(', ')} onChange={e => updateRule(rule.id, { excludeTags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })} className="h-7 text-xs" placeholder="spam, bloqueado" />
             </div>
+            <Separator />
+            <div>
+              <Label className="text-xs text-primary">Palavras-chave de disparo (vírgula)</Label>
+              <Input
+                value={(rule.keywords || []).join(', ')}
+                onChange={e => updateRule(rule.id, { keywords: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })}
+                className="h-7 text-xs"
+                placeholder="oi, olá, atendimento"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">Deixe vazio para disparar em qualquer mensagem recebida</p>
+            </div>
+            <div>
+              <Label className="text-xs">Tipo de correspondência</Label>
+              <Select
+                value={rule.keywordMatch || 'any'}
+                onValueChange={v => updateRule(rule.id, { keywordMatch: v as 'any' | 'exact' | 'starts_with' })}
+              >
+                <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent className="z-[100]">
+                  <SelectItem value="any">Contém qualquer palavra-chave</SelectItem>
+                  <SelectItem value="exact">Mensagem exata</SelectItem>
+                  <SelectItem value="starts_with">Começa com</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardContent>
         </Card>
       ))}

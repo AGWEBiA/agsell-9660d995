@@ -113,6 +113,18 @@ export default function Forms() {
     window.open(`${window.location.origin}/forms/${formId}`, '_blank');
   };
 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await createForm.context?.queryClient.invalidateQueries({ queryKey: ['forms'] });
+    // Simulate a bit of delay for visual feedback if query is too fast
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
+
+  const filteredForms = forms.filter(form => 
+    form.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (form.description && form.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
   const totalSubmissions = forms.reduce((acc, f) => acc + (f.submissions_count ?? 0), 0);
 
   if (isLoading) {

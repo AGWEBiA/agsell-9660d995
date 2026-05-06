@@ -372,6 +372,8 @@ function RulesEditor({ rules, onUpdate }: { rules: ChatbotRule[]; onUpdate: (rul
       includeTags: [],
       excludeTags: [],
       channels: ['whatsapp'],
+      keywords: [],
+      keywordMatch: 'any',
       isActive: true,
     }]);
   };

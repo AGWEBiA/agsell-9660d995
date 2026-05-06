@@ -16,8 +16,15 @@ const buildLogger = (envStatus: { mode: string; command: string; missing: string
       );
     }
   },
-  closeBundle() {
+  async closeBundle() {
     console.log('✅ Build finalizado.');
+    try {
+      const { execSync } = await import('child_process');
+      const size = execSync('du -sh dist').toString().split('\t')[0];
+      console.log(`📦 Tamanho total do diretório dist: ${size}`);
+    } catch (e) {
+      // Ignora erro se du não estiver disponível
+    }
   },
 });
 

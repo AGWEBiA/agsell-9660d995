@@ -2,11 +2,14 @@ import { useSystemStatus, SystemIncident } from '@/hooks/useSystemStatus';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle, AlertTriangle, XCircle, Wrench, Clock, Loader2 } from 'lucide-react';
+import { CheckCircle, AlertTriangle, XCircle, Wrench, Clock, Loader2, Server, Database, Globe, Zap, ShieldCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import logoRed from '@/assets/agsell-logo-red.png';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const statusConfig = {
   operational: { label: 'Operacional', icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-950', border: 'border-green-200 dark:border-green-800', badgeBg: 'bg-green-100 text-green-800' },

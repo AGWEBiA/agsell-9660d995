@@ -947,9 +947,20 @@ serve(async (req) => {
     await supabase.from('automation_executions').update({
       status: finalStatus,
       completed_at: new Date().toISOString(),
-      current_step: currentStep,
+      current_step: actions.length, // Ensure we mark it as finished
       results,
     }).eq('id', executionId);
+
+    // Call shared logger for the final status
+    await logToSystem(supabase, {
+      organization_id: automation.organization_id,
+      user_id: automation.user_id,
+      source: "process-automation",
+      event: "automation_finished",
+      level: finalStatus === 'completed' ? 'info' : 'warning',
+      message: `Automation ${automation.name} finished with status: ${finalStatus}`,
+      payload: { automation_id, execution_id: executionId, total_steps: actions.length }
+    });
 
     await supabase.rpc('increment_automation_executions', { automation_id });
 

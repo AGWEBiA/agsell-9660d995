@@ -20,19 +20,12 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useForms } from '@/hooks/useForms';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
-import type { Json } from '@/integrations/supabase/types';
-import { FormFieldEditor, type FormField } from '@/components/forms/FormFieldEditor';
-import { FormIntegrationDialog } from '@/components/forms/FormIntegrationDialog';
-import { FormTemplates, DEFAULT_SETTINGS, type FormSettings, type FormTemplate } from '@/components/forms/FormTemplates';
-import { FormStyleEditor } from '@/components/forms/FormStyleEditor';
-import { FormPreview } from '@/components/forms/FormPreview';
-import { FormTagSelector } from '@/components/forms/FormTagSelector';
-
-// Component for managing web forms with search and refresh capabilities
+...
 export default function Forms() {
   const { forms, isLoading, createForm, updateForm, toggleForm, deleteForm, getFormSubmissions } = useForms();
+  const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createTab, setCreateTab] = useState<'templates' | 'blank'>('templates');
   const [searchQuery, setSearchQuery] = useState('');

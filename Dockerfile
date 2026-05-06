@@ -1,10 +1,10 @@
 # ── Build stage ──────────────────────────────────
-FROM node:20-alpine AS build
+FROM oven/bun:1.3.3-alpine AS build
 
 WORKDIR /app
 
-COPY package.json package-lock.json* bun.lockb* ./
-RUN npm ci
+COPY package.json bun.lock* ./
+RUN bun install --frozen-lockfile
 
 COPY . .
 
@@ -19,9 +19,9 @@ ENV VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
 ENV VITE_SUPABASE_PUBLISHABLE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY}
 
 # Diagnóstico não bloqueante: mostra de onde o build receberá as variáveis sem vazar chaves.
-RUN node -e "const fs=require('fs'); const dot=fs.existsSync('.env')?fs.readFileSync('.env','utf8'):''; const has=(k)=>Boolean(process.env[k]||new RegExp('^'+k+'=', 'm').test(dot)); console.log('Build env check:', {VITE_SUPABASE_URL:has('VITE_SUPABASE_URL'), VITE_SUPABASE_PUBLISHABLE_KEY:has('VITE_SUPABASE_PUBLISHABLE_KEY'), VITE_SUPABASE_ANON_KEY:has('VITE_SUPABASE_ANON_KEY'), envFile:fs.existsSync('.env')});"
+RUN bun -e "const fs=require('fs'); const dot=fs.existsSync('.env')?fs.readFileSync('.env','utf8'):''; const has=(k)=>Boolean(process.env[k]||new RegExp('^'+k+'=', 'm').test(dot)); console.log('Build env check:', {VITE_SUPABASE_URL:has('VITE_SUPABASE_URL'), VITE_SUPABASE_PUBLISHABLE_KEY:has('VITE_SUPABASE_PUBLISHABLE_KEY'), VITE_SUPABASE_ANON_KEY:has('VITE_SUPABASE_ANON_KEY'), envFile:fs.existsSync('.env')});"
 
-RUN npm run build
+RUN bun run build
 
 # ── Production stage ─────────────────────────────
 FROM nginx:alpine

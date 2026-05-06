@@ -16,8 +16,15 @@ const buildLogger = (envStatus: { mode: string; command: string; missing: string
       );
     }
   },
-  closeBundle() {
+  async closeBundle() {
     console.log('✅ Build finalizado.');
+    try {
+      const { execSync } = await import('child_process');
+      const size = execSync('du -sh dist').toString().split('\t')[0];
+      console.log(`📦 Tamanho total do diretório dist: ${size}`);
+    } catch (e) {
+      // Ignora erro se du não estiver disponível
+    }
   },
 });
 
@@ -59,8 +66,11 @@ export default defineConfig(({ mode, command }) => {
             if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
               return 'vendor-core';
             }
-            if (id.includes('@radix-ui') || id.includes('lucide-react')) {
-              return 'vendor-ui';
+            if (id.includes('@radix-ui')) {
+              return 'vendor-ui-radix';
+            }
+            if (id.includes('lucide-react')) {
+              return 'vendor-ui-lucide';
             }
             if (id.includes('recharts')) {
               return 'vendor-charts';
@@ -74,8 +84,17 @@ export default defineConfig(({ mode, command }) => {
             if (id.includes('zod') || id.includes('react-hook-form')) {
               return 'vendor-forms';
             }
-            if (id.includes('date-fns') || id.includes('lodash')) {
+            if (id.includes('date-fns')) {
+              return 'vendor-date';
+            }
+            if (id.includes('emoji-mart') || id.includes('@emoji-mart')) {
+              return 'vendor-emoji';
+            }
+            if (id.includes('lodash') || id.includes('axios') || id.includes('dompurify')) {
               return 'vendor-utils';
+            }
+            if (id.includes('@tanstack')) {
+              return 'vendor-query';
             }
             return 'vendor-others';
           }

@@ -32,32 +32,33 @@ const logAudit = async (supabase: any, details: {
 };
 
 Deno.serve(async (req) => {
-...
-    // ────────────────────────────────────────────────────────────────
-    // Standardized structured logger for Phase 3 events
-    // (poll/reaction/sticker/mention) — makes debugging fast.
-    // ────────────────────────────────────────────────────────────────
-    const logPhase3Event = async (
-      level: "info" | "warn" | "error" | "skipped",
-      kind: "poll" | "poll_vote" | "reaction" | "sticker" | "mention" | "unsupported",
-      details: Record<string, unknown>,
-      orgId: string | null = null,
-      instance = "",
-      phone: string | null = null,
-    ) => {
-      const tag = `[whatsapp-webhook][${level.toUpperCase()}][${kind}]`;
-      const logFn = level === "error" ? console.error : (level === "warn" ? console.warn : console.log);
-      logFn(`${tag} ${JSON.stringify(details).slice(0, 600)}`);
+  // Meta webhook verification (GET)
+  if (req.method === "GET") {
+    const url = new URL(req.url);
+    const mode = url.searchParams.get("hub.mode");
+    const token = url.searchParams.get("hub.verify_token");
+    const challenge = url.searchParams.get("hub.challenge");
+    const verifyToken = Deno.env.get("WHATSAPP_WEBHOOK_VERIFY_TOKEN") || "agsell_whatsapp_verify";
 
-      try {
-        await logAudit(supabase, {
-          orgId,
-          source: "whatsapp-webhook",
-          event: `phase3.${kind}`,
-          status: level === "error" ? "failure" : (level === "skipped" ? "skipped" : "success"),
-          message: `${kind} event processed`,
-          payload: { ...details, instance, phone }
-        });
+    if (mode === "subscribe" && token === verifyToken) {
+      console.log("WhatsApp webhook verified");
+      return new Response(challenge, { status: 200 });
+    }
+    return new Response("Forbidden", { status: 403 });
+  }
+
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const body = await req.json();
+    console.log("WhatsApp webhook received:", JSON.stringify(body).slice(0, 500));
+
       } catch (logErr) {
         console.error(`${tag} failed to persist webhook log:`, logErr);
       }

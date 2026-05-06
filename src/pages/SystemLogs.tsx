@@ -81,17 +81,16 @@ export default function SystemLogs() {
         <CardHeader className="pb-3">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="space-y-2">
-              <label className="text-xs font-medium uppercase text-muted-foreground">Nível</label>
+              <label className="text-xs font-medium uppercase text-muted-foreground">Status</label>
               <Select value={level} onValueChange={setLevel}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Todos os níveis" />
+                  <SelectValue placeholder="Todos os status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os níveis</SelectItem>
-                  <SelectItem value="info">Informação</SelectItem>
-                  <SelectItem value="warning">Aviso</SelectItem>
-                  <SelectItem value="error">Erro</SelectItem>
-                  <SelectItem value="debug">Debug</SelectItem>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  <SelectItem value="success">Sucesso</SelectItem>
+                  <SelectItem value="skipped">Pulado</SelectItem>
+                  <SelectItem value="failure">Falha</SelectItem>
                 </SelectContent>
               </Select>
             </div>

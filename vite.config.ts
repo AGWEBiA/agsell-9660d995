@@ -3,6 +3,32 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
+// Custom plugin for detailed build logging
+const buildLogger = () => ({
+  name: 'build-logger',
+  buildStart() {
+    console.log('🚀 Iniciando processo de build...');
+  },
+  resolveId(source) {
+    if (source.includes('jspdf') || source.includes('recharts')) {
+      // Log heavy dependencies when they are resolved
+    }
+    return null;
+  },
+  generateBundle(options, bundle) {
+    console.log('📦 Bundle gerado. Analisando arquivos...');
+    const chunks = Object.values(bundle).filter(b => b.type === 'chunk');
+    chunks.sort((a, b) => (b as any).code.length - (a as any).code.length);
+    console.log('Top 5 maiores chunks:');
+    chunks.slice(0, 5).forEach(chunk => {
+      console.log(` - ${chunk.fileName}: ${(chunk as any).code.length / 1024} KB`);
+    });
+  },
+  closeBundle() {
+    console.log('✅ Build finalizado com sucesso!');
+  }
+});
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
@@ -15,6 +41,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === "development" && componentTagger(),
+    buildLogger(),
   ].filter(Boolean),
   resolve: {
     alias: {
@@ -25,24 +52,41 @@ export default defineConfig(({ mode }) => ({
     target: "es2020",
     minify: "esbuild",
     cssCodeSplit: true,
-    chunkSizeWarningLimit: 1200,
-    reportCompressedSize: false,
+    chunkSizeWarningLimit: 800, // Reduced warning limit to encourage smaller chunks
+    reportCompressedSize: true, // Re-enabled to see sizes in logs
     emptyOutDir: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ["react", "react-dom", "react-router-dom"],
-          ui: [
-            "@radix-ui/react-dialog",
-            "@radix-ui/react-dropdown-menu",
-            "@radix-ui/react-select",
-            "@radix-ui/react-tabs",
-            "lucide-react",
-          ],
-          charts: ["recharts"],
-          forms: ["react-hook-form", "@hookform/resolvers", "zod"],
-          supabase: ["@supabase/supabase-js"],
-          pdf: ["jspdf"],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
+              return 'vendor-core';
+            }
+            if (id.includes('@radix-ui') || id.includes('lucide-react')) {
+              return 'vendor-ui';
+            }
+            if (id.includes('recharts')) {
+              return 'vendor-charts';
+            }
+            if (id.includes('jspdf') || id.includes('html2canvas')) {
+              return 'vendor-pdf';
+            }
+            if (id.includes('@supabase')) {
+              return 'vendor-supabase';
+            }
+            if (id.includes('zod') || id.includes('react-hook-form')) {
+              return 'vendor-forms';
+            }
+            if (id.includes('date-fns') || id.includes('lodash')) {
+              return 'vendor-utils';
+            }
+            return 'vendor-others';
+          }
+          // Split large pages/components
+          if (id.includes('/pages/Inbox/')) return 'page-inbox';
+          if (id.includes('/pages/Dashboard/')) return 'page-dashboard';
+          if (id.includes('/pages/Admin/')) return 'page-admin';
+          if (id.includes('/components/flow-builder/')) return 'comp-flowbuilder';
         },
       },
     },

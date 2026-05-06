@@ -14,7 +14,7 @@ import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  Plus, FileText, Eye, Users, Percent, MoreHorizontal, ExternalLink, Copy, Trash2, Pencil, List, Code, LayoutTemplate, MonitorSmartphone, Palette,
+  Plus, FileText, Eye, Users, Percent, MoreHorizontal, ExternalLink, Copy, Trash2, Pencil, List, Code, LayoutTemplate, MonitorSmartphone, Palette, Search, RotateCw,
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -34,6 +34,8 @@ export default function Forms() {
   const { forms, isLoading, createForm, updateForm, toggleForm, deleteForm, getFormSubmissions } = useForms();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createTab, setCreateTab] = useState<'templates' | 'blank'>('templates');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [newForm, setNewForm] = useState<{ name: string; description: string; fields: FormField[]; settings: FormSettings }>({
     name: '', description: '', fields: [
       { name: 'name', label: 'Nome', type: 'text', required: true },
@@ -110,6 +112,18 @@ export default function Forms() {
   const handlePreview = (formId: string) => {
     window.open(`${window.location.origin}/forms/${formId}`, '_blank');
   };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await createForm.context?.queryClient.invalidateQueries({ queryKey: ['forms'] });
+    // Simulate a bit of delay for visual feedback if query is too fast
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
+
+  const filteredForms = forms.filter(form => 
+    form.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (form.description && form.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   const totalSubmissions = forms.reduce((acc, f) => acc + (f.submissions_count ?? 0), 0);
 
@@ -281,15 +295,44 @@ export default function Forms() {
 
       {/* Table */}
       <Card>
-        <CardHeader><CardTitle>Meus Formulários</CardTitle></CardHeader>
+        <CardHeader>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <CardTitle>Meus Formulários</CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 md:w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar formulários..."
+                  className="pl-9 h-9"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className="h-9 w-9 shrink-0" 
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                title="Atualizar lista"
+              >
+                <RotateCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
         <CardContent>
-          {forms.length === 0 ? (
+          {filteredForms.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">Nenhum formulário criado ainda</p>
-              <Button className="mt-4" onClick={() => setIsCreateOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />Criar Primeiro Formulário
-              </Button>
+              <p className="text-muted-foreground">
+                {searchQuery ? 'Nenhum formulário encontrado para sua busca' : 'Nenhum formulário criado ainda'}
+              </p>
+              {!searchQuery && (
+                <Button className="mt-4" onClick={() => setIsCreateOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />Criar Primeiro Formulário
+                </Button>
+              )}
             </div>
           ) : (
             <Table>
@@ -304,7 +347,7 @@ export default function Forms() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {forms.map((form) => {
+                {filteredForms.map((form) => {
                   const fieldsCount = Array.isArray(form.fields) ? form.fields.length : 0;
                   const formSettings = form.settings as unknown as Partial<FormSettings> | null;
                   const layout = formSettings?.layout || 'single';

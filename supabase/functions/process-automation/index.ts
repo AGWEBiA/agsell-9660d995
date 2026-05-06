@@ -136,31 +136,41 @@ serve(async (req) => {
 
     // Helper: log timeline entry
     const logTimeline = async (actionType: string, nodeLabel: string, status: string, details: Record<string, unknown> = {}) => {
-      await supabase.from('automation_contact_timeline').insert({
-        automation_id,
-        execution_id: executionId,
-        contact_id,
-        node_id: `step_${currentStep}`,
-        node_label: nodeLabel,
-        action_type: actionType,
-        status,
-        details,
-        organization_id: automation.organization_id,
-      });
-
-      // Also log to system_logs for admin monitoring
       try {
-        await supabase.from("system_logs").insert({
+        await supabase.from('automation_contact_timeline').insert({
+          automation_id,
+          execution_id: executionId,
+          contact_id,
+          node_id: `step_${currentStep}`,
+          node_label: nodeLabel,
+          action_type: actionType,
+          status,
+          details,
           organization_id: automation.organization_id,
+        });
+
+        // Use the shared logger for robustness and better visibility
+        await logToSystem(supabase, {
+          organization_id: automation.organization_id,
+          user_id: automation.user_id,
           source: "process-automation",
-          event_type: "automation_step",
-          status: status === 'error' ? 'failure' : 'success',
-          message: `${nodeLabel}: ${status}`,
-          payload: { automation_id, contact_id, action_type: actionType, ...details },
-          error_details: status === 'error' ? { message: status } : null
+          event: "automation_step",
+          level: status === 'error' ? 'error' : 'info',
+          message: `Step ${currentStep} (${nodeLabel}): ${status}`,
+          payload: { 
+            automation_id, 
+            contact_id, 
+            execution_id: executionId,
+            action_type: actionType, 
+            ...details 
+          },
+          metadata: {
+            step: currentStep,
+            status
+          }
         });
       } catch (logErr) {
-        console.error("Failed to log automation step to system_logs:", logErr);
+        console.error("Failed to log automation timeline/system_logs:", logErr);
       }
     };
 
@@ -937,9 +947,20 @@ serve(async (req) => {
     await supabase.from('automation_executions').update({
       status: finalStatus,
       completed_at: new Date().toISOString(),
-      current_step: currentStep,
+      current_step: actions.length, // Ensure we mark it as finished
       results,
     }).eq('id', executionId);
+
+    // Call shared logger for the final status
+    await logToSystem(supabase, {
+      organization_id: automation.organization_id,
+      user_id: automation.user_id,
+      source: "process-automation",
+      event: "automation_finished",
+      level: finalStatus === 'completed' ? 'info' : 'warning',
+      message: `Automation ${automation.name} finished with status: ${finalStatus}`,
+      payload: { automation_id, execution_id: executionId, total_steps: actions.length }
+    });
 
     await supabase.rpc('increment_automation_executions', { automation_id });
 

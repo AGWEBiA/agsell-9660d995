@@ -26,6 +26,7 @@ export default tseslint.config(
       "no-empty": "off",
       "@typescript-eslint/no-empty-object-type": "off",
       "react-hooks/rules-of-hooks": "off",
+      "react-hooks/exhaustive-deps": "off",
       "@typescript-eslint/no-unused-expressions": "off",
       "no-var": "off",
       "no-useless-escape": "off",

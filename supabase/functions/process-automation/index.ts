@@ -28,42 +28,58 @@ serve(async (req) => {
   }
 
   try {
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error("[process-automation] Missing environment variables");
+      return new Response(JSON.stringify({ error: 'Server configuration error' }), { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
     }
 
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Missing authorization header' }), { 
+        status: 401, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
+    }
 
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const token = authHeader.replace('Bearer ', '');
     const isInternalCron = req.headers.get('X-Internal-Cron') === 'true' && token === supabaseServiceKey;
 
-    // For internal cron calls (scheduled step resumptions), skip user JWT validation
-    // since the original user token will have expired by the time the cron fires.
-    // The service role key is used instead and validated above.
     if (!isInternalCron) {
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);
       if (authError || !user) {
-        return new Response(
-          JSON.stringify({ error: 'Unauthorized' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        console.error("[process-automation] Auth validation failed:", authError?.message);
+        return new Response(JSON.stringify({ error: 'Invalid or expired session' }), { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        });
       }
     }
 
-    const payload: ExecutionPayload = await req.json();
+    const bodyText = await req.text();
+    let payload: ExecutionPayload;
+    try {
+      payload = JSON.parse(bodyText);
+    } catch (e) {
+      return new Response(JSON.stringify({ error: 'Invalid JSON payload' }), { 
+        status: 400, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
+    }
+
     const { automation_id, contact_id, trigger_event, resume_from_step, execution_id: resumeExecId } = payload;
 
     if (!automation_id || !trigger_event) {
-      return new Response(
-        JSON.stringify({ error: 'automation_id and trigger_event are required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      return new Response(JSON.stringify({ error: 'automation_id and trigger_event are required' }), { 
+        status: 400, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
     }
 
     const { data: automation, error: automationError } = await supabase
@@ -74,10 +90,11 @@ serve(async (req) => {
       .single();
 
     if (automationError || !automation) {
-      return new Response(
-        JSON.stringify({ error: 'Automation not found or inactive' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      console.warn(`[process-automation] Automation ${automation_id} not found or inactive`);
+      return new Response(JSON.stringify({ error: 'Automation not found or inactive' }), { 
+        status: 404, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
     }
 
     const actions = (automation.actions || []) as AutomationAction[];

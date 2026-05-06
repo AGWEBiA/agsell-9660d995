@@ -16,13 +16,39 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error("[Unified Webhook] Missing environment variables");
+    return new Response(JSON.stringify({ error: "Configuration error" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   try {
     const rawBody = await req.text();
-    const payload = JSON.parse(rawBody);
+    if (!rawBody) {
+      return new Response(JSON.stringify({ error: "Empty body" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    let payload;
+    try {
+      payload = JSON.parse(rawBody);
+    } catch (e) {
+      console.error("[Unified Webhook] JSON Parse Error:", e.message);
+      return new Response(JSON.stringify({ error: "Invalid JSON" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const url = new URL(req.url);
     const source = url.searchParams.get("source") || "unknown";
 
@@ -38,7 +64,10 @@ Deno.serve(async (req) => {
       .select()
       .single();
 
-    if (eventError) throw eventError;
+    if (eventError) {
+      console.error("[Unified Webhook] DB Insert Error:", eventError);
+      throw eventError;
+    }
 
     console.log(`[Unified Webhook] Received event from ${source}, event_id: ${event.id}`);
 
@@ -51,8 +80,7 @@ Deno.serve(async (req) => {
     }
 
     if (processorUrl) {
-      // Background call to the actual processor to keep response time low
-      // We pass the webhook_event_id so the processor can update it
+      // Background call to the actual processor
       fetch(processorUrl, {
         method: "POST",
         headers: {
@@ -60,7 +88,10 @@ Deno.serve(async (req) => {
           "X-Webhook-Event-Id": event.id,
         },
         body: rawBody,
-      }).catch(err => console.error(`[Unified Webhook] Error calling processor ${source}:`, err));
+      }).catch(err => {
+        console.error(`[Unified Webhook] Async fetch error for ${source}:`, err);
+        // We still return 200 to the source, but we've logged the failure internally
+      });
     }
 
     return new Response(JSON.stringify({ success: true, event_id: event.id }), {
@@ -68,8 +99,12 @@ Deno.serve(async (req) => {
     });
 
   } catch (error: any) {
-    console.error("[Unified Webhook] Error:", error);
-    return new Response(JSON.stringify({ success: false, error: error.message }), {
+    console.error("[Unified Webhook] Critical Error:", error);
+    return new Response(JSON.stringify({ 
+      success: false, 
+      error: "Internal Server Error",
+      reference: crypto.randomUUID() 
+    }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

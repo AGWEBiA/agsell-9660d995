@@ -18,17 +18,27 @@ export function useForms() {
   const formsQuery = useQuery({
     queryKey: ['forms', user?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from('forms')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data as Form[];
+      try {
+        if (!user?.id) return [];
+        const { data, error } = await supabase
+          .from('forms')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error('[useForms] Supabase error:', error);
+          throw new Error(error.message || 'Erro ao buscar formulários');
+        }
+        return data as Form[];
+      } catch (err: any) {
+        toast.error('Erro de conexão: Verifique sua internet');
+        throw err;
+      }
     },
     enabled: !!user?.id,
+    retry: 2,
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const createForm = useMutation({

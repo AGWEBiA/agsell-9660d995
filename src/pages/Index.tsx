@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { SEO } from '@/components/seo/SEO';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -104,6 +105,10 @@ function Navbar() {
 function HeroSection() {
   return (
     <section className="relative py-16 md:py-20 lg:py-28 overflow-hidden">
+      <SEO 
+        title="CRM com WhatsApp, E-mail, IA e Automação"
+        description="AG Sell é a plataforma all-in-one que substitui HubSpot, ActiveCampaign e ManyChat. CRM integrado com WhatsApp e IA a partir de R$ 197/mês."
+      />
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-[hsl(2,76%,53%)]/5 blur-3xl" />
         <div className="absolute -bottom-20 -left-20 w-[500px] h-[500px] rounded-full bg-[hsl(2,76%,53%)]/3 blur-3xl" />

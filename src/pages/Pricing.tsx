@@ -428,6 +428,10 @@ export default function Pricing() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
+      <SEO 
+        title="Preços e Planos — Comece a partir de R$ 197/mês"
+        description="Escolha o plano ideal da AG Sell para sua empresa. Economize mais de R$ 1.650/mês substituindo 6 ferramentas por uma única plataforma de CRM e IA."
+      />
       {/* Header */}
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">

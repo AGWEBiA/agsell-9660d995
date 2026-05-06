@@ -8,11 +8,12 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { PermissionsProvider } from "@/contexts/PermissionsContext";
 import { AdminViewProvider } from "@/contexts/AdminViewContext";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { GlobalSearch } from "@/components/search/GlobalSearch";
-import { FeatureRequiredPage } from "@/components/permissions/FeatureRequiredPage";
-import { RuntimeProtection } from "@/components/security/RuntimeProtection";
+// Lazy components for layout and security
+const ProtectedRoute = React.lazy(() => import("@/components/auth/ProtectedRoute").then(m => ({ default: m.ProtectedRoute })));
+const DashboardLayout = React.lazy(() => import("@/components/layout/DashboardLayout").then(m => ({ default: m.DashboardLayout })));
+const GlobalSearch = React.lazy(() => import("@/components/search/GlobalSearch").then(m => ({ default: m.GlobalSearch })));
+const FeatureRequiredPage = React.lazy(() => import("@/components/permissions/FeatureRequiredPage").then(m => ({ default: m.FeatureRequiredPage })));
+const RuntimeProtection = React.lazy(() => import("@/components/security/RuntimeProtection").then(m => ({ default: m.RuntimeProtection })));
 import React, { Suspense } from "react";
 import { HelmetProvider } from "react-helmet-async";
 
@@ -153,11 +154,11 @@ const App = () => (
             <TooltipProvider>
               <Toaster />
               <Sonner />
-              <RuntimeProtection />
-              <BrowserRouter>
-                <GlobalSearch />
-                <Suspense fallback={<PageLoader />}>
-                <Routes>
+              <Suspense fallback={<PageLoader />}>
+                <RuntimeProtection />
+                <BrowserRouter>
+                  <GlobalSearch />
+                  <Routes>
                 {/* Public Routes */}
                   <Route path="/" element={<Index />} />
                   <Route path="/login" element={<Login />} />

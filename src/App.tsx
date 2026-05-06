@@ -8,14 +8,14 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { PermissionsProvider } from "@/contexts/PermissionsContext";
 import { AdminViewProvider } from "@/contexts/AdminViewContext";
+import React, { Suspense } from "react";
+import { HelmetProvider } from "react-helmet-async";
 // Lazy components for layout and security
 const ProtectedRoute = React.lazy(() => import("@/components/auth/ProtectedRoute").then(m => ({ default: m.ProtectedRoute })));
 const DashboardLayout = React.lazy(() => import("@/components/layout/DashboardLayout").then(m => ({ default: m.DashboardLayout })));
 const GlobalSearch = React.lazy(() => import("@/components/search/GlobalSearch").then(m => ({ default: m.GlobalSearch })));
 const FeatureRequiredPage = React.lazy(() => import("@/components/permissions/FeatureRequiredPage").then(m => ({ default: m.FeatureRequiredPage })));
 const RuntimeProtection = React.lazy(() => import("@/components/security/RuntimeProtection").then(m => ({ default: m.RuntimeProtection })));
-import React, { Suspense } from "react";
-import { HelmetProvider } from "react-helmet-async";
 
 // Loading fallback
 const PageLoader = () => (

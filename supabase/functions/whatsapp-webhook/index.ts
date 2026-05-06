@@ -6,34 +6,33 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-Deno.serve(async (req) => {
-  // Meta webhook verification (GET)
-  if (req.method === "GET") {
-    const url = new URL(req.url);
-    const mode = url.searchParams.get("hub.mode");
-    const token = url.searchParams.get("hub.verify_token");
-    const challenge = url.searchParams.get("hub.challenge");
-    const verifyToken = Deno.env.get("WHATSAPP_WEBHOOK_VERIFY_TOKEN") || "agsell_whatsapp_verify";
-
-    if (mode === "subscribe" && token === verifyToken) {
-      console.log("WhatsApp webhook verified");
-      return new Response(challenge, { status: 200 });
-    }
-    return new Response("Forbidden", { status: 403 });
-  }
-
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
-
+// Log audit events to system_logs for admin transparency
+const logAudit = async (supabase: any, details: {
+  orgId?: string | null,
+  source: string,
+  event: string,
+  status: 'success' | 'failure' | 'skipped',
+  message: string,
+  payload?: any,
+  error?: any
+}) => {
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    await supabase.from("system_logs").insert({
+      organization_id: details.orgId,
+      source: details.source,
+      event_type: details.event,
+      status: details.status,
+      message: details.message,
+      payload: details.payload,
+      error_details: details.error
+    });
+  } catch (err) {
+    console.error("Failed to log audit event:", err);
+  }
+};
 
-    const body = await req.json();
-    console.log("WhatsApp webhook received:", JSON.stringify(body).slice(0, 500));
-
+Deno.serve(async (req) => {
+...
     // ────────────────────────────────────────────────────────────────
     // Standardized structured logger for Phase 3 events
     // (poll/reaction/sticker/mention) — makes debugging fast.
@@ -51,13 +50,13 @@ Deno.serve(async (req) => {
       logFn(`${tag} ${JSON.stringify(details).slice(0, 600)}`);
 
       try {
-        await supabase.from("whatsapp_webhook_logs").insert({
-          event_type: `phase3.${kind}`,
-          instance_name: instance || null,
-          phone,
-          organization_id: orgId,
-          routing_status: level === "skipped" ? "discarded" : (level === "error" ? "discarded" : "routed"),
-          details: { phase: 3, kind, level, ...details },
+        await logAudit(supabase, {
+          orgId,
+          source: "whatsapp-webhook",
+          event: `phase3.${kind}`,
+          status: level === "error" ? "failure" : (level === "skipped" ? "skipped" : "success"),
+          message: `${kind} event processed`,
+          payload: { ...details, instance, phone }
         });
       } catch (logErr) {
         console.error(`${tag} failed to persist webhook log:`, logErr);

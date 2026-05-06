@@ -536,8 +536,9 @@ Deno.serve(async (req) => {
           .maybeSingle();
 
         if (membership && plan) {
+          targetOrgId = membership.organization_id;
           await activateSubscription(supabase, {
-            organizationId: membership.organization_id,
+            organizationId: targetOrgId,
             planId: plan.id,
             planSlug: plan.slug,
             kiwifyOrderId: payload.order_id,
@@ -545,6 +546,9 @@ Deno.serve(async (req) => {
             billingCycle: detectBillingCycle(payload),
           });
           await logStep(supabase, "Subscription activated for existing user");
+
+          // Trigger automations for purchase
+          await triggerPurchaseAutomation(supabase, targetOrgId, customerEmail, payload);
 
           const hasLoggedIn = !!existingUser.last_sign_in_at;
           const alreadyEmailed =
@@ -575,7 +579,7 @@ Deno.serve(async (req) => {
               const { data: organizationData } = await supabase
                 .from("organizations")
                 .select("name")
-                .eq("id", membership.organization_id)
+                .eq("id", targetOrgId)
                 .maybeSingle();
 
               await sendWelcomeEmail(supabase, {
@@ -621,19 +625,23 @@ Deno.serve(async (req) => {
             .single();
 
           if (newOrg?.id) {
+            targetOrgId = newOrg.id;
             await supabase.from("organization_members").insert({
-              organization_id: newOrg.id,
+              organization_id: targetOrgId,
               user_id: existingUser.id,
               role: "owner",
             });
             await activateSubscription(supabase, {
-              organizationId: newOrg.id,
+              organizationId: targetOrgId,
               planId: plan.id,
               planSlug: plan.slug,
               kiwifyOrderId: payload.order_id,
               kiwifySubscriptionId: payload.Subscription?.id,
               billingCycle: detectBillingCycle(payload),
             });
+
+            // Trigger automations for purchase
+            await triggerPurchaseAutomation(supabase, targetOrgId, customerEmail, payload);
 
             // Send credentials email for existing user without org
             const hasLoggedIn = !!existingUser.last_sign_in_at;
@@ -671,7 +679,7 @@ Deno.serve(async (req) => {
               supabase,
               "Org + subscription created for existing user",
               {
-                orgId: newOrg.id,
+                orgId: targetOrgId,
               },
             );
           }
@@ -727,29 +735,32 @@ Deno.serve(async (req) => {
             .select("id")
             .single();
 
-          const orgId = newOrg?.id;
-          if (orgError || !orgId) {
+          if (orgError || !newOrg?.id) {
             await logStep(
               supabase,
               "ERROR creating organization",
               orgError?.message,
             );
           } else {
+            targetOrgId = newOrg.id;
             // Add user as owner
             await supabase.from("organization_members").insert({
-              organization_id: orgId,
+              organization_id: targetOrgId,
               user_id: userId,
               role: "owner",
             });
 
             await activateSubscription(supabase, {
-              organizationId: orgId,
+              organizationId: targetOrgId,
               planId: plan.id,
               planSlug: plan.slug,
               kiwifyOrderId: payload.order_id,
               kiwifySubscriptionId: payload.Subscription?.id,
               billingCycle: detectBillingCycle(payload),
             });
+
+            // Trigger automations for purchase
+            await triggerPurchaseAutomation(supabase, targetOrgId, customerEmail, payload);
 
             // Send welcome email
             await sendWelcomeEmail(supabase, {
@@ -765,7 +776,7 @@ Deno.serve(async (req) => {
               "New account created and subscription activated",
               {
                 userId,
-                orgId,
+                orgId: targetOrgId,
               },
             );
           }
@@ -773,8 +784,8 @@ Deno.serve(async (req) => {
       }
 
       // Create/update contact
-      if (plan) {
-        await upsertContact(supabase, payload, plan.name);
+      if (plan && targetOrgId) {
+        await upsertContact(supabase, payload, plan.name, targetOrgId);
       }
 
       if (webhookEventId) {
@@ -783,6 +794,7 @@ Deno.serve(async (req) => {
           .update({
             processed: true,
             processed_at: new Date().toISOString(),
+            organization_id: targetOrgId || null,
           })
           .eq("id", webhookEventId);
       }

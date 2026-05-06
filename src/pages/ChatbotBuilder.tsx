@@ -555,7 +555,7 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Palette & Rules */}
-        <div className="w-56 border-r flex flex-col shrink-0">
+        <div className="w-72 border-r flex flex-col shrink-0">
           <Tabs value={activeTab} onValueChange={v => setActiveTab(v as any)} className="flex flex-col h-full">
             <TabsList className="mx-2 mt-2 shrink-0">
               <TabsTrigger value="nodes" className="text-xs flex-1">Blocos</TabsTrigger>

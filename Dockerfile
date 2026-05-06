@@ -8,20 +8,18 @@ RUN npm ci
 
 COPY . .
 
-# Build args (precisam ser declarados para o Vite ler durante o build)
+# Build args opcionais. O publish do Lovable pode não enviar build args;
+# nesse caso o Vite lê as chaves públicas VITE_* do .env copiado acima.
 ARG VITE_SUPABASE_URL
 ARG VITE_SUPABASE_ANON_KEY
 ARG VITE_SUPABASE_PUBLISHABLE_KEY
 
-ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
-ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
-ENV VITE_SUPABASE_PUBLISHABLE_KEY=$VITE_SUPABASE_PUBLISHABLE_KEY
+ENV VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+ENV VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+ENV VITE_SUPABASE_PUBLISHABLE_KEY=${VITE_SUPABASE_PUBLISHABLE_KEY}
 
-# Validações – falha cedo se algo não chegou no build
-RUN test -n "$VITE_SUPABASE_URL" || (echo "Erro: VITE_SUPABASE_URL não recebida como build arg" && exit 1)
-RUN test -n "$VITE_SUPABASE_ANON_KEY" || (echo "Erro: VITE_SUPABASE_ANON_KEY não recebida como build arg" && exit 1)
-RUN test -n "$VITE_SUPABASE_PUBLISHABLE_KEY" || (echo "Erro: VITE_SUPABASE_PUBLISHABLE_KEY não recebida como build arg" && exit 1)
-RUN node -e "console.log('Build usando Supabase project ref:', new URL(process.env.VITE_SUPABASE_URL).hostname.split('.')[0])"
+# Diagnóstico não bloqueante: mostra de onde o build receberá as variáveis sem vazar chaves.
+RUN node -e "const fs=require('fs'); const dot=fs.existsSync('.env')?fs.readFileSync('.env','utf8'):''; const has=(k)=>Boolean(process.env[k]||new RegExp('^'+k+'=', 'm').test(dot)); console.log('Build env check:', {VITE_SUPABASE_URL:has('VITE_SUPABASE_URL'), VITE_SUPABASE_PUBLISHABLE_KEY:has('VITE_SUPABASE_PUBLISHABLE_KEY'), VITE_SUPABASE_ANON_KEY:has('VITE_SUPABASE_ANON_KEY'), envFile:fs.existsSync('.env')});"
 
 RUN npm run build
 

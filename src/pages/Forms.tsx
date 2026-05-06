@@ -34,6 +34,8 @@ export default function Forms() {
   const { forms, isLoading, createForm, updateForm, toggleForm, deleteForm, getFormSubmissions } = useForms();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createTab, setCreateTab] = useState<'templates' | 'blank'>('templates');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [newForm, setNewForm] = useState<{ name: string; description: string; fields: FormField[]; settings: FormSettings }>({
     name: '', description: '', fields: [
       { name: 'name', label: 'Nome', type: 'text', required: true },

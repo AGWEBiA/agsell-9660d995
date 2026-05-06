@@ -270,6 +270,10 @@ export default function Automations() {
                       ))}
                       {forms.length === 0 && (
                         <SelectItem value="_none" disabled>Nenhum formulário criado</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </FormField>
               )}
               {requiresKeyword && (
                 <>
@@ -296,10 +300,6 @@ export default function Automations() {
                     </Select>
                   </FormField>
                 </>
-              )}
-                    </SelectContent>
-                  </Select>
-                </FormField>
               )}
               <FormField label="Canal" required helpText="Por qual canal a automação vai atuar">
                 <div className="grid grid-cols-3 gap-2">

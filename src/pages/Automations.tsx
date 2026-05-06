@@ -270,7 +270,33 @@ export default function Automations() {
                       ))}
                       {forms.length === 0 && (
                         <SelectItem value="_none" disabled>Nenhum formulário criado</SelectItem>
-                      )}
+              )}
+              {requiresKeyword && (
+                <>
+                  <FormField label="Palavra-chave" required helpText="A automação só dispara quando a mensagem recebida contiver esta palavra-chave">
+                    <Input
+                      placeholder="Ex: INFO, QUERO, PROMO"
+                      value={newAutomation.keyword}
+                      onChange={(e) => setNewAutomation(prev => ({ ...prev, keyword: e.target.value }))}
+                    />
+                  </FormField>
+                  <FormField label="Correspondência" helpText="Como comparar a palavra-chave com a mensagem recebida">
+                    <Select
+                      value={newAutomation.match_type}
+                      onValueChange={(value) => setNewAutomation(prev => ({ ...prev, match_type: value }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="contains">Contém</SelectItem>
+                        <SelectItem value="exact">Exata</SelectItem>
+                        <SelectItem value="starts_with">Começa com</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormField>
+                </>
+              )}
                     </SelectContent>
                   </Select>
                 </FormField>

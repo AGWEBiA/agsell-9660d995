@@ -131,7 +131,7 @@ export default function SystemLogs() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[180px]">Data</TableHead>
-                  <TableHead className="w-[100px]">Nível</TableHead>
+                  <TableHead className="w-[100px]">Status</TableHead>
                   <TableHead className="w-[150px]">Origem</TableHead>
                   <TableHead className="w-[150px]">Evento</TableHead>
                   <TableHead>Mensagem</TableHead>
@@ -153,15 +153,18 @@ export default function SystemLogs() {
                       <TableCell className="font-mono text-xs text-muted-foreground">
                         {format(new Date(log.created_at), "dd/MM HH:mm:ss", { locale: ptBR })}
                       </TableCell>
-                      <TableCell>{getLevelBadge(log.level)}</TableCell>
+                      <TableCell>{getLevelBadge(log.status)}</TableCell>
                       <TableCell className="font-medium text-xs">{log.source}</TableCell>
-                      <TableCell className="text-xs">{log.event}</TableCell>
+                      <TableCell className="text-xs">{log.event_type}</TableCell>
                       <TableCell className="max-w-md truncate" title={log.message}>
                         {log.message}
                       </TableCell>
                       <TableCell>
-                        {log.payload && (
-                          <Button variant="ghost" size="icon" onClick={() => console.log(log.payload)}>
+                        {(log.payload || log.error_details) && (
+                          <Button variant="ghost" size="icon" onClick={() => {
+                            console.log("Payload:", log.payload);
+                            if (log.error_details) console.log("Errors:", log.error_details);
+                          }}>
                             <Activity className="h-4 w-4" />
                           </Button>
                         )}

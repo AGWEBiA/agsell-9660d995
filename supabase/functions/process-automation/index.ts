@@ -132,15 +132,19 @@ serve(async (req) => {
       });
 
       // Also log to system_logs for admin monitoring
-      await logToSystem(supabase, {
-        organization_id: automation.organization_id,
-        source: "process-automation",
-        event: "automation_step",
-        message: `${nodeLabel}: ${status}`,
-        level: status === 'error' ? 'error' : 'info',
-        payload: { automation_id, contact_id, action_type: actionType, ...details },
-        metadata: { execution_id: executionId, step: currentStep }
-      });
+      try {
+        await supabase.from("system_logs").insert({
+          organization_id: automation.organization_id,
+          source: "process-automation",
+          event_type: "automation_step",
+          status: status === 'error' ? 'failure' : 'success',
+          message: `${nodeLabel}: ${status}`,
+          payload: { automation_id, contact_id, action_type: actionType, ...details },
+          error_details: status === 'error' ? { message: status } : null
+        });
+      } catch (logErr) {
+        console.error("Failed to log automation step to system_logs:", logErr);
+      }
     };
 
     // Helper: send WhatsApp via send-whatsapp edge function (supports text/buttons/list/presence)

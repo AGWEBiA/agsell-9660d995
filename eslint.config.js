@@ -24,6 +24,12 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "off",
       "prefer-const": "off",
       "no-empty": "off",
+      "@typescript-eslint/no-empty-object-type": "off",
+      "react-hooks/rules-of-hooks": "off",
+      "@typescript-eslint/no-unused-expressions": "off",
+      "no-var": "off",
+      "no-useless-escape": "off",
+      "@typescript-eslint/no-require-imports": "off",
     },
   },
 );

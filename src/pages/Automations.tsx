@@ -86,12 +86,18 @@ export default function Automations() {
     trigger_type: '',
     channel: '',
     form_id: '',
+    keyword: '',
+    match_type: 'contains',
   });
   const [editActions, setEditActions] = useState<Action[]>([]);
+
+  const KEYWORD_TRIGGERS = ['whatsapp_received', 'instagram_dm', 'instagram_comment'];
+  const requiresKeyword = KEYWORD_TRIGGERS.includes(newAutomation.trigger_type);
 
   const handleCreate = () => {
     if (!newAutomation.name || !newAutomation.trigger_type || !newAutomation.channel) return;
     if (newAutomation.trigger_type === 'form_submitted' && !newAutomation.form_id) return;
+    if (requiresKeyword && !newAutomation.keyword.trim()) return;
     createAutomation.mutate({
       name: newAutomation.name,
       trigger_type: newAutomation.trigger_type,
@@ -102,9 +108,12 @@ export default function Automations() {
         ...(newAutomation.trigger_type === 'form_submitted' && newAutomation.form_id
           ? { form_id: newAutomation.form_id, form_name: forms.find(f => f.id === newAutomation.form_id)?.name || '' }
           : {}),
+        ...(requiresKeyword
+          ? { keyword: newAutomation.keyword.trim(), match_type: newAutomation.match_type }
+          : {}),
       },
     });
-    setNewAutomation({ name: '', trigger_type: '', channel: '', form_id: '' });
+    setNewAutomation({ name: '', trigger_type: '', channel: '', form_id: '', keyword: '', match_type: 'contains' });
     setIsDialogOpen(false);
   };
 

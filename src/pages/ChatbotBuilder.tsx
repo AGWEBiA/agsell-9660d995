@@ -393,7 +393,15 @@ function RulesEditor({ rules, onUpdate }: { rules: ChatbotRule[]; onUpdate: (rul
               <Input value={rule.name} onChange={e => updateRule(rule.id, { name: e.target.value })} className="h-7 text-xs font-medium border-0 p-0 focus-visible:ring-0" />
               <div className="flex items-center gap-2">
                 <Switch checked={rule.isActive} onCheckedChange={v => updateRule(rule.id, { isActive: v })} />
-                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => onUpdate(rules.filter(r => r.id !== rule.id))}><Trash2 className="h-3 w-3" /></Button>
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10" 
+                  onClick={() => onUpdate(rules.filter(r => r.id !== rule.id))}
+                  title="Excluir regra"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
               </div>
             </div>
           </CardHeader>

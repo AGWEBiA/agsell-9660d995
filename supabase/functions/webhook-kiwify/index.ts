@@ -1057,22 +1057,12 @@ async function upsertContact(
   supabase: any,
   payload: KiwifyPayload,
   planName: string,
+  organization_id: string,
 ) {
   const customer = payload.Customer;
-  if (!customer?.email) return;
+  if (!customer?.email || !organization_id) return;
 
-  // Find an org that has this kiwify product configured
-  const { data: orgIntegration } = await supabase
-    .from("organization_integrations")
-    .select("organization_id")
-    .eq("integration_type", "kiwify")
-    .eq("is_active", true)
-    .limit(1)
-    .maybeSingle();
-
-  if (!orgIntegration) return;
-
-  const orgId = orgIntegration.organization_id;
+  const orgId = organization_id;
 
   const { data: owner } = await supabase
     .from("organization_members")
@@ -1080,9 +1070,12 @@ async function upsertContact(
     .eq("organization_id", orgId)
     .eq("role", "owner")
     .limit(1)
-    .single();
+    .maybeSingle();
 
-  if (!owner) return;
+  if (!owner) {
+    console.warn(`[upsertContact] No owner found for org ${orgId}`);
+    return;
+  }
 
   const nameParts = customer.full_name.split(" ");
 

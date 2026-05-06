@@ -1,4 +1,5 @@
 import React from 'react';
+import { SEO } from '@/components/seo/SEO';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { CompetitorComparison } from '@/components/pricing/CompetitorComparison';

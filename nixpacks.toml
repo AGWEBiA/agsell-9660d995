@@ -5,7 +5,7 @@ nixPkgs = ["nodejs_20", "bun"]
 cmds = ["bun install --frozen-lockfile"]
 
 [phases.build]
-cmds = ["bun run build"]
+cmds = ["NODE_OPTIONS=--max-old-space-size=4096 bun run build"]
 
 [start]
 cmd = "bun run preview"

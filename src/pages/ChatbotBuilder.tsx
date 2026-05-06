@@ -387,12 +387,20 @@ function RulesEditor({ rules, onUpdate }: { rules: ChatbotRule[]; onUpdate: (rul
   return (
     <div className="space-y-4">
       {rules.map(rule => (
-        <Card key={rule.id} className="border">
+        <Card key={rule.id} className="border shadow-sm">
           <CardHeader className="pb-2 pt-3 px-3">
-            <div className="flex items-center justify-between">
-              <Input value={rule.name} onChange={e => updateRule(rule.id, { name: e.target.value })} className="h-7 text-xs font-medium border-0 p-0 focus-visible:ring-0" />
-              <div className="flex items-center gap-2">
-                <Switch checked={rule.isActive} onCheckedChange={v => updateRule(rule.id, { isActive: v })} />
+            <div className="flex items-center justify-between gap-2">
+              <Input 
+                value={rule.name} 
+                onChange={e => updateRule(rule.id, { name: e.target.value })} 
+                className="h-7 text-xs font-medium border-0 p-0 focus-visible:ring-0 bg-transparent flex-1" 
+              />
+              <div className="flex items-center gap-1 shrink-0">
+                <Switch 
+                  checked={rule.isActive} 
+                  onCheckedChange={v => updateRule(rule.id, { isActive: v })} 
+                  className="scale-75"
+                />
                 <Button 
                   size="icon" 
                   variant="ghost" 

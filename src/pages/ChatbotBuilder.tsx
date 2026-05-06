@@ -348,7 +348,7 @@ function NodeConfigEditor({ node, onUpdate, allNodes }: { node: ChatbotNode; onU
             onUpdate({ ...node, connections: conns });
           }}>
             <SelectTrigger className="h-7 text-[10px]"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-            <SelectContent className="z-[100]">
+            <SelectContent className="z-[100]" position="popper" sideOffset={5}>
               <SelectItem value="_none">Nenhum</SelectItem>
               {allNodes.filter(n => n.id !== node.id).map(n => (
                 <SelectItem key={n.id} value={n.id}>{n.label}</SelectItem>

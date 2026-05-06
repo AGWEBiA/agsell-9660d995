@@ -14,6 +14,7 @@ import { GlobalSearch } from "@/components/search/GlobalSearch";
 import { FeatureRequiredPage } from "@/components/permissions/FeatureRequiredPage";
 import { RuntimeProtection } from "@/components/security/RuntimeProtection";
 import React, { Suspense } from "react";
+import { HelmetProvider } from "react-helmet-async";
 
 // Loading fallback
 const PageLoader = () => (
@@ -142,7 +143,8 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <AuthProvider>
         <OrganizationProvider>
@@ -283,7 +285,8 @@ const App = () => (
         </OrganizationProvider>
       </AuthProvider>
     </ThemeProvider>
-  </QueryClientProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;

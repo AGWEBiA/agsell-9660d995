@@ -33,13 +33,13 @@ export default function SystemLogs() {
         .range(page * pageSize, (page + 1) * pageSize - 1);
 
       if (level !== 'all') {
-        query = query.eq('level', level);
+        query = query.eq('status', level);
       }
       if (source) {
         query = query.ilike('source', `%${source}%`);
       }
       if (search) {
-        query = query.or(`message.ilike.%${search}%,event.ilike.%${search}%`);
+        query = query.or(`message.ilike.%${search}%,event_type.ilike.%${search}%`);
       }
       if (currentOrganization?.id) {
         query = query.eq('organization_id', currentOrganization.id);
@@ -52,12 +52,12 @@ export default function SystemLogs() {
     enabled: !!currentOrganization?.id,
   });
 
-  const getLevelBadge = (level: string) => {
-    switch (level) {
-      case 'error': return <Badge variant="destructive" className="gap-1"><ShieldAlert className="h-3 w-3" /> Erro</Badge>;
-      case 'warning': return <Badge variant="outline" className="text-amber-600 border-amber-600 gap-1 bg-amber-50"><AlertCircle className="h-3 w-3" /> Aviso</Badge>;
-      case 'debug': return <Badge variant="secondary" className="gap-1 font-mono"><Bug className="h-3 w-3" /> Debug</Badge>;
-      default: return <Badge variant="outline" className="text-blue-600 border-blue-600 gap-1 bg-blue-50"><Info className="h-3 w-3" /> Info</Badge>;
+  const getLevelBadge = (status: string) => {
+    switch (status) {
+      case 'failure': return <Badge variant="destructive" className="gap-1"><ShieldAlert className="h-3 w-3" /> Falha</Badge>;
+      case 'skipped': return <Badge variant="outline" className="text-amber-600 border-amber-600 gap-1 bg-amber-50"><AlertCircle className="h-3 w-3" /> Pulado</Badge>;
+      case 'success': return <Badge variant="outline" className="text-emerald-600 border-emerald-600 gap-1 bg-emerald-50"><Info className="h-3 w-3" /> Sucesso</Badge>;
+      default: return <Badge variant="secondary" className="gap-1 font-mono"><Bug className="h-3 w-3" /> {status}</Badge>;
     }
   };
 
@@ -81,17 +81,16 @@ export default function SystemLogs() {
         <CardHeader className="pb-3">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="space-y-2">
-              <label className="text-xs font-medium uppercase text-muted-foreground">Nível</label>
+              <label className="text-xs font-medium uppercase text-muted-foreground">Status</label>
               <Select value={level} onValueChange={setLevel}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Todos os níveis" />
+                  <SelectValue placeholder="Todos os status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os níveis</SelectItem>
-                  <SelectItem value="info">Informação</SelectItem>
-                  <SelectItem value="warning">Aviso</SelectItem>
-                  <SelectItem value="error">Erro</SelectItem>
-                  <SelectItem value="debug">Debug</SelectItem>
+                  <SelectItem value="all">Todos os status</SelectItem>
+                  <SelectItem value="success">Sucesso</SelectItem>
+                  <SelectItem value="skipped">Pulado</SelectItem>
+                  <SelectItem value="failure">Falha</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -132,7 +131,7 @@ export default function SystemLogs() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[180px]">Data</TableHead>
-                  <TableHead className="w-[100px]">Nível</TableHead>
+                  <TableHead className="w-[100px]">Status</TableHead>
                   <TableHead className="w-[150px]">Origem</TableHead>
                   <TableHead className="w-[150px]">Evento</TableHead>
                   <TableHead>Mensagem</TableHead>
@@ -154,15 +153,18 @@ export default function SystemLogs() {
                       <TableCell className="font-mono text-xs text-muted-foreground">
                         {format(new Date(log.created_at), "dd/MM HH:mm:ss", { locale: ptBR })}
                       </TableCell>
-                      <TableCell>{getLevelBadge(log.level)}</TableCell>
+                      <TableCell>{getLevelBadge(log.status)}</TableCell>
                       <TableCell className="font-medium text-xs">{log.source}</TableCell>
-                      <TableCell className="text-xs">{log.event}</TableCell>
+                      <TableCell className="text-xs">{log.event_type}</TableCell>
                       <TableCell className="max-w-md truncate" title={log.message}>
                         {log.message}
                       </TableCell>
                       <TableCell>
-                        {log.payload && (
-                          <Button variant="ghost" size="icon" onClick={() => console.log(log.payload)}>
+                        {(log.payload || log.error_details) && (
+                          <Button variant="ghost" size="icon" onClick={() => {
+                            console.log("Payload:", log.payload);
+                            if (log.error_details) console.log("Errors:", log.error_details);
+                          }}>
                             <Activity className="h-4 w-4" />
                           </Button>
                         )}

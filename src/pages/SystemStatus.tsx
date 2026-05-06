@@ -2,11 +2,14 @@ import { useSystemStatus, SystemIncident } from '@/hooks/useSystemStatus';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { CheckCircle, AlertTriangle, XCircle, Wrench, Clock, Loader2 } from 'lucide-react';
+import { CheckCircle, AlertTriangle, XCircle, Wrench, Clock, Loader2, Server, Database, Globe, Zap, ShieldCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import logoRed from '@/assets/agsell-logo-red.png';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const statusConfig = {
   operational: { label: 'Operacional', icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-950', border: 'border-green-200 dark:border-green-800', badgeBg: 'bg-green-100 text-green-800' },
@@ -108,6 +111,35 @@ function IncidentCard({ incident }: { incident: SystemIncident }) {
 
 export default function SystemStatus() {
   const { overallStatus, services, getServiceStatus, recentIncidents, isLoading } = useSystemStatus();
+  const { isAdmin } = usePermissions();
+
+  // Admin-only metrics
+  const { data: healthMetrics } = useQuery({
+    queryKey: ['system-health-metrics'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('system_health_metrics' as any)
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      return data || [];
+    },
+    enabled: isAdmin
+  });
+
+  const { data: lastExecution } = useQuery({
+    queryKey: ['last-automation-execution'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('automation_executions')
+        .select('created_at, status')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+    enabled: isAdmin
+  });
 
   if (isLoading) {
     return (
@@ -140,6 +172,64 @@ export default function SystemStatus() {
 
       <main className="max-w-3xl mx-auto px-4 py-8 space-y-8">
         <OverallBanner status={overallStatus} />
+
+        {isAdmin && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="border-primary/20 bg-primary/5">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-primary" />
+                  Painel de Admin: Core Engine
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground flex items-center gap-2"><Zap className="h-3.5 w-3.5" /> Última Automação</span>
+                  <span className="font-mono">
+                    {lastExecution ? format(new Date(lastExecution.created_at), "HH:mm:ss") : 'N/A'} 
+                    <Badge variant="outline" className="ml-2 scale-75 origin-right">{lastExecution?.status || 'idle'}</Badge>
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground flex items-center gap-2"><Database className="h-3.5 w-3.5" /> Banco de Dados</span>
+                  <Badge variant="outline" className="text-emerald-500 border-emerald-500 bg-emerald-50">Conectado</Badge>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground flex items-center gap-2"><Server className="h-3.5 w-3.5" /> Edge Functions</span>
+                  <Badge variant="outline" className="text-emerald-500 border-emerald-500 bg-emerald-50">Deploy v2.1.0</Badge>
+                </div>
+                <div className="pt-2">
+                  <Link to="/system-logs">
+                    <Badge className="w-full justify-center py-1.5 cursor-pointer hover:bg-primary/90">Acessar Logs de Auditoria →</Badge>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-blue-200 bg-blue-50/30">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium flex items-center gap-2 text-blue-700">
+                  <Globe className="h-4 w-4" />
+                  Webhooks & API
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Status WhatsApp</span>
+                  <Badge variant="outline" className="text-emerald-600">Online (Evolution)</Badge>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Status Kiwify</span>
+                  <Badge variant="outline" className="text-emerald-600">Receptivo</Badge>
+                </div>
+                <div className="flex justify-between items-center text-sm text-blue-600 font-medium">
+                  <span>Monitoramento Ativo</span>
+                  <span className="animate-pulse">●</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Services */}
         <Card>

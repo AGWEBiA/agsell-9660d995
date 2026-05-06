@@ -6,6 +6,31 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// Log audit events to system_logs for admin transparency
+const logAudit = async (supabase: any, details: {
+  orgId?: string | null,
+  source: string,
+  event: string,
+  status: 'success' | 'failure' | 'skipped',
+  message: string,
+  payload?: any,
+  error?: any
+}) => {
+  try {
+    await supabase.from("system_logs").insert({
+      organization_id: details.orgId,
+      source: details.source,
+      event_type: details.event,
+      status: details.status,
+      message: details.message,
+      payload: details.payload,
+      error_details: details.error
+    });
+  } catch (err) {
+    console.error("Failed to log audit event:", err);
+  }
+};
+
 Deno.serve(async (req) => {
   // Meta webhook verification (GET)
   if (req.method === "GET") {
@@ -51,18 +76,19 @@ Deno.serve(async (req) => {
       logFn(`${tag} ${JSON.stringify(details).slice(0, 600)}`);
 
       try {
-        await supabase.from("whatsapp_webhook_logs").insert({
-          event_type: `phase3.${kind}`,
-          instance_name: instance || null,
-          phone,
-          organization_id: orgId,
-          routing_status: level === "skipped" ? "discarded" : (level === "error" ? "discarded" : "routed"),
-          details: { phase: 3, kind, level, ...details },
+        await logAudit(supabase, {
+          orgId,
+          source: "whatsapp-webhook",
+          event: `phase3.${kind}`,
+          status: level === "error" ? "failure" : (level === "skipped" ? "skipped" : "success"),
+          message: `${kind} event processed`,
+          payload: { ...details, instance, phone }
         });
       } catch (logErr) {
         console.error(`${tag} failed to persist webhook log:`, logErr);
       }
     };
+
 
     // Handle WhatsApp Business API (Cloud API) format
     if (body.object === "whatsapp_business_account") {
@@ -1236,14 +1262,14 @@ Deno.serve(async (req) => {
               || (hasMedia ? `[${messageType === "audio" ? "🎵 Áudio" : messageType === "image" ? "📷 Imagem" : messageType === "video" ? "🎥 Vídeo" : "📎 Arquivo"}]` : "[Mensagem]");
 
             // Log routed message
-            await supabase.from("whatsapp_webhook_logs").insert({
-              event_type: body.event || "messages.upsert",
-              instance_name: instanceName,
-              phone: senderPhone,
-              organization_id: integration.organization_id,
-              routing_status: "routed",
-              details: { message_type: hasMedia || isLocation || isContact ? messageType : "text", from_me: isFromMe, text_preview: resolvedText.slice(0, 100) },
-            }).then(() => {}).catch(() => {});
+            await logAudit(supabase, {
+              orgId: integration.organization_id,
+              source: "whatsapp-webhook",
+              event: "message_routed",
+              status: "success",
+              message: `Message from ${senderPhone} routed to inbox`,
+              payload: { message_type: hasMedia || isLocation || isContact ? messageType : "text", text: resolvedText.slice(0, 100) }
+            });
 
             // For fromMe messages, the senderPhone is the contact we're messaging
             // We route them as "user" sender_type so they appear in the conversation
@@ -1273,7 +1299,7 @@ Deno.serve(async (req) => {
             if (contactId && !isFromMe) {
               const { data: automations } = await supabase
                 .from("automations")
-                .select("id, trigger_type, trigger_config")
+                .select("id, trigger_type, trigger_config, name")
                 .eq("organization_id", integration.organization_id)
                 .in("trigger_type", ["whatsapp_received", "whatsapp_keyword"])
                 .eq("is_active", true);
@@ -1285,8 +1311,27 @@ Deno.serve(async (req) => {
                   // For keyword triggers, check if message matches
                   if (auto.trigger_type === "whatsapp_keyword") {
                     const kw = String(config.keyword || "").toLowerCase();
-                    if (!kw || !resolvedText.toLowerCase().includes(kw)) continue;
+                    if (!kw || !resolvedText.toLowerCase().includes(kw)) {
+                      await logAudit(supabase, {
+                        orgId: integration.organization_id,
+                        source: "whatsapp-webhook",
+                        event: "automation_skipped",
+                        status: "skipped",
+                        message: `Keyword "${kw}" not found in message`,
+                        payload: { automation_id: auto.id, automation_name: auto.name }
+                      });
+                      continue;
+                    }
                   }
+
+                  await logAudit(supabase, {
+                    orgId: integration.organization_id,
+                    source: "whatsapp-webhook",
+                    event: "automation_triggered",
+                    status: "success",
+                    message: `Triggering automation: ${auto.name}`,
+                    payload: { automation_id: auto.id, trigger: auto.trigger_type }
+                  });
 
                   fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/process-automation`, {
                     method: "POST",
@@ -1308,14 +1353,14 @@ Deno.serve(async (req) => {
 
           } else if (isGroupMessage) {
             // Log discarded group message
-            await supabase.from("whatsapp_webhook_logs").insert({
-              event_type: body.event || "messages.upsert",
-              instance_name: instanceName,
-              phone: senderPhone,
-              organization_id: integration.organization_id,
-              routing_status: "discarded",
-              details: { reason: "group_message", jid: String(remoteJid).slice(0, 60) },
-            }).then(() => {}).catch(() => {});
+            await logAudit(supabase, {
+              orgId: integration.organization_id,
+              source: "whatsapp-webhook",
+              event: "group_message_discarded",
+              status: "skipped",
+              message: `Group message from ${senderPhone} discarded`,
+              payload: { jid: String(remoteJid).slice(0, 60) }
+            });
           }
         }
       } else if (instanceName) {

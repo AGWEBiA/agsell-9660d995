@@ -46,6 +46,8 @@ interface ChatbotRule {
   includeTags: string[];
   excludeTags: string[];
   channels: string[];
+  keywords: string[];
+  keywordMatch: 'any' | 'exact' | 'starts_with';
   isActive: boolean;
 }
 
@@ -346,7 +348,7 @@ function NodeConfigEditor({ node, onUpdate, allNodes }: { node: ChatbotNode; onU
             onUpdate({ ...node, connections: conns });
           }}>
             <SelectTrigger className="h-7 text-[10px]"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-[100]">
               <SelectItem value="_none">Nenhum</SelectItem>
               {allNodes.filter(n => n.id !== node.id).map(n => (
                 <SelectItem key={n.id} value={n.id}>{n.label}</SelectItem>
@@ -370,6 +372,8 @@ function RulesEditor({ rules, onUpdate }: { rules: ChatbotRule[]; onUpdate: (rul
       includeTags: [],
       excludeTags: [],
       channels: ['whatsapp'],
+      keywords: [],
+      keywordMatch: 'any',
       isActive: true,
     }]);
   };
@@ -447,6 +451,31 @@ function RulesEditor({ rules, onUpdate }: { rules: ChatbotRule[]; onUpdate: (rul
             <div>
               <Label className="text-xs text-red-600">Tags Exclusão (vírgula)</Label>
               <Input value={rule.excludeTags.join(', ')} onChange={e => updateRule(rule.id, { excludeTags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })} className="h-7 text-xs" placeholder="spam, bloqueado" />
+            </div>
+            <Separator />
+            <div>
+              <Label className="text-xs text-primary">Palavras-chave de disparo (vírgula)</Label>
+              <Input
+                value={(rule.keywords || []).join(', ')}
+                onChange={e => updateRule(rule.id, { keywords: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })}
+                className="h-7 text-xs"
+                placeholder="oi, olá, atendimento"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">Deixe vazio para disparar em qualquer mensagem recebida</p>
+            </div>
+            <div>
+              <Label className="text-xs">Tipo de correspondência</Label>
+              <Select
+                value={rule.keywordMatch || 'any'}
+                onValueChange={v => updateRule(rule.id, { keywordMatch: v as 'any' | 'exact' | 'starts_with' })}
+              >
+                <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                <SelectContent className="z-[100]">
+                  <SelectItem value="any">Contém qualquer palavra-chave</SelectItem>
+                  <SelectItem value="exact">Mensagem exata</SelectItem>
+                  <SelectItem value="starts_with">Começa com</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
@@ -526,7 +555,7 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Palette & Rules */}
-        <div className="w-56 border-r flex flex-col shrink-0">
+        <div className="w-72 border-r flex flex-col shrink-0">
           <Tabs value={activeTab} onValueChange={v => setActiveTab(v as any)} className="flex flex-col h-full">
             <TabsList className="mx-2 mt-2 shrink-0">
               <TabsTrigger value="nodes" className="text-xs flex-1">Blocos</TabsTrigger>

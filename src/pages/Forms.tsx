@@ -20,6 +20,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useForms } from '@/hooks/useForms';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import type { Json } from '@/integrations/supabase/types';
@@ -30,8 +31,10 @@ import { FormStyleEditor } from '@/components/forms/FormStyleEditor';
 import { FormPreview } from '@/components/forms/FormPreview';
 import { FormTagSelector } from '@/components/forms/FormTagSelector';
 
+// Component for managing web forms with search and refresh capabilities
 export default function Forms() {
   const { forms, isLoading, createForm, updateForm, toggleForm, deleteForm, getFormSubmissions } = useForms();
+  const queryClient = useQueryClient();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createTab, setCreateTab] = useState<'templates' | 'blank'>('templates');
   const [searchQuery, setSearchQuery] = useState('');
@@ -115,7 +118,7 @@ export default function Forms() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await createForm.context?.queryClient.invalidateQueries({ queryKey: ['forms'] });
+    await queryClient.invalidateQueries({ queryKey: ['forms'] });
     // Simulate a bit of delay for visual feedback if query is too fast
     setTimeout(() => setIsRefreshing(false), 500);
   };

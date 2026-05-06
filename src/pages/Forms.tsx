@@ -118,7 +118,7 @@ export default function Forms() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await createForm.context?.queryClient.invalidateQueries({ queryKey: ['forms'] });
+    await queryClient.invalidateQueries({ queryKey: ['forms'] });
     // Simulate a bit of delay for visual feedback if query is too fast
     setTimeout(() => setIsRefreshing(false), 500);
   };

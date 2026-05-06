@@ -331,7 +331,7 @@ export default function Automations() {
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleCreate} disabled={createAutomation.isPending}>
+              <Button onClick={handleCreate} disabled={createAutomation.isPending || (requiresKeyword && !newAutomation.keyword.trim())}>
                 {createAutomation.isPending ? 'Criando...' : 'Criar Automação'}
               </Button>
             </DialogFooter>

@@ -33,13 +33,13 @@ export default function SystemLogs() {
         .range(page * pageSize, (page + 1) * pageSize - 1);
 
       if (level !== 'all') {
-        query = query.eq('level', level);
+        query = query.eq('status', level);
       }
       if (source) {
         query = query.ilike('source', `%${source}%`);
       }
       if (search) {
-        query = query.or(`message.ilike.%${search}%,event.ilike.%${search}%`);
+        query = query.or(`message.ilike.%${search}%,event_type.ilike.%${search}%`);
       }
       if (currentOrganization?.id) {
         query = query.eq('organization_id', currentOrganization.id);
@@ -52,12 +52,12 @@ export default function SystemLogs() {
     enabled: !!currentOrganization?.id,
   });
 
-  const getLevelBadge = (level: string) => {
-    switch (level) {
-      case 'error': return <Badge variant="destructive" className="gap-1"><ShieldAlert className="h-3 w-3" /> Erro</Badge>;
-      case 'warning': return <Badge variant="outline" className="text-amber-600 border-amber-600 gap-1 bg-amber-50"><AlertCircle className="h-3 w-3" /> Aviso</Badge>;
-      case 'debug': return <Badge variant="secondary" className="gap-1 font-mono"><Bug className="h-3 w-3" /> Debug</Badge>;
-      default: return <Badge variant="outline" className="text-blue-600 border-blue-600 gap-1 bg-blue-50"><Info className="h-3 w-3" /> Info</Badge>;
+  const getLevelBadge = (status: string) => {
+    switch (status) {
+      case 'failure': return <Badge variant="destructive" className="gap-1"><ShieldAlert className="h-3 w-3" /> Falha</Badge>;
+      case 'skipped': return <Badge variant="outline" className="text-amber-600 border-amber-600 gap-1 bg-amber-50"><AlertCircle className="h-3 w-3" /> Pulado</Badge>;
+      case 'success': return <Badge variant="outline" className="text-emerald-600 border-emerald-600 gap-1 bg-emerald-50"><Info className="h-3 w-3" /> Sucesso</Badge>;
+      default: return <Badge variant="secondary" className="gap-1 font-mono"><Bug className="h-3 w-3" /> {status}</Badge>;
     }
   };
 

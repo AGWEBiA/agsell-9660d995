@@ -1139,6 +1139,64 @@ async function callSyncUser(userId: string, shouldBeActive: boolean) {
   }
 }
 
+// deno-lint-ignore no-explicit-any
+async function triggerPurchaseAutomation(
+  supabase: any,
+  organizationId: string,
+  email: string,
+  payload: KiwifyPayload,
+) {
+  try {
+    // 1. Find the contact in this organization
+    const { data: contact } = await supabase
+      .from("contacts")
+      .select("id")
+      .eq("organization_id", organizationId)
+      .ilike("email", email)
+      .maybeSingle();
+
+    if (!contact) {
+      console.warn(`[triggerPurchaseAutomation] Contact not found for ${email} in org ${organizationId}`);
+      return;
+    }
+
+    // 2. Find active automations for purchase
+    const eventType = payload.order_status === "paid" ? "kiwify_purchase_approved" : "kiwify_subscription_renewed";
+    
+    const { data: automations } = await supabase
+      .from("automations")
+      .select("id, name")
+      .eq("organization_id", organizationId)
+      .eq("is_active", true)
+      .in("trigger_type", [eventType, "purchase_approved"]); // Supporting both names
+
+    if (automations && automations.length > 0) {
+      for (const auto of automations) {
+        await logStep(supabase, `Triggering purchase automation: ${auto.name}`, {
+          automation_id: auto.id,
+          event: eventType,
+        }, "info", organizationId);
+
+        fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/process-automation`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({
+            automation_id: auto.id,
+            contact_id: contact.id,
+            trigger_event: eventType,
+            trigger_data: payload,
+          }),
+        }).catch(err => console.error("Error dispatching purchase automation:", err));
+      }
+    }
+  } catch (err) {
+    console.error("Error in triggerPurchaseAutomation:", err);
+  }
+}
+
 function generatePassword(): string {
   // Simpler password character set to avoid issues with special characters in some contexts
   // and make it easier for users to type/copy

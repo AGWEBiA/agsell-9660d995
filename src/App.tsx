@@ -8,7 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { PermissionsProvider } from "@/contexts/PermissionsContext";
 import { AdminViewProvider } from "@/contexts/AdminViewContext";
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect } from "react";
 import { HelmetProvider } from "react-helmet-async";
 // Lazy components for layout and security
 const ProtectedRoute = React.lazy(() => import("@/components/auth/ProtectedRoute").then(m => ({ default: m.ProtectedRoute })));
@@ -143,7 +143,17 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
+const App = () => {
+  useEffect(() => {
+    // Debug for context issues
+    if (typeof React === 'undefined') {
+      console.error('CRITICAL: React is undefined in App scope');
+    } else {
+      console.log('React version check:', React.version);
+    }
+  }, []);
+
+  return (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
     <ThemeProvider>
@@ -288,6 +298,7 @@ const App = () => (
     </ThemeProvider>
     </QueryClientProvider>
   </HelmetProvider>
-);
+  );
+};
 
 export default App;

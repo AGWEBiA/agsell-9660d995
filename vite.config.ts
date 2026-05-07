@@ -56,54 +56,12 @@ export default defineConfig(({ mode, command }) => {
     target: "es2020",
     minify: "esbuild",
     cssCodeSplit: true,
-    chunkSizeWarningLimit: 800, // Reduced warning limit to encourage smaller chunks
-    reportCompressedSize: true, // Re-enabled to see sizes in logs
+    chunkSizeWarningLimit: 2000,
+    reportCompressedSize: false,
     emptyOutDir: true,
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
-              return 'vendor-core';
-            }
-            if (id.includes('@radix-ui')) {
-              return 'vendor-ui-radix';
-            }
-            if (id.includes('lucide-react')) {
-              return 'vendor-ui-lucide';
-            }
-            if (id.includes('recharts')) {
-              return 'vendor-charts';
-            }
-            if (id.includes('jspdf') || id.includes('html2canvas')) {
-              return 'vendor-pdf';
-            }
-            if (id.includes('@supabase')) {
-              return 'vendor-supabase';
-            }
-            if (id.includes('zod') || id.includes('react-hook-form')) {
-              return 'vendor-forms';
-            }
-            if (id.includes('date-fns')) {
-              return 'vendor-date';
-            }
-            if (id.includes('emoji-mart') || id.includes('@emoji-mart')) {
-              return 'vendor-emoji';
-            }
-            if (id.includes('lodash') || id.includes('axios') || id.includes('dompurify')) {
-              return 'vendor-utils';
-            }
-            if (id.includes('@tanstack')) {
-              return 'vendor-query';
-            }
-            return 'vendor-others';
-          }
-          // Split large pages/components
-          if (id.includes('/pages/Inbox/')) return 'page-inbox';
-          if (id.includes('/pages/Dashboard/')) return 'page-dashboard';
-          if (id.includes('/pages/Admin/')) return 'page-admin';
-          if (id.includes('/components/flow-builder/')) return 'comp-flowbuilder';
-        },
+        manualChunks: undefined, // Let Vite handle it to avoid context duplication issues
       },
     },
   },

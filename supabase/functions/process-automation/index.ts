@@ -28,6 +28,26 @@ serve(async (req) => {
   }
 
   try {
+    const bodyText = await req.text();
+    let parsedBody: Partial<ExecutionPayload> & { action?: string; source?: string } = {};
+    if (bodyText) {
+      try {
+        parsedBody = JSON.parse(bodyText);
+      } catch {
+        parsedBody = {};
+      }
+    }
+
+    if (parsedBody?.action === 'ping') {
+      return new Response(JSON.stringify({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        version: '2026-05-07-v2-fast-ping',
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -63,10 +83,9 @@ serve(async (req) => {
       }
     }
 
-    const bodyText = await req.text();
     let payload: ExecutionPayload;
     try {
-      payload = JSON.parse(bodyText);
+      payload = parsedBody as ExecutionPayload;
     } catch (e) {
       return new Response(JSON.stringify({ error: 'Invalid JSON payload' }), { 
         status: 400, 

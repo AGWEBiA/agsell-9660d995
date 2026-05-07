@@ -95,6 +95,26 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const bodyText = await req.text();
+    let parsedBody: Partial<WhatsAppRequest> & { action?: string; source?: string } = {};
+    if (bodyText) {
+      try {
+        parsedBody = JSON.parse(bodyText);
+      } catch {
+        parsedBody = {};
+      }
+    }
+
+    if (parsedBody?.action === "ping") {
+      return new Response(JSON.stringify({
+        status: "ok",
+        timestamp: new Date().toISOString(),
+        version: "2026-05-07-v2-fast-ping",
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -117,7 +137,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const whatsappReq = (await req.json()) as WhatsAppRequest;
+    const whatsappReq = parsedBody as WhatsAppRequest;
 
     // Validate organization membership
     if (whatsappReq.organization_id) {

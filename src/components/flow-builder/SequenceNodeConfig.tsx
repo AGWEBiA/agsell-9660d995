@@ -130,8 +130,8 @@ function SubFlowEditor({ config, onChange }: { config: Record<string, unknown>; 
 }
 
 function ReferenceAutomationPicker({ config, onChange }: { config: Record<string, unknown>; onChange: (c: Record<string, unknown>) => void }) {
-  const { automations } = useAutomations() as unknown as { automations: { data?: Array<{ id: string; name: string; is_active: boolean }> } };
-  const list = (automations?.data as Array<{ id: string; name: string; is_active: boolean }>) || [];
+  const { automations } = useAutomations();
+  const list = (automations as Array<{ id: string; name: string; is_active: boolean }>) || [];
 
   return (
     <div className="space-y-2">

@@ -93,8 +93,10 @@ export default function DeployStatus() {
           addLog(`Banco de Dados instável: ${diag.database.error}`, "warning");
         }
 
-        if (diag.rpc_check.exists) {
+        if (diag.rpc_check.exists === true) {
           addLog("RPC reprocess_scheduled_step: Detectada e Ativa", "success");
+        } else if (diag.rpc_check.status === "warning") {
+          addLog(diag.rpc_check.error || "RPC reprocess_scheduled_step será validada/aplicada pelo publish.", "warning");
         } else {
           addLog("RPC reprocess_scheduled_step: NÃO ENCONTRADA. O deploy tentará criar via migração.", "warning");
         }
@@ -213,7 +215,7 @@ export default function DeployStatus() {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">RPC Reprocess</span>
-                {diagnosticsData?.rpc_check.exists ? 
+                {diagnosticsData?.rpc_check.exists === true || diagnosticsData?.rpc_check.status === "warning" ? 
                   <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : 
                   <XCircle className="h-4 w-4 text-red-500" />
                 }
@@ -233,8 +235,8 @@ export default function DeployStatus() {
               {diagnosticsData?.edge_functions && Object.entries(diagnosticsData.edge_functions).map(([name, info]: [string, any]) => (
                 <div key={name} className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground truncate max-w-[120px]">{name}</span>
-                  <Badge variant={info.status === 'online' ? "secondary" : "destructive"} className="text-[10px]">
-                    {info.status === 'online' ? `${info.latency}ms` : 'OFF'}
+                  <Badge variant={info.status === 'online' || info.status === 'ok' ? "secondary" : "destructive"} className="text-[10px]">
+                    {info.status === 'online' ? `${info.latency}ms` : info.status === 'ok' ? 'OK' : 'OFF'}
                   </Badge>
                 </div>
               ))}

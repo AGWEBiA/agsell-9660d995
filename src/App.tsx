@@ -133,6 +133,8 @@ const CRMAdmin = React.lazy(() => import("./pages/CRMAdmin"));
 const CRMIntelligence = React.lazy(() => import("./pages/CRMIntelligenceConsolidated"));
 const CRMSettings = React.lazy(() => import("./pages/CRMSettingsConsolidated"));
 
+// build: 2026-05-07c — publish resilience for automation monitor
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

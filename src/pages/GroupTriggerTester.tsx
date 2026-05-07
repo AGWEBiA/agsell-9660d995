@@ -27,7 +27,7 @@ interface ExecutionRow {
 
 export default function GroupTriggerTester() {
   const { currentOrganization } = useOrganization();
-  const { data: groups = [] } = useWhatsAppGroups();
+  const { groups = [] } = useWhatsAppGroups();
   const [groupId, setGroupId] = useState('');
   const [tagName, setTagName] = useState('');
   const [triggerType, setTriggerType] = useState<'group_tag_added' | 'group_tag_removed'>('group_tag_added');

@@ -690,7 +690,7 @@ const PLAN_REPLACES: Record<string, string> = {
   enterprise: 'Substitui: HubSpot + ActiveCampaign + SellFlux + ManyChat + Intercom + ChatGPT API',
 };
 
-import { PricingSection } from '@/components/pricing/PricingSection';
+
 
 function PlansSection() {
   return (

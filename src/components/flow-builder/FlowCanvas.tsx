@@ -1,4 +1,5 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { MousePointerClick, Hand, X as XIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { FlowNode, FlowConnection, FlowNodePosition } from './flowNodeTypes';
 import { triggerOptions, actionOptions, conditionOptions } from './flowNodeTypes';

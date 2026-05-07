@@ -74,19 +74,49 @@ serve(async (req) => {
           processed++;
         } else {
           const errBody = await resp.text();
-          console.error(`Scheduled step ${step.id} failed:`, errBody);
+          const severity = resp.status >= 500 ? 'critical' : (resp.status === 401 || resp.status === 403 ? 'high' : 'medium');
+          console.error(`[process-scheduled-steps] Step ${step.id} failed (${resp.status}):`, errBody);
           await supabase
             .from('automation_scheduled_steps')
             .update({ status: 'error' })
             .eq('id', step.id);
+          await supabase.from('security_alerts').insert({
+            organization_id: step.organization_id,
+            alert_type: 'automation_step_failed',
+            severity,
+            title: `Falha ao processar automação (HTTP ${resp.status})`,
+            description: `Step ${step.id} retornou ${resp.status}. Detalhes: ${String(errBody).slice(0, 500)}`,
+            metadata: {
+              step_id: step.id,
+              automation_id: step.automation_id,
+              contact_id: step.contact_id,
+              execution_id: step.execution_id,
+              http_status: resp.status,
+              error_body: String(errBody).slice(0, 1000),
+            },
+          });
           errors++;
         }
       } catch (stepErr) {
-        console.error(`Error processing scheduled step ${step.id}:`, stepErr);
+        const msg = (stepErr as Error)?.message ?? String(stepErr);
+        console.error(`[process-scheduled-steps] Exception on step ${step.id}:`, msg);
         await supabase
           .from('automation_scheduled_steps')
           .update({ status: 'error' })
           .eq('id', step.id);
+        await supabase.from('security_alerts').insert({
+          organization_id: step.organization_id,
+          alert_type: 'automation_step_exception',
+          severity: 'high',
+          title: 'Exceção ao processar automação agendada',
+          description: msg.slice(0, 500),
+          metadata: {
+            step_id: step.id,
+            automation_id: step.automation_id,
+            contact_id: step.contact_id,
+            execution_id: step.execution_id,
+          },
+        });
         errors++;
       }
     }

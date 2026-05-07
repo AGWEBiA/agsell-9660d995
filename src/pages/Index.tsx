@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { WhatsNewSection } from '@/components/vendas/WhatsNewSection';
 import { useActivePlans, Plan } from '@/hooks/useActivePlans';
+import { PricingSection } from '@/components/pricing/PricingSection';
 
 
 // ─── SECTION 1: Navbar ──────────────────────────────────────

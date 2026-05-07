@@ -128,6 +128,7 @@ const FunnelBI = React.lazy(() => import("./pages/FunnelBI"));
 const AutomationMetrics = React.lazy(() => import("./pages/AutomationMetrics"));
 const AutomationsMonitor = React.lazy(() => import("./pages/AutomationsMonitor"));
 const CronMetrics = React.lazy(() => import("./pages/CronMetrics"));
+const GroupTriggerTester = React.lazy(() => import("./pages/GroupTriggerTester"));
 const SMSMarketing = React.lazy(() => import("./pages/SMSMarketing"));
 const Notifications = React.lazy(() => import("./pages/Notifications"));
 const CRMAdmin = React.lazy(() => import("./pages/CRMAdmin"));

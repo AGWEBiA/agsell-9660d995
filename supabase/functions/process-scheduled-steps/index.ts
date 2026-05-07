@@ -7,6 +7,8 @@ const corsHeaders = {
 };
 
 const PROCESS_AUTOMATION_TIMEOUT_MS = 25_000;
+const MAX_RETRIES = 3;
+const BACKOFF_MS = 2000;
 
 async function getAuthenticatedUserId(supabase: ReturnType<typeof createClient>, req: Request) {
   const authHeader = req.headers.get('Authorization');
@@ -58,20 +60,28 @@ async function handleManualReprocess(supabase: ReturnType<typeof createClient>, 
     });
   }
 
-  if (!['processing', 'error', 'failed'].includes(step.status)) {
-    return new Response(JSON.stringify({ error: `Step não está travado (status atual: ${step.status})` }), {
-      status: 409,
+  // Use the RPC if it exists, otherwise fallback to direct update
+  const { data: rpcData, error: rpcError } = await supabase.rpc('reprocess_scheduled_step', { target_step_id: stepId });
+  
+  if (rpcError) {
+    console.log('[process-scheduled-steps] RPC fallback used due to:', rpcError.message);
+    const { error: resetError } = await supabase
+      .from('automation_scheduled_steps')
+      .update({ 
+        status: 'pending', 
+        scheduled_at: new Date(Math.min(new Date(step.scheduled_at).getTime(), Date.now())).toISOString(),
+        retry_count: 0
+      })
+      .eq('id', stepId)
+      .in('status', ['processing', 'error', 'failed']);
+
+    if (resetError) throw resetError;
+  } else if ((rpcData as any)?.error) {
+    return new Response(JSON.stringify({ error: (rpcData as any).error }), {
+      status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
-
-  const { error: resetError } = await supabase
-    .from('automation_scheduled_steps')
-    .update({ status: 'pending', scheduled_at: new Date(Math.min(new Date(step.scheduled_at).getTime(), Date.now())).toISOString() })
-    .eq('id', stepId)
-    .in('status', ['processing', 'error', 'failed']);
-
-  if (resetError) throw resetError;
 
   return new Response(JSON.stringify({ success: true, step_id: stepId }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -88,7 +98,6 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
   }
 }
 
-// This function is called by pg_cron every minute to process scheduled automation steps
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -98,13 +107,8 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     if (!supabaseUrl || !serviceKey) {
-      console.error('[process-scheduled-steps] Missing environment variables', {
-        hasUrl: Boolean(supabaseUrl),
-        hasServiceKey: Boolean(serviceKey),
-      });
       return new Response(JSON.stringify({ error: 'Server configuration error' }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
@@ -129,11 +133,7 @@ serve(async (req) => {
       .order('scheduled_at', { ascending: true })
       .limit(50);
 
-    if (fetchError) {
-      console.error('[process-scheduled-steps] fetch error:', fetchError);
-      throw fetchError;
-    }
-    console.log(`[process-scheduled-steps] Found ${pendingSteps?.length ?? 0} pending steps`);
+    if (fetchError) throw fetchError;
     if (!pendingSteps || pendingSteps.length === 0) {
       return new Response(JSON.stringify({ processed: 0 }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -145,14 +145,8 @@ serve(async (req) => {
 
     for (const step of pendingSteps) {
       try {
-        // Mark as processing
-        await supabase
-          .from('automation_scheduled_steps')
-          .update({ status: 'processing' })
-          .eq('id', step.id);
+        await supabase.from('automation_scheduled_steps').update({ status: 'processing' }).eq('id', step.id);
 
-        // Always use service role key for internal cron calls
-        // User JWT tokens expire and cannot be used for delayed resumption
         const resp = await fetchWithTimeout(`${supabaseUrl}/functions/v1/process-automation`, {
           method: 'POST',
           headers: {
@@ -170,56 +164,50 @@ serve(async (req) => {
         }, PROCESS_AUTOMATION_TIMEOUT_MS);
 
         if (resp.ok) {
-          await supabase
-            .from('automation_scheduled_steps')
-            .update({ status: 'completed' })
-            .eq('id', step.id);
+          await supabase.from('automation_scheduled_steps').update({ status: 'completed' }).eq('id', step.id);
           processed++;
         } else {
           const errBody = await resp.text();
-          const severity = resp.status >= 500 ? 'critical' : (resp.status === 401 || resp.status === 403 ? 'high' : 'medium');
-          console.error(`[process-scheduled-steps] Step ${step.id} failed (${resp.status}):`, errBody);
-          await supabase
-            .from('automation_scheduled_steps')
-            .update({ status: 'error' })
-            .eq('id', step.id);
-          await supabase.from('security_alerts').insert({
-            organization_id: step.organization_id,
-            alert_type: 'automation_step_failed',
-            severity,
-            title: `Falha ao processar automação (HTTP ${resp.status})`,
-            description: `Step ${step.id} retornou ${resp.status}. Detalhes: ${String(errBody).slice(0, 500)}`,
-            metadata: {
-              step_id: step.id,
-              automation_id: step.automation_id,
-              contact_id: step.contact_id,
-              execution_id: step.execution_id,
-              http_status: resp.status,
-              error_body: String(errBody).slice(0, 1000),
-            },
-          });
+          const currentRetry = (step.retry_count || 0);
+          const shouldRetry = currentRetry < MAX_RETRIES && (resp.status >= 500 || resp.status === 401 || resp.status === 408);
+          
+          const nextStatus = shouldRetry ? 'pending' : 'error';
+          const nextScheduledAt = shouldRetry 
+            ? new Date(Date.now() + (BACKOFF_MS * Math.pow(2, currentRetry))).toISOString()
+            : step.scheduled_at;
+
+          await supabase.from('automation_scheduled_steps').update({ 
+            status: nextStatus, 
+            retry_count: currentRetry + (shouldRetry ? 1 : 0),
+            last_error: `HTTP ${resp.status}: ${errBody.slice(0, 200)}`,
+            scheduled_at: nextScheduledAt
+          }).eq('id', step.id);
+
+          // Audit log if audit table exists (swallow error if table missing)
+          await supabase.from('automation_scheduled_steps_audit').insert({
+            step_id: step.id,
+            attempt_number: currentRetry + 1,
+            status_before: 'processing',
+            status_after: nextStatus,
+            error_message: `HTTP ${resp.status}: ${errBody.slice(0, 500)}`
+          }).select().then(({error}) => error && console.log('Audit log skipped:', error.message));
+
+          if (!shouldRetry) {
+            const severity = resp.status >= 500 ? 'critical' : (resp.status === 401 ? 'high' : 'medium');
+            await supabase.from('security_alerts').insert({
+              organization_id: step.organization_id,
+              alert_type: 'automation_step_failed',
+              severity,
+              title: `Falha Crítica Automação (HTTP ${resp.status})`,
+              description: `Step ${step.id} esgotou retentativas ou erro fatal.`,
+              metadata: { step_id: step.id, http_status: resp.status, error_body: errBody.slice(0, 500) },
+            });
+          }
           errors++;
         }
       } catch (stepErr) {
         const msg = (stepErr as Error)?.message ?? String(stepErr);
-        console.error(`[process-scheduled-steps] Exception on step ${step.id}:`, msg);
-        await supabase
-          .from('automation_scheduled_steps')
-          .update({ status: 'error' })
-          .eq('id', step.id);
-        await supabase.from('security_alerts').insert({
-          organization_id: step.organization_id,
-          alert_type: 'automation_step_exception',
-          severity: 'high',
-          title: 'Exceção ao processar automação agendada',
-          description: msg.slice(0, 500),
-          metadata: {
-            step_id: step.id,
-            automation_id: step.automation_id,
-            contact_id: step.contact_id,
-            execution_id: step.execution_id,
-          },
-        });
+        await supabase.from('automation_scheduled_steps').update({ status: 'error', last_error: msg }).eq('id', step.id);
         errors++;
       }
     }
@@ -229,10 +217,8 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Process scheduled steps error:', error);
-    return new Response(
-      JSON.stringify({ error: (error as Error).message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });

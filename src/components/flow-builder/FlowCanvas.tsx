@@ -60,6 +60,20 @@ export function FlowCanvas({
   // Sidebar drag-drop onto canvas
   const [dragOverCanvas, setDragOverCanvas] = useState(false);
 
+  // Interaction hint (dismissible, persisted)
+  const [showHint, setShowHint] = useState<boolean>(() => {
+    try { return localStorage.getItem('flowbuilder.hint.dismissed') !== '1'; } catch { return true; }
+  });
+  const dismissHint = () => {
+    setShowHint(false);
+    try { localStorage.setItem('flowbuilder.hint.dismissed', '1'); } catch { /* noop */ }
+  };
+  useEffect(() => {
+    if (!showHint) return;
+    const t = window.setTimeout(() => setShowHint(false), 12000);
+    return () => window.clearTimeout(t);
+  }, [showHint]);
+
   const screenToCanvas = useCallback((screenX: number, screenY: number): FlowNodePosition => {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return { x: 0, y: 0 };

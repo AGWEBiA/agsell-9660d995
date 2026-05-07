@@ -80,7 +80,7 @@ export function WhatsNewSection({ variant = 'default', className = '' }: WhatsNe
   return (
     <section
       id="novidades"
-      className={`relative overflow-hidden py-16 md:py-24 border-t border-white/5 ${className}`}
+      className={`relative overflow-hidden py-12 md:py-16 border-t border-white/5 ${className}`}
     >
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] rounded-full bg-primary/8 blur-[140px]" />

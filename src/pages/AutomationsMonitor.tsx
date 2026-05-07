@@ -138,9 +138,10 @@ export default function AutomationsMonitor() {
       </div>
 
       <Tabs defaultValue="steps">
-        <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
+        <TabsList className="grid w-full grid-cols-3 max-w-[500px]">
           <TabsTrigger value="steps">Steps Ativos</TabsTrigger>
           <TabsTrigger value="alerts">Alertas de Falha</TabsTrigger>
+          <TabsTrigger value="system">Saúde do Sistema</TabsTrigger>
         </TabsList>
 
         <TabsContent value="steps" className="space-y-4 pt-4">

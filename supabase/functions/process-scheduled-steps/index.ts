@@ -7,8 +7,9 @@ const corsHeaders = {
 };
 
 const PROCESS_AUTOMATION_TIMEOUT_MS = 25_000;
-const MAX_RETRIES = 3;
-const BACKOFF_MS = 2000;
+const MAX_RETRIES = 5; // Increased from 3
+const BACKOFF_MS = 5000; // Increased base backoff
+const AUDIT_TABLE = 'automation_scheduled_steps_audit';
 
 async function getAuthenticatedUserId(supabase: ReturnType<typeof createClient>, req: Request) {
   const authHeader = req.headers.get('Authorization');
@@ -183,14 +184,21 @@ serve(async (req) => {
             scheduled_at: nextScheduledAt
           }).eq('id', step.id);
 
-          // Audit log if audit table exists (swallow error if table missing)
-          await supabase.from('automation_scheduled_steps_audit').insert({
-            step_id: step.id,
-            attempt_number: currentRetry + 1,
-            status_before: 'processing',
-            status_after: nextStatus,
-            error_message: `HTTP ${resp.status}: ${errBody.slice(0, 500)}`
-          }).select().then(({error}) => error && console.log('Audit log skipped:', error.message));
+          // Audit log if audit table exists (swallow error if table missing or timed out)
+          try {
+            const { error: auditError } = await supabase.from(AUDIT_TABLE).insert({
+              step_id: step.id,
+              attempt_number: currentRetry + 1,
+              status_before: 'processing',
+              status_after: nextStatus,
+              error_message: `HTTP ${resp.status}: ${errBody.slice(0, 500)}`
+            });
+            if (auditError && auditError.code !== '42P01') {
+              console.error('[process-scheduled-steps] Audit error:', auditError.message);
+            }
+          } catch (e) {
+            console.log('[process-scheduled-steps] Audit log skipped (exception)');
+          }
 
           if (!shouldRetry) {
             const severity = resp.status >= 500 ? 'critical' : (resp.status === 401 ? 'high' : 'medium');

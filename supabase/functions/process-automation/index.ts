@@ -120,8 +120,9 @@ serve(async (req) => {
     const actions = (automation.actions || []) as AutomationAction[];
     const startStep = resume_from_step || 0;
 
-    // Create or resume execution record
+    // Create or resume execution record + load trigger context (e.g. group_id for group_tag_added)
     let executionId = resumeExecId;
+    let triggerContext: Record<string, unknown> = {};
     if (!executionId) {
       const { data: execution, error: execError } = await supabase
         .from('automation_executions')
@@ -138,10 +139,15 @@ serve(async (req) => {
       if (execError) throw execError;
       executionId = execution.id;
     } else {
-      await supabase
+      const { data: execRow } = await supabase
         .from('automation_executions')
         .update({ status: 'running' })
-        .eq('id', executionId);
+        .eq('id', executionId)
+        .select('trigger_data')
+        .maybeSingle();
+      if (execRow?.trigger_data && typeof execRow.trigger_data === 'object') {
+        triggerContext = execRow.trigger_data as Record<string, unknown>;
+      }
     }
 
     const results: Array<{ step: number; action: string; status: string; result?: unknown; error?: string }> = [];
@@ -320,9 +326,10 @@ serve(async (req) => {
           }
 
           case 'send_whatsapp_group': {
-            // Send message to a WhatsApp group session
+            // Send message to a WhatsApp group session.
+            // Falls back to the group_id captured by the trigger (e.g. group_tag_added → context group)
             const contact = await getContact();
-            const groupId = action.config.group_id as string;
+            const groupId = (action.config.group_id as string) || (triggerContext.group_id as string | undefined) || '';
             const message = replaceVars(action.config.message as string, contact);
             if (groupId && message) {
               const { data: group } = await supabase
@@ -835,14 +842,18 @@ serve(async (req) => {
           }
 
           case 'edit_whatsapp_group': {
-            if (action.config.group_id) {
+            // Falls back to the trigger group_id when not configured (group_tag_added flow)
+            const targetGroupId = (action.config.group_id as string) || (triggerContext.group_id as string | undefined) || '';
+            if (targetGroupId) {
               const updates: Record<string, unknown> = {};
               if (action.config.new_name) updates.name = action.config.new_name;
               if (action.config.new_description) updates.description = action.config.new_description;
               if (Object.keys(updates).length > 0) {
-                await supabase.from('whatsapp_groups').update(updates).eq('id', action.config.group_id as string);
+                await supabase.from('whatsapp_groups').update(updates).eq('id', targetGroupId);
               }
-              actionResult = { success: true, updates };
+              actionResult = { success: true, updates, group_id: targetGroupId };
+            } else {
+              actionResult = { success: false, reason: 'Missing group_id' };
             }
             await logTimeline('edit_group', 'Editar Grupo', 'success');
             break;

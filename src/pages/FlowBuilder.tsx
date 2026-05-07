@@ -1231,19 +1231,19 @@ export default function FlowBuilder() {
               <>
                 <p className="text-[8px] font-semibold text-white/30 uppercase tracking-wider text-center mb-2">Arraste os<br/>ícones</p>
 
-                {/* ENTRADA - Tag (starting node) */}
+                {/* ENTRADA - Tag de Grupo (starting node, SellFlux-style) */}
                 <p className="text-[7px] font-semibold text-white/30 uppercase tracking-wider text-center mb-1 mt-2">— Entrada —</p>
                 {(() => {
-                  const tagTrigger = triggerOptions.find(t => t.id === 'tag_added');
+                  const tagTrigger = triggerOptions.find(t => t.id === 'group_tag_added');
                   if (!tagTrigger) return null;
                   return (
                     <div
                       draggable="true"
-                      onDragStart={e => handleDragStart(e, 'trigger', 'tag_added')}
+                      onDragStart={e => handleDragStart(e, 'trigger', 'group_tag_added')}
                       onDragEnd={handleDragEnd}
-                      onClick={() => handleClickToAdd('trigger', 'tag_added')}
+                      onClick={() => handleClickToAdd('trigger', 'group_tag_added')}
                       className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-white/10 transition-all cursor-grab active:cursor-grabbing group select-none relative z-[5]"
-                      title="Tag — Clique ou arraste para adicionar"
+                      title="Tag do Grupo — A tag adicionada ao grupo dispara o fluxo"
                     >
                       <div className="flex items-center justify-center h-8 w-8 rounded-lg shrink-0 bg-gradient-to-br from-emerald-500 to-green-600 text-white pointer-events-none">
                         <Tag className="h-4 w-4" />

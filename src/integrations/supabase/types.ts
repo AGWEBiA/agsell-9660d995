@@ -776,6 +776,7 @@ export type Database = {
           started_at: string | null
           status: string
           total_steps: number | null
+          trigger_data: Json
           trigger_event: string
         }
         Insert: {
@@ -790,6 +791,7 @@ export type Database = {
           started_at?: string | null
           status?: string
           total_steps?: number | null
+          trigger_data?: Json
           trigger_event: string
         }
         Update: {
@@ -804,6 +806,7 @@ export type Database = {
           started_at?: string | null
           status?: string
           total_steps?: number | null
+          trigger_data?: Json
           trigger_event?: string
         }
         Relationships: [
@@ -837,6 +840,7 @@ export type Database = {
           retry_count: number
           scheduled_at: string
           status: string
+          trigger_data: Json
           updated_at: string
         }
         Insert: {
@@ -852,6 +856,7 @@ export type Database = {
           retry_count?: number
           scheduled_at: string
           status?: string
+          trigger_data?: Json
           updated_at?: string
         }
         Update: {
@@ -867,6 +872,7 @@ export type Database = {
           retry_count?: number
           scheduled_at?: string
           status?: string
+          trigger_data?: Json
           updated_at?: string
         }
         Relationships: [
@@ -7812,6 +7818,15 @@ export type Database = {
           v_contact_id: string
           v_org_id: string
           v_trigger_data?: Json
+          v_trigger_type: string
+        }
+        Returns: number
+      }
+      enqueue_group_automations: {
+        Args: {
+          v_group_id: string
+          v_org_id: string
+          v_tag_name?: string
           v_trigger_type: string
         }
         Returns: number

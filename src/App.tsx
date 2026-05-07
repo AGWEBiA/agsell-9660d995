@@ -275,6 +275,7 @@ const App = () => {
                     <Route path="funnel-bi" element={<FunnelBI />} />
                     <Route path="automation-metrics" element={<AutomationMetrics />} />
                     <Route path="automations-monitor" element={<AutomationsMonitor />} />
+                    <Route path="cron-metrics" element={<CronMetrics />} />
                     <Route path="support" element={<SupportTickets />} />
                     <Route path="support-center" element={<SupportCenter />} />
                     <Route path="support-portal-settings" element={<FeatureRequiredPage feature="customer_support_center" featureLabel="Portal de Suporte"><SupportPortalSettingsPage /></FeatureRequiredPage>} />

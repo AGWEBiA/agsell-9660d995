@@ -6,9 +6,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-internal-cron',
 };
 
-const VERSION = '2026-05-07-v6-active-processor';
-const HARD_DEADLINE_MS = 25_000; // stop pulling new steps after 25s
-const MAX_STEPS_PER_RUN = 25;
+const VERSION = '2026-05-07-v7-tuned';
+const HARD_DEADLINE_MS = 20_000; // stop pulling new steps after 20s
+const MAX_STEPS_PER_RUN = 10;     // smaller batch to reduce DB pressure
 const STEP_INVOKE_TIMEOUT_MS = 8_000;
 
 async function getAuthenticatedUserId(supabase: ReturnType<typeof createClient>, req: Request) {

@@ -1,4 +1,5 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { MousePointerClick, Hand, X as XIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { FlowNode, FlowConnection, FlowNodePosition } from './flowNodeTypes';
 import { triggerOptions, actionOptions, conditionOptions } from './flowNodeTypes';
@@ -58,6 +59,20 @@ export function FlowCanvas({
 
   // Sidebar drag-drop onto canvas
   const [dragOverCanvas, setDragOverCanvas] = useState(false);
+
+  // Interaction hint (dismissible, persisted)
+  const [showHint, setShowHint] = useState<boolean>(() => {
+    try { return localStorage.getItem('flowbuilder.hint.dismissed') !== '1'; } catch { return true; }
+  });
+  const dismissHint = () => {
+    setShowHint(false);
+    try { localStorage.setItem('flowbuilder.hint.dismissed', '1'); } catch { /* noop */ }
+  };
+  useEffect(() => {
+    if (!showHint) return;
+    const t = window.setTimeout(() => setShowHint(false), 12000);
+    return () => window.clearTimeout(t);
+  }, [showHint]);
 
   const screenToCanvas = useCallback((screenX: number, screenY: number): FlowNodePosition => {
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -471,6 +486,30 @@ export function FlowCanvas({
             </div>
             <p className="text-white/60 text-lg font-semibold">Arraste um gatilho da barra lateral</p>
             <p className="text-white/40 text-sm mt-1">ou clique em um gatilho para começar</p>
+          </div>
+        </div>
+      )}
+
+      {/* Interaction hint — clique vs arrastar */}
+      {showHint && nodes.length > 0 && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 max-w-[92%]">
+          <div className="flex items-center gap-3 bg-[#222240]/95 backdrop-blur border border-white/10 rounded-lg px-3 py-2 shadow-lg">
+            <div className="flex items-center gap-1.5 text-white/80 text-xs">
+              <MousePointerClick className="h-3.5 w-3.5 text-primary" />
+              <span><strong>Clique</strong> no nó para configurar</span>
+            </div>
+            <div className="w-px h-4 bg-white/15" />
+            <div className="flex items-center gap-1.5 text-white/80 text-xs">
+              <Hand className="h-3.5 w-3.5 text-primary" />
+              <span><strong>Segure e arraste</strong> para mover</span>
+            </div>
+            <button
+              onClick={dismissHint}
+              className="ml-1 p-0.5 rounded hover:bg-white/10 text-white/50 hover:text-white"
+              aria-label="Fechar dica"
+            >
+              <XIcon className="h-3.5 w-3.5" />
+            </button>
           </div>
         </div>
       )}

@@ -404,8 +404,9 @@ export default function Index() {
                     alt={t.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"
-                    width={800}
-                    height={600}
+                    width={400}
+                    height={300}
+                    decoding="async"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent" />
                   <div className="absolute top-3 left-3">

@@ -122,6 +122,15 @@ serve(async (req) => {
         if (body?.action === 'reprocess_step' && body?.step_id) {
           return await handleManualReprocess(supabase, req, body.step_id);
         }
+        if (body?.action === 'ping') {
+          return new Response(JSON.stringify({ 
+            status: 'ok', 
+            timestamp: new Date().toISOString(),
+            version: '2026-05-07-v3' 
+          }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
       }
     }
 

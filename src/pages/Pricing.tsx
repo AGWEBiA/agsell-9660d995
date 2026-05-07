@@ -58,7 +58,6 @@ const SYSTEM_FEATURES = [
 ];
 
 
-import { PricingSection } from '@/components/pricing/PricingSection';
 
 export default function Pricing() {
   const [searchParams] = useSearchParams();

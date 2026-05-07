@@ -171,6 +171,7 @@ const App = () => {
                   <Routes>
                 {/* Public Routes */}
                   <Route path="/" element={<Index />} />
+                  <Route path="/inicial" element={<Home />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />
@@ -179,7 +180,6 @@ const App = () => {
                   <Route path="/features" element={<Features />} />
                   <Route path="/apresentacao" element={<Apresentacao />} />
                   <Route path="/apresentacao-crm" element={<ApresentacaoCRM />} />
-                  <Route path="/vendas" element={<Vendas />} />
                   <Route path="/pitch" element={<SalesPitch />} />
                   <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                   <Route path="/terms-of-service" element={<TermsOfService />} />

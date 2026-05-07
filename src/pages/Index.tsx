@@ -263,7 +263,7 @@ export default function Index() {
                   src="/videos/agsell-presentation.mp4"
                   controls
                   playsInline
-                  preload="none"
+                  preload="metadata"
                   poster="/videos/agsell-presentation-thumb.jpg"
                   className="w-full h-full object-cover"
                 >
@@ -336,14 +336,16 @@ export default function Index() {
                   {/* Image */}
                   <div className="relative">
                     <div className="absolute -inset-3 bg-gradient-to-br from-primary/20 via-transparent to-purple-500/10 rounded-2xl blur-2xl opacity-60" />
-                    <div className="relative rounded-2xl border border-white/10 overflow-hidden bg-zinc-900 shadow-2xl">
+                    <div className="relative rounded-2xl border border-white/10 overflow-hidden bg-zinc-900 shadow-2xl aspect-video">
                       <img
                         src={f.image}
                         alt={f.title}
-                        className="w-full h-auto"
-                        loading="lazy"
-                        width={1024}
-                        height={768}
+                        className="w-full h-full object-cover"
+                        loading={i < 2 ? "eager" : "lazy"}
+                        fetchPriority={i === 0 ? "high" : "auto"}
+                        width={800}
+                        height={450}
+                        decoding="async"
                       />
                     </div>
                   </div>
@@ -402,8 +404,9 @@ export default function Index() {
                     alt={t.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     loading="lazy"
-                    width={800}
-                    height={600}
+                    width={400}
+                    height={300}
+                    decoding="async"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-transparent to-transparent" />
                   <div className="absolute top-3 left-3">

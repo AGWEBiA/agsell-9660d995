@@ -18,6 +18,7 @@ import { useForms } from '@/hooks/useForms';
 import { useGatewayProducts } from '@/hooks/useGatewayProducts';
 import { cn } from '@/lib/utils';
 import type { Json } from '@/integrations/supabase/types';
+import { findOrphanGroupNodes, flattenWithSubflows, type FlowNodeLike } from '@/lib/flow/groupTargeting';
 import {
   ArrowLeft, Plus, Save, Trash2,
   Zap, MessageSquare, Mail, Instagram, Send,
@@ -770,7 +771,8 @@ export default function FlowBuilder() {
   const [flowName, setFlowName] = useState(searchParams.get('name') || 'Meu Fluxo');
   const [nodes, setNodes] = useState<FlowNode[]>([]);
   const [connections, setConnections] = useState<FlowConnection[]>([]);
-  const [isActive, setIsActive] = useState(false);
+   const [isActive, setIsActive] = useState(false);
+   const [structureMode, setStructureMode] = useState<'loose' | 'container'>('loose');
   const [editingNode, setEditingNode] = useState<FlowNode | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [newCampaignOpen, setNewCampaignOpen] = useState(false);
@@ -931,6 +933,7 @@ export default function FlowBuilder() {
         setFlowName(existing.name);
         setIsActive(existing.is_active ?? false);
         const tc = existing.trigger_config as Record<string, unknown> | null;
+        setStructureMode((tc?.structure_mode as 'loose' | 'container') === 'container' ? 'container' : 'loose');
         const originalTrigger = (tc?.original_trigger as string) || existing.trigger_type;
         const trigger = triggerOptions.find(t => t.id === originalTrigger);
 
@@ -941,7 +944,7 @@ export default function FlowBuilder() {
         // This avoids losing fields like tag_name, event_name, webhook_url, pipeline_id, etc.
         const internalTriggerKeys = new Set([
           'channel', 'flow_builder', 'original_trigger', 'trigger_node_id',
-          'position', 'connections',
+          'position', 'connections', 'structure_mode',
         ]);
         const preservedTriggerConfig: Record<string, unknown> = {};
         if (tc) {
@@ -1036,19 +1039,14 @@ export default function FlowBuilder() {
       return;
     }
 
-    // Validate group action nodes have either explicit group_id or rely on a group-tag trigger
-    const groupActionSubtypes = ['send_whatsapp_group', 'edit_whatsapp_group', 'add_to_whatsapp_group'];
-    const isGroupTrigger = triggerNode.subtype === 'group_tag_added' || triggerNode.subtype === 'group_tag_removed';
-    const orphanGroupNodes = nodes.filter(n => groupActionSubtypes.includes(n.subtype))
-      .filter(n => {
-        const cfg = n.config as Record<string, unknown>;
-        const hasExplicit = cfg && typeof cfg.group_id === 'string' && (cfg.group_id as string).length > 0;
-        return !hasExplicit && !isGroupTrigger;
-      });
+    // Validate group action nodes (loose AND container sub-flow modes)
+    // have either explicit group_id or rely on a group-tag trigger.
+    const flatNodes = flattenWithSubflows(nodes as unknown as FlowNodeLike[]);
+    const orphanGroupNodes = findOrphanGroupNodes(flatNodes, triggerNode.subtype);
     if (orphanGroupNodes.length > 0) {
       toast({
         title: '⚠️ Nó(s) de grupo sem destino',
-        description: `${orphanGroupNodes.length} nó(s) WhatsApp Grupo sem group_id e sem trigger de tag de grupo. Configure um grupo ou use o gatilho "Tag adicionada ao Grupo".`,
+        description: `${orphanGroupNodes.length} nó(s) WhatsApp Grupo sem group_id (incl. sub-fluxos de Sequência) e sem trigger de tag de grupo. Configure um grupo ou use o gatilho "Tag adicionada ao Grupo".`,
         variant: 'destructive',
       });
       return;
@@ -1071,6 +1069,7 @@ export default function FlowBuilder() {
       trigger_node_id: triggerNode.id,
       position: triggerNode.position,
       connections: connections,
+      structure_mode: structureMode,
       ...triggerNode.config,
     } as Record<string, Json>;
 
@@ -1224,6 +1223,30 @@ export default function FlowBuilder() {
           {currentFlowId && <Badge variant="outline" className="text-xs">Editando</Badge>}
         </div>
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 rounded-md border bg-background/50 p-0.5" title="Estrutura do fluxo">
+            <button
+              type="button"
+              onClick={() => setStructureMode('loose')}
+              className={cn(
+                'px-2 py-1 text-xs rounded transition',
+                structureMode === 'loose' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted',
+              )}
+              title="Cada ação é um nó solto no canvas (modo padrão)"
+            >
+              Nós soltos
+            </button>
+            <button
+              type="button"
+              onClick={() => setStructureMode('container')}
+              className={cn(
+                'px-2 py-1 text-xs rounded transition',
+                structureMode === 'container' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted',
+              )}
+              title="Use nós Sequência para agrupar ações em sub-fluxos (containers)"
+            >
+              Subfluxo container
+            </button>
+          </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">{isActive ? 'Ativo' : 'Rascunho'}</span>
             <Switch checked={isActive} onCheckedChange={setIsActive} />

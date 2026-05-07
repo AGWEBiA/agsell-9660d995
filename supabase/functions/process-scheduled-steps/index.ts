@@ -6,6 +6,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const PROCESS_AUTOMATION_TIMEOUT_MS = 25_000;
+
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort('process-automation timeout'), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // This function is called by pg_cron every minute to process scheduled automation steps
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -50,7 +62,7 @@ serve(async (req) => {
 
         // Always use service role key for internal cron calls
         // User JWT tokens expire and cannot be used for delayed resumption
-        const resp = await fetch(`${supabaseUrl}/functions/v1/process-automation`, {
+        const resp = await fetchWithTimeout(`${supabaseUrl}/functions/v1/process-automation`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -64,7 +76,7 @@ serve(async (req) => {
             resume_from_step: step.current_step,
             execution_id: step.execution_id,
           }),
-        });
+        }, PROCESS_AUTOMATION_TIMEOUT_MS);
 
         if (resp.ok) {
           await supabase

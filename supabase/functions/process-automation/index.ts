@@ -578,7 +578,7 @@ serve(async (req) => {
           // ── DELAYS (REAL) ──
           case 'wait':
           case 'timer': {
-            const config = action.config;
+            const config = action.config as Record<string, any>;
             let delayMs = 0;
 
             if (config.timer_mode === 'specific_date' && config.specific_date) {
@@ -590,6 +590,70 @@ serve(async (req) => {
               const multiplier = unit === 'hours' ? 3600000 : unit === 'days' ? 86400000 : 60000;
               delayMs = duration * multiplier;
             }
+
+            // ── Honor configured time-window / weekdays / deadline ──
+            // Uses São Paulo timezone (UTC-3, no DST since 2019).
+            const SP_OFFSET_MIN = -180;
+            const adjustToWindow = (baseMs: number): number => {
+              let candidate = new Date(baseMs);
+              const intervalStart = (config.has_time_interval && config.interval_start) ? String(config.interval_start) : null;
+              const intervalEnd = (config.has_time_interval && config.interval_end) ? String(config.interval_end) : null;
+              const allowedDays: string[] | null = (config.has_weekday_filter && Array.isArray(config.selected_days) && config.selected_days.length > 0)
+                ? config.selected_days as string[]
+                : null;
+              const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+
+              const toSP = (d: Date) => new Date(d.getTime() + (SP_OFFSET_MIN - d.getTimezoneOffset()) * 60000);
+              const fromSP = (d: Date) => new Date(d.getTime() - (SP_OFFSET_MIN - d.getTimezoneOffset()) * 60000);
+
+              for (let safety = 0; safety < 8; safety++) {
+                const sp = toSP(candidate);
+                const dayKey = dayKeys[sp.getUTCDay()];
+                const minutes = sp.getUTCHours() * 60 + sp.getUTCMinutes();
+
+                let needsBump = false;
+
+                if (allowedDays && !allowedDays.includes(dayKey)) {
+                  // jump to start of next day in SP
+                  sp.setUTCHours(0, 0, 0, 0);
+                  sp.setUTCDate(sp.getUTCDate() + 1);
+                  candidate = fromSP(sp);
+                  needsBump = true;
+                } else if (intervalStart && intervalEnd) {
+                  const [sH, sM] = intervalStart.split(':').map(Number);
+                  const [eH, eM] = intervalEnd.split(':').map(Number);
+                  const startMin = sH * 60 + (sM || 0);
+                  const endMin = eH * 60 + (eM || 0);
+                  if (minutes < startMin) {
+                    sp.setUTCHours(sH, sM || 0, 0, 0);
+                    candidate = fromSP(sp);
+                    needsBump = true;
+                  } else if (minutes >= endMin) {
+                    sp.setUTCHours(sH, sM || 0, 0, 0);
+                    sp.setUTCDate(sp.getUTCDate() + 1);
+                    candidate = fromSP(sp);
+                    needsBump = true;
+                  }
+                }
+                if (!needsBump) break;
+              }
+              return candidate.getTime();
+            };
+
+            let scheduledMs = adjustToWindow(Date.now() + delayMs);
+
+            // Deadline check: skip step entirely if past deadline
+            if (config.has_deadline && config.deadline_date) {
+              const deadlineMs = new Date(String(config.deadline_date)).getTime();
+              if (!Number.isNaN(deadlineMs) && scheduledMs > deadlineMs) {
+                actionResult = { skipped: true, reason: 'past_deadline', deadline: config.deadline_date };
+                results.push({ step: currentStep, action: actionType, status: 'skipped', result: actionResult });
+                await logTimeline('timer', 'Timer', 'skipped', { reason: 'past_deadline' });
+                break;
+              }
+            }
+
+            delayMs = Math.max(0, scheduledMs - Date.now());
 
             if (delayMs > 0) {
               // Schedule remaining steps for later execution

@@ -695,11 +695,7 @@ const PLAN_REPLACES: Record<string, string> = {
 
 function PlansSection() {
   return (
-    <section id="planos" className="relative overflow-hidden bg-[hsl(0,0%,7%)]">
-      <div className="container mx-auto px-4 sm:px-6">
-        <PricingSection />
-      </div>
-    </section>
+    <PricingSection />
   );
 }
 

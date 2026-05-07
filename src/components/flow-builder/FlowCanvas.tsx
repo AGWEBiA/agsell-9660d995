@@ -489,6 +489,31 @@ export function FlowCanvas({
           </div>
         </div>
       )}
+      )}
+
+      {/* Interaction hint — clique vs arrastar */}
+      {showHint && nodes.length > 0 && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 max-w-[92%]">
+          <div className="flex items-center gap-3 bg-[#222240]/95 backdrop-blur border border-white/10 rounded-lg px-3 py-2 shadow-lg">
+            <div className="flex items-center gap-1.5 text-white/80 text-xs">
+              <MousePointerClick className="h-3.5 w-3.5 text-primary" />
+              <span><strong>Clique</strong> no nó para configurar</span>
+            </div>
+            <div className="w-px h-4 bg-white/15" />
+            <div className="flex items-center gap-1.5 text-white/80 text-xs">
+              <Hand className="h-3.5 w-3.5 text-primary" />
+              <span><strong>Segure e arraste</strong> para mover</span>
+            </div>
+            <button
+              onClick={dismissHint}
+              className="ml-1 p-0.5 rounded hover:bg-white/10 text-white/50 hover:text-white"
+              aria-label="Fechar dica"
+            >
+              <XIcon className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

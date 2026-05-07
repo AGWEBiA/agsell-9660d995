@@ -944,7 +944,7 @@ export default function FlowBuilder() {
         // This avoids losing fields like tag_name, event_name, webhook_url, pipeline_id, etc.
         const internalTriggerKeys = new Set([
           'channel', 'flow_builder', 'original_trigger', 'trigger_node_id',
-          'position', 'connections',
+          'position', 'connections', 'structure_mode',
         ]);
         const preservedTriggerConfig: Record<string, unknown> = {};
         if (tc) {

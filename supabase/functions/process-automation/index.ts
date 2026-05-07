@@ -842,14 +842,18 @@ serve(async (req) => {
           }
 
           case 'edit_whatsapp_group': {
-            if (action.config.group_id) {
+            // Falls back to the trigger group_id when not configured (group_tag_added flow)
+            const targetGroupId = (action.config.group_id as string) || (triggerContext.group_id as string | undefined) || '';
+            if (targetGroupId) {
               const updates: Record<string, unknown> = {};
               if (action.config.new_name) updates.name = action.config.new_name;
               if (action.config.new_description) updates.description = action.config.new_description;
               if (Object.keys(updates).length > 0) {
-                await supabase.from('whatsapp_groups').update(updates).eq('id', action.config.group_id as string);
+                await supabase.from('whatsapp_groups').update(updates).eq('id', targetGroupId);
               }
-              actionResult = { success: true, updates };
+              actionResult = { success: true, updates, group_id: targetGroupId };
+            } else {
+              actionResult = { success: false, reason: 'Missing group_id' };
             }
             await logTimeline('edit_group', 'Editar Grupo', 'success');
             break;

@@ -21,7 +21,7 @@ export interface Plan {
   is_active: boolean;
 }
 
-export const ALLOWED_PLAN_NAMES = ['Starter', 'Professional', 'Enterprise', 'Agência'];
+export const ALLOWED_PLAN_NAMES = ['Starter', 'Professional', 'Enterprise', 'Agência', 'Grátis'];
 
 export function useActivePlans() {
   const [plans, setPlans] = useState<Plan[]>([]);

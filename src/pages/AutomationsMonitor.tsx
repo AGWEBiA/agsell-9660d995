@@ -73,7 +73,7 @@ export default function AutomationsMonitor() {
   }, {});
 
   const handleReprocess = async (stepId: string) => {
-    const { data, error } = await supabase.rpc('reprocess_scheduled_step', { _step_id: stepId });
+    const { data, error } = await (supabase as any).rpc('reprocess_scheduled_step', { _step_id: stepId });
     if (error) { toast.error('Erro: ' + error.message); return; }
     if ((data as any)?.error) { toast.error((data as any).error); return; }
     toast.success('Step recolocado em fila para reprocessar');

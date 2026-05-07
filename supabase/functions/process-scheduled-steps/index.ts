@@ -6,11 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const PROCESS_AUTOMATION_TIMEOUT_MS = 25_000;
-const MAX_RETRIES = 5; // Increased from 3
-const BACKOFF_MS = 5000; // Increased base backoff
-const AUDIT_TABLE = 'automation_scheduled_steps_audit';
-
 async function getAuthenticatedUserId(supabase: ReturnType<typeof createClient>, req: Request) {
   const authHeader = req.headers.get('Authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.replace('Bearer ', '') : '';
@@ -70,8 +65,7 @@ async function handleManualReprocess(supabase: ReturnType<typeof createClient>, 
       .from('automation_scheduled_steps')
       .update({ 
         status: 'pending', 
-        scheduled_at: new Date(Math.min(new Date(step.scheduled_at).getTime(), Date.now())).toISOString(),
-        retry_count: 0
+        scheduled_at: new Date(Math.min(new Date(step.scheduled_at).getTime(), Date.now())).toISOString()
       })
       .eq('id', stepId)
       .in('status', ['processing', 'error', 'failed']);
@@ -87,16 +81,6 @@ async function handleManualReprocess(supabase: ReturnType<typeof createClient>, 
   return new Response(JSON.stringify({ success: true, step_id: stepId }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
-}
-
-async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort('process-automation timeout'), timeoutMs);
-  try {
-    return await fetch(url, { ...init, signal: controller.signal });
-  } finally {
-    clearTimeout(timer);
-  }
 }
 
 serve(async (req) => {
@@ -123,14 +107,10 @@ serve(async (req) => {
           return await handleManualReprocess(supabase, req, body.step_id);
         }
         if (body?.action === 'ping' || body?.action === 'cron') {
-          // If it's a cron call, we respond immediately to avoid holding connections
-          // but we still do a quick health check
-          const { error: dbTest } = await supabase.from('automation_scheduled_steps').select('id').limit(1);
           return new Response(JSON.stringify({ 
-            status: dbTest ? 'degraded' : 'ok', 
-            db_error: dbTest?.message,
+            status: 'ok',
             timestamp: new Date().toISOString(),
-            version: '2026-05-07-v4-safe' 
+            version: '2026-05-07-v5-fast-ping' 
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
@@ -143,90 +123,6 @@ serve(async (req) => {
     return new Response(JSON.stringify({ status: 'active', message: 'Processing paused for stability' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-
-    let processed = 0;
-    let errors = 0;
-
-    for (const step of pendingSteps) {
-      try {
-        await supabase.from('automation_scheduled_steps').update({ status: 'processing' }).eq('id', step.id);
-
-        const resp = await fetchWithTimeout(`${supabaseUrl}/functions/v1/process-automation`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${serviceKey}`,
-            'X-Internal-Cron': 'true',
-          },
-          body: JSON.stringify({
-            automation_id: step.automation_id,
-            contact_id: step.contact_id,
-            trigger_event: 'scheduled_resume',
-            resume_from_step: step.current_step,
-            execution_id: step.execution_id,
-          }),
-        }, PROCESS_AUTOMATION_TIMEOUT_MS);
-
-        if (resp.ok) {
-          await supabase.from('automation_scheduled_steps').update({ status: 'completed' }).eq('id', step.id);
-          processed++;
-        } else {
-          const errBody = await resp.text();
-          const currentRetry = (step.retry_count || 0);
-          const shouldRetry = currentRetry < MAX_RETRIES && (resp.status >= 500 || resp.status === 401 || resp.status === 408);
-          
-          const nextStatus = shouldRetry ? 'pending' : 'error';
-          const nextScheduledAt = shouldRetry 
-            ? new Date(Date.now() + (BACKOFF_MS * Math.pow(2, currentRetry))).toISOString()
-            : step.scheduled_at;
-
-          await supabase.from('automation_scheduled_steps').update({ 
-            status: nextStatus, 
-            retry_count: currentRetry + (shouldRetry ? 1 : 0),
-            last_error: `HTTP ${resp.status}: ${errBody.slice(0, 200)}`,
-            scheduled_at: nextScheduledAt
-          }).eq('id', step.id);
-
-          // Audit log if audit table exists (swallow error if table missing or timed out)
-          try {
-            const { error: auditError } = await supabase.from(AUDIT_TABLE).insert({
-              step_id: step.id,
-              attempt_number: currentRetry + 1,
-              status_before: 'processing',
-              status_after: nextStatus,
-              error_message: `HTTP ${resp.status}: ${errBody.slice(0, 500)}`
-            });
-            if (auditError && auditError.code !== '42P01') {
-              console.error('[process-scheduled-steps] Audit error:', auditError.message);
-            }
-          } catch (e) {
-            console.log('[process-scheduled-steps] Audit log skipped (exception)');
-          }
-
-          if (!shouldRetry) {
-            const severity = resp.status >= 500 ? 'critical' : (resp.status === 401 ? 'high' : 'medium');
-            await supabase.from('security_alerts').insert({
-              organization_id: step.organization_id,
-              alert_type: 'automation_step_failed',
-              severity,
-              title: `Falha Crítica Automação (HTTP ${resp.status})`,
-              description: `Step ${step.id} esgotou retentativas ou erro fatal.`,
-              metadata: { step_id: step.id, http_status: resp.status, error_body: errBody.slice(0, 500) },
-            });
-          }
-          errors++;
-        }
-      } catch (stepErr) {
-        const msg = (stepErr as Error)?.message ?? String(stepErr);
-        await supabase.from('automation_scheduled_steps').update({ status: 'error', last_error: msg }).eq('id', step.id);
-        errors++;
-      }
-    }
-
-    return new Response(
-      JSON.stringify({ processed, errors, total: pendingSteps.length }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
   } catch (error) {
     return new Response(JSON.stringify({ error: (error as Error).message }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },

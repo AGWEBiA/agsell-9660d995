@@ -14,6 +14,39 @@ interface LogEntry {
   timestamp: string;
 }
 
+const INFRA_CHECK_TIMEOUT_MS = 12000;
+
+const invokeInfraCheck = async () => {
+  const controller = new AbortController();
+  const timer = window.setTimeout(() => controller.abort(), INFRA_CHECK_TIMEOUT_MS);
+
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const token = sessionData.session?.access_token ?? publishableKey;
+
+    const response = await fetch(`${supabaseUrl}/functions/v1/infra-check`, {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        apikey: publishableKey,
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ action: "check", source: "deploy-status" }),
+    });
+
+    const payload = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new Error(payload?.error || `infra-check respondeu HTTP ${response.status}`);
+    }
+    return payload;
+  } finally {
+    window.clearTimeout(timer);
+  }
+};
+
 export default function DeployStatus() {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<"idle" | "checking" | "ready" | "error">("idle");
@@ -43,25 +76,19 @@ export default function DeployStatus() {
       addLog("Verificando conectividade e RPCs no ambiente Live...", "info");
       setProgress(30);
       
-      const { data: diag, error: funcError } = await supabase.functions.invoke('infra-check');
-      
-      if (funcError) {
-        addLog(`Falha ao chamar infra-check: ${funcError.message}`, "error");
-        addLog("Tentando fallback direto via SQL...", "warning");
-        
-        // Fallback connectivity check
-        const { error: dbError } = await supabase.from('automations').select('count', { count: 'exact', head: true }).limit(0);
-        if (dbError) {
-          addLog(`Banco de Dados Offline: ${dbError.message}`, "error");
-          setStatus("error");
-          return;
-        }
-        addLog("Conexão com Banco de Dados: OK (Fallback)", "success");
+      const diag = await invokeInfraCheck();
+
+      if (!diag) {
+        addLog("infra-check não retornou dados de diagnóstico.", "error");
+        setStatus("error");
+        return;
       } else {
         setDiagnosticsData(diag);
         
         if (diag.database.status === 'ok') {
           addLog("Conexão com Banco de Dados: OK", "success");
+        } else if (diag.database.status === 'timeout') {
+          addLog("Banco de Dados respondeu fora do tempo seguro; publish bloqueado sem quebrar a tela.", "warning");
         } else {
           addLog(`Banco de Dados instável: ${diag.database.error}`, "warning");
         }
@@ -72,11 +99,13 @@ export default function DeployStatus() {
           addLog("RPC reprocess_scheduled_step: NÃO ENCONTRADA. O deploy tentará criar via migração.", "warning");
         }
 
-        Object.entries(diag.edge_functions).forEach(([name, info]: [string, any]) => {
+        Object.entries(diag.edge_functions || {}).forEach(([name, info]: [string, any]) => {
           if (info.status === 'online') {
             addLog(`Edge Function ${name}: ONLINE (${info.latency}ms)`, "success");
+          } else if (info.status === 'ok') {
+            addLog(`Edge Function ${name}: RESPONDENDO (${info.latency_ms}ms)`, "success");
           } else {
-            addLog(`Edge Function ${name}: FALHA (${info.error || info.status_code})`, "error");
+            addLog(`Edge Function ${name}: FALHA CONTROLADA (${info.error || info.status_code})`, "warning");
           }
         });
       }
@@ -86,6 +115,13 @@ export default function DeployStatus() {
       
       // Simulating typegen check - in real app we could fetch a version file
       addLog("Typegen check: OK (v2026.05.07)", "success");
+
+      if (diag.ok === false || diag.database?.status !== "ok") {
+        setProgress(85);
+        addLog("Pré-check interrompido: o Live respondeu, mas não passou nas validações dentro do tempo seguro.", "error");
+        setStatus("error");
+        return;
+      }
 
       setProgress(100);
       addLog("Pré-check concluído. Ambiente pronto para sincronização.", "success");

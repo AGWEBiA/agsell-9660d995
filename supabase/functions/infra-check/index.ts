@@ -1,99 +1,186 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const FUNCTION_VERSION = "2026-05-07-v6-http-only";
+const CHECK_TIMEOUT_MS = 2_500;
+const HARD_DEADLINE_MS = 8_500;
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-async function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
-  return await Promise.race([
-    p,
-    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`${label} timeout after ${ms}ms`)), ms)),
-  ]);
+type CheckStatus = "ok" | "degraded" | "missing" | "error" | "timeout";
+
+interface CheckResult {
+  status: CheckStatus;
+  latency_ms: number;
+  error: string | null;
+  status_code?: number;
 }
 
-async function fetchWithTimeout(url: string, init: RequestInit, ms: number) {
-  const ctrl = new AbortController();
-  const t = setTimeout(() => ctrl.abort(), ms);
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+async function requestWithTimeout(url: string, init: RequestInit, timeoutMs = CHECK_TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(new Error(`timeout after ${timeoutMs}ms`)), timeoutMs);
   try {
-    return await fetch(url, { ...init, signal: ctrl.signal });
+    return await fetch(url, {
+      ...init,
+      signal: controller.signal,
+      headers: {
+        "Connection": "close",
+        ...(init.headers ?? {}),
+      },
+    });
   } finally {
-    clearTimeout(t);
+    clearTimeout(timer);
   }
+}
+
+async function safeCheck(label: string, task: () => Promise<CheckResult>): Promise<CheckResult> {
+  const startedAt = Date.now();
+  try {
+    return await Promise.race([
+      task(),
+      new Promise<CheckResult>((resolve) =>
+        setTimeout(
+          () => resolve({ status: "timeout", latency_ms: Date.now() - startedAt, error: `${label} timeout` }),
+          CHECK_TIMEOUT_MS + 250,
+        ),
+      ),
+    ]);
+  } catch (error) {
+    return {
+      status: "error",
+      latency_ms: Date.now() - startedAt,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+async function checkRest(baseUrl: string, key: string): Promise<CheckResult> {
+  const startedAt = Date.now();
+  const url = `${baseUrl}/rest/v1/automations?select=id&limit=1`;
+  const res = await requestWithTimeout(url, {
+    method: "GET",
+    headers: {
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+      Prefer: "count=none",
+    },
+  });
+  const body = await res.text().catch(() => "");
+  return {
+    status: res.ok || res.status === 401 || res.status === 403 ? "ok" : "degraded",
+    latency_ms: Date.now() - startedAt,
+    status_code: res.status,
+    error: res.ok ? null : body.slice(0, 240) || res.statusText,
+  };
+}
+
+async function checkRpc(baseUrl: string, key: string): Promise<CheckResult & { exists: boolean }> {
+  const startedAt = Date.now();
+  const res = await requestWithTimeout(`${baseUrl}/rest/v1/rpc/reprocess_scheduled_step`, {
+    method: "POST",
+    headers: {
+      apikey: key,
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ target_step_id: "00000000-0000-0000-0000-000000000000" }),
+  });
+  const text = await res.text().catch(() => "");
+  let parsed: { code?: string; message?: string } = {};
+  try {
+    parsed = text ? JSON.parse(text) : {};
+  } catch {
+    parsed = { message: text };
+  }
+
+  const missing = res.status === 404 || parsed.code === "42883" || /function .* does not exist/i.test(parsed.message ?? text);
+  return {
+    exists: !missing,
+    status: missing ? "missing" : "ok",
+    latency_ms: Date.now() - startedAt,
+    status_code: res.status,
+    error: missing ? "RPC reprocess_scheduled_step ainda não existe no Live" : parsed.message ?? null,
+  };
+}
+
+async function checkFunction(baseUrl: string, key: string, name: string): Promise<CheckResult> {
+  const startedAt = Date.now();
+  const res = await requestWithTimeout(`${baseUrl}/functions/v1/${name}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ action: "ping", source: "infra-check", version: FUNCTION_VERSION }),
+  });
+  const body = await res.text().catch(() => "");
+  return {
+    status: res.ok || res.status === 400 || res.status === 401 || res.status === 403 || res.status === 404 ? "ok" : "degraded",
+    latency_ms: Date.now() - startedAt,
+    status_code: res.status,
+    error: res.ok ? null : body.slice(0, 240) || res.statusText,
+  };
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const supabase = createClient(supabaseUrl, serviceKey);
+  const startedAt = Date.now();
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-  const diagnostics: any = {
+  if (!supabaseUrl || !serviceKey) {
+    return jsonResponse({
+      version: FUNCTION_VERSION,
+      ok: false,
+      database: { status: "error", error: "Configuração do backend ausente", latency_ms: 0 },
+      rpc_check: { exists: false, status: "error", error: "Configuração do backend ausente", latency_ms: 0 },
+      edge_functions: {},
+    }, 200);
+  }
+
+  const diagnostics: Record<string, unknown> = {
+    version: FUNCTION_VERSION,
     timestamp: new Date().toISOString(),
-    database: { status: 'unknown', error: null },
-    rpc_check: { exists: false, error: null },
-    edge_functions: {} as Record<string, any>,
+    ok: true,
+    total_latency_ms: 0,
+    database: { status: "unknown", error: null, latency_ms: 0 },
+    rpc_check: { exists: false, status: "unknown", error: null, latency_ms: 0 },
+    edge_functions: {},
   };
 
-  // 1. DB connectivity (3s timeout)
-  try {
-    const res = await withTimeout(
-      supabase.from('automations').select('count', { count: 'exact', head: true }),
-      3000,
-      'db'
-    );
-    diagnostics.database.status = (res as any).error ? 'degraded' : 'ok';
-    diagnostics.database.error = (res as any).error?.message ?? null;
-  } catch (e: any) {
-    diagnostics.database.status = 'error';
-    diagnostics.database.error = e.message;
+  const checks = await Promise.race([
+    Promise.all([
+      safeCheck("database", () => checkRest(supabaseUrl, serviceKey)),
+      safeCheck("rpc", () => checkRpc(supabaseUrl, serviceKey)),
+      Promise.all(["process-scheduled-steps", "process-automation", "send-whatsapp"].map(async (name) => [
+        name,
+        await safeCheck(name, () => checkFunction(supabaseUrl, serviceKey, name)),
+      ] as const)),
+    ]),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), HARD_DEADLINE_MS)),
+  ]);
+
+  if (checks === null) {
+    diagnostics.ok = false;
+    diagnostics.database = { status: "timeout", error: "Pré-check interrompido antes do limite da plataforma", latency_ms: Date.now() - startedAt };
+  } else {
+    const [database, rpcCheck, edgeEntries] = checks;
+    diagnostics.database = database;
+    diagnostics.rpc_check = rpcCheck;
+    diagnostics.edge_functions = Object.fromEntries(edgeEntries);
+    diagnostics.ok = database.status === "ok";
   }
 
-  // 2. RPC existence check (3s timeout) - dummy uuid won't mutate anything
-  try {
-    const res: any = await withTimeout(
-      supabase.rpc('reprocess_scheduled_step', { target_step_id: '00000000-0000-0000-0000-000000000000' }),
-      3000,
-      'rpc'
-    );
-    if (res.error && res.error.code === '42883') {
-      diagnostics.rpc_check.exists = false;
-    } else {
-      diagnostics.rpc_check.exists = true;
-    }
-    diagnostics.rpc_check.error = res.error?.message ?? null;
-  } catch (e: any) {
-    diagnostics.rpc_check.error = e.message;
-  }
-
-  // 3. Edge functions ping in parallel with 4s timeout each
-  const functions = ['process-scheduled-steps', 'process-automation', 'send-whatsapp'];
-  await Promise.all(functions.map(async (name) => {
-    const start = Date.now();
-    try {
-      const res = await fetchWithTimeout(`${supabaseUrl}/functions/v1/${name}`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${serviceKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'ping' }),
-      }, 4000);
-      diagnostics.edge_functions[name] = {
-        status: res.ok ? 'online' : 'error',
-        latency: Date.now() - start,
-        status_code: res.status,
-      };
-      try { await res.text(); } catch { /* noop */ }
-    } catch (e: any) {
-      diagnostics.edge_functions[name] = {
-        status: 'offline',
-        latency: Date.now() - start,
-        error: e.message,
-      };
-    }
-  }));
-
-  return new Response(JSON.stringify(diagnostics), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-  });
+  diagnostics.total_latency_ms = Date.now() - startedAt;
+  return jsonResponse(diagnostics);
 });

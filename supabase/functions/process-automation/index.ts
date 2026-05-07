@@ -120,8 +120,9 @@ serve(async (req) => {
     const actions = (automation.actions || []) as AutomationAction[];
     const startStep = resume_from_step || 0;
 
-    // Create or resume execution record
+    // Create or resume execution record + load trigger context (e.g. group_id for group_tag_added)
     let executionId = resumeExecId;
+    let triggerContext: Record<string, unknown> = {};
     if (!executionId) {
       const { data: execution, error: execError } = await supabase
         .from('automation_executions')
@@ -138,10 +139,15 @@ serve(async (req) => {
       if (execError) throw execError;
       executionId = execution.id;
     } else {
-      await supabase
+      const { data: execRow } = await supabase
         .from('automation_executions')
         .update({ status: 'running' })
-        .eq('id', executionId);
+        .eq('id', executionId)
+        .select('trigger_data')
+        .maybeSingle();
+      if (execRow?.trigger_data && typeof execRow.trigger_data === 'object') {
+        triggerContext = execRow.trigger_data as Record<string, unknown>;
+      }
     }
 
     const results: Array<{ step: number; action: string; status: string; result?: unknown; error?: string }> = [];

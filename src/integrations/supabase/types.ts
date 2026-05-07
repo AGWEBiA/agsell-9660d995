@@ -7837,6 +7837,7 @@ export type Database = {
           out_status: string
         }[]
       }
+      get_cron_queue_metrics: { Args: never; Returns: Json }
       get_form_by_id: {
         Args: { _form_id: string }
         Returns: {

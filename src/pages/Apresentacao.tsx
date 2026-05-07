@@ -125,7 +125,7 @@ export default function Apresentacao() {
       <div className="h-14" />
 
       {/* Hero */}
-      <section className="relative py-20 md:py-32 overflow-hidden">
+      <section className="relative py-14 md:py-20 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-primary/8 blur-[120px]" />
         </div>
@@ -159,7 +159,7 @@ export default function Apresentacao() {
       </section>
 
       {/* Pain Points */}
-      <section className="py-16 md:py-24 border-t border-white/5">
+      <section className="py-10 md:py-16 border-t border-white/5">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <p className="text-primary text-sm font-semibold tracking-widest uppercase mb-3">O problema</p>
@@ -180,7 +180,7 @@ export default function Apresentacao() {
       </section>
 
       {/* Replaces */}
-      <section className="py-16 md:py-24 border-t border-white/5">
+      <section className="py-10 md:py-16 border-t border-white/5">
         <div className="container mx-auto px-4 sm:px-6 text-center">
           <p className="text-primary text-sm font-semibold tracking-widest uppercase mb-3">A solução</p>
           <h2 className="text-2xl sm:text-4xl font-bold mb-4">
@@ -205,7 +205,7 @@ export default function Apresentacao() {
       </section>
 
       {/* Pillars */}
-      <section className="py-16 md:py-24 border-t border-white/5">
+      <section className="py-10 md:py-16 border-t border-white/5">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <p className="text-primary text-sm font-semibold tracking-widest uppercase mb-3">Funcionalidades</p>
@@ -236,7 +236,7 @@ export default function Apresentacao() {
       <WhatsNewSection />
 
       {/* Comparison Table */}
-      <section id="comparativo" className="py-16 md:py-24 border-t border-white/5">
+      <section id="comparativo" className="py-10 md:py-16 border-t border-white/5">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-12">
             <p className="text-primary text-sm font-semibold tracking-widest uppercase mb-3">Comparativo</p>
@@ -272,7 +272,7 @@ export default function Apresentacao() {
       </section>
 
       {/* Social Proof Numbers */}
-      <section className="py-16 md:py-20 border-t border-white/5">
+      <section className="py-10 md:py-14 border-t border-white/5">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto text-center">
             {[
@@ -291,7 +291,7 @@ export default function Apresentacao() {
       </section>
 
       {/* Migration */}
-      <section className="py-16 md:py-24 border-t border-white/5">
+      <section className="py-10 md:py-16 border-t border-white/5">
         <div className="container mx-auto px-4 sm:px-6 text-center max-w-2xl">
           <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
             <Zap className="h-7 w-7 text-primary" />

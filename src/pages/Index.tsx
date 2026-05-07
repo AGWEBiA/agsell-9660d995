@@ -192,7 +192,7 @@ export default function Index() {
       <div className="h-16" />
 
       {/* HERO */}
-      <section className="relative overflow-hidden pt-12 md:pt-20 pb-16 md:pb-24">
+      <section className="relative overflow-hidden pt-8 md:pt-14 pb-12 md:pb-16">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full bg-primary/10 blur-[140px]" />
           <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full bg-orange-500/5 blur-[120px]" />
@@ -277,7 +277,7 @@ export default function Index() {
       </section>
 
       {/* Stack scroll */}
-      <section id="stack" className="py-12 border-y border-white/5 bg-white/[0.015] overflow-hidden">
+      <section id="stack" className="py-8 border-y border-white/5 bg-white/[0.015] overflow-hidden">
         <div className="container mx-auto px-4 sm:px-6 mb-6">
           <p className="text-center text-xs text-white/30 uppercase tracking-widest font-semibold">
             Tudo o que você precisa para vender — em um só lugar
@@ -297,7 +297,7 @@ export default function Index() {
       </section>
 
       {/* O que você encontra (com imagens, estilo Asimov) */}
-      <section id="funcionalidades" className="py-20 md:py-28">
+      <section id="funcionalidades" className="py-12 md:py-16">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-14 max-w-3xl mx-auto">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
@@ -325,7 +325,7 @@ export default function Index() {
           </div>
 
           {/* Feature blocks alternados com imagens */}
-          <div className="space-y-20 md:space-y-28 max-w-6xl mx-auto">
+          <div className="space-y-12 md:space-y-16 max-w-6xl mx-auto">
             {FEATURES.map((f, i) => {
               const reversed = i % 2 === 1;
               return (
@@ -377,7 +377,7 @@ export default function Index() {
       <WhatsNewSection />
 
       {/* Trilhas (com imagens, sem "Aprenda") */}
-      <section id="trilhas" className="py-20 md:py-28 border-t border-white/5">
+      <section id="trilhas" className="py-12 md:py-16 border-t border-white/5">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="max-w-3xl mb-14">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 leading-tight">
@@ -430,7 +430,7 @@ export default function Index() {
       </section>
 
       {/* CONHEÇA OS ESPECIALISTAS */}
-      <section id="especialistas" className="py-20 md:py-28 border-t border-white/5 relative overflow-hidden">
+      <section id="especialistas" className="py-12 md:py-16 border-t border-white/5 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-primary/8 blur-[140px]" />
         </div>
@@ -502,7 +502,7 @@ export default function Index() {
       </section>
 
       {/* Big CTA / Mission */}
-      <section className="py-24 md:py-32 border-t border-white/5 relative overflow-hidden">
+      <section className="py-16 md:py-20 border-t border-white/5 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full bg-primary/8 blur-[120px]" />
         </div>
@@ -526,14 +526,14 @@ export default function Index() {
       </section>
 
       {/* Pricing Box completo */}
-      <section id="planos" className="py-20 md:py-28 border-t border-white/5">
+      <section id="planos" className="py-12 md:py-16 border-t border-white/5">
         <div className="container mx-auto px-4 sm:px-6">
           <PricingSection />
         </div>
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 md:py-28 border-t border-white/5">
+      <section className="py-12 md:py-16 border-t border-white/5">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="text-center mb-14">
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
@@ -565,7 +565,7 @@ export default function Index() {
       </section>
 
       {/* FAQ */}
-      <section className="py-20 md:py-28 border-t border-white/5">
+      <section className="py-12 md:py-16 border-t border-white/5">
         <div className="container mx-auto px-4 sm:px-6 max-w-3xl">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold mb-3">Perguntas frequentes</h2>
@@ -589,7 +589,7 @@ export default function Index() {
       </section>
 
       {/* Final CTA */}
-      <section className="py-20 md:py-28 border-t border-white/5">
+      <section className="py-12 md:py-16 border-t border-white/5">
         <div className="container mx-auto px-4 sm:px-6">
           <div className="max-w-4xl mx-auto rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-10 sm:p-14 text-center relative overflow-hidden">
             <div className="absolute inset-0 pointer-events-none">

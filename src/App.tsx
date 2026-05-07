@@ -34,7 +34,7 @@ const Pricing = React.lazy(() => import("./pages/Pricing"));
 const Features = React.lazy(() => import("./pages/Features"));
 const Apresentacao = React.lazy(() => import("./pages/Apresentacao"));
 const ApresentacaoCRM = React.lazy(() => import("./pages/ApresentacaoCRM"));
-const Vendas = React.lazy(() => import("./pages/Vendas"));
+const Home = React.lazy(() => import("./pages/Home"));
 const SalesPitch = React.lazy(() => import("./pages/SalesPitch"));
 const PurchaseSuccess = React.lazy(() => import("./pages/PurchaseSuccess"));
 const SubscriptionExpired = React.lazy(() => import("./pages/SubscriptionExpired"));

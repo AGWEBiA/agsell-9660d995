@@ -7980,6 +7980,7 @@ export type Database = {
       }
       normalize_br_phone: { Args: { phone: string }; Returns: string }
       process_import_job: { Args: { _job_id: string }; Returns: Json }
+      reprocess_scheduled_step: { Args: { _step_id: string }; Returns: Json }
       unify_sac_contacts: { Args: never; Returns: Json }
     }
     Enums: {

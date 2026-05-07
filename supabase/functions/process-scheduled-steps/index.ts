@@ -26,7 +26,11 @@ serve(async (req) => {
       .order('scheduled_at', { ascending: true })
       .limit(50);
 
-    if (fetchError) throw fetchError;
+    if (fetchError) {
+      console.error('[process-scheduled-steps] fetch error:', fetchError);
+      throw fetchError;
+    }
+    console.log(`[process-scheduled-steps] Found ${pendingSteps?.length ?? 0} pending steps`);
     if (!pendingSteps || pendingSteps.length === 0) {
       return new Response(JSON.stringify({ processed: 0 }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

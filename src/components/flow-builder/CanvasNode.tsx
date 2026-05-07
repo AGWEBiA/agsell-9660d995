@@ -258,25 +258,27 @@ export function CanvasNode({
       {/* Node body — SellFlux centered style */}
       <div
         className="relative rounded-xl cursor-move group transition-colors"
-        onMouseDown={onMouseDown}
+        onMouseDown={handleBodyMouseDown}
         onDoubleClick={onEdit}
       >
         {/* Delete button */}
         <button
           onClick={handleDeleteClick}
           onMouseDown={handleDeleteMouseDown}
-          className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-20"
+          className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-20 ring-2 ring-background"
+          title="Excluir nó"
         >
-          <X className="h-2.5 w-2.5" />
+          <X className="h-3 w-3" />
         </button>
 
-        {/* Settings button */}
+        {/* Settings button — always visible, larger and more prominent */}
         <button
           onClick={handleSettingsClick}
           onMouseDown={handleSettingsMouseDown}
-          className="absolute -top-2 -left-2 h-5 w-5 rounded-full bg-white/10 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 hover:bg-white/20"
+          className="absolute -top-2 -left-2 h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center opacity-80 hover:opacity-100 transition-opacity z-20 hover:bg-primary shadow-md ring-2 ring-background"
+          title="Configurar"
         >
-          <Settings className="h-2.5 w-2.5 text-white/70" />
+          <Settings className="h-3 w-3" />
         </button>
 
         {/* Centered icon box */}

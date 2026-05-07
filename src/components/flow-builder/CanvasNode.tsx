@@ -343,13 +343,16 @@ export function CanvasNode({
       {/* Node body — SellFlux centered style */}
       <div
         className="relative rounded-xl cursor-move group transition-colors"
+        style={{ touchAction: 'none' }}
         onMouseDown={handleBodyMouseDown}
+        onTouchStart={handleBodyTouchStart}
         onDoubleClick={onEdit}
       >
         {/* Delete button */}
         <button
           onClick={handleDeleteClick}
           onMouseDown={handleDeleteMouseDown}
+          onTouchStart={(e) => e.stopPropagation()}
           className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-20 ring-2 ring-background"
           title="Excluir nó"
         >
@@ -360,6 +363,8 @@ export function CanvasNode({
         <button
           onClick={handleSettingsClick}
           onMouseDown={handleSettingsMouseDown}
+          onTouchStart={(e) => e.stopPropagation()}
+          onTouchEnd={(e) => { e.stopPropagation(); e.preventDefault(); onEdit(); }}
           className="absolute -top-2 -left-2 h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center opacity-80 hover:opacity-100 transition-opacity z-20 hover:bg-primary shadow-md ring-2 ring-background"
           title="Configurar"
         >

@@ -117,12 +117,36 @@ export function CanvasNode({
     e.stopPropagation();
   };
 
-  // Drag-vs-click: if mouse barely moved and was held briefly, treat as click → open edit.
-  // Otherwise allow drag (delegated to onMouseDown from FlowCanvas).
+  // Touch + Mouse interaction model:
+  //  - Mouse: short click (<220ms, <5px move) → open settings. Otherwise drag.
+  //  - Touch: tap (<300ms, <8px move) → open settings. Long-press (>350ms) → start drag.
+  // Telemetry is recorded on window.__flowBuilderTelemetry for inspection.
   const CLICK_MOVE_THRESHOLD = 5;
   const CLICK_HOLD_THRESHOLD_MS = 220;
+  const TAP_MOVE_THRESHOLD = 8;
+  const TAP_MAX_MS = 300;
+  const LONG_PRESS_MS = 350;
+
+  const recordTelemetry = (event: string, extra: Record<string, unknown> = {}) => {
+    try {
+      const w = window as unknown as { __flowBuilderTelemetry?: { events: Array<Record<string, unknown>>; counts: Record<string, number> } };
+      if (!w.__flowBuilderTelemetry) {
+        w.__flowBuilderTelemetry = { events: [], counts: {} };
+      }
+      const t = w.__flowBuilderTelemetry;
+      t.counts[event] = (t.counts[event] || 0) + 1;
+      t.events.push({ ts: Date.now(), event, nodeId: node.id, subtype: node.subtype, ...extra });
+      if (t.events.length > 200) t.events.shift();
+      // Detect false positive: user moved a lot but no edit/drag fired
+      if (event === 'click_aborted_no_action') {
+        // eslint-disable-next-line no-console
+        console.warn('[FlowBuilder] False-positive interaction (no edit/drag fired)', { nodeId: node.id, ...extra });
+      }
+    } catch { /* noop */ }
+  };
 
   const handleBodyMouseDown = (e: React.MouseEvent) => {
+    // Ignore synthetic mouse events that follow touch (handled by touch handler)
     // Only left button
     if (e.button !== 0) {
       onMouseDown(e);
@@ -133,9 +157,11 @@ export function CanvasNode({
     const startY = e.clientY;
     const startTime = Date.now();
     let moved = false;
+    recordTelemetry('mouse_down');
 
     const onMove = (ev: MouseEvent) => {
       if (Math.abs(ev.clientX - startX) > CLICK_MOVE_THRESHOLD || Math.abs(ev.clientY - startY) > CLICK_MOVE_THRESHOLD) {
+        if (!moved) recordTelemetry('drag_started');
         moved = true;
       }
     };
@@ -144,11 +170,70 @@ export function CanvasNode({
       window.removeEventListener('mouseup', onUp);
       const elapsed = Date.now() - startTime;
       if (!moved && elapsed < CLICK_HOLD_THRESHOLD_MS) {
+        recordTelemetry('click_opened_edit', { elapsed });
         onEdit();
+      } else if (!moved) {
+        recordTelemetry('click_aborted_no_action', { elapsed, reason: 'held_too_long' });
       }
     };
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
+  };
+
+  const handleBodyTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    const touch = e.touches[0];
+    const startX = touch.clientX;
+    const startY = touch.clientY;
+    const startTime = Date.now();
+    let moved = false;
+    let dragMode = false;
+    recordTelemetry('touch_start');
+
+    const longPressTimer = window.setTimeout(() => {
+      if (!moved) {
+        dragMode = true;
+        recordTelemetry('long_press_drag_start');
+        // Begin drag by synthesizing the same event the canvas expects.
+        onMouseDown({
+          stopPropagation: () => {},
+          preventDefault: () => {},
+          clientX: startX,
+          clientY: startY,
+          button: 0,
+        } as unknown as React.MouseEvent);
+        // Haptic hint if available
+        try { (navigator as Navigator & { vibrate?: (p: number) => void }).vibrate?.(15); } catch { /* noop */ }
+      }
+    }, LONG_PRESS_MS);
+
+    const onMove = (ev: TouchEvent) => {
+      const t = ev.touches[0];
+      if (!t) return;
+      if (Math.abs(t.clientX - startX) > TAP_MOVE_THRESHOLD || Math.abs(t.clientY - startY) > TAP_MOVE_THRESHOLD) {
+        moved = true;
+      }
+    };
+    const onEnd = () => {
+      window.clearTimeout(longPressTimer);
+      window.removeEventListener('touchmove', onMove);
+      window.removeEventListener('touchend', onEnd);
+      window.removeEventListener('touchcancel', onEnd);
+      const elapsed = Date.now() - startTime;
+      if (dragMode) {
+        recordTelemetry('long_press_drag_end', { elapsed });
+        return;
+      }
+      if (!moved && elapsed < TAP_MAX_MS) {
+        recordTelemetry('tap_opened_edit', { elapsed });
+        onEdit();
+      } else {
+        recordTelemetry('tap_aborted_no_action', { elapsed, moved });
+      }
+    };
+    window.addEventListener('touchmove', onMove, { passive: true });
+    window.addEventListener('touchend', onEnd);
+    window.addEventListener('touchcancel', onEnd);
   };
 
   // Note node special rendering

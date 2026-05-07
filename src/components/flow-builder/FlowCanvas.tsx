@@ -489,7 +489,6 @@ export function FlowCanvas({
           </div>
         </div>
       )}
-      )}
 
       {/* Interaction hint — clique vs arrastar */}
       {showHint && nodes.length > 0 && (

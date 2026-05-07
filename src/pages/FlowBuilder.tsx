@@ -1069,6 +1069,7 @@ export default function FlowBuilder() {
       trigger_node_id: triggerNode.id,
       position: triggerNode.position,
       connections: connections,
+      structure_mode: structureMode,
       ...triggerNode.config,
     } as Record<string, Json>;
 

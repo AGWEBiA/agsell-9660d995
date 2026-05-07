@@ -7798,6 +7798,15 @@ export type Database = {
         Args: { _data: Json; _event_type: string; _org_id: string }
         Returns: number
       }
+      enqueue_automations: {
+        Args: {
+          v_contact_id: string
+          v_org_id: string
+          v_trigger_data?: Json
+          v_trigger_type: string
+        }
+        Returns: number
+      }
       find_duplicate_contacts: {
         Args: { _org_id: string }
         Returns: {

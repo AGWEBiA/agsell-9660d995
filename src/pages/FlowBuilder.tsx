@@ -771,7 +771,8 @@ export default function FlowBuilder() {
   const [flowName, setFlowName] = useState(searchParams.get('name') || 'Meu Fluxo');
   const [nodes, setNodes] = useState<FlowNode[]>([]);
   const [connections, setConnections] = useState<FlowConnection[]>([]);
-  const [isActive, setIsActive] = useState(false);
+   const [isActive, setIsActive] = useState(false);
+   const [structureMode, setStructureMode] = useState<'loose' | 'container'>('loose');
   const [editingNode, setEditingNode] = useState<FlowNode | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [newCampaignOpen, setNewCampaignOpen] = useState(false);

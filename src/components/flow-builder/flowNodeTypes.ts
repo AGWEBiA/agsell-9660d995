@@ -91,6 +91,8 @@ export const triggerOptions = [
   // WhatsApp group triggers
   { id: 'whatsapp_group_join', label: 'Entrou no Grupo', icon: UserPlus, channel: 'whatsapp', color: 'from-green-500 to-lime-500', description: 'Quando alguém entra em um grupo do WhatsApp' },
   { id: 'whatsapp_group_leave', label: 'Saiu do Grupo', icon: LogOut, channel: 'whatsapp', color: 'from-red-400 to-orange-400', description: 'Quando alguém sai de um grupo do WhatsApp' },
+  { id: 'group_tag_added', label: 'Tag adicionada ao Grupo', icon: Tag, channel: 'whatsapp', color: 'from-emerald-500 to-green-600', description: 'Quando uma tag é adicionada a um grupo do WhatsApp (gatilho de fluxo de aquecimento, contagem regressiva, etc.)' },
+  { id: 'group_tag_removed', label: 'Tag removida do Grupo', icon: Tag, channel: 'whatsapp', color: 'from-rose-500 to-red-500', description: 'Quando uma tag é removida de um grupo do WhatsApp' },
 ];
 
 // ── Node categories (SellFlux-style sidebar layout) ──

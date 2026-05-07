@@ -18,9 +18,11 @@ interface ChatMessage {
 
 // Build a condensed knowledge base from help center articles
 function buildKnowledgeBase(): string {
-  return helpArticles
-    .map((a) => `### ${a.title}\n${a.content.substring(0, 600)}`)
+  const articlesContext = helpArticles
+    .map((a) => `### ${a.title}\n${a.content.substring(0, 1000)}`)
     .join('\n\n');
+    
+  return `CENTRAL DE AJUDA AG SELL:\n${articlesContext}\n\nMANUAL TÉCNICO E API:\nO AG Sell utiliza React 18, Supabase e Lovable AI Gateway. Endpoints principais em /api-docs. Manual completo em /manual-tecnico.`;
 }
 
 export function SupportAgentChat() {

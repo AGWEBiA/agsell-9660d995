@@ -5,7 +5,7 @@ import {
   Webhook, SlidersHorizontal, Instagram, ListChecks, BookOpen,
   Rocket, Globe, Briefcase, Star, PlayCircle, HelpCircle, Workflow,
   Vote, SplitSquareVertical, Megaphone, Search, Bell, Palette,
-  type LucideIcon,
+  type LucideIcon, Download, Save, RefreshCw,
 } from 'lucide-react';
 
 export interface HelpCategory {
@@ -62,6 +62,12 @@ export const helpCategories: HelpCategory[] = [
     title: 'Configurações',
     icon: Settings,
     description: 'Organização, planos, permissões, agência, API Keys, webhooks e integrações.',
+  },
+  {
+    id: 'documentation',
+    title: 'Documentação Técnica',
+    icon: FileText,
+    description: 'Manual técnico do sistema, documentação da API e guias de referência para desenvolvedores.',
   },
 ];
 
@@ -5333,6 +5339,66 @@ Todas as campanhas consomem **créditos de comunicação**:
 - 📱 **Use fallback** no VoIP para garantir que a mensagem chegue
 
 💡 **Dica**: Combine campanhas de VoIP + SMS para máximo alcance: ligue primeiro, envie SMS para quem não atendeu.`,
+  },
+  // =====================================================
+  // DOCUMENTAÇÃO TÉCNICA
+  // =====================================================
+  {
+    id: 'technical-manual-article',
+    categoryId: 'documentation',
+    title: 'Manual Técnico do Sistema',
+    icon: BookOpen,
+    description: 'Visão geral da arquitetura, stack tecnológica e módulos funcionais do AG Sell.',
+    content: `O **AG Sell** é uma plataforma SaaS de alta performance construída sobre uma arquitetura moderna e escalável.
+
+## 1. Stack Tecnológica
+
+| Camada | Tecnologia |
+|--------|-----------|
+| **Frontend** | React 18 + TypeScript + Vite |
+| **Backend** | Supabase (Lovable Cloud) |
+| **Banco de Dados** | PostgreSQL |
+| **IA** | Lovable AI Gateway (Gemini 3 Flash / GPT-4) |
+| **Pagamentos** | Kiwify |
+
+## 2. Módulos Principais
+
+- **CRM**: Gestão de contatos, empresas e pipeline Kanban.
+- **SAC Omnichannel**: Inbox unificado para WhatsApp, Instagram e E-mail.
+- **Automação**: Motor de fluxos visuais (Flow Builder) e sequências drip.
+- **IA Generativa**: Assistente de chat e agentes autônomos com RAG.
+
+## 3. Segurança e Performance
+
+- Autenticação via Supabase Auth com JWT.
+- Row Level Security (RLS) para isolamento total de dados entre organizações.
+- Edge Functions (Deno) para processamento serverless de alta latência.
+
+Para detalhes completos sobre tabelas, endpoints e arquitetura, consulte o (/manual-tecnico).`,
+  },
+  {
+    id: 'api-docs-article',
+    categoryId: 'documentation',
+    title: 'Documentação da API REST',
+    icon: Code2,
+    description: 'Guia de integração via API para desenvolvedores externos e sistemas de terceiros.',
+    content: `A API do AG Sell permite que você conecte o CRM a qualquer outro sistema de forma programática.
+
+## Autenticação
+
+Todas as requisições devem incluir o header \`X-API-Key\`, que pode ser gerado em (/api-keys).
+
+## Endpoints Principais
+
+- \`GET /v1/contacts\`: Lista seus contatos.
+- \`POST /v1/messages\`: Envia mensagens via WhatsApp ou E-mail.
+- \`POST /v1/automations/{id}/trigger\`: Dispara um fluxo de automação.
+
+## Webhooks
+
+Você pode assinar eventos como \`contact.created\` ou \`deal.won\` para receber notificações em tempo real na sua URL de callback.
+
+Consulte a documentação completa e interativa em (/api-docs).`,
   },
 ];
 

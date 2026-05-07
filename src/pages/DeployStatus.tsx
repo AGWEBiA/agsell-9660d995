@@ -3,7 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Loader2, XCircle, Terminal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { CheckCircle2, Loader2, XCircle, Terminal, RefreshCw, AlertTriangle } from "lucide-react";
 
 interface LogEntry {
   id: string;

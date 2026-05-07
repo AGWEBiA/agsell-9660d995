@@ -242,11 +242,11 @@ export default function Index() {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3">
-                <Link to="/pricing">
+                <a href="#planos">
                   <Button size="lg" className="rounded-full px-8 h-12 bg-primary hover:bg-primary/90 font-semibold text-base w-full sm:w-auto">
                     Começar agora <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
-                </Link>
+                </a>
                 <a href="#trilhas">
                   <Button variant="outline" size="lg" className="rounded-full px-8 h-12 border-white/15 text-white hover:bg-white/5 bg-transparent text-base w-full sm:w-auto">
                     Ver trilhas

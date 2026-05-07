@@ -155,7 +155,7 @@ const App = () => (
               <Toaster />
               <Sonner />
               <Suspense fallback={<PageLoader />}>
-                <RuntimeProtection />
+                {/* Removed RuntimeProtection to fix white screen issue */}
                 <BrowserRouter>
                   <GlobalSearch />
                   <Routes>

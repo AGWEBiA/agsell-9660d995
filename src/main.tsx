@@ -2,7 +2,7 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-// build: 2026-05-07 — sync edge functions to Live
+// build: 2026-05-07b — trigger publish
 
 // Global error tracking for better debugging in production
 // Global error tracking for better debugging

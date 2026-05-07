@@ -326,9 +326,10 @@ serve(async (req) => {
           }
 
           case 'send_whatsapp_group': {
-            // Send message to a WhatsApp group session
+            // Send message to a WhatsApp group session.
+            // Falls back to the group_id captured by the trigger (e.g. group_tag_added → context group)
             const contact = await getContact();
-            const groupId = action.config.group_id as string;
+            const groupId = (action.config.group_id as string) || (triggerContext.group_id as string | undefined) || '';
             const message = replaceVars(action.config.message as string, contact);
             if (groupId && message) {
               const { data: group } = await supabase

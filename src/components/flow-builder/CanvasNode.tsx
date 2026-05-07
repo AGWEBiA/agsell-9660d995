@@ -117,6 +117,40 @@ export function CanvasNode({
     e.stopPropagation();
   };
 
+  // Drag-vs-click: if mouse barely moved and was held briefly, treat as click → open edit.
+  // Otherwise allow drag (delegated to onMouseDown from FlowCanvas).
+  const CLICK_MOVE_THRESHOLD = 5;
+  const CLICK_HOLD_THRESHOLD_MS = 220;
+
+  const handleBodyMouseDown = (e: React.MouseEvent) => {
+    // Only left button
+    if (e.button !== 0) {
+      onMouseDown(e);
+      return;
+    }
+    onMouseDown(e);
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startTime = Date.now();
+    let moved = false;
+
+    const onMove = (ev: MouseEvent) => {
+      if (Math.abs(ev.clientX - startX) > CLICK_MOVE_THRESHOLD || Math.abs(ev.clientY - startY) > CLICK_MOVE_THRESHOLD) {
+        moved = true;
+      }
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      const elapsed = Date.now() - startTime;
+      if (!moved && elapsed < CLICK_HOLD_THRESHOLD_MS) {
+        onEdit();
+      }
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
   // Note node special rendering
   if (node.subtype === 'note') {
     const noteColorMap: Record<string, { bg: string; border: string; text: string }> = {

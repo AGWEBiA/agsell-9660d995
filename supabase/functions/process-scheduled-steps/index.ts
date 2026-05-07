@@ -107,14 +107,10 @@ serve(async (req) => {
           return await handleManualReprocess(supabase, req, body.step_id);
         }
         if (body?.action === 'ping' || body?.action === 'cron') {
-          // If it's a cron call, we respond immediately to avoid holding connections
-          // but we still do a quick health check
-          const { error: dbTest } = await supabase.from('automation_scheduled_steps').select('id').limit(1);
           return new Response(JSON.stringify({ 
-            status: dbTest ? 'degraded' : 'ok', 
-            db_error: dbTest?.message,
+            status: 'ok',
             timestamp: new Date().toISOString(),
-            version: '2026-05-07-v4-safe' 
+            version: '2026-05-07-v5-fast-ping' 
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });

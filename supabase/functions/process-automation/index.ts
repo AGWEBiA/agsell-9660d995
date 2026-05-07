@@ -904,19 +904,67 @@ serve(async (req) => {
             break;
           }
 
-          // ── SEQUENCES ──
+          // ── SEQUENCES (container nodes) ──
           case 'sequence_lead':
           case 'sequence_transaction':
           case 'sequence_rewarming':
           case 'sequence_optin': {
-            const steps = (action.config.steps as Array<{ message: string; delay_minutes: number; channel: string }>) || [];
-            if (contact_id && steps.length > 0) {
-              // Create a lightweight inline sequence - schedule first step immediately
-              for (let si = 0; si < steps.length; si++) {
-                const step = steps[si];
-                const delayMs = (si === 0) ? 0 : (step.delay_minutes || 5) * 60000;
-                const scheduledAt = new Date(Date.now() + delayMs).toISOString();
+            const seqMode = String(action.config.mode || 'inline');
 
+            if (seqMode === 'reference' && action.config.target_automation_id) {
+              // Mode 1: dispatch another existing automation as sub-routine
+              try {
+                await fetch(`${supabaseUrl}/functions/v1/process-automation`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+                  body: JSON.stringify({
+                    automation_id: action.config.target_automation_id,
+                    contact_id,
+                    trigger_data: triggerContext,
+                  }),
+                });
+                actionResult = { sequence_dispatched: true, mode: 'reference', target: action.config.target_automation_id };
+              } catch (refErr) {
+                actionResult = { error: (refErr as Error).message };
+              }
+              await logTimeline(actionType, `Sequência → automação`, 'success');
+              break;
+            }
+
+            // Mode 2: inline sub-flow with sub_nodes/sub_connections from canvas editor
+            const subNodes = (action.config.sub_nodes as Array<{ id: string; type: string; subtype: string; config: Record<string, unknown> }>) || [];
+            const subConnections = (action.config.sub_connections as Array<{ from: string; to: string }>) || [];
+
+            if (contact_id && subNodes.length > 0) {
+              // Topological order from sub-flow trigger/first node
+              const nodeMap = new Map(subNodes.map(n => [n.id, n]));
+              const incoming = new Map<string, number>();
+              subNodes.forEach(n => incoming.set(n.id, 0));
+              subConnections.forEach(c => incoming.set(c.to, (incoming.get(c.to) || 0) + 1));
+              const ordered: typeof subNodes = [];
+              const queue = subNodes.filter(n => (incoming.get(n.id) || 0) === 0).map(n => n.id);
+              const seen = new Set<string>();
+              while (queue.length) {
+                const nid = queue.shift()!;
+                if (seen.has(nid)) continue;
+                seen.add(nid);
+                const n = nodeMap.get(nid);
+                if (n) ordered.push(n);
+                subConnections.filter(c => c.from === nid).forEach(c => queue.push(c.to));
+              }
+              // Fallback: include any unreached nodes at the end
+              subNodes.forEach(n => { if (!seen.has(n.id)) ordered.push(n); });
+
+              // Schedule each sub-node respecting timer nodes as delays
+              let cumulativeMs = 0;
+              for (const sn of ordered) {
+                if (sn.subtype === 'timer' || sn.type === 'timer') {
+                  const minutes = Number(sn.config?.delay_minutes || sn.config?.minutes || 5);
+                  cumulativeMs += minutes * 60000;
+                  continue;
+                }
+                if (sn.subtype === 'note') continue;
+                const scheduledAt = new Date(Date.now() + cumulativeMs).toISOString();
                 await supabase.from('automation_scheduled_steps').insert({
                   automation_id,
                   execution_id: executionId,
@@ -925,10 +973,31 @@ serve(async (req) => {
                   current_step: i,
                   scheduled_at: scheduledAt,
                   status: 'pending',
-                  actions: [{ type: step.channel || 'send_whatsapp', config: { message: step.message } }],
+                  actions: [{ type: sn.subtype, subtype: sn.subtype, config: sn.config || {} }],
+                  trigger_data: triggerContext,
                 });
               }
-              actionResult = { sequence_scheduled: true, total_steps: steps.length, type: actionType };
+              actionResult = { sequence_scheduled: true, mode: 'inline', total_steps: ordered.length, type: actionType };
+            } else {
+              // Legacy fallback: flat steps array (older saved data)
+              const steps = (action.config.steps as Array<{ message: string; delay_minutes: number; channel: string }>) || [];
+              if (contact_id && steps.length > 0) {
+                for (let si = 0; si < steps.length; si++) {
+                  const step = steps[si];
+                  const delayMs = (si === 0) ? 0 : (step.delay_minutes || 5) * 60000;
+                  await supabase.from('automation_scheduled_steps').insert({
+                    automation_id,
+                    execution_id: executionId,
+                    contact_id,
+                    organization_id: automation.organization_id,
+                    current_step: i,
+                    scheduled_at: new Date(Date.now() + delayMs).toISOString(),
+                    status: 'pending',
+                    actions: [{ type: step.channel || 'send_whatsapp', config: { message: step.message } }],
+                  });
+                }
+                actionResult = { sequence_scheduled: true, mode: 'legacy', total_steps: steps.length };
+              }
             }
             await logTimeline(actionType, `Sequência ${actionType.replace('sequence_', '')}`, 'success');
             break;

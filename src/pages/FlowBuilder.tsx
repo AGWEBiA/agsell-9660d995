@@ -933,6 +933,7 @@ export default function FlowBuilder() {
         setFlowName(existing.name);
         setIsActive(existing.is_active ?? false);
         const tc = existing.trigger_config as Record<string, unknown> | null;
+        setStructureMode((tc?.structure_mode as 'loose' | 'container') === 'container' ? 'container' : 'loose');
         const originalTrigger = (tc?.original_trigger as string) || existing.trigger_type;
         const trigger = triggerOptions.find(t => t.id === originalTrigger);
 

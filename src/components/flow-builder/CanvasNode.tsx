@@ -117,6 +117,40 @@ export function CanvasNode({
     e.stopPropagation();
   };
 
+  // Drag-vs-click: if mouse barely moved and was held briefly, treat as click → open edit.
+  // Otherwise allow drag (delegated to onMouseDown from FlowCanvas).
+  const CLICK_MOVE_THRESHOLD = 5;
+  const CLICK_HOLD_THRESHOLD_MS = 220;
+
+  const handleBodyMouseDown = (e: React.MouseEvent) => {
+    // Only left button
+    if (e.button !== 0) {
+      onMouseDown(e);
+      return;
+    }
+    onMouseDown(e);
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startTime = Date.now();
+    let moved = false;
+
+    const onMove = (ev: MouseEvent) => {
+      if (Math.abs(ev.clientX - startX) > CLICK_MOVE_THRESHOLD || Math.abs(ev.clientY - startY) > CLICK_MOVE_THRESHOLD) {
+        moved = true;
+      }
+    };
+    const onUp = () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+      const elapsed = Date.now() - startTime;
+      if (!moved && elapsed < CLICK_HOLD_THRESHOLD_MS) {
+        onEdit();
+      }
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
   // Note node special rendering
   if (node.subtype === 'note') {
     const noteColorMap: Record<string, { bg: string; border: string; text: string }> = {
@@ -224,25 +258,27 @@ export function CanvasNode({
       {/* Node body — SellFlux centered style */}
       <div
         className="relative rounded-xl cursor-move group transition-colors"
-        onMouseDown={onMouseDown}
+        onMouseDown={handleBodyMouseDown}
         onDoubleClick={onEdit}
       >
         {/* Delete button */}
         <button
           onClick={handleDeleteClick}
           onMouseDown={handleDeleteMouseDown}
-          className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm z-20"
+          className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-20 ring-2 ring-background"
+          title="Excluir nó"
         >
-          <X className="h-2.5 w-2.5" />
+          <X className="h-3 w-3" />
         </button>
 
-        {/* Settings button */}
+        {/* Settings button — always visible, larger and more prominent */}
         <button
           onClick={handleSettingsClick}
           onMouseDown={handleSettingsMouseDown}
-          className="absolute -top-2 -left-2 h-5 w-5 rounded-full bg-white/10 backdrop-blur flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 hover:bg-white/20"
+          className="absolute -top-2 -left-2 h-6 w-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center opacity-80 hover:opacity-100 transition-opacity z-20 hover:bg-primary shadow-md ring-2 ring-background"
+          title="Configurar"
         >
-          <Settings className="h-2.5 w-2.5 text-white/70" />
+          <Settings className="h-3 w-3" />
         </button>
 
         {/* Centered icon box */}

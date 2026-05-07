@@ -233,6 +233,8 @@ export const triggerTypeMap: Record<string, string> = {
   telegram_keyword: 'telegram_message',
   whatsapp_group_join: 'whatsapp_group_join',
   whatsapp_group_leave: 'whatsapp_group_leave',
+  group_tag_added: 'group_tag_added',
+  group_tag_removed: 'group_tag_removed',
 };
 
 export const TEMPLATE_VARIABLES = [

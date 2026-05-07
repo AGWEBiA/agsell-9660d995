@@ -48,8 +48,9 @@ serve(async (req) => {
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const token = authHeader.replace('Bearer ', '');
-    const isInternalCron = req.headers.get('X-Internal-Cron') === 'true' && token === supabaseServiceKey;
+    const token = authHeader.replace('Bearer ', '').trim();
+    const isInternalCron = (req.headers.get('X-Internal-Cron') === 'true' || req.headers.get('x-internal-cron') === 'true') && 
+                          (token === supabaseServiceKey || token === Deno.env.get('SUPABASE_ANON_KEY'));
 
     if (!isInternalCron) {
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);

@@ -343,9 +343,15 @@ export default function AutomationsMonitor() {
               </div>
 
               <div className="p-4 bg-muted/30 rounded-lg text-sm text-muted-foreground">
-                <p className="font-bold mb-2">Dica de Deploy:</p>
-                <p>Se o backend estiver "OFFLINE", tente atualizar o projeto clicando no botão "Publicar" ou peça ao suporte para verificar as Edge Functions do seu projeto Supabase.</p>
-                {lastCheck && <p className="mt-2">Última verificação bem-sucedida: {lastCheck}</p>}
+                <p className="font-bold mb-2">Dica de Infraestrutura:</p>
+                <p>Se o backend estiver "OFFLINE" ou as automações não ativarem, verifique o painel de diagnósticos avançados.</p>
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto text-primary font-semibold mt-2"
+                  onClick={() => window.location.href = '/deploy-status'}
+                >
+                  Abrir Painel de Diagnóstico Live <ExternalLink className="ml-1 h-3 w-3" />
+                </Button>
               </div>
             </CardContent>
           </Card>

@@ -172,7 +172,7 @@ export default function Index() {
             <a href="#funcionalidades" className="hover:text-white transition-colors">Funcionalidades</a>
             <a href="#trilhas" className="hover:text-white transition-colors">Trilhas</a>
             <a href="#especialistas" className="hover:text-white transition-colors">Especialistas</a>
-            <Link to="/pricing" className="hover:text-white transition-colors">Planos</Link>
+            <a href="#planos" className="hover:text-white transition-colors">Planos</a>
           </nav>
           <div className="flex items-center gap-2">
             <Link to="/login" className="hidden sm:block">
@@ -180,11 +180,11 @@ export default function Index() {
                 Entrar
               </Button>
             </Link>
-            <Link to="/pricing">
+            <a href="#planos">
               <Button size="sm" className="rounded-full px-5 bg-primary hover:bg-primary/90 font-semibold">
                 Assinar
               </Button>
-            </Link>
+            </a>
           </div>
         </div>
       </header>

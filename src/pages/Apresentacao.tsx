@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { WhatsAppFloatingButton } from '@/components/vendas/WhatsAppFloatingButton';
 import { WhatsNewSection } from '@/components/vendas/WhatsNewSection';
+import { PricingSection } from '@/components/pricing/PricingSection';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/Logo';
 import { Badge } from '@/components/ui/badge';
@@ -307,34 +308,15 @@ export default function Apresentacao() {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="py-20 md:py-32 border-t border-white/5 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] rounded-full bg-primary/10 blur-[100px]" />
-        </div>
-        <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center max-w-2xl">
-          <h2 className="text-3xl sm:text-5xl font-bold mb-4 leading-tight">
-            Sua operação inteira.
-            <br />
-            <span className="text-primary">Uma só plataforma.</span>
-          </h2>
-          <p className="text-white/50 text-sm mb-10 max-w-md mx-auto">
-            Planos flexíveis para sua operação. Sem surpresas, sem pegadinhas. Suporte dedicado desde o dia 1.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link to="/pricing">
-              <Button size="lg" className="rounded-full px-10 bg-primary hover:bg-primary/90 text-white font-semibold text-base h-13">
-                Escolher meu plano <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-            <Link to="/features">
-              <Button variant="outline" size="lg" className="rounded-full px-8 border-white/10 text-white hover:bg-white/5 text-base h-13">
-                Ver funcionalidades
-              </Button>
-            </Link>
-          </div>
+      {/* Plans Section */}
+      <section className="border-t border-white/5 bg-white/[0.01]">
+        <div className="container mx-auto px-4 sm:px-6">
+          <PricingSection />
         </div>
       </section>
+
+      {/* Final CTA - Removido e substituído pela seção de planos acima */}
+
 
       {/* Footer */}
       <footer className="border-t border-white/5">

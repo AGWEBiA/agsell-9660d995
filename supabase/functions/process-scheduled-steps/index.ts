@@ -6,11 +6,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const PROCESS_AUTOMATION_TIMEOUT_MS = 25_000;
-const MAX_RETRIES = 5; // Increased from 3
-const BACKOFF_MS = 5000; // Increased base backoff
-const AUDIT_TABLE = 'automation_scheduled_steps_audit';
-
 async function getAuthenticatedUserId(supabase: ReturnType<typeof createClient>, req: Request) {
   const authHeader = req.headers.get('Authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.replace('Bearer ', '') : '';
@@ -70,8 +65,7 @@ async function handleManualReprocess(supabase: ReturnType<typeof createClient>, 
       .from('automation_scheduled_steps')
       .update({ 
         status: 'pending', 
-        scheduled_at: new Date(Math.min(new Date(step.scheduled_at).getTime(), Date.now())).toISOString(),
-        retry_count: 0
+        scheduled_at: new Date(Math.min(new Date(step.scheduled_at).getTime(), Date.now())).toISOString()
       })
       .eq('id', stepId)
       .in('status', ['processing', 'error', 'failed']);
@@ -87,16 +81,6 @@ async function handleManualReprocess(supabase: ReturnType<typeof createClient>, 
   return new Response(JSON.stringify({ success: true, step_id: stepId }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
-}
-
-async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort('process-automation timeout'), timeoutMs);
-  try {
-    return await fetch(url, { ...init, signal: controller.signal });
-  } finally {
-    clearTimeout(timer);
-  }
 }
 
 serve(async (req) => {

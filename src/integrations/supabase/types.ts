@@ -832,9 +832,12 @@ export type Database = {
           current_step: number
           execution_id: string
           id: string
+          last_error: string | null
           organization_id: string | null
+          retry_count: number
           scheduled_at: string
           status: string
+          updated_at: string
         }
         Insert: {
           actions?: Json
@@ -844,9 +847,12 @@ export type Database = {
           current_step?: number
           execution_id: string
           id?: string
+          last_error?: string | null
           organization_id?: string | null
+          retry_count?: number
           scheduled_at: string
           status?: string
+          updated_at?: string
         }
         Update: {
           actions?: Json
@@ -856,9 +862,12 @@ export type Database = {
           current_step?: number
           execution_id?: string
           id?: string
+          last_error?: string | null
           organization_id?: string | null
+          retry_count?: number
           scheduled_at?: string
           status?: string
+          updated_at?: string
         }
         Relationships: [
           {

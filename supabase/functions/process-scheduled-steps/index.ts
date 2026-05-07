@@ -3,14 +3,18 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-internal-cron',
 };
+
+const VERSION = '2026-05-07-v6-active-processor';
+const HARD_DEADLINE_MS = 25_000; // stop pulling new steps after 25s
+const MAX_STEPS_PER_RUN = 25;
+const STEP_INVOKE_TIMEOUT_MS = 8_000;
 
 async function getAuthenticatedUserId(supabase: ReturnType<typeof createClient>, req: Request) {
   const authHeader = req.headers.get('Authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.replace('Bearer ', '') : '';
   if (!token) return null;
-
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return null;
   return data.user.id;
@@ -21,7 +25,6 @@ async function userCanAccessOrganization(supabase: ReturnType<typeof createClien
     supabase.from('organization_members').select('id').eq('user_id', userId).eq('organization_id', organizationId).maybeSingle(),
     supabase.from('user_roles').select('id').eq('user_id', userId).eq('role', 'admin').maybeSingle(),
   ]);
-
   return Boolean(membership || role);
 }
 
@@ -29,58 +32,143 @@ async function handleManualReprocess(supabase: ReturnType<typeof createClient>, 
   const userId = await getAuthenticatedUserId(supabase, req);
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Sessão inválida' }), {
-      status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
-  const { data: step, error: stepError } = await supabase
+  const { data: step } = await supabase
     .from('automation_scheduled_steps')
     .select('id, organization_id, status, scheduled_at')
-    .eq('id', stepId)
-    .maybeSingle();
+    .eq('id', stepId).maybeSingle();
 
-  if (stepError) throw stepError;
   if (!step) {
     return new Response(JSON.stringify({ error: 'Step não encontrado' }), {
-      status: 404,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
-
-  const hasAccess = await userCanAccessOrganization(supabase, userId, step.organization_id);
-  if (!hasAccess) {
+  if (!(await userCanAccessOrganization(supabase, userId, step.organization_id))) {
     return new Response(JSON.stringify({ error: 'Sem permissão' }), {
-      status: 403,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 
-  // Use the RPC if it exists, otherwise fallback to direct update
-  const { data: rpcData, error: rpcError } = await supabase.rpc('reprocess_scheduled_step', { target_step_id: stepId });
-  
+  const { error: rpcError } = await supabase.rpc('reprocess_scheduled_step', { target_step_id: stepId });
   if (rpcError) {
-    console.log('[process-scheduled-steps] RPC fallback used due to:', rpcError.message);
-    const { error: resetError } = await supabase
-      .from('automation_scheduled_steps')
-      .update({ 
-        status: 'pending', 
-        scheduled_at: new Date(Math.min(new Date(step.scheduled_at).getTime(), Date.now())).toISOString()
-      })
-      .eq('id', stepId)
-      .in('status', ['processing', 'error', 'failed']);
-
-    if (resetError) throw resetError;
-  } else if ((rpcData as any)?.error) {
-    return new Response(JSON.stringify({ error: (rpcData as any).error }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    await supabase.from('automation_scheduled_steps')
+      .update({ status: 'pending', scheduled_at: new Date().toISOString() })
+      .eq('id', stepId);
   }
-
   return new Response(JSON.stringify({ success: true, step_id: stepId }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
+}
+
+async function processOneStep(
+  supabase: ReturnType<typeof createClient>,
+  supabaseUrl: string,
+  serviceKey: string,
+  step: any,
+): Promise<{ ok: boolean; error?: string }> {
+  // Mark as processing (optimistic claim)
+  const { data: claimed, error: claimErr } = await supabase
+    .from('automation_scheduled_steps')
+    .update({ status: 'processing' })
+    .eq('id', step.id)
+    .eq('status', 'pending')
+    .select('id')
+    .maybeSingle();
+
+  if (claimErr || !claimed) {
+    return { ok: false, error: 'already_claimed' };
+  }
+
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), STEP_INVOKE_TIMEOUT_MS);
+
+    const resp = await fetch(`${supabaseUrl}/functions/v1/process-automation`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${serviceKey}`,
+        'X-Internal-Cron': 'true',
+      },
+      body: JSON.stringify({
+        automation_id: step.automation_id,
+        execution_id: step.execution_id,
+        contact_id: step.contact_id,
+        trigger_event: 'scheduled_resume',
+        resume_from_step: step.current_step || 0,
+      }),
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timer));
+
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => '');
+      throw new Error(`process-automation HTTP ${resp.status}: ${text.slice(0, 200)}`);
+    }
+
+    await supabase.from('automation_scheduled_steps')
+      .update({ status: 'completed' })
+      .eq('id', step.id);
+
+    return { ok: true };
+  } catch (err) {
+    const msg = (err as Error).message || 'unknown';
+    await supabase.from('automation_scheduled_steps')
+      .update({
+        status: 'error',
+        last_error: msg,
+        retry_count: (step.retry_count || 0) + 1,
+      })
+      .eq('id', step.id);
+    return { ok: false, error: msg };
+  }
+}
+
+async function processPendingSteps(
+  supabase: ReturnType<typeof createClient>,
+  supabaseUrl: string,
+  serviceKey: string,
+) {
+  const startedAt = Date.now();
+  const summary = { picked: 0, ok: 0, failed: 0, errors: [] as string[] };
+
+  // Recover stuck "processing" steps older than 5 min
+  await supabase
+    .from('automation_scheduled_steps')
+    .update({ status: 'pending' })
+    .eq('status', 'processing')
+    .lt('scheduled_at', new Date(Date.now() - 5 * 60_000).toISOString());
+
+  while (Date.now() - startedAt < HARD_DEADLINE_MS && summary.picked < MAX_STEPS_PER_RUN) {
+    const { data: steps, error } = await supabase
+      .from('automation_scheduled_steps')
+      .select('id, automation_id, execution_id, contact_id, organization_id, current_step, retry_count, scheduled_at')
+      .eq('status', 'pending')
+      .lte('scheduled_at', new Date().toISOString())
+      .order('scheduled_at', { ascending: true })
+      .limit(5);
+
+    if (error) {
+      summary.errors.push(`fetch: ${error.message}`);
+      break;
+    }
+    if (!steps || steps.length === 0) break;
+
+    for (const step of steps) {
+      if (Date.now() - startedAt >= HARD_DEADLINE_MS) break;
+      summary.picked += 1;
+      const result = await processOneStep(supabase, supabaseUrl, serviceKey, step);
+      if (result.ok) summary.ok += 1;
+      else {
+        summary.failed += 1;
+        if (result.error) summary.errors.push(result.error);
+      }
+    }
+  }
+
+  return summary;
 }
 
 serve(async (req) => {
@@ -99,28 +187,29 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, serviceKey);
 
+    // Parse body
+    let body: any = {};
     if (req.method === 'POST') {
-      const bodyText = await req.text();
-      if (bodyText) {
-        const body = JSON.parse(bodyText);
-        if (body?.action === 'reprocess_step' && body?.step_id) {
-          return await handleManualReprocess(supabase, req, body.step_id);
-        }
-        if (body?.action === 'ping' || body?.action === 'cron') {
-          return new Response(JSON.stringify({ 
-            status: 'ok',
-            timestamp: new Date().toISOString(),
-            version: '2026-05-07-v5-fast-ping' 
-          }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
+      const text = await req.text();
+      if (text) {
+        try { body = JSON.parse(text); } catch { body = {}; }
       }
     }
 
-    // Circuit breaker: only proceed if we're NOT under heavy load (optional logic can go here)
-    // For now, we exit early to prevent connection timeout loops
-    return new Response(JSON.stringify({ status: 'active', message: 'Processing paused for stability' }), {
+    if (body?.action === 'ping') {
+      return new Response(JSON.stringify({ status: 'ok', version: VERSION }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (body?.action === 'reprocess_step' && body?.step_id) {
+      return await handleManualReprocess(supabase, req, body.step_id);
+    }
+
+    // Default: process pending scheduled steps (cron entrypoint)
+    const summary = await processPendingSteps(supabase, supabaseUrl, serviceKey);
+
+    return new Response(JSON.stringify({ status: 'ok', version: VERSION, ...summary }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {

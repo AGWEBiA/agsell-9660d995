@@ -1223,6 +1223,30 @@ export default function FlowBuilder() {
           {currentFlowId && <Badge variant="outline" className="text-xs">Editando</Badge>}
         </div>
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 rounded-md border bg-background/50 p-0.5" title="Estrutura do fluxo">
+            <button
+              type="button"
+              onClick={() => setStructureMode('loose')}
+              className={cn(
+                'px-2 py-1 text-xs rounded transition',
+                structureMode === 'loose' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted',
+              )}
+              title="Cada ação é um nó solto no canvas (modo padrão)"
+            >
+              Nós soltos
+            </button>
+            <button
+              type="button"
+              onClick={() => setStructureMode('container')}
+              className={cn(
+                'px-2 py-1 text-xs rounded transition',
+                structureMode === 'container' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted',
+              )}
+              title="Use nós Sequência para agrupar ações em sub-fluxos (containers)"
+            >
+              Subfluxo container
+            </button>
+          </div>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">{isActive ? 'Ativo' : 'Rascunho'}</span>
             <Switch checked={isActive} onCheckedChange={setIsActive} />

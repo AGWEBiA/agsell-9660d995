@@ -263,7 +263,7 @@ export default function Index() {
                   src="/videos/agsell-presentation.mp4"
                   controls
                   playsInline
-                  preload="none"
+                  preload="metadata"
                   poster="/videos/agsell-presentation-thumb.jpg"
                   className="w-full h-full object-cover"
                 >

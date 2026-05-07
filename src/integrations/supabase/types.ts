@@ -7989,6 +7989,10 @@ export type Database = {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
+      list_group_trigger_executions: {
+        Args: { _group_id?: string; _limit?: number; _org_id: string }
+        Returns: Json
+      }
       log_audit_event: {
         Args: {
           _action: string
@@ -8006,6 +8010,15 @@ export type Database = {
       normalize_br_phone: { Args: { phone: string }; Returns: string }
       process_import_job: { Args: { _job_id: string }; Returns: Json }
       reprocess_scheduled_step: { Args: { _step_id: string }; Returns: Json }
+      simulate_group_tag_trigger: {
+        Args: {
+          _group_id: string
+          _org_id: string
+          _tag_name: string
+          _trigger_type?: string
+        }
+        Returns: Json
+      }
       unify_sac_contacts: { Args: never; Returns: Json }
     }
     Enums: {

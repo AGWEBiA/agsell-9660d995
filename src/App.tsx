@@ -128,6 +128,7 @@ const FunnelBI = React.lazy(() => import("./pages/FunnelBI"));
 const AutomationMetrics = React.lazy(() => import("./pages/AutomationMetrics"));
 const AutomationsMonitor = React.lazy(() => import("./pages/AutomationsMonitor"));
 const CronMetrics = React.lazy(() => import("./pages/CronMetrics"));
+const GroupTriggerTester = React.lazy(() => import("./pages/GroupTriggerTester"));
 const SMSMarketing = React.lazy(() => import("./pages/SMSMarketing"));
 const Notifications = React.lazy(() => import("./pages/Notifications"));
 const CRMAdmin = React.lazy(() => import("./pages/CRMAdmin"));
@@ -276,6 +277,7 @@ const App = () => {
                     <Route path="automation-metrics" element={<AutomationMetrics />} />
                     <Route path="automations-monitor" element={<AutomationsMonitor />} />
                     <Route path="cron-metrics" element={<CronMetrics />} />
+                    <Route path="group-trigger-tester" element={<GroupTriggerTester />} />
                     <Route path="support" element={<SupportTickets />} />
                     <Route path="support-center" element={<SupportCenter />} />
                     <Route path="support-portal-settings" element={<FeatureRequiredPage feature="customer_support_center" featureLabel="Portal de Suporte"><SupportPortalSettingsPage /></FeatureRequiredPage>} />

@@ -116,6 +116,13 @@ export default function DeployStatus() {
       // Simulating typegen check - in real app we could fetch a version file
       addLog("Typegen check: OK (v2026.05.07)", "success");
 
+      if (diag.ok === false || diag.database?.status !== "ok") {
+        setProgress(85);
+        addLog("Pré-check interrompido: o Live respondeu, mas não passou nas validações dentro do tempo seguro.", "error");
+        setStatus("error");
+        return;
+      }
+
       setProgress(100);
       addLog("Pré-check concluído. Ambiente pronto para sincronização.", "success");
       setStatus("ready");

@@ -30,31 +30,44 @@ export default function DeployStatus() {
   };
 
   useEffect(() => {
-    // Simulando o monitoramento do processo de build e deploy que o Lovable executa
-    const steps = [
-      { msg: "Iniciando build de produção...", progress: 10, status: "building" },
-      { msg: "Transformando módulos (Vite)...", progress: 30, status: "building" },
-      { msg: "Build concluído com sucesso!", progress: 50, status: "success" },
-      { msg: "Preparando arquivos para upload...", progress: 60, status: "uploading" },
-      { msg: "Enviando bundles para a CDN...", progress: 80, status: "uploading" },
-      { msg: "Finalizando rollout...", progress: 95, status: "deploying" },
-      { msg: "Sistema online e saudável!", progress: 100, status: "success" },
-    ];
+    const runDiagnostics = async () => {
+      addLog("Iniciando diagnósticos de infraestrutura...", "info");
+      setStatus("building");
+      setProgress(20);
 
-    let currentStep = 0;
-    const interval = setInterval(() => {
-      if (currentStep < steps.length) {
-        const step = steps[currentStep];
-        addLog(step.msg, step.status === "error" ? "error" : step.progress === 100 ? "success" : "info");
-        setProgress(step.progress);
-        setStatus(step.status as any);
-        currentStep++;
-      } else {
-        clearInterval(interval);
+      try {
+        // Teste 1: Conexão com Supabase
+        const { error: dbError } = await supabase.from('automations').select('count', { count: 'exact', head: true }).limit(0);
+        if (dbError) {
+          addLog(`Falha na conexão com Banco de Dados: ${dbError.message}`, "error");
+          if (dbError.message.includes("timeout")) {
+            addLog("Dica: O banco de dados parece estar sobrecarregado. Tente aguardar alguns minutos.", "info");
+          }
+          setStatus("error");
+          return;
+        }
+        addLog("Conexão com Banco de Dados: OK", "success");
+        setProgress(50);
+
+        // Teste 2: Edge Functions
+        const { data, error: funcError } = await supabase.functions.invoke('process-scheduled-steps', { body: { action: 'ping' } });
+        if (funcError) {
+          addLog(`Edge Function (process-scheduled-steps): ${funcError.message}`, "error");
+        } else {
+          addLog(`Edge Function (process-scheduled-steps): ONLINE (v${data?.version || 'unknown'})`, "success");
+        }
+        setProgress(80);
+
+        addLog("Build/Deploy: Pronto para sincronização.", "info");
+        setStatus("success");
+        setProgress(100);
+      } catch (err: any) {
+        addLog(`Erro inesperado: ${err.message}`, "error");
+        setStatus("error");
       }
-    }, 2000);
+    };
 
-    return () => clearInterval(interval);
+    runDiagnostics();
   }, []);
 
   return (

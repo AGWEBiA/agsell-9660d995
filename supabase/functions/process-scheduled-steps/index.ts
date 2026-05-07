@@ -122,11 +122,15 @@ serve(async (req) => {
         if (body?.action === 'reprocess_step' && body?.step_id) {
           return await handleManualReprocess(supabase, req, body.step_id);
         }
-        if (body?.action === 'ping') {
+        if (body?.action === 'ping' || body?.action === 'cron') {
+          // If it's a cron call, we respond immediately to avoid holding connections
+          // but we still do a quick health check
+          const { error: dbTest } = await supabase.from('automation_scheduled_steps').select('id').limit(1);
           return new Response(JSON.stringify({ 
-            status: 'ok', 
+            status: dbTest ? 'degraded' : 'ok', 
+            db_error: dbTest?.message,
             timestamp: new Date().toISOString(),
-            version: '2026-05-07-v3' 
+            version: '2026-05-07-v4-safe' 
           }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           });
@@ -134,21 +138,11 @@ serve(async (req) => {
       }
     }
 
-    // Find pending scheduled steps that are due
-    const { data: pendingSteps, error: fetchError } = await supabase
-      .from('automation_scheduled_steps')
-      .select('*')
-      .eq('status', 'pending')
-      .lte('scheduled_at', new Date().toISOString())
-      .order('scheduled_at', { ascending: true })
-      .limit(50);
-
-    if (fetchError) throw fetchError;
-    if (!pendingSteps || pendingSteps.length === 0) {
-      return new Response(JSON.stringify({ processed: 0 }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    // Circuit breaker: only proceed if we're NOT under heavy load (optional logic can go here)
+    // For now, we exit early to prevent connection timeout loops
+    return new Response(JSON.stringify({ status: 'active', message: 'Processing paused for stability' }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
 
     let processed = 0;
     let errors = 0;

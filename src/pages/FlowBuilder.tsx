@@ -18,6 +18,7 @@ import { useForms } from '@/hooks/useForms';
 import { useGatewayProducts } from '@/hooks/useGatewayProducts';
 import { cn } from '@/lib/utils';
 import type { Json } from '@/integrations/supabase/types';
+import { findOrphanGroupNodes, flattenWithSubflows, type FlowNodeLike } from '@/lib/flow/groupTargeting';
 import {
   ArrowLeft, Plus, Save, Trash2,
   Zap, MessageSquare, Mail, Instagram, Send,

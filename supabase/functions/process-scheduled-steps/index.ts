@@ -8,6 +8,76 @@ const corsHeaders = {
 
 const PROCESS_AUTOMATION_TIMEOUT_MS = 25_000;
 
+async function getAuthenticatedUserId(supabase: ReturnType<typeof createClient>, req: Request) {
+  const authHeader = req.headers.get('Authorization');
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.replace('Bearer ', '') : '';
+  if (!token) return null;
+
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data.user) return null;
+  return data.user.id;
+}
+
+async function userCanAccessOrganization(supabase: ReturnType<typeof createClient>, userId: string, organizationId: string) {
+  const [{ data: membership }, { data: role }] = await Promise.all([
+    supabase.from('organization_members').select('id').eq('user_id', userId).eq('organization_id', organizationId).maybeSingle(),
+    supabase.from('user_roles').select('id').eq('user_id', userId).eq('role', 'admin').maybeSingle(),
+  ]);
+
+  return Boolean(membership || role);
+}
+
+async function handleManualReprocess(supabase: ReturnType<typeof createClient>, req: Request, stepId: string) {
+  const userId = await getAuthenticatedUserId(supabase, req);
+  if (!userId) {
+    return new Response(JSON.stringify({ error: 'Sessão inválida' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const { data: step, error: stepError } = await supabase
+    .from('automation_scheduled_steps')
+    .select('id, organization_id, status, scheduled_at')
+    .eq('id', stepId)
+    .maybeSingle();
+
+  if (stepError) throw stepError;
+  if (!step) {
+    return new Response(JSON.stringify({ error: 'Step não encontrado' }), {
+      status: 404,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const hasAccess = await userCanAccessOrganization(supabase, userId, step.organization_id);
+  if (!hasAccess) {
+    return new Response(JSON.stringify({ error: 'Sem permissão' }), {
+      status: 403,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  if (!['processing', 'error', 'failed'].includes(step.status)) {
+    return new Response(JSON.stringify({ error: `Step não está travado (status atual: ${step.status})` }), {
+      status: 409,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+
+  const { error: resetError } = await supabase
+    .from('automation_scheduled_steps')
+    .update({ status: 'pending', scheduled_at: new Date(Math.min(new Date(step.scheduled_at).getTime(), Date.now())).toISOString() })
+    .eq('id', stepId)
+    .in('status', ['processing', 'error', 'failed']);
+
+  if (resetError) throw resetError;
+
+  return new Response(JSON.stringify({ success: true, step_id: stepId }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
 async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort('process-automation timeout'), timeoutMs);
@@ -25,9 +95,30 @@ serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    if (!supabaseUrl || !serviceKey) {
+      console.error('[process-scheduled-steps] Missing environment variables', {
+        hasUrl: Boolean(supabaseUrl),
+        hasServiceKey: Boolean(serviceKey),
+      });
+      return new Response(JSON.stringify({ error: 'Server configuration error' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const supabase = createClient(supabaseUrl, serviceKey);
+
+    if (req.method === 'POST') {
+      const bodyText = await req.text();
+      if (bodyText) {
+        const body = JSON.parse(bodyText);
+        if (body?.action === 'reprocess_step' && body?.step_id) {
+          return await handleManualReprocess(supabase, req, body.step_id);
+        }
+      }
+    }
 
     // Find pending scheduled steps that are due
     const { data: pendingSteps, error: fetchError } = await supabase

@@ -160,7 +160,7 @@ const FAQ = [
   },
 ];
 
-export default function Vendas() {
+export default function Index() {
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white selection:bg-primary/30 antialiased">
       {/* Nav */}

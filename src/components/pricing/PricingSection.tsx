@@ -145,7 +145,7 @@ export function PricingSection() {
   }
 
   return (
-    <div id="planos" className="py-16 sm:py-24">
+    <div id="planos" className="py-10 sm:py-16">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <Badge variant="secondary" className="mb-4">

@@ -862,7 +862,7 @@ function FloatingSupportWidget() {
 }
 
 // ─── Main Landing Page ──────────────────────────────────────
-export default function LandingPage() {
+export default function Home() {
   useEffect(() => {
     document.title = 'AG Sell — CRM com WhatsApp, E-mail, IA e Automação | Plataforma All-in-One';
     const metaDesc = document.querySelector('meta[name="description"]');

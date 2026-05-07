@@ -1036,19 +1036,14 @@ export default function FlowBuilder() {
       return;
     }
 
-    // Validate group action nodes have either explicit group_id or rely on a group-tag trigger
-    const groupActionSubtypes = ['send_whatsapp_group', 'edit_whatsapp_group', 'add_to_whatsapp_group'];
-    const isGroupTrigger = triggerNode.subtype === 'group_tag_added' || triggerNode.subtype === 'group_tag_removed';
-    const orphanGroupNodes = nodes.filter(n => groupActionSubtypes.includes(n.subtype))
-      .filter(n => {
-        const cfg = n.config as Record<string, unknown>;
-        const hasExplicit = cfg && typeof cfg.group_id === 'string' && (cfg.group_id as string).length > 0;
-        return !hasExplicit && !isGroupTrigger;
-      });
+    // Validate group action nodes (loose AND container sub-flow modes)
+    // have either explicit group_id or rely on a group-tag trigger.
+    const flatNodes = flattenWithSubflows(nodes as unknown as FlowNodeLike[]);
+    const orphanGroupNodes = findOrphanGroupNodes(flatNodes, triggerNode.subtype);
     if (orphanGroupNodes.length > 0) {
       toast({
         title: '⚠️ Nó(s) de grupo sem destino',
-        description: `${orphanGroupNodes.length} nó(s) WhatsApp Grupo sem group_id e sem trigger de tag de grupo. Configure um grupo ou use o gatilho "Tag adicionada ao Grupo".`,
+        description: `${orphanGroupNodes.length} nó(s) WhatsApp Grupo sem group_id (incl. sub-fluxos de Sequência) e sem trigger de tag de grupo. Configure um grupo ou use o gatilho "Tag adicionada ao Grupo".`,
         variant: 'destructive',
       });
       return;

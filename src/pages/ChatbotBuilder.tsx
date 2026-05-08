@@ -21,6 +21,7 @@ import {
   MessageCircle, UserPlus, PhoneForwarded, XCircle, Zap, Brain,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { evaluateChatbotSchedule } from '@/lib/chatbot/schedule';
 
 // ─── Chatbot Node Types ───
 type ChatbotNodeType =

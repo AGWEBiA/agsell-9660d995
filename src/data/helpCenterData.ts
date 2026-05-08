@@ -7,6 +7,7 @@ import {
   Vote, SplitSquareVertical, Megaphone, Search, Bell, Palette,
   type LucideIcon, Download, Save, RefreshCw,
 } from 'lucide-react';
+import { AUTOMATION_GUIDE_CATEGORY, AUTOMATION_GUIDE_ARTICLES } from './automationGuide';
 
 export interface HelpCategory {
   id: string;

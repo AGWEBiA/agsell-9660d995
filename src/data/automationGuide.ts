@@ -5,9 +5,9 @@
 import {
   Workflow, Zap, GitBranch, Mail, MessageSquare, Instagram, Phone, Bell,
   Tag, PenLine, Star, TrendingUp, ListPlus, ListMinus, Vote, Shuffle,
-  SplitSquareVertical, Clock, UserCheck, Headphones, UserPlus, Globe,
+  SquareSplitVertical, Clock, UserCheck, Headphones, UserPlus, Globe,
   FileText, MousePointerClick, Eye, FormInput, Trophy, MessageCircle,
-  Activity, type LucideIcon, Heart, FileDown, ListChecks
+  type LucideIcon, Heart, FileDown, ListChecks
 } from 'lucide-react';
 import type { HelpArticle, HelpCategory } from '@/types/help';
 

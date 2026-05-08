@@ -170,6 +170,7 @@ const App = () => {
             <TooltipProvider>
               <Toaster />
               <Sonner />
+              <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>
                 {/* Removed RuntimeProtection to fix white screen issue */}
                 <BrowserRouter>

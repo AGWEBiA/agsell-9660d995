@@ -46,134 +46,133 @@ export const TRIGGER_GUIDES: ItemGuide[] = [
     value: 'form_submitted',
     label: 'Formulário Submetido',
     icon: FormInput,
-    short: 'Dispara quando um lead envia um formulário publicado.',
-    when: 'Sempre que um visitante (logado ou anônimo) clica em "Enviar" em um formulário criado em /forms.',
-    inputs: ['Selecione o formulário específico que dispara o fluxo.'],
-    fields: ['Todos os campos do formulário ficam disponíveis como variáveis ({{nome}}, {{email}}, {{telefone}}…).'],
-    example: 'Form "Lead Magnet — eBook Vendas" → Ação: enviar e-mail com link do material + adicionar tag "lead-ebook".',
+    short: 'Gatilho de entrada via captura direta em páginas ou pop-ups.',
+    when: 'Este gatilho é acionado no exato momento em que um lead clica no botão de submissão de qualquer formulário nativo do AG Sell ou integrado via SDK.',
+    inputs: [
+      'Selecione o formulário: Escolha na lista de formulários ativos.',
+      'Mapeamento de Campos: Certifique-se de que os campos do formulário (nome, email, etc) estão mapeados para os campos correspondentes no CRM.',
+      'Double Opt-in: Defina se este formulário exige confirmação de e-mail antes de seguir o fluxo.'
+    ],
+    fields: [
+      'ID do Formulário: {{form_id}}',
+      'URL da Origem: {{source_url}}',
+      'Dados de UTM: {{utm_source}}, {{utm_medium}}, {{utm_campaign}}',
+      'Campos Personalizados: Todos os inputs do form ficam disponíveis como variáveis globais.'
+    ],
+    example: 'Um lead converte no formulário "Ebook Vendas 2024". O sistema captura o e-mail, verifica se ele já existe no CRM, atualiza os dados e dispara uma sequência de nutrição imediata.',
     tips: [
-      'Use formulários diferentes para cada campanha — facilita medir conversão por origem.',
-      'Combine com a ação "Atualizar Lead Score" para qualificar automaticamente.',
+      'Sempre use UTMs nos links de seus formulários para saber exatamente qual anúncio gerou o lead.',
+      'Configure um redirecionamento de "Obrigado" no próprio formulário para melhorar a experiência do usuário.',
+      'Use a variável {{source_url}} em condições para tratar leads que vem de páginas diferentes usando o mesmo formulário.'
+    ],
+    caveats: [
+      'Se o mapeamento de campos estiver incorreto, os dados serão salvos como "Nota" no contato e não nos campos estruturados.',
+      'Formulários externos (Typeform, WPForms) requerem integração via Webhook Inbound e não usam este gatilho nativo.'
     ],
   },
   {
     value: 'tag_added',
     label: 'Tag Adicionada',
     icon: Tag,
-    short: 'Dispara quando uma tag específica é adicionada a um contato.',
-    when: 'No momento em que a tag entra no contato — manualmente, por importação, por outra automação ou via API.',
-    inputs: ['Nome exato da tag de gatilho.'],
-    example: 'Tag "Cliente VIP" adicionada → enviar WhatsApp de boas-vindas exclusivo + criar tarefa para o gerente.',
-    caveats: ['A remoção da tag NÃO dispara este gatilho. Para isso use uma automação separada com a ação inversa.'],
+    short: 'Gatilho reativo para segmentação e micro-automações.',
+    when: 'Dispara quando uma tag específica é aplicada a um contato. Isso pode ocorrer manualmente por um operador, via importação de planilha, por outra automação ou via requisição de API externa.',
+    inputs: [
+      'Tag Alvo: Escolha ou digite a tag que servirá de gatilho.',
+      'Execução Única: Defina se o fluxo deve rodar toda vez que a tag for adicionada ou apenas na primeira vez.'
+    ],
+    example: 'O vendedor adiciona a tag "Interesse-Imóvel-Luxo" manualmente no CRM. O sistema imediatamente envia um catálogo em PDF via WhatsApp e notifica o gerente regional.',
+    tips: [
+      'Crie um padrão de nomenclatura para tags (ex: [STATUS] Pago, [ORIGEM] Facebook) para evitar confusão.',
+      'Use tags de controle para evitar que um lead entre no mesmo fluxo várias vezes se não for desejado.'
+    ],
+    caveats: [
+      'A remoção de uma tag NÃO ativa este fluxo.',
+      'Tags adicionadas em massa (acima de 10.000 contatos) podem ter um pequeno delay no processamento do gatilho.'
+    ],
   },
   {
     value: 'deal_stage_changed',
-    label: 'Deal Mudou de Estágio',
+    label: 'Negócio Mudou de Estágio',
     icon: TrendingUp,
-    short: 'Dispara quando um negócio é movido entre colunas do Kanban.',
-    when: 'Toda vez que o estágio de um deal é alterado (drag-and-drop ou via API).',
-    inputs: ['Pipeline de origem.', 'Estágio de destino que dispara o fluxo.'],
-    example: 'Deal entra em "Proposta Enviada" → enviar e-mail com a proposta + agendar follow-up em 2 dias.',
-    tips: ['Combine com "Criar Tarefa" para que o vendedor receba a próxima ação automaticamente.'],
-  },
-  {
-    value: 'contact_created',
-    label: 'Contato Criado',
-    icon: UserPlus,
-    short: 'Dispara para todo novo contato cadastrado.',
-    when: 'Em qualquer criação: import CSV, cadastro manual, formulário, webhook, integração de gateway.',
-    inputs: ['Nenhum — opera para qualquer contato novo.'],
-    example: 'Novo contato → enviar e-mail de boas-vindas + adicionar à sequência "Onboarding" + atribuir SDR via Round Robin.',
-    caveats: ['Cuidado com loops: evite que ações dentro do fluxo criem novos contatos sem condição de parada.'],
+    short: 'Gatilho de movimentação de funil de vendas.',
+    when: 'Disparado quando um "Deal" (Negócio) é movido de uma coluna para outra dentro do Kanban de vendas.',
+    inputs: [
+      'Pipeline: Selecione o funil de vendas desejado.',
+      'Estágio de Origem (Opcional): Só dispara se vier de um estágio específico.',
+      'Estágio de Destino: O estágio que ativa a automação.'
+    ],
+    example: 'O deal é movido para "Contrato Enviado". A automação envia um e-mail com o link do DocuSign e cria uma tarefa para o vendedor cobrar o cliente em 48 horas.',
+    tips: [
+      'Use este gatilho para automatizar tarefas administrativas burocráticas entre estágios.',
+      'Mova o deal para um estágio de "Perdido" e dispare uma automação de reativação para daqui a 6 meses.'
+    ],
+    caveats: [
+      'Movimentações via API também disparam este gatilho.',
+      'Evite ações que movam o próprio deal para outro estágio dentro do mesmo fluxo, pois isso pode gerar loops infinitos.'
+    ],
   },
   {
     value: 'score_threshold',
     label: 'Score Atingiu Limite',
     icon: Star,
-    short: 'Dispara quando o Lead Score do contato cruza um valor.',
-    when: 'No exato momento em que a regra de scoring atualiza o score e ele iguala/passa o limite.',
-    inputs: ['Valor mínimo de score (ex.: 80).'],
-    example: 'Score ≥ 80 → notificar SDR no Inbox + criar deal no estágio "Lead Qualificado".',
-    tips: ['Configure regras de scoring em /lead-scoring antes de criar este fluxo.'],
-  },
-  {
-    value: 'email_opened',
-    label: 'E-mail Aberto',
-    icon: Eye,
-    short: 'Dispara quando o destinatário abre um e-mail enviado.',
-    when: 'Pixel de tracking confirma a abertura do e-mail (campanha ou transacional).',
-    inputs: ['Opcional: filtrar por campanha específica.'],
-    example: 'Abriu e-mail "Promoção Black Friday" → enviar WhatsApp com link de checkout em 1h.',
-    caveats: ['Apple Mail Privacy Protection pode inflar abertura — use junto a "E-mail Clicado" para qualificar melhor.'],
-  },
-  {
-    value: 'email_clicked',
-    label: 'Link Clicado no E-mail',
-    icon: MousePointerClick,
-    short: 'Dispara quando um link rastreado do e-mail é clicado.',
-    when: 'Logo após o clique. Cada link contém um redirect rastreado.',
-    inputs: ['Opcional: URL específica do link.'],
-    example: 'Clicou no link "Quero saber mais" → adicionar tag "interesse-alto" + iniciar sequência de nutrição.',
+    short: 'Gatilho de qualificação automática (Lead Scoring).',
+    when: 'Ativado quando o sistema de pontuação (Lead Scoring) recalcula o valor de um contato e ele ultrapassa ou iguala o limite definido.',
+    inputs: [
+      'Limite de Pontuação: Valor numérico (ex: 100).',
+      'Direção: Acima de, Abaixo de, ou Exatamente.'
+    ],
+    example: 'Um lead abre 5 e-mails e visita a página de preços 3 vezes. Seu score chega a 150 pontos. O sistema cria um Deal qualificado e notifica o SDR.',
+    tips: [
+      'Defina pontuações negativas para comportamentos de desinteresse (ex: página de "Trabalhe Conosco").',
+      'Revise seus critérios de pontuação trimestralmente para garantir que o "Lead Quente" realmente está no momento de compra.'
+    ],
+    caveats: [
+      'O gatilho só dispara na transição. Se o lead já tinha 100 pontos e ganha mais 10, o gatilho "Score Atingiu 100" não disparará novamente.'
+    ],
   },
   {
     value: 'whatsapp_received',
-    label: 'WhatsApp Recebido (palavra-chave)',
+    label: 'WhatsApp Recebido (Chatbot)',
     icon: MessageSquare,
-    short: 'Dispara quando o contato envia uma mensagem de WhatsApp contendo a palavra/frase.',
-    when: 'Mensagem inbound chega via webhook (Evolution API ou Meta Cloud API) e bate com a regra de match.',
+    short: 'Gatilho de resposta automática para atendimento e vendas.',
+    when: 'Dispara quando uma mensagem chega ao seu WhatsApp conectado e contém palavras ou frases que batem com sua configuração.',
     inputs: [
-      'Palavra-chave ou frase.',
-      'Tipo de match: contém, igual a, começa com, termina com.',
-      'Instância de WhatsApp (opcional, para canal específico).',
+      'Palavra-chave/Frase: O texto que o sistema deve procurar.',
+      'Tipo de Correspondência: Igual a, Contém, Começa com, ou Expressão Regular.',
+      'Sensibilidade: Diferenciar maiúsculas/minúsculas (Opcional).'
     ],
-    example: 'Mensagem contém "preço" → enviar PDF de tabela + transferir para humano.',
+    example: 'O cliente envia "Quero falar com um atendente". O sistema reconhece a frase, envia uma mensagem de "Aguarde um momento" e transfere a conversa para o SAC humano.',
     tips: [
-      'Use match "igual a" para palavras curtas evitarem falso positivo.',
-      'Combine com chatbot para fluxo conversacional completo.',
+      'Use "Contém" para frases naturais e "Igual a" para menus numéricos (ex: Digite 1 para Vendas).',
+      'Sempre ofereça uma opção de saída para falar com um humano para evitar frustração.'
     ],
-  },
-  {
-    value: 'instagram_dm',
-    label: 'DM Recebida no Instagram',
-    icon: Instagram,
-    short: 'Dispara quando um seguidor envia DM contendo a palavra-chave.',
-    when: 'Webhook do Instagram (Graph API) recebe a mensagem e o match é positivo.',
-    inputs: ['Palavra-chave.', 'Tipo de match.'],
-    example: 'DM contém "ebook" → enviar link do material via DM (respeita janela de 24h).',
     caveats: [
-      'Janela de 24h da Meta: respostas após esse período exigem template aprovado.',
-      'Necessário IGSID — só funciona após 1ª interação do contato.',
+      'Mensagens de áudio ou imagem não ativam este gatilho de texto.',
+      'Cuidado com palavras muito comuns que podem causar disparos indesejados.'
     ],
-  },
-  {
-    value: 'instagram_comment',
-    label: 'Comentário no Instagram',
-    icon: MessageCircle,
-    short: 'Dispara quando comentam um post com a palavra-chave.',
-    when: 'Webhook recebe novo comentário e o texto bate com a regra.',
-    inputs: ['Post-alvo (ID ou todos).', 'Palavra-chave.'],
-    example: 'Comentário "EU QUERO" no post de lançamento → responder DM com link + adicionar tag "lead-lancamento".',
   },
   {
     value: 'page_visited',
-    label: 'Página Visitada no Site',
+    label: 'Página Visitada (Site Tracking)',
     icon: Eye,
-    short: 'Dispara quando o contato visita uma URL específica.',
-    when: 'Site Tracking detecta a visita (script instalado no site).',
-    inputs: ['URL ou padrão (ex.: /pricing).'],
-    example: 'Visitou /pricing 3x em 7 dias → notificar SDR + criar tarefa "Ligar".',
-    tips: ['Combine com "Win Probability" para priorizar leads quentes.'],
-  },
-  {
-    value: 'site_event',
-    label: 'Evento no Site',
-    icon: Activity,
-    short: 'Dispara em evento customizado registrado pela API de tracking.',
-    when: 'Evento (ex.: "added_to_cart", "video_75pct") é enviado via track-event.',
-    inputs: ['Nome do evento.', 'Filtros opcionais por valor/atributo.'],
-    example: 'Evento "abandoned_cart" → enviar WhatsApp em 30min com cupom + sequência de recuperação por e-mail.',
+    short: 'Gatilho de intenção de compra via navegação.',
+    when: 'Ativado quando um contato identificado (que já converteu em algum form ou clicou em e-mail) visita uma URL específica do seu site monitorado.',
+    inputs: [
+      'URL ou Padrão: Endereço completo ou parte dele (ex: /checkout).',
+      'Tempo de Permanência: Só dispara se o lead ficar mais de X segundos (Opcional).'
+    ],
+    example: 'Um lead antigo visita a página "Nossos Planos". O sistema identifica o interesse, envia uma notificação para o vendedor e marca o contato com a tag "Intenção de Compra".',
+    tips: [
+      'Monitore páginas de checkout para identificar desistências antes mesmo do abandono de carrinho.',
+      'Não use para todas as páginas do site, apenas para as que demonstram intenção clara.'
+    ],
+    caveats: [
+      'Só funciona para contatos já conhecidos pelo sistema (identificados via cookie).',
+      'Requer o script de Site Tracking instalado corretamente no cabeçalho do seu site.'
+    ],
   },
 ];
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ACTIONS (ações) — espelha src/components/automations/AutomationActionsEditor.tsx
@@ -183,201 +182,145 @@ export const ACTION_GUIDES: ItemGuide[] = [
     value: 'send_email',
     label: 'Enviar E-mail',
     icon: Mail,
-    short: 'Envia um e-mail transacional ou de marketing para o contato do fluxo.',
-    when: 'Use para confirmações, nutrição, follow-up e comunicação one-to-one automatizada.',
-    inputs: ['Caixa remetente (mailbox).', 'Assunto.', 'Conteúdo HTML/texto (suporta variáveis {{nome}}, etc.).'],
-    fields: ['Template visual (Email Template Builder).', 'Anexos.', 'Preview text.'],
-    example: 'Após "Formulário Submetido", enviar e-mail com o material prometido em até 30 segundos.',
-    tips: ['Use domínio próprio verificado para melhor entregabilidade.'],
+    short: 'Comunicação direta via SMTP ou Provedor de E-mail.',
+    when: 'Ideal para envio de materiais ricos, confirmações de pedidos, newsletters e réguas de relacionamento de longo prazo.',
+    inputs: [
+      'Remetente: Selecione uma de suas contas de e-mail conectadas.',
+      'Assunto: Use variáveis para personalização (ex: "Olá {{nome}}, aqui está seu guia").',
+      'Corpo do E-mail: Editor Visual (Drag & Drop) ou HTML Customizado.'
+    ],
+    fields: [
+      'Anexos: Envio de PDFs, imagens ou docs.',
+      'Tempo de Disparo: Imediato ou agendado.',
+      'Tracking de Abertura/Clique: Ative para gerar gatilhos posteriores.'
+    ],
+    example: 'Enviar um e-mail de boas-vindas com um cupom de desconto 5 minutos após o lead se cadastrar na newsletter.',
+    tips: [
+      'Sempre envie um e-mail de teste para você mesmo antes de ativar.',
+      'Evite muitas imagens pesadas para não cair na aba de Promoções do Gmail.',
+      'Use o campo "Preview Text" para aumentar sua taxa de abertura.'
+    ],
+    caveats: [
+      'Se o seu domínio não tiver SPF/DKIM configurados, seus e-mails podem ir para o SPAM.',
+      'O limite de envios diários depende do seu provedor (Google, Outlook, Amazon SES).'
+    ],
   },
   {
     value: 'send_whatsapp',
     label: 'Enviar WhatsApp',
     icon: MessageSquare,
-    short: 'Envia mensagem WhatsApp via instância (Evolution API ou Meta Cloud API).',
-    when: 'Confirmação de compra, lembrete, recuperação, atendimento ativo.',
-    inputs: ['Instância WhatsApp.', 'Texto da mensagem (variáveis suportadas).'],
-    fields: ['Mídia (imagem, vídeo, áudio, documento).', 'Botões interativos (Cloud API).', 'Template aprovado (fora de janela 24h).'],
-    example: 'Após compra → "Olá {{nome}}, seu pedido #{{order_id}} foi confirmado. Acompanhe em {{link}}."',
-    caveats: ['Fora de janela de 24h: obrigatório usar template aprovado pela Meta.'],
-  },
-  {
-    value: 'send_instagram_dm',
-    label: 'Enviar DM no Instagram',
-    icon: Instagram,
-    short: 'Envia mensagem direta para o contato via Graph API.',
-    when: 'Resposta automática a comentários, entrega de leads magnet, atendimento.',
-    inputs: ['Conta Instagram conectada.', 'Texto da DM.'],
-    caveats: ['Necessário IGSID (só após 1ª interação) e respeitar janela de 24h.'],
-    example: 'Comentou "QUERO" → DM com link do material em 2s.',
-  },
-  {
-    value: 'send_sms',
-    label: 'Enviar SMS',
-    icon: Phone,
-    short: 'Envia SMS via Zenvia/Twilio (consome créditos de comunicação).',
-    when: 'Lembretes urgentes, OTP, confirmação de evento.',
-    inputs: ['Texto (até 160 caracteres por segmento).'],
-    example: 'Lembrete: "Sua consulta é amanhã às 14h. Confirme respondendo SIM."',
-    tips: ['1 SMS = 1 crédito. Acompanhe em /communication-credits.'],
-  },
-  {
-    value: 'send_notification',
-    label: 'Notificar Admin',
-    icon: Bell,
-    short: 'Envia notificação interna para usuários da sua organização.',
-    when: 'Alertar equipe sobre lead quente, falha em integração, deal de alto valor.',
-    inputs: ['Usuários a notificar.', 'Mensagem.'],
-    example: 'Score ≥ 90 → notificar gerente comercial no sininho do sistema.',
+    short: 'Mensagens instantâneas via Evolution API ou Meta Cloud.',
+    when: 'Use para comunicações que exigem leitura imediata, como alertas de segurança, lembretes de reunião ou vendas rápidas.',
+    inputs: [
+      'Instância: Selecione o número de WhatsApp conectado.',
+      'Mensagem: Texto plano com suporte a variáveis e emojis.',
+      'Mídia: Envie imagens, áudios ou documentos junto com o texto.'
+    ],
+    fields: [
+      'Botões de Resposta: Botões clicáveis para o cliente responder rápido (Apenas Meta Cloud).',
+      'Template: Use templates aprovados pela Meta para envios fora da janela de 24h.'
+    ],
+    example: 'Enviar uma mensagem: "Olá {{nome}}, notamos que você não concluiu sua compra. Posso te ajudar?" 15 minutos após o abandono de carrinho.',
+    tips: [
+      'Não envie mensagens em massa para quem não te deu permissão, ou seu número será banido.',
+      'Humanize a mensagem. Use variáveis como {{nome}} e evite textos muito robóticos.'
+    ],
+    caveats: [
+      'O WhatsApp tem uma "janela de 24h". Após isso, você só pode iniciar conversa usando Templates Pagos.',
+      'Mensagens enviadas via API oficial tem custo por conversão (taxa da Meta).'
+    ],
   },
   {
     value: 'add_tag',
     label: 'Adicionar Tag',
     icon: Tag,
-    short: 'Adiciona uma ou mais tags ao contato.',
-    when: 'Segmentar contatos por comportamento, origem ou estágio.',
-    inputs: ['Tag(s) a adicionar.'],
-    example: 'Abriu 3 e-mails da campanha → tag "engajado-campanha-x".',
-  },
-  {
-    value: 'remove_tag',
-    label: 'Remover Tag',
-    icon: Tag,
-    short: 'Remove tag(s) do contato.',
-    when: 'Limpar tags obsoletas, desinscrever de segmento.',
-    inputs: ['Tag(s) a remover.'],
-    example: 'Comprou produto → remover tag "lead-frio".',
-  },
-  {
-    value: 'set_custom_field',
-    label: 'Definir Campo Personalizado',
-    icon: PenLine,
-    short: 'Atribui valor a um campo customizado do contato.',
-    when: 'Persistir dados de comportamento, preferência ou enriquecimento.',
-    inputs: ['Campo (criado em /crm-settings).', 'Valor (texto, número, data ou variável).'],
-    example: 'Última compra → set "ultima_compra_data" = {{today}}.',
-  },
-  {
-    value: 'update_score',
-    label: 'Atualizar Lead Score',
-    icon: Star,
-    short: 'Soma ou subtrai pontos do score do contato.',
-    when: 'Reforçar pontuação dentro de fluxos específicos sem editar regras globais.',
-    inputs: ['Operação (somar/subtrair/definir).', 'Valor.'],
-    example: 'Visitou /pricing → +20 pontos. Pediu unsubscribe → -50 pontos.',
+    short: 'Organização e segmentação de banco de dados.',
+    when: 'Essencial para marcar o comportamento do lead e filtrar listas para campanhas futuras.',
+    inputs: [
+      'Tags: Lista de uma ou mais tags a serem aplicadas.'
+    ],
+    example: 'Adicionar a tag "Lead-Qualificado" assim que o lead preencher o formulário de orçamento.',
+    tips: [
+      'Use esta ação para "limpar" o lead de fluxos antigos (ex: adicionar tag "Cliente" e usar isso como condição de saída de fluxos de Prospecção).'
+    ],
+    caveats: [
+      'Tags duplicadas não são criadas, o sistema apenas ignora se o contato já possuir a tag.'
+    ],
   },
   {
     value: 'create_deal',
-    label: 'Criar Deal no Pipeline',
+    label: 'Criar Negócio (Deal)',
     icon: TrendingUp,
-    short: 'Cria um novo negócio no pipeline de vendas.',
-    when: 'Conversão de lead em oportunidade comercial.',
-    inputs: ['Pipeline.', 'Estágio inicial.', 'Valor (opcional).', 'Responsável.'],
-    example: 'Score atingiu 80 → criar deal no estágio "Qualificado", responsável via Round Robin.',
-  },
-  {
-    value: 'subscribe_sequence',
-    label: 'Inscrever em Sequência',
-    icon: ListPlus,
-    short: 'Inscreve o contato em uma sequência (drip) já configurada.',
-    when: 'Iniciar nutrição multi-passos sem replicar lógica no fluxo.',
-    inputs: ['Sequência de destino.'],
-    example: 'Novo lead → inscrever na sequência "Onboarding 7 dias".',
-  },
-  {
-    value: 'unsubscribe_sequence',
-    label: 'Remover de Sequência',
-    icon: ListMinus,
-    short: 'Cancela a inscrição do contato em uma sequência.',
-    when: 'Lead converteu, descadastrou ou trocou de jornada.',
-    inputs: ['Sequência a remover.'],
-    example: 'Comprou → remover da sequência de carrinho abandonado.',
-  },
-  {
-    value: 'goto_flow',
-    label: 'Ir para outro Flow',
-    icon: GitBranch,
-    short: 'Encaminha a execução para outro fluxo (sub-flow).',
-    when: 'Modularizar fluxos grandes, reaproveitar lógica.',
-    inputs: ['Fluxo de destino.'],
-    example: 'Após qualificação → ir para flow "Agendamento de Reunião".',
-    caveats: ['Evite loops circulares — o motor protege com limite, mas pode pausar a execução.'],
-  },
-  {
-    value: 'send_poll',
-    label: 'Enviar Enquete',
-    icon: Vote,
-    short: 'Envia enquete WhatsApp (Evolution API) com opções de resposta.',
-    when: 'Pesquisa rápida, qualificação, NPS.',
-    inputs: ['Pergunta.', 'Opções (2 a 12).', 'Múltipla escolha (sim/não).'],
-    example: '"Como nos avalia?" — opções 1 a 5. Resposta vira tag de NPS.',
-  },
-  {
-    value: 'ab_split',
-    label: 'Teste A/B (Split)',
-    icon: Shuffle,
-    short: 'Divide contatos em variantes (A/B/C…) com pesos configuráveis.',
-    when: 'Testar copy, canal, oferta ou jornada.',
-    inputs: ['Variantes e percentual de cada (soma 100%).'],
-    example: '50% recebe variante A (com desconto) | 50% recebe B (sem desconto). Métrica de conversão decide vencedor.',
-  },
-  {
-    value: 'condition',
-    label: 'Condição (Se/Senão)',
-    icon: SplitSquareVertical,
-    short: 'Bifurca o fluxo segundo regras AND/OR sobre dados do contato.',
-    when: 'Personalizar próximo passo de acordo com tags, score, campo, evento.',
-    inputs: ['Conjunto de condições (campo, operador, valor).', 'Lógica AND/OR.'],
-    example: 'SE tag = "VIP" E score ≥ 80 → enviar oferta premium. SENÃO → fluxo padrão.',
+    short: 'Integração direta entre Marketing e Vendas.',
+    when: 'Transforme leads frios em oportunidades reais no seu funil de vendas automaticamente.',
+    inputs: [
+      'Funil (Pipeline): Selecione em qual processo o negócio será criado.',
+      'Estágio: Em qual coluna o card deve aparecer.',
+      'Título do Negócio: Use variáveis (ex: "Oportunidade - {{nome}}").',
+      'Valor Estimado: Defina um valor padrão ou capture de um campo do formulário.'
+    ],
+    example: 'Lead qualificado via Score ou Formulário → Criar Deal no estágio "Triagem" e atribuir ao vendedor da vez (Round Robin).',
+    tips: [
+      'Atribua o deal automaticamente usando a lógica de Round Robin para garantir distribuição justa entre vendedores.'
+    ],
+    caveats: [
+      'Certifique-se de que o contato já possui um telefone ou e-mail válido para o vendedor conseguir entrar em contato.'
+    ],
   },
   {
     value: 'wait',
-    label: 'Aguardar',
+    label: 'Aguardar (Timer)',
     icon: Clock,
-    short: 'Pausa o fluxo por um período antes da próxima ação.',
-    when: 'Espaçar mensagens, esperar comportamento, agendar follow-up.',
-    inputs: ['Duração (minutos, horas, dias) ou data específica.'],
-    example: 'Enviou e-mail → aguardar 2 dias → se não abriu, enviar WhatsApp.',
-    tips: ['Esperas longas (>1h) são processadas pelo pg_cron — não há custo adicional.'],
+    short: 'Controle de cadência e timing do fluxo.',
+    when: 'Use para dar "espaço" entre as mensagens e não parecer um robô desesperado.',
+    inputs: [
+      'Duração: Minutos, Horas ou Dias.',
+      'Horário de Brasília: Defina se a automação deve esperar até um horário específico do dia (ex: Próximo dia útil às 09:00).'
+    ],
+    example: 'Lead se cadastrou → Enviar e-mail agora → **Aguardar 2 dias** → Enviar WhatsApp de acompanhamento.',
+    tips: [
+      'Evite esperas muito curtas (menos de 5 min) se estiver enviando mensagens sequenciais em canais diferentes.'
+    ],
   },
   {
-    value: 'assign_agent',
-    label: 'Atribuir a Agente',
-    icon: UserCheck,
-    short: 'Atribui o contato/conversa a um atendente do SAC.',
-    when: 'Roteamento de leads quentes para vendedores; distribuição de atendimento.',
-    inputs: ['Agente fixo OU regra (Round Robin / Lowest Load).'],
-    example: 'Lead com score ≥ 70 → Round Robin entre SDRs do time comercial.',
-  },
-  {
-    value: 'transfer_human',
-    label: 'Transferir para Humano',
-    icon: Headphones,
-    short: 'Encaminha a conversa para a fila do SAC e pausa automações no contato.',
-    when: 'Fallback de chatbot, palavra "atendente", caso complexo.',
-    inputs: ['Departamento/fila (opcional).', 'Mensagem de transição.'],
-    example: 'Bot não entendeu 2x → transferir para humano com mensagem "Vou te conectar a um especialista".',
-  },
-  {
-    value: 'create_task',
-    label: 'Criar Tarefa',
-    icon: UserPlus,
-    short: 'Cria tarefa no módulo /tasks vinculada ao contato/deal.',
-    when: 'Garantir follow-up humano, ligar, enviar proposta manual.',
-    inputs: ['Título.', 'Responsável.', 'Prazo.', 'Descrição.'],
-    example: 'Deal moveu para "Proposta Enviada" → criar tarefa "Ligar em 48h" para responsável do deal.',
+    value: 'condition',
+    label: 'Condição (IF/ELSE)',
+    icon: SplitSquareVertical,
+    short: 'Inteligência e caminhos personalizados.',
+    when: 'Crie ramificações no fluxo baseadas em dados reais do contato ou comportamento nas etapas anteriores.',
+    inputs: [
+      'Regra: Campo do Contato, Tag, Score ou Evento.',
+      'Operador: Igual a, Diferente de, Contém, Maior que, etc.',
+      'Valor de Comparação: O que o sistema deve validar.'
+    ],
+    example: 'SE o lead possui a tag "VIP", envie o desconto de 30%. SENÃO, envie o desconto de 10%.',
+    tips: [
+      'Você pode empilhar várias condições usando lógica E (AND) ou OU (OR).',
+      'Use condições para verificar se o lead já comprou antes de enviar um e-mail de oferta, evitando SPAM.'
+    ],
   },
   {
     value: 'http_request',
-    label: 'Requisição HTTP (Webhook out)',
+    label: 'Webhook de Saída (HTTP Request)',
     icon: Globe,
-    short: 'Faz POST/GET para um endpoint externo com payload customizado.',
-    when: 'Integrar com sistemas próprios, ERPs, ou serviços sem conector nativo.',
-    inputs: ['URL.', 'Método.', 'Headers.', 'Body (JSON com variáveis).'],
-    example: 'POST para ERP com dados do deal fechado para gerar nota fiscal.',
-    tips: ['Use a aba "Webhooks" para monitorar entregas e retentativas.'],
+    short: 'Conectividade total com o mundo externo.',
+    when: 'Envie dados para o seu ERP, Google Sheets (via Zapier/Make), Sistema de Notas Fiscais ou qualquer API externa.',
+    inputs: [
+      'URL do Endpoint: O endereço que receberá os dados.',
+      'Método: POST, GET, PUT ou DELETE.',
+      'Headers: Cabeçalhos de autenticação (ex: Authorization Bearer).',
+      'JSON Body: O conteúdo dos dados que você quer enviar.'
+    ],
+    example: 'Ao fechar uma venda (Deal Ganho), disparar um Webhook para o seu sistema interno de logística para liberar o produto.',
+    tips: [
+      'Use ferramentas como Webhook.site para testar o que sua automação está enviando antes de conectar ao sistema final.'
+    ],
+    caveats: [
+      'O sistema aguarda até 10 segundos pela resposta da sua API. Se demorar mais, será considerado timeout.'
+    ],
   },
 ];
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Geração automática dos artigos da Central de Ajuda
@@ -417,54 +360,50 @@ ${
 const overviewArticle: HelpArticle = {
   id: 'automation-guide-overview',
   categoryId: AUTOMATION_GUIDE_CATEGORY.id,
-  title: 'Como funcionam as automações no AG Sell',
+  title: 'Manual de Automação AG Sell',
   icon: Workflow,
   description:
-    'Visão geral do motor de automações: gatilhos, ações, condições, esperas e modo de execução.',
+    'Documentação técnica e operacional completa do motor de fluxos e inteligência comercial.',
   popular: true,
-  readTime: '8 min',
-  content: `As **automações** do AG Sell são fluxos visuais que executam ações em contatos quando um **gatilho** acontece. Você cria automações em (/automations) e desenha o fluxo no construtor visual (/flow-builder).
+  readTime: '12 min',
+  content: `O **AG Sell** utiliza um motor de automação de eventos assíncronos que permite escalar o atendimento e as vendas sem aumentar a equipe. Este guia detalha cada componente para que você configure fluxos à prova de erros.
 
-## Anatomia de uma automação
+## Arquitetura do Motor de Fluxos
 
-Toda automação tem **três partes**:
+Diferente de sistemas simples, o AG Sell separa a **Lógica** da **Execução**:
+1. **Trigger Engine:** Monitora em tempo real eventos no banco de dados e webhooks externos.
+2. **Worker Pool:** Processa as ações em paralelo para garantir que milhares de contatos possam estar em fluxos simultâneos sem latência.
+3. **Scheduler (pg_cron):** Gerencia as ações de "Aguardar", garantindo que mensagens sejam enviadas no horário exato, mesmo após dias.
 
-1. **Gatilho (Trigger)** — o evento que inicia o fluxo (ex.: "Formulário Submetido", "Tag Adicionada").
-2. **Ações (Actions)** — o que será executado em sequência (enviar e-mail, criar deal, aguardar, etc.).
-3. **Condições e Esperas** — controlam o caminho que cada contato percorre.
+## Componentes Fundamentais
 
-## Como o motor executa
+### 1. Gatilhos (Triggers)
+São os "pontos de entrada". Uma automação pode ter múltiplos gatilhos se desejar que caminhos diferentes levem ao mesmo resultado.
 
-- Quando um gatilho acontece, o sistema cria uma **execução** atrelada ao contato.
-- Ações são executadas **em ordem**, uma após a outra.
-- Ações de **espera longa** (mais de 1h) são agendadas via \`pg_cron\` e retomam automaticamente.
-- **Condições** bifurcam o fluxo em ramos "Sim/Não" com lógica AND/OR.
-- **A/B Split** divide contatos em variantes para teste estatístico.
-- **Goto Flow** transfere a execução para outro fluxo (sub-flow modular).
+### 2. Ações (Actions)
+São as "tarefas" executadas. Elas variam de comunicações externas (WhatsApp, E-mail) a atualizações internas no CRM (Tags, Deals, Score).
 
-## Canais suportados
+### 3. Ramos de Decisão (Conditions)
+Permitem que a automação seja inteligente. "Se o cliente clicou, faça X. Se não clicou, faça Y".
 
-E-mail, WhatsApp (Evolution API e Meta Cloud), Instagram DM, SMS (Zenvia/Twilio) e notificações internas. Para grupos do WhatsApp use exclusivamente Evolution API — a API oficial não suporta grupos.
+## Variáveis Globais de Personalização
 
-## Onde monitorar
+Em qualquer campo de texto, você pode usar as seguintes variáveis dinâmicas:
+- \`{{nome}}\`: Nome do contato.
+- \`{{email}}\`: E-mail principal.
+- \`{{telefone}}\`: WhatsApp/Celular.
+- \`{{deal_value}}\`: Valor do negócio atual (se houver).
+- \`{{atendente_nome}}\`: Nome do usuário responsável pelo contato.
 
-- **Linha do tempo do contato** — todos os passos executados aparecem no perfil.
-- **/automations-monitor** — falhas e retentativas em tempo real.
-- **/flow-analytics** — entradas, saídas e conversão por nó.
+## Boas Práticas de Implementação
 
-## Como baixar este guia em PDF
+- **Nomenclatura:** Nomeie seus fluxos de forma clara: \`[VENDAS] - Carrinho Abandonado - Produto X\`.
+- **Modo de Teste:** Sempre ative o fluxo primeiro para uma tag de teste antes de liberar para toda a base.
+- **Filtros de Segurança:** Use filtros de "Apenas uma vez por contato" em fluxos de boas-vindas para evitar que o cliente receba a mesma mensagem repetidamente.
 
-Você pode baixar a versão completa deste manual operacional clicando no artigo **"Baixar Guia em PDF"** na barra lateral. O arquivo é gerado com a logo da **AG Sell** e formatado para consulta rápida.
+---
 
-## Como manter este guia atualizado
-
-> Este guia é gerado a partir de um único arquivo: \`src/data/automationGuide.ts\`. Sempre que um gatilho ou ação é adicionado ou alterado no sistema, basta atualizar a lista nesse arquivo e os artigos são regerados automaticamente.
-
-## Próximos artigos
-
-- **Catálogo de Gatilhos** — referência completa dos ${TRIGGER_GUIDES.length} gatilhos disponíveis.
-- **Catálogo de Ações** — referência completa das ${ACTION_GUIDES.length} ações disponíveis.
-- **Receitas prontas** — fluxos campeões para colar e adaptar.
+Para acessar o detalhamento técnico de cada item, navegue pelos catálogos de Gatilhos e Ações na barra lateral.
 `,
 };
 

@@ -13,6 +13,7 @@ interface Props {
 
 const categoryGradients: Record<string, { bg: string; border: string; icon: string }> = {
   'getting-started': { bg: 'from-blue-500/10 via-blue-400/5 to-transparent', border: 'border-blue-500/20 hover:border-blue-500/40', icon: 'bg-blue-500/15 text-blue-600 dark:text-blue-400' },
+  'automation-guide': { bg: 'from-blue-600/15 via-blue-500/10 to-transparent', border: 'border-blue-600/30 hover:border-blue-600/50', icon: 'bg-blue-600/20 text-blue-700 dark:text-blue-300' },
   crm: { bg: 'from-emerald-500/10 via-emerald-400/5 to-transparent', border: 'border-emerald-500/20 hover:border-emerald-500/40', icon: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' },
   communication: { bg: 'from-violet-500/10 via-violet-400/5 to-transparent', border: 'border-violet-500/20 hover:border-violet-500/40', icon: 'bg-violet-500/15 text-violet-600 dark:text-violet-400' },
   marketing: { bg: 'from-amber-500/10 via-amber-400/5 to-transparent', border: 'border-amber-500/20 hover:border-amber-500/40', icon: 'bg-amber-500/15 text-amber-600 dark:text-amber-400' },

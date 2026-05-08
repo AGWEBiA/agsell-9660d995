@@ -264,7 +264,27 @@ function renderContentBlocks(content: string): React.ReactNode[] {
 
 export function HelpCenterArticle({ article, category, onBack, allArticles, onNavigate }: Props) {
   const [downloading, setDownloading] = useState(false);
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    const saved = localStorage.getItem('help-center-favorites');
+    return saved ? JSON.parse(saved) : [];
+  });
   const articleRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    localStorage.setItem('help-center-favorites', JSON.stringify(favorites));
+  }, [favorites]);
+
+  const isFavorite = favorites.includes(article.id);
+
+  const toggleFavorite = () => {
+    if (isFavorite) {
+      setFavorites(prev => prev.filter(id => id !== article.id));
+      toast.info('Removido dos favoritos');
+    } else {
+      setFavorites(prev => [...prev, article.id]);
+      toast.success('Adicionado aos favoritos');
+    }
+  };
 
   const relatedArticles = allArticles
     .filter((a) => a.categoryId === article.categoryId && a.id !== article.id)

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -12,8 +12,6 @@ import { Link } from 'react-router-dom';
 import type { HelpCategory, HelpArticle } from '@/data/helpCenterData';
 import { TutorialPresentation } from '@/components/help-center/TutorialPresentation';
 import { tutorialPresentations } from '@/data/tutorialPresentations';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import { toast } from 'sonner';
 
 interface Props {

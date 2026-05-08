@@ -156,4 +156,4 @@ export const HelpCenterSidebar = memo(function HelpCenterSidebar({ categories, a
       </ScrollArea>
     </aside>
   );
-}
+});

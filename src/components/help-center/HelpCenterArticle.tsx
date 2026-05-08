@@ -270,7 +270,7 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
     if (!articleRef.current) return;
     
     setDownloading(true);
-    const toastId = toast.loading('Gerando PDF...');
+    const toastId = toast.loading('Gerando PDF personalizado...');
 
     try {
       const element = articleRef.current;
@@ -288,6 +288,32 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
         (el as HTMLElement).style.setProperty('color', '#000000', 'important');
       });
 
+      // Add AG Sell Branding (Header/Logo) for PDF only
+      const brandingHeader = document.createElement('div');
+      brandingHeader.className = 'pdf-only-branding';
+      brandingHeader.style.cssText = `
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 40px;
+        padding-bottom: 15px;
+        border-bottom: 2px solid #3b82f6;
+      `;
+      
+      brandingHeader.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="background-color: #3b82f6; padding: 8px; border-radius: 8px;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8h-2c0-9-15-4.5-15 4.5a1 1 0 0 0 1 1h2a7 7 0 0 1 4 12Z"/><path d="M13 20a5 5 0 0 1-5-5"/><path d="M13 15a5 5 0 0 1 5 5"/></svg>
+          </div>
+          <span style="font-size: 20px; font-weight: 800; color: #1e40af; letter-spacing: -0.025em;">AG SELL</span>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 10px; color: #64748b; font-weight: 600; text-transform: uppercase;">Manual Operacional</div>
+          <div style="font-size: 12px; color: #1e293b; font-weight: 700;">Guia de Automações</div>
+        </div>
+      `;
+      element.prepend(brandingHeader);
+
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
@@ -296,7 +322,8 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
         windowWidth: 800
       });
 
-      // Restore original colors
+      // Restore original state
+      element.removeChild(brandingHeader);
       element.style.cssText = originalStyle;
       Array.from(textElements).forEach((el, i) => {
         (el as HTMLElement).style.color = originalColors[i];
@@ -310,6 +337,16 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
       });
 
       pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
+      
+      // Add a small footer in the PDF
+      const pageCount = (pdf as any).internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(8);
+        pdf.setTextColor(100);
+        pdf.text('© 2026 AG Sell - Inteligência em Vendas e Automação', 20, (canvas.height / 2) - 10);
+      }
+
       pdf.save(`AG-Sell-Guia-${article.title.replace(/\s+/g, '-')}.pdf`);
       
       toast.success('PDF baixado com sucesso!', { id: toastId });

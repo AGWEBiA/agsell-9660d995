@@ -12,6 +12,7 @@ export interface DashboardStats {
   conversionGrowth: number;
   tasksCompleted: number;
   tasksPending: number;
+  topSalesRep?: string;
 }
 
 export interface LeadsByMonth {
@@ -52,73 +53,47 @@ export function useDashboardStats() {
       const lastMonthStart = startOfMonth(subMonths(now, 1));
       const lastMonthEnd = endOfMonth(subMonths(now, 1));
 
-      // Total contacts
-      const { count: totalContacts } = await supabase
-        .from('contacts')
-        .select('*', { count: 'exact', head: true });
-
-      // Contacts last month
-      const { count: lastMonthContacts } = await supabase
-        .from('contacts')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', lastMonthStart.toISOString())
-        .lte('created_at', lastMonthEnd.toISOString());
-
-      // Contacts this month
-      const { count: thisMonthContacts } = await supabase
-        .from('contacts')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', thisMonthStart.toISOString());
+      // Execute queries in parallel for better performance
+      const [
+        { count: totalContacts },
+        { count: lastMonthContacts },
+        { count: thisMonthContacts },
+        { data: deals },
+        { data: lastMonthDeals },
+        { count: wonDeals },
+        { count: allDeals },
+        { count: tasksCompleted },
+        { count: tasksPending }
+      ] = await Promise.all([
+        supabase.from('contacts').select('*', { count: 'exact', head: true }),
+        supabase.from('contacts').select('*', { count: 'exact', head: true })
+          .gte('created_at', lastMonthStart.toISOString())
+          .lte('created_at', lastMonthEnd.toISOString()),
+        supabase.from('contacts').select('*', { count: 'exact', head: true })
+          .gte('created_at', thisMonthStart.toISOString()),
+        supabase.from('deals').select('value, status').eq('status', 'open'),
+        supabase.from('deals').select('value').eq('status', 'open')
+          .gte('created_at', lastMonthStart.toISOString())
+          .lte('created_at', lastMonthEnd.toISOString()),
+        supabase.from('deals').select('*', { count: 'exact', head: true }).eq('status', 'won'),
+        supabase.from('deals').select('*', { count: 'exact', head: true }),
+        supabase.from('tasks').select('*', { count: 'exact', head: true }).eq('status', 'completed'),
+        supabase.from('tasks').select('*', { count: 'exact', head: true }).neq('status', 'completed')
+      ]);
 
       const contactsGrowth = lastMonthContacts && lastMonthContacts > 0
         ? Math.round(((thisMonthContacts || 0) - lastMonthContacts) / lastMonthContacts * 100)
         : 0;
 
-      // Total deals value (open deals)
-      const { data: deals } = await supabase
-        .from('deals')
-        .select('value, status')
-        .eq('status', 'open');
-
       const totalDealsValue = deals?.reduce((sum, d) => sum + (d.value || 0), 0) || 0;
-
-      // Last month deals
-      const { data: lastMonthDeals } = await supabase
-        .from('deals')
-        .select('value')
-        .eq('status', 'open')
-        .gte('created_at', lastMonthStart.toISOString())
-        .lte('created_at', lastMonthEnd.toISOString());
-
       const lastMonthDealsValue = lastMonthDeals?.reduce((sum, d) => sum + (d.value || 0), 0) || 0;
       const dealsGrowth = lastMonthDealsValue > 0
         ? Math.round((totalDealsValue - lastMonthDealsValue) / lastMonthDealsValue * 100)
         : 0;
 
-      // Conversion rate
-      const { count: wonDeals } = await supabase
-        .from('deals')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'won');
-
-      const { count: allDeals } = await supabase
-        .from('deals')
-        .select('*', { count: 'exact', head: true });
-
       const conversionRate = allDeals && allDeals > 0
         ? Math.round((wonDeals || 0) / allDeals * 100 * 10) / 10
         : 0;
-
-      // Tasks
-      const { count: tasksCompleted } = await supabase
-        .from('tasks')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'completed');
-
-      const { count: tasksPending } = await supabase
-        .from('tasks')
-        .select('*', { count: 'exact', head: true })
-        .neq('status', 'completed');
 
       return {
         totalContacts: totalContacts || 0,
@@ -132,7 +107,7 @@ export function useDashboardStats() {
       };
     },
     enabled: !!user,
-    staleTime: 30000, // 30 seconds
+    staleTime: 30000,
   });
 }
 
@@ -142,29 +117,28 @@ export function useLeadsByMonth() {
   return useQuery({
     queryKey: ['leads-by-month', user?.id],
     queryFn: async (): Promise<LeadsByMonth[]> => {
-      const months: LeadsByMonth[] = [];
-      
-      for (let i = 6; i >= 0; i--) {
-        const date = subMonths(new Date(), i);
-        const start = startOfMonth(date);
-        const end = endOfMonth(date);
+      const monthData = await Promise.all(
+        Array.from({ length: 7 }, (_, i) => {
+          const date = subMonths(new Date(), 6 - i);
+          const start = startOfMonth(date);
+          const end = endOfMonth(date);
+          
+          return supabase
+            .from('contacts')
+            .select('*', { count: 'exact', head: true })
+            .gte('created_at', start.toISOString())
+            .lte('created_at', end.toISOString())
+            .then(({ count }) => ({
+              month: format(date, 'MMM'),
+              leads: count || 0,
+            }));
+        })
+      );
 
-        const { count } = await supabase
-          .from('contacts')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', start.toISOString())
-          .lte('created_at', end.toISOString());
-
-        months.push({
-          month: format(date, 'MMM'),
-          leads: count || 0,
-        });
-      }
-
-      return months;
+      return monthData;
     },
     enabled: !!user,
-    staleTime: 60000, // 1 minute
+    staleTime: 60000,
   });
 }
 
@@ -181,23 +155,22 @@ export function useDealsByStage() {
 
       if (!stages) return [];
 
-      const result: DealsByStage[] = [];
+      const stageCounts = await Promise.all(
+        stages.map(stage => 
+          supabase
+            .from('deals')
+            .select('*', { count: 'exact', head: true })
+            .eq('stage_id', stage.id)
+            .eq('status', 'open')
+            .then(({ count }) => ({
+              name: stage.name,
+              value: count || 0,
+              color: stage.color || '#3b82f6',
+            }))
+        )
+      );
 
-      for (const stage of stages) {
-        const { count } = await supabase
-          .from('deals')
-          .select('*', { count: 'exact', head: true })
-          .eq('stage_id', stage.id)
-          .eq('status', 'open');
-
-        result.push({
-          name: stage.name,
-          value: count || 0,
-          color: stage.color || '#3b82f6',
-        });
-      }
-
-      return result;
+      return stageCounts;
     },
     enabled: !!user,
     staleTime: 30000,
@@ -252,7 +225,7 @@ export function useTopLeads() {
         id: c.id,
         name: `${c.first_name} ${c.last_name || ''}`.trim(),
         score: c.lead_score || 0,
-        company: c.company?.name || null,
+        company: (c.company as any)?.name || null,
         status: (c.lead_score || 0) >= 80 ? 'hot' : (c.lead_score || 0) >= 50 ? 'warm' : 'cold',
       }));
     },

@@ -5,7 +5,7 @@ import {
   Webhook, SlidersHorizontal, Instagram, ListChecks, BookOpen,
   Rocket, Globe, Briefcase, Star, PlayCircle, HelpCircle, Workflow,
   Vote, SplitSquareVertical, Megaphone, Search, Bell, Palette,
-  type LucideIcon, Download, Save, RefreshCw, FileCode, Heart
+  type LucideIcon, Download, Save, RefreshCw, FileCode, Heart, Code2
 } from 'lucide-react';
 import { AUTOMATION_GUIDE_CATEGORY, AUTOMATION_GUIDE_ARTICLES } from './automationGuide';
 

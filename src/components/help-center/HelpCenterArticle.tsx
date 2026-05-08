@@ -420,26 +420,39 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
 
   return (
     <div className="relative">
-      <div className="flex items-center justify-between mb-5">
-        <Button variant="ghost" size="sm" onClick={onBack} className="-ml-2 text-muted-foreground hover:text-foreground gap-1">
-          <ArrowLeft className="h-4 w-4" /> {category?.title || 'Voltar'}
-        </Button>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 gap-3">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={onBack} className="-ml-2 text-muted-foreground hover:text-foreground gap-1">
+            <ArrowLeft className="h-4 w-4" /> {category?.title || 'Voltar'}
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={toggleFavorite}
+            className={cn("gap-2 text-xs", isFavorite ? "text-red-500 bg-red-500/5 hover:bg-red-500/10" : "text-muted-foreground")}
+          >
+            <Heart className={cn("h-4 w-4", isFavorite && "fill-current")} />
+            {isFavorite ? 'Favorito' : 'Favoritar'}
+          </Button>
+        </div>
 
         {isAutomationGuide && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleDownloadPDF} 
-            disabled={downloading}
-            className="gap-2 text-xs font-medium border-primary/20 hover:border-primary/50 hover:bg-primary/5"
-          >
-            {downloading ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Download className="h-3.5 w-3.5" />
-            )}
-            Download PDF
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleDownloadPDF} 
+              disabled={downloading}
+              className="gap-2 text-xs font-medium border-primary/20 hover:border-primary/50 hover:bg-primary/5"
+            >
+              {downloading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <FileDown className="h-3.5 w-3.5" />
+              )}
+              Exportar A4
+            </Button>
+          </div>
         )}
       </div>
 

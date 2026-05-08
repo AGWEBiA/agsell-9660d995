@@ -298,7 +298,7 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
 
       // Restore original colors
       element.style.cssText = originalStyle;
-      textElements.forEach((el, i) => {
+      Array.from(textElements).forEach((el, i) => {
         (el as HTMLElement).style.color = originalColors[i];
       });
 

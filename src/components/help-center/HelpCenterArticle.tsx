@@ -260,7 +260,7 @@ function renderContentBlocks(content: string): React.ReactNode[] {
   return content.split('\n\n').map((block, idx) => renderSingleBlock(block, idx)).filter(Boolean);
 }
 
-export function HelpCenterArticle({ article, category, onBack, allArticles, onNavigate }: Props) {
+export const HelpCenterArticle = memo(function HelpCenterArticle({ article, category, onBack, allArticles, onNavigate }: Props) {
   const [downloading, setDownloading] = useState(false);
   const [favorites, setFavorites] = useState<string[]>(() => {
     const saved = localStorage.getItem('help-center-favorites');

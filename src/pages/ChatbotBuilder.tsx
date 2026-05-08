@@ -938,6 +938,8 @@ export default function ChatbotBuilderPage() {
           nodes: updated.nodes as any,
           rules: updated.rules as any,
           is_active: updated.isActive,
+          whatsapp_instance_id: updated.whatsapp_instance_id ?? null,
+          settings: (updated.settings ?? {}) as any,
         })
         .eq('id', updated.id);
       if (error) throw error;

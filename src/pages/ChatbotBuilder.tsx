@@ -51,6 +51,13 @@ interface ChatbotRule {
   isActive: boolean;
 }
 
+interface ChatbotSettings {
+  agent_prompt?: string;
+  human_fallback_enabled?: boolean;
+  human_fallback_message?: string;
+  human_fallback_department?: string;
+}
+
 interface Chatbot {
   id: string;
   name: string;
@@ -59,6 +66,8 @@ interface Chatbot {
   rules: ChatbotRule[];
   isActive: boolean;
   channel: string;
+  whatsapp_instance_id?: string | null;
+  settings?: ChatbotSettings;
 }
 
 const nodeTypes: { type: ChatbotNodeType; label: string; icon: typeof Bot; color: string; category: string }[] = [

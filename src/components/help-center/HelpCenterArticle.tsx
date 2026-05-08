@@ -283,7 +283,7 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
       // Find all text elements that might be white in dark mode and force them to dark
       const textElements = element.querySelectorAll('.text-foreground, .text-muted-foreground, p, h1, h2, h3, span, li');
       const originalColors: string[] = [];
-      textElements.forEach((el, i) => {
+      Array.from(textElements).forEach((el, i) => {
         originalColors[i] = (el as HTMLElement).style.color;
         (el as HTMLElement).style.setProperty('color', '#000000', 'important');
       });

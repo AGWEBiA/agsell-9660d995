@@ -529,7 +529,21 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
       config: defaultNodeConfig(type),
       connections: defaultConnections(type),
     };
-    setNodes(prev => [...prev, newNode]);
+    setNodes(prev => {
+      // Auto-conecta o último nó "solto" ao novo bloco para o fluxo avançar sozinho
+      const next = [...prev];
+      if (next.length > 0) {
+        const last = next[next.length - 1];
+        const firstConn = last.connections[0];
+        if (firstConn && !firstConn.targetId) {
+          next[next.length - 1] = {
+            ...last,
+            connections: [{ ...firstConn, targetId: newNode.id }, ...last.connections.slice(1)],
+          };
+        }
+      }
+      return [...next, newNode];
+    });
     setSelectedNodeId(newNode.id);
   };
 

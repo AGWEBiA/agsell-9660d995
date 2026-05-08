@@ -274,12 +274,32 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
 
     try {
       const element = articleRef.current;
+      
+      // Temporary style adjustments for PDF capture
+      const originalStyle = element.style.cssText;
+      element.style.color = '#000000';
+      element.style.backgroundColor = '#ffffff';
+      
+      // Find all text elements that might be white in dark mode and force them to dark
+      const textElements = element.querySelectorAll('.text-foreground, .text-muted-foreground, p, h1, h2, h3, span, li');
+      const originalColors: string[] = [];
+      textElements.forEach((el, i) => {
+        originalColors[i] = (el as HTMLElement).style.color;
+        (el as HTMLElement).style.setProperty('color', '#000000', 'important');
+      });
+
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
-        windowWidth: 1200 // Force a consistent width for rendering
+        windowWidth: 800
+      });
+
+      // Restore original colors
+      element.style.cssText = originalStyle;
+      textElements.forEach((el, i) => {
+        (el as HTMLElement).style.color = originalColors[i];
       });
 
       const imgData = canvas.toDataURL('image/png');

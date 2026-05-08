@@ -6,7 +6,7 @@ import {
   Webhook, SlidersHorizontal, Instagram, ListChecks, Search,
   BookOpen, ChevronRight, Lightbulb, Bell, Globe, Lock, Database,
   HelpCircle, Megaphone, Wrench, Workflow, Vote, SplitSquareVertical, Briefcase,
-  Phone,
+  Phone, Download, Calendar, Clock, UserCheck, MessageCircle, AlertCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,8 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface GuideSection {
   id: string;

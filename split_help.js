@@ -1,5 +1,5 @@
-import fs from 'fs';
-import path from 'path';
+const fs = require('fs');
+const path = require('path');
 
 const filePath = 'src/data/helpCenterData.ts';
 const content = fs.readFileSync(filePath, 'utf-8');
@@ -28,19 +28,21 @@ import { HelpArticle } from '@/types/help';
 
 `;
 
-const categoryArticles: Record<string, string[]> = {};
+const categoryArticles = {};
 categories.forEach(cat => categoryArticles[cat.id] = []);
 
-let currentArticleLines: string[] = [];
+let currentArticleLines = [];
 let currentCategory = '';
 let inArticle = false;
 
 for (let i = 0; i < lines.length; i++) {
   const line = lines[i];
   
-  if (line.includes('  {') && line.trim() === '{') {
+  // Simple heuristic for article start
+  if (line.trim() === '{') {
     inArticle = true;
     currentArticleLines = [line];
+    currentCategory = '';
   } else if (inArticle) {
     currentArticleLines.push(line);
     const catMatch = line.match(/categoryId: '([^']+)'/);
@@ -48,7 +50,8 @@ for (let i = 0; i < lines.length; i++) {
       currentCategory = catMatch[1];
     }
     
-    if (line.trim() === '},' || line.trim() === '}') {
+    // Heuristic for article end
+    if (line.trim() === '},') {
       if (currentCategory && categoryArticles[currentCategory]) {
         categoryArticles[currentCategory].push(currentArticleLines.join('\n'));
       }
@@ -58,7 +61,9 @@ for (let i = 0; i < lines.length; i++) {
   }
 }
 
-mkdirSync('src/data/help', { recursive: true });
+if (!fs.existsSync('src/data/help')) {
+  fs.mkdirSync('src/data/help', { recursive: true });
+}
 
 categories.forEach(cat => {
   const articles = categoryArticles[cat.id];
@@ -67,9 +72,3 @@ categories.forEach(cat => {
     fs.writeFileSync(path.join('src/data/help', cat.fileName), fileContent);
   }
 });
-
-function mkdirSync(dir: string, options: any) {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, options);
-  }
-}

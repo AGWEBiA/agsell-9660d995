@@ -665,6 +665,7 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
             <TabsList className="mx-2 mt-2 shrink-0">
               <TabsTrigger value="nodes" className="text-xs flex-1">Blocos</TabsTrigger>
               <TabsTrigger value="rules" className="text-xs flex-1">Regras</TabsTrigger>
+              <TabsTrigger value="settings" className="text-xs flex-1">Config</TabsTrigger>
             </TabsList>
             <ScrollArea className="flex-1">
               <TabsContent value="nodes" className="p-2 mt-0 space-y-3">
@@ -686,6 +687,68 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
               </TabsContent>
               <TabsContent value="rules" className="p-2 mt-0">
                 <RulesEditor rules={rules} onUpdate={setRules} />
+              </TabsContent>
+              <TabsContent value="settings" className="p-2 mt-0 space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold">Instância WhatsApp</Label>
+                  <Select value={whatsappInstanceId ?? '_none'} onValueChange={v => setWhatsappInstanceId(v === '_none' ? null : v)}>
+                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Nenhuma" /></SelectTrigger>
+                    <SelectContent className="z-[100]">
+                      <SelectItem value="_none">Nenhuma</SelectItem>
+                      {instances.map((i: any) => (
+                        <SelectItem key={i.id} value={i.id}>
+                          {i.name} ({i.integration_type === 'evolution_api' ? 'Evolution' : 'Meta Oficial'}){!i.is_active ? ' • inativa' : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {instanceWarning && (
+                    <p className="text-[10px] text-destructive bg-destructive/10 rounded p-1.5">⚠️ {instanceWarning}</p>
+                  )}
+                  {isGroupChannel && (
+                    <p className="text-[10px] text-muted-foreground">Grupos exigem Evolution API (a API Oficial Meta não suporta grupos).</p>
+                  )}
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold">Prompt Global do Agente IA</Label>
+                  <Textarea
+                    rows={5}
+                    className="text-xs"
+                    placeholder="Ex: Você é a Ana, atendente da Empresa X. Seja cordial, objetiva, responda em até 3 frases e nunca prometa prazos."
+                    value={settings.agent_prompt || ''}
+                    onChange={e => setSettings(s => ({ ...s, agent_prompt: e.target.value }))}
+                  />
+                  <p className="text-[10px] text-muted-foreground">Aplicado por padrão a todos os blocos de IA que não tenham prompt próprio.</p>
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold">Fallback para humano</Label>
+                    <Switch
+                      checked={settings.human_fallback_enabled ?? true}
+                      onCheckedChange={v => setSettings(s => ({ ...s, human_fallback_enabled: v }))}
+                    />
+                  </div>
+                  {(settings.human_fallback_enabled ?? true) && (
+                    <>
+                      <Textarea
+                        rows={2}
+                        className="text-xs"
+                        placeholder="Mensagem enviada antes de transferir para humano"
+                        value={settings.human_fallback_message || ''}
+                        onChange={e => setSettings(s => ({ ...s, human_fallback_message: e.target.value }))}
+                      />
+                      <Input
+                        className="h-8 text-xs"
+                        placeholder="Departamento (ex: Suporte)"
+                        value={settings.human_fallback_department || ''}
+                        onChange={e => setSettings(s => ({ ...s, human_fallback_department: e.target.value }))}
+                      />
+                      <p className="text-[10px] text-muted-foreground">Acionado quando a IA não conseguir responder ou repetir validação esgotar.</p>
+                    </>
+                  )}
+                </div>
               </TabsContent>
             </ScrollArea>
           </Tabs>

@@ -51,11 +51,22 @@ interface ChatbotRule {
   isActive: boolean;
 }
 
+interface ChatbotSchedule {
+  enabled?: boolean;
+  timezone?: string;
+  days?: number[];           // 0=Dom..6=Sáb
+  start?: string;            // "HH:mm"
+  end?: string;              // "HH:mm"
+  action_outside?: 'pause' | 'fallback_human' | 'send_message';
+  off_hours_message?: string;
+}
+
 interface ChatbotSettings {
   agent_prompt?: string;
   human_fallback_enabled?: boolean;
   human_fallback_message?: string;
   human_fallback_department?: string;
+  schedule?: ChatbotSchedule;
 }
 
 interface Chatbot {

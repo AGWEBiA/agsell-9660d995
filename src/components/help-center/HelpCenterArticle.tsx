@@ -296,66 +296,77 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
     if (!articleRef.current) return;
     
     setDownloading(true);
-    const toastId = toast.loading('Gerando PDF A4 com sumário...');
+    const toastId = toast.loading('Gerando PDF A4 profissional...');
 
     try {
       const element = articleRef.current;
+      const isCompleteGuide = article.id === 'automation-pdf-download';
       
-      // Temporary style adjustments for PDF capture (A4 proportions)
+      // Temporary style adjustments for PDF capture
       const originalStyle = element.style.cssText;
       element.style.color = '#000000';
       element.style.backgroundColor = '#ffffff';
-      element.style.padding = '40px';
-      element.style.width = '800px'; // A4-ish width
+      element.style.padding = '60px 50px';
+      element.style.width = '1000px'; // Wider for better resolution before scaling
+      element.style.borderRadius = '0';
+      element.style.boxShadow = 'none';
       
-      const textElements = element.querySelectorAll('.text-foreground, .text-muted-foreground, p, h1, h2, h3, span, li');
+      const textElements = element.querySelectorAll('.text-foreground, .text-muted-foreground, p, h1, h2, h3, h4, span, li, strong');
       const originalColors: string[] = [];
       Array.from(textElements).forEach((el, i) => {
-        originalColors[i] = (el as HTMLElement).style.color;
-        (el as HTMLElement).style.setProperty('color', '#000000', 'important');
+        const htmlEl = el as HTMLElement;
+        originalColors[i] = htmlEl.style.color;
+        htmlEl.style.setProperty('color', '#1e293b', 'important');
+        htmlEl.style.setProperty('font-family', 'sans-serif', 'important');
       });
 
-      // Find headings for the index
+      // Find all headings for a global index
       const headings = Array.from(element.querySelectorAll('h2, h3'))
-        .filter(h => h.offsetParent !== null) // Only visible ones
+        .filter(h => h.offsetParent !== null)
         .map(h => ({
           text: (h as HTMLElement).innerText,
           level: h.tagName.toLowerCase()
         }));
 
-      // Add AG Sell Branding and Table of Contents (Index)
+      // Add Professional Branding Header
       const brandingHeader = document.createElement('div');
-      brandingHeader.className = 'pdf-only-branding';
+      brandingHeader.className = 'pdf-branding-container';
       brandingHeader.style.cssText = `
-        border-bottom: 2px solid #3b82f6;
-        margin-bottom: 40px;
-        padding-bottom: 20px;
+        border-bottom: 3px solid #3b82f6;
+        margin-bottom: 50px;
+        padding-bottom: 30px;
+        display: block;
+        width: 100%;
       `;
       
       brandingHeader.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="background-color: #f1f5f9; padding: 10px; border-radius: 12px; border: 1px solid #e2e8f0;">
-              <img src="/placeholder.svg" style="width: 32px; height: 32px;" />
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="background-color: #3b82f6; padding: 12px; border-radius: 12px;">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19 7-7 3 3-7 7-3-3z"/><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="m2 2 20 20"/></svg>
             </div>
             <div style="display: flex; flex-direction: column;">
-              <span style="font-size: 22px; font-weight: 900; color: #0f172a; letter-spacing: -0.5px;">AG SELL</span>
-              <span style="font-size: 9px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Marketing Intelligence</span>
+              <span style="font-size: 28px; font-weight: 800; color: #0f172a; letter-spacing: -1px; line-height: 1;">AG SELL</span>
+              <span style="font-size: 11px; color: #3b82f6; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-top: 4px;">Marketing Intelligence</span>
             </div>
           </div>
           <div style="text-align: right;">
-            <div style="font-size: 10px; color: #64748b; font-weight: 600;">MANUAL OPERACIONAL</div>
-            <div style="font-size: 12px; color: #1e293b; font-weight: 700;">${article.title}</div>
+            <div style="font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Guia Operacional Detalhado</div>
+            <div style="font-size: 16px; color: #1e293b; font-weight: 800;">${article.title}</div>
+            <div style="font-size: 10px; color: #94a3b8; margin-top: 5px;">Versão 2.4 • Emitido em ${new Date().toLocaleDateString('pt-BR')}</div>
           </div>
         </div>
+        
         ${headings.length > 0 ? `
-          <div style="margin-top: 30px; padding: 25px; background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; page-break-inside: avoid;">
-            <div style="font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">CONTEÚDO DO GUIA</div>
-            ${headings.map(h => `
-              <div style="font-size: 11px; margin-bottom: 6px; padding-left: ${h.level === 'h3' ? '20px' : '0'}; color: ${h.level === 'h3' ? '#475569' : '#1e293b'}; font-weight: ${h.level === 'h2' ? '700' : '500'}">
-                <span style="color: #3b82f6; margin-right: 8px;">${h.level === 'h2' ? '●' : '○'}</span> ${h.text}
-              </div>
-            `).join('')}
+          <div style="margin-top: 40px; padding: 30px; background: #f8fafc; border-radius: 20px; border: 1px solid #e2e8f0;">
+            <div style="font-size: 16px; font-weight: 800; color: #0f172a; margin-bottom: 20px; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; display: inline-block;">SUMÁRIO EXECUTIVO</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 40px;">
+              ${headings.map(h => `
+                <div style="font-size: 12px; padding-left: ${h.level === 'h3' ? '20px' : '0'}; color: ${h.level === 'h3' ? '#64748b' : '#0f172a'}; font-weight: ${h.level === 'h2' ? '700' : '400'}; border-bottom: 1px dotted #e2e8f0; padding-bottom: 4px; display: flex; justify-content: space-between;">
+                  <span>${h.level === 'h2' ? '■' : '•'} ${h.text}</span>
+                </div>
+              `).join('')}
+            </div>
           </div>
         ` : ''}
       `;
@@ -366,55 +377,77 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
         useCORS: true,
         logging: false,
         backgroundColor: '#ffffff',
-        windowWidth: 800
+        windowWidth: 1000,
+        y: 0,
+        scrollX: 0,
+        scrollY: 0
       });
 
-      // Restore original state
+      // Restore original state immediately to not flicker
       element.removeChild(brandingHeader);
       element.style.cssText = originalStyle;
       Array.from(textElements).forEach((el, i) => {
         (el as HTMLElement).style.color = originalColors[i];
       });
 
-      const imgData = canvas.toDataURL('image/png');
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: 'a4',
-        compress: true
+        format: 'a4'
       });
 
-      const imgProps = (pdf as any).getImageProperties(imgData);
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      // Handle multi-page PDF if content is long
-      let heightLeft = pdfHeight;
-      let position = 0;
-      const pageHeight = pdf.internal.pageSize.getHeight();
+      // Margins
+      const margin = 10;
+      const contentWidth = pdfWidth - (2 * margin);
+      
+      const imgProps = (pdf as any).getImageProperties(imgData);
+      const scaledHeight = (imgProps.height * contentWidth) / imgProps.width;
+      
+      let heightLeft = scaledHeight;
+      let position = margin; // Start with top margin
 
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pageHeight;
+      // First page
+      pdf.addImage(imgData, 'JPEG', margin, position, contentWidth, scaledHeight);
+      heightLeft -= (pdfHeight - (2 * margin));
 
-      while (heightLeft >= 0) {
-        position = heightLeft - pdfHeight;
+      // Subsequent pages
+      while (heightLeft > 0) {
+        position = heightLeft - scaledHeight + margin;
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pageHeight;
+        // Add a white rectangle at the top to cover the "bleed" from previous page
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, 0, pdfWidth, margin, 'F');
+        
+        pdf.addImage(imgData, 'JPEG', margin, position, contentWidth, scaledHeight);
+        
+        // Add white rectangle at the bottom to cover the "bleed" to next page
+        pdf.setFillColor(255, 255, 255);
+        pdf.rect(0, pdfHeight - margin, pdfWidth, margin, 'F');
+        
+        heightLeft -= (pdfHeight - (2 * margin));
       }
       
-      // Footer with pagination
+      // Add dynamic footer and page numbers
       const pageCount = (pdf as any).internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         pdf.setPage(i);
-        pdf.setFontSize(9);
-        pdf.setTextColor(100);
-        pdf.text(`AG Sell - Manual Operacional | Página ${i} de ${pageCount}`, pdfWidth / 2, pageHeight - 12, { align: 'center' });
+        pdf.setFontSize(8);
+        pdf.setTextColor(148, 163, 184); // slate-400
+        
+        // Horizontal line
         pdf.setDrawColor(226, 232, 240);
-        pdf.line(10, pageHeight - 15, pdfWidth - 10, pageHeight - 15);
+        pdf.line(margin, pdfHeight - margin - 5, pdfWidth - margin, pdfHeight - margin - 5);
+        
+        // Footer texts
+        pdf.text('AG Sell Marketing Intelligence - Guia de Automações 2024', margin, pdfHeight - margin);
+        pdf.text(`Página ${i} de ${pageCount}`, pdfWidth - margin, pdfHeight - margin, { align: 'right' });
       }
 
-      pdf.save(`AG-Sell-Guia-${article.title.replace(/\s+/g, '-')}.pdf`);
+      pdf.save(`AG-Sell-Manual-${article.title.replace(/\s+/g, '-')}.pdf`);
       toast.success('PDF A4 gerado com sucesso!', { id: toastId });
     } catch (error) {
       console.error('PDF generation error:', error);

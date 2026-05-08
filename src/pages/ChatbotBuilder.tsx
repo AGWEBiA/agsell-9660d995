@@ -512,11 +512,46 @@ function RulesEditor({ rules, onUpdate }: { rules: ChatbotRule[]; onUpdate: (rul
 
 // ─── Chatbot Visual Builder ───
 function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { chatbot: Chatbot; onSave: (c: Chatbot) => void; onClose: () => void; isSaving?: boolean }) {
+  const { currentOrganization } = useOrganization();
   const [nodes, setNodes] = useState<ChatbotNode[]>(chatbot.nodes);
   const [rules, setRules] = useState<ChatbotRule[]>(chatbot.rules);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'nodes' | 'rules'>('nodes');
+  const [activeTab, setActiveTab] = useState<'nodes' | 'rules' | 'settings'>('nodes');
   const [name, setName] = useState(chatbot.name);
+  const [whatsappInstanceId, setWhatsappInstanceId] = useState<string | null>(chatbot.whatsapp_instance_id ?? null);
+  const [settings, setSettings] = useState<ChatbotSettings>(chatbot.settings ?? {
+    agent_prompt: '',
+    human_fallback_enabled: true,
+    human_fallback_message: 'Vou transferir você para um de nossos atendentes humanos. Aguarde um momento. 🙋',
+    human_fallback_department: '',
+  });
+
+  const { data: instances = [] } = useQuery({
+    queryKey: ['chatbot-wa-instances', currentOrganization?.id],
+    queryFn: async () => {
+      if (!currentOrganization?.id) return [];
+      const { data, error } = await supabase
+        .from('organization_integrations')
+        .select('id, name, integration_type, is_active, config')
+        .eq('organization_id', currentOrganization.id)
+        .in('integration_type', ['evolution_api', 'whatsapp_business']);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!currentOrganization?.id,
+  });
+
+  const selectedInstance = instances.find((i: any) => i.id === whatsappInstanceId);
+  const isGroupChannel = chatbot.channel === 'whatsapp_group';
+  const instanceWarning = (() => {
+    if (!whatsappInstanceId) return chatbot.channel === 'whatsapp' ? 'Vincule uma instância WhatsApp para ativar o chatbot.' : null;
+    if (!selectedInstance) return 'Instância selecionada não encontrada.';
+    if (!selectedInstance.is_active) return 'A instância vinculada está inativa.';
+    if (isGroupChannel && selectedInstance.integration_type !== 'evolution_api') {
+      return 'Grupos de WhatsApp exigem uma instância Evolution API. A API Oficial Meta não suporta grupos.';
+    }
+    return null;
+  })();
 
   const selectedNode = nodes.find(n => n.id === selectedNodeId);
 

@@ -5402,5 +5402,5 @@ Você pode assinar eventos como \`contact.created\` ou \`deal.won\` para receber
 
 Consulte a documentação completa e interativa em (/api-docs).`,
   },
+  ...AUTOMATION_GUIDE_ARTICLES,
 ];
-

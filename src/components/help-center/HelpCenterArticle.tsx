@@ -407,9 +407,11 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
       const pageCount = (pdf as any).internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         pdf.setPage(i);
-        pdf.setFontSize(8);
-        pdf.setTextColor(150);
-        pdf.text(`© 2026 AG Sell | Página ${i} de ${pageCount}`, pdfWidth / 2, pageHeight - 10, { align: 'center' });
+        pdf.setFontSize(9);
+        pdf.setTextColor(100);
+        pdf.text(`AG Sell - Manual Operacional | Página ${i} de ${pageCount}`, pdfWidth / 2, pageHeight - 12, { align: 'center' });
+        pdf.setDrawColor(226, 232, 240);
+        pdf.line(10, pageHeight - 15, pdfWidth - 10, pageHeight - 15);
       }
 
       pdf.save(`AG-Sell-Guia-${article.title.replace(/\s+/g, '-')}.pdf`);

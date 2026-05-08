@@ -604,7 +604,38 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
   };
 
   const handleSave = () => {
-    onSave({ ...chatbot, name, nodes, rules });
+    if (!name.trim()) {
+      toast.error('Defina um nome para o chatbot');
+      return;
+    }
+    if (instanceWarning) {
+      toast.error(instanceWarning);
+      return;
+    }
+    // Garante pelo menos uma regra de ativação
+    let finalRules = rules;
+    if (rules.length === 0) {
+      finalRules = [{
+        id: crypto.randomUUID(),
+        name: 'Primeira mensagem do contato',
+        departments: [],
+        officeHours: { enabled: false, start: '08:00', end: '18:00', days: [1, 2, 3, 4, 5] },
+        includeTags: [],
+        excludeTags: [],
+        channels: [chatbot.channel === 'whatsapp_group' ? 'whatsapp' : chatbot.channel],
+        keywords: [],
+        keywordMatch: 'any',
+        isActive: true,
+      }];
+      setRules(finalRules);
+      toast.info('Adicionada regra padrão "Primeira mensagem do contato"');
+    }
+    // Garante fallback humano se IA estiver presente sem fallback configurado
+    const hasAi = nodes.some(n => n.type === 'ai_response' || n.type === 'ai_mission');
+    if (hasAi && !settings.human_fallback_enabled) {
+      toast.warning('Recomendamos manter o fallback para humano ativo quando há blocos de IA');
+    }
+    onSave({ ...chatbot, name, nodes, rules: finalRules, whatsapp_instance_id: whatsappInstanceId, settings });
   };
 
   const categories = [...new Set(nodeTypes.map(n => n.category))];

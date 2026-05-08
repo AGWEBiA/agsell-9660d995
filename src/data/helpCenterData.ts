@@ -5,9 +5,12 @@ import {
   Webhook, SlidersHorizontal, Instagram, ListChecks, BookOpen,
   Rocket, Globe, Briefcase, Star, PlayCircle, HelpCircle, Workflow,
   Vote, SplitSquareVertical, Megaphone, Search, Bell, Palette,
-  type LucideIcon, Download, Save, RefreshCw, FileCode, Heart, Code2, FileDown
+  Download, Save, RefreshCw, FileCode, Heart, Code2, FileDown
 } from 'lucide-react';
 import { AUTOMATION_GUIDE_CATEGORY, AUTOMATION_GUIDE_ARTICLES } from './automationGuide';
+import { type HelpArticle, type HelpCategory } from '@/types/help';
+
+export type { HelpArticle, HelpCategory };
 
 const PDF_DOWNLOAD_ARTICLE: HelpArticle = {
   id: 'automation-pdf-download',
@@ -53,6 +56,7 @@ Ao navegar pela Central de Ajuda ou pelo Guia de Automações, você verá um bo
 [💡] **Exportação Personalizada:** Quando você exporta o Guia de Automações em PDF, o sistema prioriza e destaca seus itens favoritos no sumário.
 `
 };
+
 
 
 export interface HelpCategory {

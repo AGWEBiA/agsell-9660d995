@@ -15,15 +15,15 @@ interface Props {
   onToggle: () => void;
 }
 
-export function HelpCenterSidebar({ categories, articles, activeCategoryId, activeArticleId, onNavigate, open }: Props) {
-  const [expandedCategories, setExpandedCategories] = React.useState<Record<string, boolean>>(() => {
+export const HelpCenterSidebar = memo(function HelpCenterSidebar({ categories, articles, activeCategoryId, activeArticleId, onNavigate, open }: Props) {
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     if (activeCategoryId) initial[activeCategoryId] = true;
     return initial;
   });
-  const [sidebarSearch, setSidebarSearch] = React.useState('');
+  const [sidebarSearch, setSidebarSearch] = useState('');
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (activeCategoryId) {
       setExpandedCategories((prev) => ({ ...prev, [activeCategoryId]: true }));
     }
@@ -33,13 +33,15 @@ export function HelpCenterSidebar({ categories, articles, activeCategoryId, acti
     setExpandedCategories((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const filteredCategories = sidebarSearch
-    ? categories.filter(cat => {
-        const catArticles = articles.filter(a => a.categoryId === cat.id);
-        return cat.title.toLowerCase().includes(sidebarSearch.toLowerCase()) ||
-          catArticles.some(a => a.title.toLowerCase().includes(sidebarSearch.toLowerCase()));
-      })
-    : categories;
+  const filteredCategories = useMemo(() => {
+    if (!sidebarSearch) return categories;
+    const searchLower = sidebarSearch.toLowerCase();
+    return categories.filter(cat => {
+      const catArticles = articles.filter(a => a.categoryId === cat.id);
+      return cat.title.toLowerCase().includes(searchLower) ||
+        catArticles.some(a => a.title.toLowerCase().includes(searchLower));
+    });
+  }, [sidebarSearch, categories, articles]);
 
   return (
     <aside

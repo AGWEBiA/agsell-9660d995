@@ -335,10 +335,13 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
       brandingHeader.innerHTML = `
         <div style="display: flex; align-items: center; justify-content: space-between;">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="background-color: #3b82f6; padding: 8px; border-radius: 8px;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8h-2c0-9-15-4.5-15 4.5a1 1 0 0 0 1 1h2a7 7 0 0 1 4 12Z"/><path d="M13 20a5 5 0 0 1-5-5"/><path d="M13 15a5 5 0 0 1 5 5"/></svg>
+            <div style="background-color: #f1f5f9; padding: 10px; border-radius: 12px; border: 1px solid #e2e8f0;">
+              <img src="/placeholder.svg" style="width: 32px; height: 32px;" />
             </div>
-            <span style="font-size: 20px; font-weight: 800; color: #1e40af;">AG SELL</span>
+            <div style="display: flex; flex-direction: column;">
+              <span style="font-size: 22px; font-weight: 900; color: #0f172a; letter-spacing: -0.5px;">AG SELL</span>
+              <span style="font-size: 9px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Marketing Intelligence</span>
+            </div>
           </div>
           <div style="text-align: right;">
             <div style="font-size: 10px; color: #64748b; font-weight: 600;">MANUAL OPERACIONAL</div>

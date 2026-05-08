@@ -316,10 +316,12 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
       });
 
       // Find headings for the index
-      const headings = Array.from(element.querySelectorAll('h2, h3')).map(h => ({
-        text: (h as HTMLElement).innerText,
-        level: h.tagName.toLowerCase()
-      }));
+      const headings = Array.from(element.querySelectorAll('h2, h3'))
+        .filter(h => h.offsetParent !== null) // Only visible ones
+        .map(h => ({
+          text: (h as HTMLElement).innerText,
+          level: h.tagName.toLowerCase()
+        }));
 
       // Add AG Sell Branding and Table of Contents (Index)
       const brandingHeader = document.createElement('div');
@@ -333,10 +335,13 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
       brandingHeader.innerHTML = `
         <div style="display: flex; align-items: center; justify-content: space-between;">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="background-color: #3b82f6; padding: 8px; border-radius: 8px;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8h-2c0-9-15-4.5-15 4.5a1 1 0 0 0 1 1h2a7 7 0 0 1 4 12Z"/><path d="M13 20a5 5 0 0 1-5-5"/><path d="M13 15a5 5 0 0 1 5 5"/></svg>
+            <div style="background-color: #f1f5f9; padding: 10px; border-radius: 12px; border: 1px solid #e2e8f0;">
+              <img src="/placeholder.svg" style="width: 32px; height: 32px;" />
             </div>
-            <span style="font-size: 20px; font-weight: 800; color: #1e40af;">AG SELL</span>
+            <div style="display: flex; flex-direction: column;">
+              <span style="font-size: 22px; font-weight: 900; color: #0f172a; letter-spacing: -0.5px;">AG SELL</span>
+              <span style="font-size: 9px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Marketing Intelligence</span>
+            </div>
           </div>
           <div style="text-align: right;">
             <div style="font-size: 10px; color: #64748b; font-weight: 600;">MANUAL OPERACIONAL</div>
@@ -344,11 +349,11 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
           </div>
         </div>
         ${headings.length > 0 ? `
-          <div style="margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
-            <div style="font-size: 14px; font-weight: 800; color: #1e40af; margin-bottom: 12px;">SUMÁRIO (ÍNDICE)</div>
+          <div style="margin-top: 30px; padding: 25px; background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; page-break-inside: avoid;">
+            <div style="font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">CONTEÚDO DO GUIA</div>
             ${headings.map(h => `
-              <div style="font-size: 10px; margin-bottom: 4px; padding-left: ${h.level === 'h3' ? '15px' : '0'}">
-                <span style="color: #3b82f6;">•</span> ${h.text}
+              <div style="font-size: 11px; margin-bottom: 6px; padding-left: ${h.level === 'h3' ? '20px' : '0'}; color: ${h.level === 'h3' ? '#475569' : '#1e293b'}; font-weight: ${h.level === 'h2' ? '700' : '500'}">
+                <span style="color: #3b82f6; margin-right: 8px;">${h.level === 'h2' ? '●' : '○'}</span> ${h.text}
               </div>
             `).join('')}
           </div>
@@ -375,7 +380,8 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: 'a4'
+        format: 'a4',
+        compress: true
       });
 
       const imgProps = (pdf as any).getImageProperties(imgData);
@@ -401,9 +407,11 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
       const pageCount = (pdf as any).internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         pdf.setPage(i);
-        pdf.setFontSize(8);
-        pdf.setTextColor(150);
-        pdf.text(`© 2026 AG Sell | Página ${i} de ${pageCount}`, pdfWidth / 2, pageHeight - 10, { align: 'center' });
+        pdf.setFontSize(9);
+        pdf.setTextColor(100);
+        pdf.text(`AG Sell - Manual Operacional | Página ${i} de ${pageCount}`, pdfWidth / 2, pageHeight - 12, { align: 'center' });
+        pdf.setDrawColor(226, 232, 240);
+        pdf.line(10, pageHeight - 15, pdfWidth - 10, pageHeight - 15);
       }
 
       pdf.save(`AG-Sell-Guia-${article.title.replace(/\s+/g, '-')}.pdf`);

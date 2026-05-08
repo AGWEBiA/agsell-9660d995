@@ -124,6 +124,9 @@ export const helpCategories: HelpCategory[] = [
 ];
 
 export const helpArticles: HelpArticle[] = [
+  ...AUTOMATION_GUIDE_ARTICLES,
+  FAVORITES_ARTICLE,
+  PDF_DOWNLOAD_ARTICLE,
   // =====================================================
   // PRIMEIROS PASSOS
   // =====================================================
@@ -5452,7 +5455,4 @@ Você pode assinar eventos como \`contact.created\` ou \`deal.won\` para receber
 
 Consulte a documentação completa e interativa em (/api-docs).`,
   },
-  FAVORITES_ARTICLE,
-  PDF_DOWNLOAD_ARTICLE,
-  ...AUTOMATION_GUIDE_ARTICLES,
 ];

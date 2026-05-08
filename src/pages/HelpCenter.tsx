@@ -19,28 +19,37 @@ export default function HelpCenter() {
   const [search, setSearch] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const activeArticle = activeArticleId ? helpArticles.find((a) => a.id === activeArticleId) : null;
-  const activeCategory = activeCategoryId ? helpCategories.find((c) => c.id === activeCategoryId) : null;
+  const activeArticle = useMemo(() => 
+    activeArticleId ? helpArticles.find((a) => a.id === activeArticleId) : null,
+  [activeArticleId]);
 
-  const filteredArticles = search
-    ? helpArticles.filter(
-        (a) =>
-          a.title.toLowerCase().includes(search.toLowerCase()) ||
-          a.description.toLowerCase().includes(search.toLowerCase())
-      )
-    : [];
+  const activeCategory = useMemo(() => 
+    activeCategoryId ? helpCategories.find((c) => c.id === activeCategoryId) : null,
+  [activeCategoryId]);
 
-  const navigateTo = (articleId?: string, categoryId?: string) => {
+  const filteredArticles = useMemo(() => {
+    if (!search) return [];
+    const searchLower = search.toLowerCase();
+    return helpArticles.filter(
+      (a) =>
+        a.title.toLowerCase().includes(searchLower) ||
+        a.description.toLowerCase().includes(searchLower)
+    );
+  }, [search]);
+
+  const navigateTo = useCallback((articleId?: string, categoryId?: string) => {
     const params = new URLSearchParams();
     if (articleId) params.set('article', articleId);
     if (categoryId) params.set('category', categoryId);
     setSearchParams(params);
     setSearch('');
-  };
+  }, [setSearchParams]);
 
-  const categoryArticles = activeCategoryId
-    ? helpArticles.filter((a) => a.categoryId === activeCategoryId)
-    : [];
+  const categoryArticles = useMemo(() => 
+    activeCategoryId
+      ? helpArticles.filter((a) => a.categoryId === activeCategoryId)
+      : [],
+  [activeCategoryId]);
 
   return (
     <div className="flex h-[calc(100vh-4rem)] -m-6 overflow-hidden bg-background">

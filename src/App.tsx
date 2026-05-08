@@ -300,6 +300,7 @@ const App = () => {
                 </Routes>
               </BrowserRouter>
             </Suspense>
+            </ErrorBoundary>
             </TooltipProvider>
             </AdminViewProvider>
           </PermissionsProvider>

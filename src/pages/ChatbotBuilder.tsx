@@ -21,6 +21,7 @@ import {
   MessageCircle, UserPlus, PhoneForwarded, XCircle, Zap, Brain,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { evaluateChatbotSchedule } from '@/lib/chatbot/schedule';
 
 // ─── Chatbot Node Types ───
 type ChatbotNodeType =
@@ -51,11 +52,22 @@ interface ChatbotRule {
   isActive: boolean;
 }
 
+interface ChatbotSchedule {
+  enabled?: boolean;
+  timezone?: string;
+  days?: number[];           // 0=Dom..6=Sáb
+  start?: string;            // "HH:mm"
+  end?: string;              // "HH:mm"
+  action_outside?: 'pause' | 'fallback_human' | 'send_message';
+  off_hours_message?: string;
+}
+
 interface ChatbotSettings {
   agent_prompt?: string;
   human_fallback_enabled?: boolean;
   human_fallback_message?: string;
   human_fallback_department?: string;
+  schedule?: ChatbotSchedule;
 }
 
 interface Chatbot {
@@ -655,6 +667,15 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
             <Phone className="h-3 w-3" />
             {selectedInstance ? selectedInstance.name : 'Sem instância'}
           </Badge>
+          {settings.schedule?.enabled && (() => {
+            const decision = evaluateChatbotSchedule(settings.schedule);
+            return (
+              <Badge variant={decision.allow ? 'secondary' : 'outline'} className="gap-1" title={decision.allow ? 'Dentro do horário' : `Fora — ${decision.reason === 'out_of_window' ? decision.action : ''}`}>
+                <Clock className="h-3 w-3" />
+                {decision.allow ? 'No ar' : 'Fora do horário'}
+              </Badge>
+            );
+          })()}
           <Button size="sm" onClick={handleSave} disabled={isSaving}>
             {isSaving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
             {isSaving ? 'Salvando...' : 'Salvar'}
@@ -753,6 +774,118 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
                     </>
                   )}
                 </div>
+                <Separator />
+                {(() => {
+                  const sched: ChatbotSchedule = settings.schedule ?? {
+                    enabled: false,
+                    timezone: 'America/Sao_Paulo',
+                    days: [1, 2, 3, 4, 5],
+                    start: '08:00',
+                    end: '18:00',
+                    action_outside: 'pause',
+                    off_hours_message: 'Estamos fora do horário de atendimento. Retornaremos em breve. ⏰',
+                  };
+                  const updateSched = (patch: Partial<ChatbotSchedule>) =>
+                    setSettings(s => ({ ...s, schedule: { ...sched, ...patch } }));
+                  const dayLabels = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+                  return (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-semibold">Agendamento (horário ativo)</Label>
+                        <Switch
+                          checked={sched.enabled ?? false}
+                          onCheckedChange={v => updateSched({ enabled: v })}
+                        />
+                      </div>
+                      {sched.enabled && (
+                        <div className="space-y-2">
+                          <div className="flex gap-2">
+                            <div className="flex-1">
+                              <Label className="text-[10px]">Início</Label>
+                              <Input
+                                type="time"
+                                className="h-7 text-xs"
+                                value={sched.start || '08:00'}
+                                onChange={e => updateSched({ start: e.target.value })}
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <Label className="text-[10px]">Fim</Label>
+                              <Input
+                                type="time"
+                                className="h-7 text-xs"
+                                value={sched.end || '18:00'}
+                                onChange={e => updateSched({ end: e.target.value })}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-[10px]">Dias da semana</Label>
+                            <div className="flex gap-1 mt-1 flex-wrap">
+                              {dayLabels.map((d, i) => {
+                                const days = sched.days || [];
+                                const active = days.includes(i);
+                                return (
+                                  <Badge
+                                    key={i}
+                                    variant={active ? 'default' : 'outline'}
+                                    className="text-[10px] cursor-pointer px-1.5"
+                                    onClick={() => updateSched({
+                                      days: active ? days.filter(x => x !== i) : [...days, i].sort(),
+                                    })}
+                                  >{d}</Badge>
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="text-[10px]">Fuso horário</Label>
+                            <Select
+                              value={sched.timezone || 'America/Sao_Paulo'}
+                              onValueChange={v => updateSched({ timezone: v })}
+                            >
+                              <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                              <SelectContent className="z-[100]">
+                                <SelectItem value="America/Sao_Paulo">Brasília (GMT-3)</SelectItem>
+                                <SelectItem value="America/Manaus">Manaus (GMT-4)</SelectItem>
+                                <SelectItem value="America/Rio_Branco">Rio Branco (GMT-5)</SelectItem>
+                                <SelectItem value="America/Noronha">Noronha (GMT-2)</SelectItem>
+                                <SelectItem value="UTC">UTC</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label className="text-[10px]">Fora do horário</Label>
+                            <Select
+                              value={sched.action_outside || 'pause'}
+                              onValueChange={v => updateSched({ action_outside: v as ChatbotSchedule['action_outside'] })}
+                            >
+                              <SelectTrigger className="h-7 text-xs"><SelectValue /></SelectTrigger>
+                              <SelectContent className="z-[100]">
+                                <SelectItem value="pause">Pausar (não responder)</SelectItem>
+                                <SelectItem value="fallback_human">Transferir para humano</SelectItem>
+                                <SelectItem value="send_message">Enviar mensagem fora do horário</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          {sched.action_outside === 'send_message' && (
+                            <Textarea
+                              rows={2}
+                              className="text-xs"
+                              placeholder="Mensagem fora do horário"
+                              value={sched.off_hours_message || ''}
+                              onChange={e => updateSched({ off_hours_message: e.target.value })}
+                            />
+                          )}
+                          {sched.action_outside === 'fallback_human' && !(settings.human_fallback_enabled ?? true) && (
+                            <p className="text-[10px] text-destructive bg-destructive/10 rounded p-1.5">⚠️ Ative o "Fallback para humano" acima para esta opção funcionar.</p>
+                          )}
+                          <p className="text-[10px] text-muted-foreground">O bot só responderá automaticamente nos horários e dias selecionados.</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </TabsContent>
             </ScrollArea>
           </Tabs>

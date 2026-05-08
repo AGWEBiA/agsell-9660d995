@@ -650,7 +650,11 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary">{nodes.length} blocos</Badge>
-          <Badge variant="secondary">{rules.length} regras</Badge>
+          <Badge variant={rules.length > 0 ? 'secondary' : 'destructive'}>{rules.length} regras</Badge>
+          <Badge variant={whatsappInstanceId && !instanceWarning ? 'secondary' : 'outline'} className="gap-1">
+            <Phone className="h-3 w-3" />
+            {selectedInstance ? selectedInstance.name : 'Sem instância'}
+          </Badge>
           <Button size="sm" onClick={handleSave} disabled={isSaving}>
             {isSaving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
             {isSaving ? 'Salvando...' : 'Salvar'}

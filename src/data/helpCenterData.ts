@@ -7,6 +7,7 @@ import {
   Vote, SplitSquareVertical, Megaphone, Search, Bell, Palette,
   type LucideIcon, Download, Save, RefreshCw,
 } from 'lucide-react';
+import { AUTOMATION_GUIDE_CATEGORY, AUTOMATION_GUIDE_ARTICLES } from './automationGuide';
 
 export interface HelpCategory {
   id: string;
@@ -69,6 +70,7 @@ export const helpCategories: HelpCategory[] = [
     icon: FileText,
     description: 'Manual técnico do sistema, documentação da API e guias de referência para desenvolvedores.',
   },
+  AUTOMATION_GUIDE_CATEGORY,
 ];
 
 export const helpArticles: HelpArticle[] = [
@@ -5400,5 +5402,5 @@ Você pode assinar eventos como \`contact.created\` ou \`deal.won\` para receber
 
 Consulte a documentação completa e interativa em (/api-docs).`,
   },
+  ...AUTOMATION_GUIDE_ARTICLES,
 ];
-

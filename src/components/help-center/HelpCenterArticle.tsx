@@ -316,10 +316,12 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
       });
 
       // Find headings for the index
-      const headings = Array.from(element.querySelectorAll('h2, h3')).map(h => ({
-        text: (h as HTMLElement).innerText,
-        level: h.tagName.toLowerCase()
-      }));
+      const headings = Array.from(element.querySelectorAll('h2, h3'))
+        .filter(h => h.offsetParent !== null) // Only visible ones
+        .map(h => ({
+          text: (h as HTMLElement).innerText,
+          level: h.tagName.toLowerCase()
+        }));
 
       // Add AG Sell Branding and Table of Contents (Index)
       const brandingHeader = document.createElement('div');

@@ -15,7 +15,7 @@ import {
   FileText, MousePointerClick, Eye, FormInput, Trophy, MessageCircle,
   Activity, type LucideIcon, Heart, FileDown
 } from 'lucide-react';
-import type { HelpArticle, HelpCategory } from './helpCenterData';
+import type { HelpArticle, HelpCategory } from '@/types/help';
 
 export const AUTOMATION_GUIDE_CATEGORY: HelpCategory = {
   id: 'automation-guide',

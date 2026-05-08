@@ -5,9 +5,35 @@ import {
   Webhook, SlidersHorizontal, Instagram, ListChecks, BookOpen,
   Rocket, Globe, Briefcase, Star, PlayCircle, HelpCircle, Workflow,
   Vote, SplitSquareVertical, Megaphone, Search, Bell, Palette,
-  type LucideIcon, Download, Save, RefreshCw,
+  type LucideIcon, Download, Save, RefreshCw, FileCode
 } from 'lucide-react';
 import { AUTOMATION_GUIDE_CATEGORY, AUTOMATION_GUIDE_ARTICLES } from './automationGuide';
+
+const PDF_DOWNLOAD_ARTICLE: HelpArticle = {
+  id: 'automation-pdf-download',
+  categoryId: 'automation-guide',
+  title: 'Baixar Guia em PDF',
+  icon: FileCode,
+  description: 'Acesse a versão em PDF do manual operacional da AG Sell para consulta offline.',
+  popular: true,
+  content: `Baixe agora a versão completa e personalizada do Guia de Automações.
+
+## Manual Operacional AG Sell
+
+O guia contém todos os gatilhos, ações e receitas prontas formatados para impressão ou consulta offline.
+
+[💡] **Nota:** Este arquivo é atualizado automaticamente sempre que novas funcionalidades são adicionadas ao sistema.
+
+### Link para Download
+Clique no botão abaixo para baixar o arquivo PDF:
+
+<a href="/guia-automacao.pdf" download="AG-Sell-Guia-Automacao.pdf" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 mt-4 no-underline">
+  <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+  Baixar PDF Completo
+</a>
+`
+};
+
 
 export interface HelpCategory {
   id: string;

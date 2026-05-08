@@ -135,4 +135,4 @@ export const HelpCenterHome = memo(function HelpCenterHome({ categories, article
       </div>
     </div>
   );
-}
+});

@@ -667,6 +667,15 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
             <Phone className="h-3 w-3" />
             {selectedInstance ? selectedInstance.name : 'Sem instância'}
           </Badge>
+          {settings.schedule?.enabled && (() => {
+            const decision = evaluateChatbotSchedule(settings.schedule);
+            return (
+              <Badge variant={decision.allow ? 'secondary' : 'outline'} className="gap-1" title={decision.allow ? 'Dentro do horário' : `Fora — ${decision.reason === 'out_of_window' ? decision.action : ''}`}>
+                <Clock className="h-3 w-3" />
+                {decision.allow ? 'No ar' : 'Fora do horário'}
+              </Badge>
+            );
+          })()}
           <Button size="sm" onClick={handleSave} disabled={isSaving}>
             {isSaving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
             {isSaving ? 'Salvando...' : 'Salvar'}

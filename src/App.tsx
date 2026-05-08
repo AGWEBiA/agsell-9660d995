@@ -10,6 +10,7 @@ import { PermissionsProvider } from "@/contexts/PermissionsContext";
 import { AdminViewProvider } from "@/contexts/AdminViewContext";
 import React, { Suspense, useEffect } from "react";
 import { HelmetProvider } from "react-helmet-async";
+import ErrorBoundary from "@/components/ErrorBoundary";
 // Lazy components for layout and security
 const ProtectedRoute = React.lazy(() => import("@/components/auth/ProtectedRoute").then(m => ({ default: m.ProtectedRoute })));
 const DashboardLayout = React.lazy(() => import("@/components/layout/DashboardLayout").then(m => ({ default: m.DashboardLayout })));
@@ -169,6 +170,7 @@ const App = () => {
             <TooltipProvider>
               <Toaster />
               <Sonner />
+              <ErrorBoundary>
               <Suspense fallback={<PageLoader />}>
                 {/* Removed RuntimeProtection to fix white screen issue */}
                 <BrowserRouter>
@@ -298,6 +300,7 @@ const App = () => {
                 </Routes>
               </BrowserRouter>
             </Suspense>
+            </ErrorBoundary>
             </TooltipProvider>
             </AdminViewProvider>
           </PermissionsProvider>

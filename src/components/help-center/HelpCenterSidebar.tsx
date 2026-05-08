@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useMemo, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { BookOpen, ChevronDown, Home, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';

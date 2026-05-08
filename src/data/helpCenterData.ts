@@ -69,6 +69,7 @@ export const helpCategories: HelpCategory[] = [
     icon: FileText,
     description: 'Manual técnico do sistema, documentação da API e guias de referência para desenvolvedores.',
   },
+  AUTOMATION_GUIDE_CATEGORY,
 ];
 
 export const helpArticles: HelpArticle[] = [

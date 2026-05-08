@@ -872,6 +872,8 @@ export default function ChatbotBuilderPage() {
         nodes: (row.nodes as ChatbotNode[]) || [],
         rules: (row.rules as ChatbotRule[]) || [],
         isActive: row.is_active,
+        whatsapp_instance_id: row.whatsapp_instance_id ?? null,
+        settings: (row.settings as ChatbotSettings) || {},
       }));
     },
     enabled: !!orgId,

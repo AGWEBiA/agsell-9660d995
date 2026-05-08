@@ -304,7 +304,7 @@ const checklistArticle: HelpArticle = {
   id: 'automation-guide-checklist',
   categoryId: AUTOMATION_GUIDE_CATEGORY.id,
   title: 'Checklist de Ativação',
-  icon: ListChecks,
+  icon: CheckSquare,
   description: 'O que verificar antes de colocar um fluxo no ar.',
   readTime: '5 min',
   content: `## Antes de Ativar

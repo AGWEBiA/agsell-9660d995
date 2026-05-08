@@ -552,4 +552,4 @@ export const HelpCenterArticle = memo(function HelpCenterArticle({ article, cate
       )}
     </div>
   );
-}
+});

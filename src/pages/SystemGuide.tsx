@@ -661,6 +661,22 @@ const guideSections: GuideSection[] = [
       { title: 'Página pública', description: 'Página acessível em /status sem autenticação para transparência.' },
     ],
   },
+  {
+    id: 'chatbot-ai-builder',
+    title: 'Chatbot Builder AI',
+    icon: Bot,
+    badge: 'NOVO',
+    description: 'Construtor de chatbots inteligentes com IA generativa, fluxos visuais e fallback humano.',
+    features: [
+      { title: 'Canvas Visual (Flow)', description: 'Arraste e conecte blocos de Boas-vindas, Resposta IA e Fallback para montar o fluxo do robô.' },
+      { title: 'Prompt Global do Agente', description: 'Configure as instruções mestre que regem o comportamento da IA em todas as respostas.' },
+      { title: 'Fallback para Humano', description: 'Transferência automática para atendentes reais quando a IA não consegue responder ou é solicitado.' },
+      { title: 'Regras de Ativação', description: 'Gatilhos por Primeira Mensagem ou Palavras-chave específicas para disparar o chatbot.' },
+      { title: 'Agendamento Inteligente', description: 'Defina horários e dias de funcionamento para iniciar ou pausar o robô automaticamente.' },
+      { title: 'Vínculo com WhatsApp', description: 'Integração direta com instâncias WhatsApp (suporte a grupos via Evolution API).' },
+      { title: 'Checklist de Ativação (Produção)', description: '1. Conectar blocos (Boas-vindas -> IA) | 2. Configurar Prompt | 3. Ativar ≥1 Regra | 4. Vincular Instância Ativa | 5. Salvar e Ativar status.' },
+    ],
+  },
 ];
 
 export default function SystemGuide() {

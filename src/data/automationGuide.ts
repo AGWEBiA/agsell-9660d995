@@ -389,15 +389,15 @@ Permitem que a automação seja inteligente. "Se o cliente clicou, faça X. Se n
 ## Variáveis Globais de Personalização
 
 Em qualquer campo de texto, você pode usar as seguintes variáveis dinâmicas:
-- `{{nome}}`: Nome do contato.
-- `{{email}}`: E-mail principal.
-- `{{telefone}}`: WhatsApp/Celular.
-- `{{deal_value}}`: Valor do negócio atual (se houver).
-- `{{atendente_nome}}`: Nome do usuário responsável pelo contato.
+- \`{{nome}}\`: Nome do contato.
+- \`{{email}}\`: E-mail principal.
+- \`{{telefone}}\`: WhatsApp/Celular.
+- \`{{deal_value}}\`: Valor do negócio atual (se houver).
+- \`{{atendente_nome}}\`: Nome do usuário responsável pelo contato.
 
 ## Boas Práticas de Implementação
 
-- **Nomenclatura:** Nomeie seus fluxos de forma clara: `[VENDAS] - Carrinho Abandonado - Produto X`.
+- **Nomenclatura:** Nomeie seus fluxos de forma clara: \`[VENDAS] - Carrinho Abandonado - Produto X\`.
 - **Modo de Teste:** Sempre ative o fluxo primeiro para uma tag de teste antes de liberar para toda a base.
 - **Filtros de Segurança:** Use filtros de "Apenas uma vez por contato" em fluxos de boas-vindas para evitar que o cliente receba a mesma mensagem repetidamente.
 

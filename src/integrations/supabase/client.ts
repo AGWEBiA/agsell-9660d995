@@ -8,10 +8,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error("Supabase environment variables are missing! Site may not function correctly.");
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
-    persistSession: true,
-    autoRefreshToken: true,
-  }
-});
+// Fallback to a dummy client if variables are missing to prevent top-level crash
+export const supabase = (supabaseUrl && supabaseAnonKey) 
+  ? createClient<Database>(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+        persistSession: true,
+        autoRefreshToken: true,
+      }
+    })
+  : null as any;

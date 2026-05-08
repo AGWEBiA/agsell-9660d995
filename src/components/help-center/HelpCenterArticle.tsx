@@ -299,6 +299,12 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
     try {
       const element = articleRef.current;
       const isCompleteGuide = article.id === 'automation-pdf-download';
+
+      // Dynamic imports for heavy libraries to optimize bundle size
+      const [html2canvas, { default: jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf')
+      ]);
       
       // Temporary style adjustments for PDF capture
       const originalStyle = element.style.cssText;
@@ -370,7 +376,7 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
       `;
       element.prepend(brandingHeader);
 
-      const canvas = await html2canvas(element, {
+      const canvas = await html2canvas.default(element, {
         scale: 2,
         useCORS: true,
         logging: false,

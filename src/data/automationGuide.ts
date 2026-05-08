@@ -452,6 +452,10 @@ E-mail, WhatsApp (Evolution API e Meta Cloud), Instagram DM, SMS (Zenvia/Twilio)
 - **/automations-monitor** — falhas e retentativas em tempo real.
 - **/flow-analytics** — entradas, saídas e conversão por nó.
 
+## Como baixar este guia em PDF
+
+Você pode baixar a versão completa deste manual operacional clicando no artigo **"Baixar Guia em PDF"** na barra lateral. O arquivo é gerado com a logo da **AG Sell** e formatado para consulta rápida.
+
 ## Como manter este guia atualizado
 
 > Este guia é gerado a partir de um único arquivo: \`src/data/automationGuide.ts\`. Sempre que um gatilho ou ação é adicionado ou alterado no sistema, basta atualizar a lista nesse arquivo e os artigos são regerados automaticamente.

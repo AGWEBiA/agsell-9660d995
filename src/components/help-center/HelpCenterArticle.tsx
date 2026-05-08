@@ -257,45 +257,106 @@ function renderContentBlocks(content: string): React.ReactNode[] {
 }
 
 export function HelpCenterArticle({ article, category, onBack, allArticles, onNavigate }: Props) {
+  const [downloading, setDownloading] = useState(false);
+  const articleRef = useRef<HTMLDivElement>(null);
+
   const relatedArticles = allArticles
     .filter((a) => a.categoryId === article.categoryId && a.id !== article.id)
     .slice(0, 4);
 
   const Icon = article.icon;
 
-  return (
-    <div>
-      <Button variant="ghost" size="sm" onClick={onBack} className="-ml-2 mb-5 text-muted-foreground hover:text-foreground gap-1">
-        <ArrowLeft className="h-4 w-4" /> {category?.title || 'Voltar'}
-      </Button>
+  const handleDownloadPDF = async () => {
+    if (!articleRef.current) return;
+    
+    setDownloading(true);
+    const toastId = toast.loading('Gerando PDF...');
 
-      {/* Article header */}
-      <div className="flex items-start gap-4 mb-6">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 shadow-sm">
-          <Icon className="h-6 w-6 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">{article.title}</h1>
-          <p className="text-muted-foreground mt-1 text-sm leading-relaxed">{article.description}</p>
-          <div className="flex items-center gap-3 mt-2.5">
-            {category && (
-              <Badge variant="secondary" className="text-xs">{category.title}</Badge>
+    try {
+      const element = articleRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: 1200 // Force a consistent width for rendering
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [canvas.width / 2, canvas.height / 2]
+      });
+
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
+      pdf.save(`AG-Sell-Guia-${article.title.replace(/\s+/g, '-')}.pdf`);
+      
+      toast.success('PDF baixado com sucesso!', { id: toastId });
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      toast.error('Erro ao gerar PDF. Tente novamente.', { id: toastId });
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const isAutomationGuide = article.categoryId === 'automation-guide';
+
+  return (
+    <div className="relative">
+      <div className="flex items-center justify-between mb-5">
+        <Button variant="ghost" size="sm" onClick={onBack} className="-ml-2 text-muted-foreground hover:text-foreground gap-1">
+          <ArrowLeft className="h-4 w-4" /> {category?.title || 'Voltar'}
+        </Button>
+
+        {isAutomationGuide && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleDownloadPDF} 
+            disabled={downloading}
+            className="gap-2 text-xs font-medium border-primary/20 hover:border-primary/50 hover:bg-primary/5"
+          >
+            {downloading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Download className="h-3.5 w-3.5" />
             )}
-            {article.readTime && (
-              <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" /> {article.readTime}
-              </span>
-            )}
-          </div>
-        </div>
+            Download PDF
+          </Button>
+        )}
       </div>
 
-      <Separator className="mb-8" />
+      <div ref={articleRef} className={cn("bg-background", downloading && "p-8 max-w-[800px] mx-auto")}>
+        {/* Article header */}
+        <div className="flex items-start gap-4 mb-6">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 shadow-sm">
+            <Icon className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">{article.title}</h1>
+            <p className="text-muted-foreground mt-1 text-sm leading-relaxed">{article.description}</p>
+            <div className="flex items-center gap-3 mt-2.5">
+              {category && (
+                <Badge variant="secondary" className="text-xs">{category.title}</Badge>
+              )}
+              {article.readTime && (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3" /> {article.readTime}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
 
-      {/* Article content */}
-      <article className="prose prose-sm dark:prose-invert max-w-none">
-        {renderContentBlocks(article.content)}
-      </article>
+        <Separator className="mb-8" />
+
+        {/* Article content */}
+        <article className="prose prose-sm dark:prose-invert max-w-none">
+          {renderContentBlocks(article.content)}
+        </article>
+      </div>
 
       {/* Related articles */}
       {relatedArticles.length > 0 && (

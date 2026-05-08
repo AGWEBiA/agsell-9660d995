@@ -7,7 +7,7 @@ import {
   Tag, PenLine, Star, TrendingUp, ListPlus, ListMinus, Vote, Shuffle,
   SquareSplitVertical, Clock, UserCheck, Headphones, UserPlus, Globe,
   FileText, MousePointerClick, Eye, FormInput, Trophy, MessageCircle,
-  type LucideIcon, Heart, FileDown, ListChecks
+  type LucideIcon, Heart, FileDown, List, CheckSquare
 } from 'lucide-react';
 import type { HelpArticle, HelpCategory } from '@/types/help';
 
@@ -304,7 +304,7 @@ const checklistArticle: HelpArticle = {
   id: 'automation-guide-checklist',
   categoryId: AUTOMATION_GUIDE_CATEGORY.id,
   title: 'Checklist de Ativação',
-  icon: ListChecks,
+  icon: CheckSquare,
   description: 'O que verificar antes de colocar um fluxo no ar.',
   readTime: '5 min',
   content: `## Antes de Ativar

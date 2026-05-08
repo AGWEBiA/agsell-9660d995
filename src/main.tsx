@@ -3,7 +3,7 @@ import App from "./App.tsx";
 import "./index.css";
 import ErrorBoundary from "./components/ErrorBoundary";
 
-// build: 2026-05-08c — force refresh publish
+// build: 2026-05-08e — enhanced initialization safety
 
 // Global error tracking for better debugging in production
 window.onerror = (message, source, lineno, colno, error) => {

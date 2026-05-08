@@ -124,6 +124,9 @@ export const helpCategories: HelpCategory[] = [
 ];
 
 export const helpArticles: HelpArticle[] = [
+  ...AUTOMATION_GUIDE_ARTICLES,
+  FAVORITES_ARTICLE,
+  PDF_DOWNLOAD_ARTICLE,
   // =====================================================
   // PRIMEIROS PASSOS
   // =====================================================

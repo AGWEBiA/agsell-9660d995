@@ -17,7 +17,15 @@ export default function HelpCenter() {
   const activeArticleId = searchParams.get('article');
   const activeCategoryId = searchParams.get('category');
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const activeArticle = useMemo(() => 
     activeArticleId ? helpArticles.find((a) => a.id === activeArticleId) : null,
@@ -28,14 +36,14 @@ export default function HelpCenter() {
   [activeCategoryId]);
 
   const filteredArticles = useMemo(() => {
-    if (!search) return [];
-    const searchLower = search.toLowerCase();
+    if (!debouncedSearch) return [];
+    const searchLower = debouncedSearch.toLowerCase();
     return helpArticles.filter(
       (a) =>
         a.title.toLowerCase().includes(searchLower) ||
         a.description.toLowerCase().includes(searchLower)
     );
-  }, [search]);
+  }, [debouncedSearch]);
 
   const navigateTo = useCallback((articleId?: string, categoryId?: string) => {
     const params = new URLSearchParams();

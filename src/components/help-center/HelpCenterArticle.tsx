@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
   ArrowLeft, ChevronRight, Clock, BookOpen, ExternalLink, Eye, Maximize2, X, 
-  PlayCircle, Lightbulb, AlertTriangle, Info, Download, Loader2 
+  PlayCircle, Lightbulb, AlertTriangle, Info, Download, Loader2, Heart,
+  FileDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';

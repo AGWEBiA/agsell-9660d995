@@ -360,54 +360,50 @@ ${
 const overviewArticle: HelpArticle = {
   id: 'automation-guide-overview',
   categoryId: AUTOMATION_GUIDE_CATEGORY.id,
-  title: 'Como funcionam as automações no AG Sell',
+  title: 'Manual de Automação AG Sell',
   icon: Workflow,
   description:
-    'Visão geral do motor de automações: gatilhos, ações, condições, esperas e modo de execução.',
+    'Documentação técnica e operacional completa do motor de fluxos e inteligência comercial.',
   popular: true,
-  readTime: '8 min',
-  content: `As **automações** do AG Sell são fluxos visuais que executam ações em contatos quando um **gatilho** acontece. Você cria automações em (/automations) e desenha o fluxo no construtor visual (/flow-builder).
+  readTime: '12 min',
+  content: `O **AG Sell** utiliza um motor de automação de eventos assíncronos que permite escalar o atendimento e as vendas sem aumentar a equipe. Este guia detalha cada componente para que você configure fluxos à prova de erros.
 
-## Anatomia de uma automação
+## Arquitetura do Motor de Fluxos
 
-Toda automação tem **três partes**:
+Diferente de sistemas simples, o AG Sell separa a **Lógica** da **Execução**:
+1. **Trigger Engine:** Monitora em tempo real eventos no banco de dados e webhooks externos.
+2. **Worker Pool:** Processa as ações em paralelo para garantir que milhares de contatos possam estar em fluxos simultâneos sem latência.
+3. **Scheduler (pg_cron):** Gerencia as ações de "Aguardar", garantindo que mensagens sejam enviadas no horário exato, mesmo após dias.
 
-1. **Gatilho (Trigger)** — o evento que inicia o fluxo (ex.: "Formulário Submetido", "Tag Adicionada").
-2. **Ações (Actions)** — o que será executado em sequência (enviar e-mail, criar deal, aguardar, etc.).
-3. **Condições e Esperas** — controlam o caminho que cada contato percorre.
+## Componentes Fundamentais
 
-## Como o motor executa
+### 1. Gatilhos (Triggers)
+São os "pontos de entrada". Uma automação pode ter múltiplos gatilhos se desejar que caminhos diferentes levem ao mesmo resultado.
 
-- Quando um gatilho acontece, o sistema cria uma **execução** atrelada ao contato.
-- Ações são executadas **em ordem**, uma após a outra.
-- Ações de **espera longa** (mais de 1h) são agendadas via \`pg_cron\` e retomam automaticamente.
-- **Condições** bifurcam o fluxo em ramos "Sim/Não" com lógica AND/OR.
-- **A/B Split** divide contatos em variantes para teste estatístico.
-- **Goto Flow** transfere a execução para outro fluxo (sub-flow modular).
+### 2. Ações (Actions)
+São as "tarefas" executadas. Elas variam de comunicações externas (WhatsApp, E-mail) a atualizações internas no CRM (Tags, Deals, Score).
 
-## Canais suportados
+### 3. Ramos de Decisão (Conditions)
+Permitem que a automação seja inteligente. "Se o cliente clicou, faça X. Se não clicou, faça Y".
 
-E-mail, WhatsApp (Evolution API e Meta Cloud), Instagram DM, SMS (Zenvia/Twilio) e notificações internas. Para grupos do WhatsApp use exclusivamente Evolution API — a API oficial não suporta grupos.
+## Variáveis Globais de Personalização
 
-## Onde monitorar
+Em qualquer campo de texto, você pode usar as seguintes variáveis dinâmicas:
+- `{{nome}}`: Nome do contato.
+- `{{email}}`: E-mail principal.
+- `{{telefone}}`: WhatsApp/Celular.
+- `{{deal_value}}`: Valor do negócio atual (se houver).
+- `{{atendente_nome}}`: Nome do usuário responsável pelo contato.
 
-- **Linha do tempo do contato** — todos os passos executados aparecem no perfil.
-- **/automations-monitor** — falhas e retentativas em tempo real.
-- **/flow-analytics** — entradas, saídas e conversão por nó.
+## Boas Práticas de Implementação
 
-## Como baixar este guia em PDF
+- **Nomenclatura:** Nomeie seus fluxos de forma clara: `[VENDAS] - Carrinho Abandonado - Produto X`.
+- **Modo de Teste:** Sempre ative o fluxo primeiro para uma tag de teste antes de liberar para toda a base.
+- **Filtros de Segurança:** Use filtros de "Apenas uma vez por contato" em fluxos de boas-vindas para evitar que o cliente receba a mesma mensagem repetidamente.
 
-Você pode baixar a versão completa deste manual operacional clicando no artigo **"Baixar Guia em PDF"** na barra lateral. O arquivo é gerado com a logo da **AG Sell** e formatado para consulta rápida.
+---
 
-## Como manter este guia atualizado
-
-> Este guia é gerado a partir de um único arquivo: \`src/data/automationGuide.ts\`. Sempre que um gatilho ou ação é adicionado ou alterado no sistema, basta atualizar a lista nesse arquivo e os artigos são regerados automaticamente.
-
-## Próximos artigos
-
-- **Catálogo de Gatilhos** — referência completa dos ${TRIGGER_GUIDES.length} gatilhos disponíveis.
-- **Catálogo de Ações** — referência completa das ${ACTION_GUIDES.length} ações disponíveis.
-- **Receitas prontas** — fluxos campeões para colar e adaptar.
+Para acessar o detalhamento técnico de cada item, navegue pelos catálogos de Gatilhos e Ações na barra lateral.
 `,
 };
 

@@ -12,29 +12,25 @@ import { AUTOMATION_GUIDE_CATEGORY, AUTOMATION_GUIDE_ARTICLES } from './automati
 const PDF_DOWNLOAD_ARTICLE: HelpArticle = {
   id: 'automation-pdf-download',
   categoryId: 'automation-guide',
-  title: 'Baixar Guia em PDF',
-  icon: FileCode,
-  description: 'Acesse a versão em PDF do manual operacional da AG Sell para consulta offline.',
+  title: 'Baixar Guia Completo em PDF',
+  icon: FileDown,
+  description: 'Gere a versão mestre do Manual Operacional AG Sell com todos os gatilhos e ações.',
   popular: true,
-  content: `Baixe agora a versão completa e personalizada do Guia de Automações.
+  content: `Você está prestes a baixar a versão mestre do **Guia de Automações AG Sell**. Este arquivo foi otimizado para exportação A4 com diagramação profissional, margens de impressão e sumário inteligente.
 
-## Manual Operacional AG Sell
+## Conteúdo do Guia Completo
+- **Catálogo de Gatilhos (Triggers):** Como configurar entradas via formulário, site tracking, WhatsApp e CRM.
+- **Manual de Ações (Actions):** Detalhamento de envios multicanal, Webhooks, tags e criação de deals.
+- **Receitas Prontas:** Fluxos testados de Carrinho Abandonado, NPS e Nutrição.
+- **Checklist Operacional:** Lista de verificação para garantir que nada falhe antes de ativar seu fluxo.
 
-O guia contém todos os gatilhos, ações e receitas prontas formatados para impressão ou consulta offline.
+### Instruções para Exportação
+Para obter o melhor resultado:
+1. Clique no botão **"Exportar A4"** localizado no topo desta página.
+2. O sistema processará todo o conteúdo do manual e gerará um arquivo PDF com múltiplas páginas.
+3. O sumário será gerado automaticamente com base nos tópicos do manual.
 
-[💡] **Diferenciais da Exportação A4:**
-- **Margens Automáticas:** Formatação otimizada para papel A4.
-- **Sumário Inteligente:** Índice gerado automaticamente com links para seções.
-- **Favoritos:** Exporte apenas os itens que você marcou como favoritos.
-
-### Como Gerar o PDF
-Para garantir que você tenha a versão mais recente e personalizada (com seus favoritos):
-1. Navegue pelos artigos do guia.
-2. Use o botão **Favoritar** (ícone de coração) para marcar os itens importantes.
-3. Em qualquer artigo do guia, clique em **Exportar A4** no topo da página.
-4. O PDF será gerado instantaneamente com o conteúdo atualizado.
-
-[ℹ️] **Dica:** A exportação individual de cada artigo também inclui o sumário daquela seção específica.
+[💡] **Dica:** Se você marcou artigos como favoritos, eles aparecerão com destaque visual no sumário do PDF completo.
 `
 };
 

@@ -682,6 +682,56 @@ const guideSections: GuideSection[] = [
 export default function SystemGuide() {
   const [search, setSearch] = useState('');
 
+  const handleExportPDF = async () => {
+    try {
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF();
+      let y = 20;
+
+      doc.setFontSize(22);
+      doc.text('Guia do Sistema - AG Sell', 20, y);
+      y += 15;
+
+      guideSections.forEach((section) => {
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text(section.title, 20, y);
+        y += 7;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(section.description, 20, y);
+        y += 10;
+
+        section.features.forEach((feature) => {
+          if (y > 270) {
+            doc.addPage();
+            y = 20;
+          }
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.text(`• ${feature.title}`, 25, y);
+          y += 5;
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'normal');
+          const lines = doc.splitTextToSize(feature.description, 160);
+          doc.text(lines, 30, y);
+          y += (lines.length * 5) + 2;
+        });
+        y += 5;
+      });
+
+      doc.save('guia-do-sistema-agsell.pdf');
+      toast.success('Guia exportado com sucesso!');
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast.error('Erro ao exportar o guia.');
+    }
+  };
+
   const filtered = guideSections.filter((s) => {
     if (!search) return true;
     const q = search.toLowerCase();
@@ -696,14 +746,20 @@ export default function SystemGuide() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-3">
-          <BookOpen className="h-8 w-8 text-primary" />
-          Guia do Sistema
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Documentação completa de todas as funcionalidades do AG Sell
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <BookOpen className="h-8 w-8 text-primary" />
+            Guia do Sistema
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Documentação completa de todas as funcionalidades do AG Sell
+          </p>
+        </div>
+        <Button onClick={handleExportPDF} className="gap-2">
+          <Download className="h-4 w-4" />
+          Exportar PDF para Suporte
+        </Button>
       </div>
 
       {/* Search */}
@@ -764,6 +820,11 @@ export default function SystemGuide() {
                       <Badge variant="secondary" className="text-[10px]">
                         {section.features.length} recursos
                       </Badge>
+                      {section.badge && (
+                        <Badge variant="default" className="text-[10px] bg-primary">
+                          {section.badge}
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground font-normal">{section.description}</p>
                   </div>

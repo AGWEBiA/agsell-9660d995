@@ -342,7 +342,7 @@ export default function Index() {
                         alt={f.title}
                         className="w-full h-full object-cover"
                         loading={i < 2 ? "eager" : "lazy"}
-                        fetchPriority={i === 0 ? "high" : "auto"}
+                        fetchpriority={i === 0 ? "high" : "auto"}
                         width={800}
                         height={450}
                         decoding="async"

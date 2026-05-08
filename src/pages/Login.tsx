@@ -44,10 +44,22 @@ export default function Login() {
         }, 100);
       }
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('Login error detail:', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+        cause: error.cause
+      });
+      
+      const isNetworkError = error.message?.toLowerCase().includes('fetch') || 
+                            error.name === 'TypeError' ||
+                            !window.navigator.onLine;
+
       toast({
-        title: 'Erro inesperado',
-        description: 'Ocorreu um erro ao tentar fazer login. Tente novamente.',
+        title: isNetworkError ? 'Erro de conexão' : 'Erro inesperado',
+        description: isNetworkError 
+          ? 'Não foi possível conectar ao servidor. Verifique sua internet.'
+          : 'Ocorreu um erro ao tentar fazer login. Tente novamente.',
         variant: 'destructive',
       });
       setLoading(false);

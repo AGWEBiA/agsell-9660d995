@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ChevronRight, BookOpen, Rocket, Star, Sparkles, PlayCircle, ArrowRight } from 'lucide-react';
@@ -21,7 +21,7 @@ const categoryGradients: Record<string, { bg: string; border: string; icon: stri
   settings: { bg: 'from-slate-500/10 via-slate-400/5 to-transparent', border: 'border-slate-500/20 hover:border-slate-500/40', icon: 'bg-slate-500/15 text-slate-600 dark:text-slate-400' },
 };
 
-export function HelpCenterHome({ categories, articles, onNavigate }: Props) {
+export const HelpCenterHome = memo(function HelpCenterHome({ categories, articles, onNavigate }: Props) {
   return (
     <div className="space-y-10">
       {/* Hero Section */}
@@ -135,4 +135,4 @@ export function HelpCenterHome({ categories, articles, onNavigate }: Props) {
       </div>
     </div>
   );
-}
+});

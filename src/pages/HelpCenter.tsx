@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ChevronRight, Search, BookOpen, ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -17,30 +17,47 @@ export default function HelpCenter() {
   const activeArticleId = searchParams.get('article');
   const activeCategoryId = searchParams.get('category');
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  const activeArticle = activeArticleId ? helpArticles.find((a) => a.id === activeArticleId) : null;
-  const activeCategory = activeCategoryId ? helpCategories.find((c) => c.id === activeCategoryId) : null;
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [search]);
 
-  const filteredArticles = search
-    ? helpArticles.filter(
-        (a) =>
-          a.title.toLowerCase().includes(search.toLowerCase()) ||
-          a.description.toLowerCase().includes(search.toLowerCase())
-      )
-    : [];
+  const activeArticle = useMemo(() => 
+    activeArticleId ? helpArticles.find((a) => a.id === activeArticleId) : null,
+  [activeArticleId]);
 
-  const navigateTo = (articleId?: string, categoryId?: string) => {
+  const activeCategory = useMemo(() => 
+    activeCategoryId ? helpCategories.find((c) => c.id === activeCategoryId) : null,
+  [activeCategoryId]);
+
+  const filteredArticles = useMemo(() => {
+    if (!debouncedSearch) return [];
+    const searchLower = debouncedSearch.toLowerCase();
+    return helpArticles.filter(
+      (a) =>
+        a.title.toLowerCase().includes(searchLower) ||
+        a.description.toLowerCase().includes(searchLower)
+    );
+  }, [debouncedSearch]);
+
+  const navigateTo = useCallback((articleId?: string, categoryId?: string) => {
     const params = new URLSearchParams();
     if (articleId) params.set('article', articleId);
     if (categoryId) params.set('category', categoryId);
     setSearchParams(params);
     setSearch('');
-  };
+  }, [setSearchParams]);
 
-  const categoryArticles = activeCategoryId
-    ? helpArticles.filter((a) => a.categoryId === activeCategoryId)
-    : [];
+  const categoryArticles = useMemo(() => 
+    activeCategoryId
+      ? helpArticles.filter((a) => a.categoryId === activeCategoryId)
+      : [],
+  [activeCategoryId]);
 
   return (
     <div className="flex h-[calc(100vh-4rem)] -m-6 overflow-hidden bg-background">
@@ -98,11 +115,11 @@ export default function HelpCenter() {
         </div>
 
         {/* Search results overlay */}
-        {search && (
+        {debouncedSearch && (
           <div className="absolute top-[calc(4rem+2.75rem)] right-6 w-80 max-h-80 bg-popover border rounded-xl shadow-xl z-50 overflow-auto">
             {filteredArticles.length === 0 ? (
               <div className="p-6 text-center text-sm text-muted-foreground">
-                Nenhum resultado para "{search}"
+                Nenhum resultado para "{debouncedSearch}"
               </div>
             ) : (
               <div className="p-1.5">

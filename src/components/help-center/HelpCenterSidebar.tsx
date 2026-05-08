@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useMemo, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { BookOpen, ChevronDown, Home, Search } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,31 +15,41 @@ interface Props {
   onToggle: () => void;
 }
 
-export function HelpCenterSidebar({ categories, articles, activeCategoryId, activeArticleId, onNavigate, open }: Props) {
-  const [expandedCategories, setExpandedCategories] = React.useState<Record<string, boolean>>(() => {
+export const HelpCenterSidebar = memo(function HelpCenterSidebar({ categories, articles, activeCategoryId, activeArticleId, onNavigate, open }: Props) {
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
     if (activeCategoryId) initial[activeCategoryId] = true;
     return initial;
   });
-  const [sidebarSearch, setSidebarSearch] = React.useState('');
+  const [sidebarSearch, setSidebarSearch] = useState('');
+  const [debouncedSidebarSearch, setDebouncedSidebarSearch] = useState('');
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (activeCategoryId) {
       setExpandedCategories((prev) => ({ ...prev, [activeCategoryId]: true }));
     }
   }, [activeCategoryId]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSidebarSearch(sidebarSearch);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [sidebarSearch]);
+
   const toggleCategory = (id: string) => {
     setExpandedCategories((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const filteredCategories = sidebarSearch
-    ? categories.filter(cat => {
-        const catArticles = articles.filter(a => a.categoryId === cat.id);
-        return cat.title.toLowerCase().includes(sidebarSearch.toLowerCase()) ||
-          catArticles.some(a => a.title.toLowerCase().includes(sidebarSearch.toLowerCase()));
-      })
-    : categories;
+  const filteredCategories = useMemo(() => {
+    if (!debouncedSidebarSearch) return categories;
+    const searchLower = debouncedSidebarSearch.toLowerCase();
+    return categories.filter(cat => {
+      const catArticles = articles.filter(a => a.categoryId === cat.id);
+      return cat.title.toLowerCase().includes(searchLower) ||
+        catArticles.some(a => a.title.toLowerCase().includes(searchLower));
+    });
+  }, [debouncedSidebarSearch, categories, articles]);
 
   return (
     <aside
@@ -92,8 +102,8 @@ export function HelpCenterSidebar({ categories, articles, activeCategoryId, acti
 
           {filteredCategories.map((category) => {
             const catArticles = articles.filter((a) => a.categoryId === category.id);
-            const matchedArticles = sidebarSearch
-              ? catArticles.filter(a => a.title.toLowerCase().includes(sidebarSearch.toLowerCase()))
+            const matchedArticles = debouncedSidebarSearch
+              ? catArticles.filter(a => a.title.toLowerCase().includes(debouncedSidebarSearch.toLowerCase()))
               : catArticles;
             const isExpanded = expandedCategories[category.id] ?? false;
             const isActiveCategory = activeCategoryId === category.id;
@@ -127,11 +137,11 @@ export function HelpCenterSidebar({ categories, articles, activeCategoryId, acti
                 <div
                   className={cn(
                     'overflow-hidden transition-all duration-200',
-                    isExpanded || sidebarSearch ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
+                    isExpanded || debouncedSidebarSearch ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
                   )}
                 >
                   <div className="ml-5 border-l border-border/60 pl-2.5 mt-0.5 mb-1 space-y-0.5">
-                    {(sidebarSearch ? matchedArticles : catArticles).map((article) => (
+                    {(debouncedSidebarSearch ? matchedArticles : catArticles).map((article) => (
                       <button
                         key={article.id}
                         onClick={() => onNavigate(article.id, category.id)}
@@ -154,4 +164,4 @@ export function HelpCenterSidebar({ categories, articles, activeCategoryId, acti
       </ScrollArea>
     </aside>
   );
-}
+});

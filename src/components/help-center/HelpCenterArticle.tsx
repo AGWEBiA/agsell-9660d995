@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -12,8 +12,6 @@ import { Link } from 'react-router-dom';
 import type { HelpCategory, HelpArticle } from '@/data/helpCenterData';
 import { TutorialPresentation } from '@/components/help-center/TutorialPresentation';
 import { tutorialPresentations } from '@/data/tutorialPresentations';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import { toast } from 'sonner';
 
 interface Props {
@@ -262,7 +260,7 @@ function renderContentBlocks(content: string): React.ReactNode[] {
   return content.split('\n\n').map((block, idx) => renderSingleBlock(block, idx)).filter(Boolean);
 }
 
-export function HelpCenterArticle({ article, category, onBack, allArticles, onNavigate }: Props) {
+export const HelpCenterArticle = memo(function HelpCenterArticle({ article, category, onBack, allArticles, onNavigate }: Props) {
   const [downloading, setDownloading] = useState(false);
   const [favorites, setFavorites] = useState<string[]>(() => {
     const saved = localStorage.getItem('help-center-favorites');
@@ -301,6 +299,12 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
     try {
       const element = articleRef.current;
       const isCompleteGuide = article.id === 'automation-pdf-download';
+
+      // Dynamic imports for heavy libraries to optimize bundle size
+      const [html2canvas, { default: jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf')
+      ]);
       
       // Temporary style adjustments for PDF capture
       const originalStyle = element.style.cssText;
@@ -372,7 +376,7 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
       `;
       element.prepend(brandingHeader);
 
-      const canvas = await html2canvas(element, {
+      const canvas = await html2canvas.default(element, {
         scale: 2,
         useCORS: true,
         logging: false,
@@ -548,4 +552,4 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
       )}
     </div>
   );
-}
+});

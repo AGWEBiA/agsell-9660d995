@@ -22,15 +22,39 @@ const PDF_DOWNLOAD_ARTICLE: HelpArticle = {
 
 O guia contém todos os gatilhos, ações e receitas prontas formatados para impressão ou consulta offline.
 
-[💡] **Nota:** Este arquivo é atualizado automaticamente sempre que novas funcionalidades são adicionadas ao sistema.
+[💡] **Diferenciais da Exportação A4:**
+- **Margens Automáticas:** Formatação otimizada para papel A4.
+- **Sumário Inteligente:** Índice gerado automaticamente com links para seções.
+- **Favoritos:** Exporte apenas os itens que você marcou como favoritos.
 
-### Link para Download
-Clique no botão abaixo para baixar o arquivo PDF:
+### Como Gerar o PDF
+Para garantir que você tenha a versão mais recente e personalizada (com seus favoritos):
+1. Navegue pelos artigos do guia.
+2. Use o botão **Favoritar** (ícone de coração) para marcar os itens importantes.
+3. Em qualquer artigo do guia, clique em **Exportar A4** no topo da página.
+4. O PDF será gerado instantaneamente com o conteúdo atualizado.
 
-<a href="/guia-automacao.pdf" download="AG-Sell-Guia-Automacao.pdf" class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 mt-4 no-underline">
-  <svg class="mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-  Baixar PDF Completo
-</a>
+[ℹ️] **Dica:** A exportação individual de cada artigo também inclui o sumário daquela seção específica.
+`
+};
+
+const FAVORITES_ARTICLE: HelpArticle = {
+  id: 'help-center-favorites',
+  categoryId: 'getting-started',
+  title: 'Seus Favoritos',
+  icon: Heart,
+  description: 'Acesse rapidamente os artigos que você marcou como importantes.',
+  content: `Bem-vindo à sua central de favoritos. Aqui você pode acessar rapidamente as funcionalidades que mais utiliza.
+
+## Como usar os favoritos
+
+Ao navegar pela Central de Ajuda ou pelo Guia de Automações, você verá um botão de **Coração (Favoritar)** no topo de cada artigo.
+
+1. Clique no coração para adicionar à sua lista.
+2. Acesse este artigo a qualquer momento para ver sua lista compilada.
+3. Seus favoritos são salvos automaticamente no seu navegador.
+
+[💡] **Exportação Personalizada:** Quando você exporta o Guia de Automações em PDF, o sistema prioriza e destaca seus itens favoritos no sumário.
 `
 };
 

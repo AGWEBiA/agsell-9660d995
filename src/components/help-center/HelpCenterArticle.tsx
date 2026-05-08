@@ -296,17 +296,18 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
     if (!articleRef.current) return;
     
     setDownloading(true);
-    const toastId = toast.loading('Gerando PDF personalizado...');
+    const toastId = toast.loading('Gerando PDF A4 com sumário...');
 
     try {
       const element = articleRef.current;
       
-      // Temporary style adjustments for PDF capture
+      // Temporary style adjustments for PDF capture (A4 proportions)
       const originalStyle = element.style.cssText;
       element.style.color = '#000000';
       element.style.backgroundColor = '#ffffff';
+      element.style.padding = '40px';
+      element.style.width = '800px'; // A4-ish width
       
-      // Find all text elements that might be white in dark mode and force them to dark
       const textElements = element.querySelectorAll('.text-foreground, .text-muted-foreground, p, h1, h2, h3, span, li');
       const originalColors: string[] = [];
       Array.from(textElements).forEach((el, i) => {
@@ -314,29 +315,44 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
         (el as HTMLElement).style.setProperty('color', '#000000', 'important');
       });
 
-      // Add AG Sell Branding (Header/Logo) for PDF only
+      // Find headings for the index
+      const headings = Array.from(element.querySelectorAll('h2, h3')).map(h => ({
+        text: (h as HTMLElement).innerText,
+        level: h.tagName.toLowerCase()
+      }));
+
+      // Add AG Sell Branding and Table of Contents (Index)
       const brandingHeader = document.createElement('div');
       brandingHeader.className = 'pdf-only-branding';
       brandingHeader.style.cssText = `
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 40px;
-        padding-bottom: 15px;
         border-bottom: 2px solid #3b82f6;
+        margin-bottom: 40px;
+        padding-bottom: 20px;
       `;
       
       brandingHeader.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <div style="background-color: #3b82f6; padding: 8px; border-radius: 8px;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8h-2c0-9-15-4.5-15 4.5a1 1 0 0 0 1 1h2a7 7 0 0 1 4 12Z"/><path d="M13 20a5 5 0 0 1-5-5"/><path d="M13 15a5 5 0 0 1 5 5"/></svg>
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="background-color: #3b82f6; padding: 8px; border-radius: 8px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8h-2c0-9-15-4.5-15 4.5a1 1 0 0 0 1 1h2a7 7 0 0 1 4 12Z"/><path d="M13 20a5 5 0 0 1-5-5"/><path d="M13 15a5 5 0 0 1 5 5"/></svg>
+            </div>
+            <span style="font-size: 20px; font-weight: 800; color: #1e40af;">AG SELL</span>
           </div>
-          <span style="font-size: 20px; font-weight: 800; color: #1e40af; letter-spacing: -0.025em;">AG SELL</span>
+          <div style="text-align: right;">
+            <div style="font-size: 10px; color: #64748b; font-weight: 600;">MANUAL OPERACIONAL</div>
+            <div style="font-size: 12px; color: #1e293b; font-weight: 700;">${article.title}</div>
+          </div>
         </div>
-        <div style="text-align: right;">
-          <div style="font-size: 10px; color: #64748b; font-weight: 600; text-transform: uppercase;">Manual Operacional</div>
-          <div style="font-size: 12px; color: #1e293b; font-weight: 700;">Guia de Automações</div>
-        </div>
+        ${headings.length > 0 ? `
+          <div style="margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+            <div style="font-size: 14px; font-weight: 800; color: #1e40af; margin-bottom: 12px;">SUMÁRIO (ÍNDICE)</div>
+            ${headings.map(h => `
+              <div style="font-size: 10px; margin-bottom: 4px; padding-left: ${h.level === 'h3' ? '15px' : '0'}">
+                <span style="color: #3b82f6;">•</span> ${h.text}
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
       `;
       element.prepend(brandingHeader);
 
@@ -358,27 +374,43 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
         orientation: 'portrait',
-        unit: 'px',
-        format: [canvas.width / 2, canvas.height / 2]
+        unit: 'mm',
+        format: 'a4'
       });
 
-      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 2, canvas.height / 2);
+      const imgProps = (pdf as any).getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
       
-      // Add a small footer in the PDF
+      // Handle multi-page PDF if content is long
+      let heightLeft = pdfHeight;
+      let position = 0;
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - pdfHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      // Footer with pagination
       const pageCount = (pdf as any).internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         pdf.setPage(i);
         pdf.setFontSize(8);
-        pdf.setTextColor(100);
-        pdf.text('© 2026 AG Sell - Inteligência em Vendas e Automação', 20, (canvas.height / 2) - 10);
+        pdf.setTextColor(150);
+        pdf.text(`© 2026 AG Sell | Página ${i} de ${pageCount}`, pdfWidth / 2, pageHeight - 10, { align: 'center' });
       }
 
       pdf.save(`AG-Sell-Guia-${article.title.replace(/\s+/g, '-')}.pdf`);
-      
-      toast.success('PDF baixado com sucesso!', { id: toastId });
+      toast.success('PDF A4 gerado com sucesso!', { id: toastId });
     } catch (error) {
       console.error('PDF generation error:', error);
-      toast.error('Erro ao gerar PDF. Tente novamente.', { id: toastId });
+      toast.error('Erro ao gerar PDF.', { id: toastId });
     } finally {
       setDownloading(false);
     }

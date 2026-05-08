@@ -248,6 +248,11 @@ function renderSingleBlock(block: string, idx: number): React.ReactNode {
     );
   }
 
+  // Links and Buttons in Markdown
+  if (block.includes('<a') || block.includes('class=')) {
+    return <div key={idx} className="my-4" dangerouslySetInnerHTML={{ __html: block }} />;
+  }
+
   // Regular paragraph
   return <p key={idx} className="text-sm leading-relaxed my-3.5 text-foreground/80" dangerouslySetInnerHTML={{ __html: block.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />;
 }

@@ -7,7 +7,7 @@ import {
   Tag, PenLine, Star, TrendingUp, ListPlus, ListMinus, Vote, Shuffle,
   SquareSplitVertical, Clock, UserCheck, Headphones, UserPlus, Globe,
   FileText, MousePointerClick, Eye, FormInput, Trophy, MessageCircle,
-  type LucideIcon, Heart, FileDown, ListChecks
+  type LucideIcon, Heart, FileDown, List, CheckSquare
 } from 'lucide-react';
 import type { HelpArticle, HelpCategory } from '@/types/help';
 

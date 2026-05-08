@@ -1,0 +1,178 @@
+export default function SystemGuide() {
+  const [search, setSearch] = useState('');
+
+  const handleExportPDF = async () => {
+    try {
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF();
+      let y = 20;
+
+      doc.setFontSize(22);
+      doc.text('Guia do Sistema - AG Sell', 20, y);
+      y += 15;
+
+      guideSections.forEach((section) => {
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text(section.title, 20, y);
+        y += 7;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(section.description, 20, y);
+        y += 10;
+
+        section.features.forEach((feature) => {
+          if (y > 270) {
+            doc.addPage();
+            y = 20;
+          }
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.text(`• ${feature.title}`, 25, y);
+          y += 5;
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'normal');
+          const lines = doc.splitTextToSize(feature.description, 160);
+          doc.text(lines, 30, y);
+          y += (lines.length * 5) + 2;
+        });
+        y += 5;
+      });
+
+      doc.save('guia-do-sistema-agsell.pdf');
+      toast.success('Guia exportado com sucesso!');
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast.error('Erro ao exportar o guia.');
+    }
+  };
+
+  const filtered = guideSections.filter((s) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      s.title.toLowerCase().includes(q) ||
+      s.description.toLowerCase().includes(q) ||
+      s.features.some(
+        (f) => f.title.toLowerCase().includes(q) || f.description.toLowerCase().includes(q)
+      )
+    );
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <BookOpen className="h-8 w-8 text-primary" />
+            Guia do Sistema
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Documentação completa de todas as funcionalidades do AG Sell
+          </p>
+        </div>
+        <Button onClick={handleExportPDF} className="gap-2">
+          <Download className="h-4 w-4" />
+          Exportar PDF para Suporte
+        </Button>
+      </div>
+
+      {/* Search */}
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="Buscar funcionalidade..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
+        />
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-primary">{guideSections.length}</p>
+            <p className="text-xs text-muted-foreground">Módulos</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-primary">
+              {guideSections.reduce((acc, s) => acc + s.features.length, 0)}
+            </p>
+            <p className="text-xs text-muted-foreground">Funcionalidades</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-primary">6</p>
+            <p className="text-xs text-muted-foreground">Canais integrados</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-primary">100%</p>
+            <p className="text-xs text-muted-foreground">Operacional</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Guide Content */}
+      <Accordion type="multiple" className="space-y-2">
+        {filtered.map((section) => {
+          const Icon = section.icon;
+          return (
+            <AccordionItem key={section.id} value={section.id} className="border rounded-lg px-2">
+              <AccordionTrigger className="hover:no-underline py-4">
+                <div className="flex items-center gap-3 text-left">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                    <Icon className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">{section.title}</span>
+                      <Badge variant="secondary" className="text-[10px]">
+                        {section.features.length} recursos
+                      </Badge>
+                      {section.badge && (
+                        <Badge variant="default" className="text-[10px] bg-primary">
+                          {section.badge}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground font-normal">{section.description}</p>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid gap-3 pb-2 pl-[52px]">
+                  {section.features.map((feature, idx) => (
+                    <div key={idx} className="flex items-start gap-2">
+                      <ChevronRight className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+                      <div>
+                        <p className="text-sm font-medium">{feature.title}</p>
+                        <p className="text-sm text-muted-foreground">{feature.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          );
+        })}
+      </Accordion>
+
+      {filtered.length === 0 && (
+        <div className="text-center py-12 text-muted-foreground">
+          <HelpCircle className="h-12 w-12 mx-auto mb-3 opacity-50" />
+          <p>Nenhuma funcionalidade encontrada para "{search}"</p>
+        </div>
+      )}
+    </div>
+  );
+}

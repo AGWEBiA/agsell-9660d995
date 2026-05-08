@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ChevronRight, Search, BookOpen, ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -20,7 +20,7 @@ export default function HelpCenter() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
     }, 200);
@@ -115,11 +115,11 @@ export default function HelpCenter() {
         </div>
 
         {/* Search results overlay */}
-        {search && (
+        {debouncedSearch && (
           <div className="absolute top-[calc(4rem+2.75rem)] right-6 w-80 max-h-80 bg-popover border rounded-xl shadow-xl z-50 overflow-auto">
             {filteredArticles.length === 0 ? (
               <div className="p-6 text-center text-sm text-muted-foreground">
-                Nenhum resultado para "{search}"
+                Nenhum resultado para "{debouncedSearch}"
               </div>
             ) : (
               <div className="p-1.5">

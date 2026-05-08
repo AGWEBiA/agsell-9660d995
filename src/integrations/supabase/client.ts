@@ -8,7 +8,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error("Supabase environment variables are missing! Site may not function correctly.");
 }
 
-// Fallback to a dummy client if variables are missing to prevent top-level crash
+// Fallback to a proxy if variables are missing to prevent top-level crash
+// and provide a descriptive error when used.
 export const supabase = (supabaseUrl && supabaseAnonKey) 
   ? createClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {
@@ -17,4 +18,13 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
         autoRefreshToken: true,
       }
     })
-  : null as any;
+  : new Proxy({}, {
+      get: (target, prop) => {
+        if (prop === 'auth') {
+           return new Proxy({}, {
+             get: () => () => { throw new Error("Supabase environment variables (URL/Key) are missing. Check your project configuration."); }
+           });
+        }
+        return () => { throw new Error("Supabase environment variables (URL/Key) are missing. Check your project configuration."); };
+      }
+    }) as any;

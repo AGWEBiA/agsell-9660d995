@@ -349,11 +349,11 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
           </div>
         </div>
         ${headings.length > 0 ? `
-          <div style="margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
-            <div style="font-size: 14px; font-weight: 800; color: #1e40af; margin-bottom: 12px;">SUMÁRIO (ÍNDICE)</div>
+          <div style="margin-top: 30px; padding: 25px; background: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; page-break-inside: avoid;">
+            <div style="font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">CONTEÚDO DO GUIA</div>
             ${headings.map(h => `
-              <div style="font-size: 10px; margin-bottom: 4px; padding-left: ${h.level === 'h3' ? '15px' : '0'}">
-                <span style="color: #3b82f6;">•</span> ${h.text}
+              <div style="font-size: 11px; margin-bottom: 6px; padding-left: ${h.level === 'h3' ? '20px' : '0'}; color: ${h.level === 'h3' ? '#475569' : '#1e293b'}; font-weight: ${h.level === 'h2' ? '700' : '500'}">
+                <span style="color: #3b82f6; margin-right: 8px;">${h.level === 'h2' ? '●' : '○'}</span> ${h.text}
               </div>
             `).join('')}
           </div>

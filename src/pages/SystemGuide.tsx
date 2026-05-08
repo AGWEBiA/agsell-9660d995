@@ -6,7 +6,7 @@ import {
   Webhook, SlidersHorizontal, Instagram, ListChecks, Search,
   BookOpen, ChevronRight, Lightbulb, Bell, Globe, Lock, Database,
   HelpCircle, Megaphone, Wrench, Workflow, Vote, SplitSquareVertical, Briefcase,
-  Phone,
+  Phone, Download, Calendar, Clock, UserCheck, MessageCircle, AlertCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,8 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface GuideSection {
   id: string;
@@ -659,10 +661,76 @@ const guideSections: GuideSection[] = [
       { title: 'Página pública', description: 'Página acessível em /status sem autenticação para transparência.' },
     ],
   },
+  {
+    id: 'chatbot-ai-builder',
+    title: 'Chatbot Builder AI',
+    icon: Bot,
+    badge: 'NOVO',
+    description: 'Construtor de chatbots inteligentes com IA generativa, fluxos visuais e fallback humano.',
+    features: [
+      { title: 'Canvas Visual (Flow)', description: 'Arraste e conecte blocos de Boas-vindas, Resposta IA e Fallback para montar o fluxo do robô.' },
+      { title: 'Prompt Global do Agente', description: 'Configure as instruções mestre que regem o comportamento da IA em todas as respostas.' },
+      { title: 'Fallback para Humano', description: 'Transferência automática para atendentes reais quando a IA não consegue responder ou é solicitado.' },
+      { title: 'Regras de Ativação', description: 'Gatilhos por Primeira Mensagem ou Palavras-chave específicas para disparar o chatbot.' },
+      { title: 'Agendamento Inteligente', description: 'Defina horários e dias de funcionamento para iniciar ou pausar o robô automaticamente.' },
+      { title: 'Vínculo com WhatsApp', description: 'Integração direta com instâncias WhatsApp (suporte a grupos via Evolution API).' },
+      { title: 'Checklist de Ativação (Produção)', description: '1. Conectar blocos (Boas-vindas -> IA) | 2. Configurar Prompt | 3. Ativar ≥1 Regra | 4. Vincular Instância Ativa | 5. Salvar e Ativar status.' },
+    ],
+  },
 ];
 
 export default function SystemGuide() {
   const [search, setSearch] = useState('');
+
+  const handleExportPDF = async () => {
+    try {
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF();
+      let y = 20;
+
+      doc.setFontSize(22);
+      doc.text('Guia do Sistema - AG Sell', 20, y);
+      y += 15;
+
+      guideSections.forEach((section) => {
+        if (y > 270) {
+          doc.addPage();
+          y = 20;
+        }
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text(section.title, 20, y);
+        y += 7;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(section.description, 20, y);
+        y += 10;
+
+        section.features.forEach((feature) => {
+          if (y > 270) {
+            doc.addPage();
+            y = 20;
+          }
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'bold');
+          doc.text(`• ${feature.title}`, 25, y);
+          y += 5;
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'normal');
+          const lines = doc.splitTextToSize(feature.description, 160);
+          doc.text(lines, 30, y);
+          y += (lines.length * 5) + 2;
+        });
+        y += 5;
+      });
+
+      doc.save('guia-do-sistema-agsell.pdf');
+      toast.success('Guia exportado com sucesso!');
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast.error('Erro ao exportar o guia.');
+    }
+  };
 
   const filtered = guideSections.filter((s) => {
     if (!search) return true;
@@ -678,14 +746,20 @@ export default function SystemGuide() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold flex items-center gap-3">
-          <BookOpen className="h-8 w-8 text-primary" />
-          Guia do Sistema
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Documentação completa de todas as funcionalidades do AG Sell
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-3">
+            <BookOpen className="h-8 w-8 text-primary" />
+            Guia do Sistema
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Documentação completa de todas as funcionalidades do AG Sell
+          </p>
+        </div>
+        <Button onClick={handleExportPDF} className="gap-2">
+          <Download className="h-4 w-4" />
+          Exportar PDF para Suporte
+        </Button>
       </div>
 
       {/* Search */}
@@ -746,6 +820,11 @@ export default function SystemGuide() {
                       <Badge variant="secondary" className="text-[10px]">
                         {section.features.length} recursos
                       </Badge>
+                      {section.badge && (
+                        <Badge variant="default" className="text-[10px] bg-primary">
+                          {section.badge}
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-sm text-muted-foreground font-normal">{section.description}</p>
                   </div>

@@ -380,7 +380,8 @@ export function HelpCenterArticle({ article, category, onBack, allArticles, onNa
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
-        format: 'a4'
+        format: 'a4',
+        compress: true
       });
 
       const imgProps = (pdf as any).getImageProperties(imgData);

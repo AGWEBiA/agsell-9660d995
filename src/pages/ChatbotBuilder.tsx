@@ -51,6 +51,13 @@ interface ChatbotRule {
   isActive: boolean;
 }
 
+interface ChatbotSettings {
+  agent_prompt?: string;
+  human_fallback_enabled?: boolean;
+  human_fallback_message?: string;
+  human_fallback_department?: string;
+}
+
 interface Chatbot {
   id: string;
   name: string;
@@ -59,6 +66,8 @@ interface Chatbot {
   rules: ChatbotRule[];
   isActive: boolean;
   channel: string;
+  whatsapp_instance_id?: string | null;
+  settings?: ChatbotSettings;
 }
 
 const nodeTypes: { type: ChatbotNodeType; label: string; icon: typeof Bot; color: string; category: string }[] = [
@@ -503,11 +512,46 @@ function RulesEditor({ rules, onUpdate }: { rules: ChatbotRule[]; onUpdate: (rul
 
 // ─── Chatbot Visual Builder ───
 function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { chatbot: Chatbot; onSave: (c: Chatbot) => void; onClose: () => void; isSaving?: boolean }) {
+  const { currentOrganization } = useOrganization();
   const [nodes, setNodes] = useState<ChatbotNode[]>(chatbot.nodes);
   const [rules, setRules] = useState<ChatbotRule[]>(chatbot.rules);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'nodes' | 'rules'>('nodes');
+  const [activeTab, setActiveTab] = useState<'nodes' | 'rules' | 'settings'>('nodes');
   const [name, setName] = useState(chatbot.name);
+  const [whatsappInstanceId, setWhatsappInstanceId] = useState<string | null>(chatbot.whatsapp_instance_id ?? null);
+  const [settings, setSettings] = useState<ChatbotSettings>(chatbot.settings ?? {
+    agent_prompt: '',
+    human_fallback_enabled: true,
+    human_fallback_message: 'Vou transferir você para um de nossos atendentes humanos. Aguarde um momento. 🙋',
+    human_fallback_department: '',
+  });
+
+  const { data: instances = [] } = useQuery({
+    queryKey: ['chatbot-wa-instances', currentOrganization?.id],
+    queryFn: async () => {
+      if (!currentOrganization?.id) return [];
+      const { data, error } = await supabase
+        .from('organization_integrations')
+        .select('id, name, integration_type, is_active, config')
+        .eq('organization_id', currentOrganization.id)
+        .in('integration_type', ['evolution_api', 'whatsapp_business']);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!currentOrganization?.id,
+  });
+
+  const selectedInstance = instances.find((i: any) => i.id === whatsappInstanceId);
+  const isGroupChannel = chatbot.channel === 'whatsapp_group';
+  const instanceWarning = (() => {
+    if (!whatsappInstanceId) return chatbot.channel === 'whatsapp' ? 'Vincule uma instância WhatsApp para ativar o chatbot.' : null;
+    if (!selectedInstance) return 'Instância selecionada não encontrada.';
+    if (!selectedInstance.is_active) return 'A instância vinculada está inativa.';
+    if (isGroupChannel && selectedInstance.integration_type !== 'evolution_api') {
+      return 'Grupos de WhatsApp exigem uma instância Evolution API. A API Oficial Meta não suporta grupos.';
+    }
+    return null;
+  })();
 
   const selectedNode = nodes.find(n => n.id === selectedNodeId);
 
@@ -520,7 +564,21 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
       config: defaultNodeConfig(type),
       connections: defaultConnections(type),
     };
-    setNodes(prev => [...prev, newNode]);
+    setNodes(prev => {
+      // Auto-conecta o último nó "solto" ao novo bloco para o fluxo avançar sozinho
+      const next = [...prev];
+      if (next.length > 0) {
+        const last = next[next.length - 1];
+        const firstConn = last.connections[0];
+        if (firstConn && !firstConn.targetId) {
+          next[next.length - 1] = {
+            ...last,
+            connections: [{ ...firstConn, targetId: newNode.id }, ...last.connections.slice(1)],
+          };
+        }
+      }
+      return [...next, newNode];
+    });
     setSelectedNodeId(newNode.id);
   };
 
@@ -546,7 +604,38 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
   };
 
   const handleSave = () => {
-    onSave({ ...chatbot, name, nodes, rules });
+    if (!name.trim()) {
+      toast.error('Defina um nome para o chatbot');
+      return;
+    }
+    if (instanceWarning) {
+      toast.error(instanceWarning);
+      return;
+    }
+    // Garante pelo menos uma regra de ativação
+    let finalRules = rules;
+    if (rules.length === 0) {
+      finalRules = [{
+        id: crypto.randomUUID(),
+        name: 'Primeira mensagem do contato',
+        departments: [],
+        officeHours: { enabled: false, start: '08:00', end: '18:00', days: [1, 2, 3, 4, 5] },
+        includeTags: [],
+        excludeTags: [],
+        channels: [chatbot.channel === 'whatsapp_group' ? 'whatsapp' : chatbot.channel],
+        keywords: [],
+        keywordMatch: 'any',
+        isActive: true,
+      }];
+      setRules(finalRules);
+      toast.info('Adicionada regra padrão "Primeira mensagem do contato"');
+    }
+    // Garante fallback humano se IA estiver presente sem fallback configurado
+    const hasAi = nodes.some(n => n.type === 'ai_response' || n.type === 'ai_mission');
+    if (hasAi && !settings.human_fallback_enabled) {
+      toast.warning('Recomendamos manter o fallback para humano ativo quando há blocos de IA');
+    }
+    onSave({ ...chatbot, name, nodes, rules: finalRules, whatsapp_instance_id: whatsappInstanceId, settings });
   };
 
   const categories = [...new Set(nodeTypes.map(n => n.category))];
@@ -561,7 +650,11 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary">{nodes.length} blocos</Badge>
-          <Badge variant="secondary">{rules.length} regras</Badge>
+          <Badge variant={rules.length > 0 ? 'secondary' : 'destructive'}>{rules.length} regras</Badge>
+          <Badge variant={whatsappInstanceId && !instanceWarning ? 'secondary' : 'outline'} className="gap-1">
+            <Phone className="h-3 w-3" />
+            {selectedInstance ? selectedInstance.name : 'Sem instância'}
+          </Badge>
           <Button size="sm" onClick={handleSave} disabled={isSaving}>
             {isSaving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
             {isSaving ? 'Salvando...' : 'Salvar'}
@@ -576,6 +669,7 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
             <TabsList className="mx-2 mt-2 shrink-0">
               <TabsTrigger value="nodes" className="text-xs flex-1">Blocos</TabsTrigger>
               <TabsTrigger value="rules" className="text-xs flex-1">Regras</TabsTrigger>
+              <TabsTrigger value="settings" className="text-xs flex-1">Config</TabsTrigger>
             </TabsList>
             <ScrollArea className="flex-1">
               <TabsContent value="nodes" className="p-2 mt-0 space-y-3">
@@ -597,6 +691,68 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
               </TabsContent>
               <TabsContent value="rules" className="p-2 mt-0">
                 <RulesEditor rules={rules} onUpdate={setRules} />
+              </TabsContent>
+              <TabsContent value="settings" className="p-2 mt-0 space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold">Instância WhatsApp</Label>
+                  <Select value={whatsappInstanceId ?? '_none'} onValueChange={v => setWhatsappInstanceId(v === '_none' ? null : v)}>
+                    <SelectTrigger className="h-8 text-xs"><SelectValue placeholder="Nenhuma" /></SelectTrigger>
+                    <SelectContent className="z-[100]">
+                      <SelectItem value="_none">Nenhuma</SelectItem>
+                      {instances.map((i: any) => (
+                        <SelectItem key={i.id} value={i.id}>
+                          {i.name} ({i.integration_type === 'evolution_api' ? 'Evolution' : 'Meta Oficial'}){!i.is_active ? ' • inativa' : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {instanceWarning && (
+                    <p className="text-[10px] text-destructive bg-destructive/10 rounded p-1.5">⚠️ {instanceWarning}</p>
+                  )}
+                  {isGroupChannel && (
+                    <p className="text-[10px] text-muted-foreground">Grupos exigem Evolution API (a API Oficial Meta não suporta grupos).</p>
+                  )}
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  <Label className="text-xs font-semibold">Prompt Global do Agente IA</Label>
+                  <Textarea
+                    rows={5}
+                    className="text-xs"
+                    placeholder="Ex: Você é a Ana, atendente da Empresa X. Seja cordial, objetiva, responda em até 3 frases e nunca prometa prazos."
+                    value={settings.agent_prompt || ''}
+                    onChange={e => setSettings(s => ({ ...s, agent_prompt: e.target.value }))}
+                  />
+                  <p className="text-[10px] text-muted-foreground">Aplicado por padrão a todos os blocos de IA que não tenham prompt próprio.</p>
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold">Fallback para humano</Label>
+                    <Switch
+                      checked={settings.human_fallback_enabled ?? true}
+                      onCheckedChange={v => setSettings(s => ({ ...s, human_fallback_enabled: v }))}
+                    />
+                  </div>
+                  {(settings.human_fallback_enabled ?? true) && (
+                    <>
+                      <Textarea
+                        rows={2}
+                        className="text-xs"
+                        placeholder="Mensagem enviada antes de transferir para humano"
+                        value={settings.human_fallback_message || ''}
+                        onChange={e => setSettings(s => ({ ...s, human_fallback_message: e.target.value }))}
+                      />
+                      <Input
+                        className="h-8 text-xs"
+                        placeholder="Departamento (ex: Suporte)"
+                        value={settings.human_fallback_department || ''}
+                        onChange={e => setSettings(s => ({ ...s, human_fallback_department: e.target.value }))}
+                      />
+                      <p className="text-[10px] text-muted-foreground">Acionado quando a IA não conseguir responder ou repetir validação esgotar.</p>
+                    </>
+                  )}
+                </div>
               </TabsContent>
             </ScrollArea>
           </Tabs>
@@ -716,6 +872,8 @@ export default function ChatbotBuilderPage() {
         nodes: (row.nodes as ChatbotNode[]) || [],
         rules: (row.rules as ChatbotRule[]) || [],
         isActive: row.is_active,
+        whatsapp_instance_id: row.whatsapp_instance_id ?? null,
+        settings: (row.settings as ChatbotSettings) || {},
       }));
     },
     enabled: !!orgId,
@@ -761,6 +919,8 @@ export default function ChatbotBuilderPage() {
         nodes: (row.nodes as ChatbotNode[]) || [],
         rules: (row.rules as ChatbotRule[]) || [],
         isActive: row.is_active,
+        whatsapp_instance_id: row.whatsapp_instance_id ?? null,
+        settings: (row.settings as ChatbotSettings) || {},
       });
       toast.success('Chatbot criado!');
     },
@@ -778,6 +938,8 @@ export default function ChatbotBuilderPage() {
           nodes: updated.nodes as any,
           rules: updated.rules as any,
           is_active: updated.isActive,
+          whatsapp_instance_id: updated.whatsapp_instance_id ?? null,
+          settings: (updated.settings ?? {}) as any,
         })
         .eq('id', updated.id);
       if (error) throw error;

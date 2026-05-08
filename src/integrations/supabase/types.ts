@@ -1050,7 +1050,9 @@ export type Database = {
           nodes: Json
           organization_id: string
           rules: Json
+          settings: Json
           updated_at: string
+          whatsapp_instance_id: string | null
         }
         Insert: {
           channel?: string
@@ -1063,7 +1065,9 @@ export type Database = {
           nodes?: Json
           organization_id: string
           rules?: Json
+          settings?: Json
           updated_at?: string
+          whatsapp_instance_id?: string | null
         }
         Update: {
           channel?: string
@@ -1076,9 +1080,19 @@ export type Database = {
           nodes?: Json
           organization_id?: string
           rules?: Json
+          settings?: Json
           updated_at?: string
+          whatsapp_instance_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "chatbots_whatsapp_instance_id_fkey"
+            columns: ["whatsapp_instance_id"]
+            isOneToOne: false
+            referencedRelation: "organization_integrations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       checkout_leads: {
         Row: {

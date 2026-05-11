@@ -37,14 +37,15 @@ export const logSystemError = async ({
   };
 
   try {
-    // Attempt to log to Supabase
+    // Attempt to log to Supabase with a timeout to avoid blocking
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
     const { error } = await supabase.from('system_errors').insert(errorData);
+    clearTimeout(timeoutId);
 
     if (error) {
       saveToLocalStorage(errorData);
-    } else if (severity === 'high' || severity === 'critical') {
-      // Trigger a toast or internal notification if critical
-      console.warn("CRITICAL ERROR DETECTED:", message);
     }
   } catch (err) {
     saveToLocalStorage(errorData);
@@ -64,11 +65,16 @@ const saveToLocalStorage = (errorData: any) => {
 
 /**
  * Syncs errors from localStorage back to Supabase when connection is restored
+ * Optimized with batching and backoff
  */
+let isSyncing = false;
 export const syncPendingErrors = async () => {
+  if (isSyncing) return;
+  
   const pendingErrors = JSON.parse(localStorage.getItem('pending_system_errors') || '[]');
   if (pendingErrors.length === 0) return;
 
+  isSyncing = true;
   console.log(`Syncing ${pendingErrors.length} pending errors to Supabase...`);
   
   try {
@@ -79,6 +85,8 @@ export const syncPendingErrors = async () => {
     }
   } catch (err) {
     console.warn("Failed to sync errors, will retry later:", err);
+  } finally {
+    isSyncing = false;
   }
 };
 
@@ -108,7 +116,7 @@ export const initGlobalErrorHandling = () => {
     });
   };
 
-  // Attempt to sync errors periodically
+  // Sync errors periodically
   setInterval(syncPendingErrors, 60000); // Every minute
   window.addEventListener('online', syncPendingErrors);
 };

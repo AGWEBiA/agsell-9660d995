@@ -9,7 +9,7 @@ const supabaseAnonKey =
   "";
 
 // Backoff configuration
-const MAX_RETRIES = 3;
+const MAX_RETRIES = 5;
 const BASE_DELAY = 1000;
 
 /**
@@ -19,15 +19,15 @@ const fetchWithRetry = async (url: string, options: any, retryCount = 0): Promis
   try {
     const response = await fetch(url, options);
     if (!response.ok && (response.status === 544 || response.status >= 500) && retryCount < MAX_RETRIES) {
-      const delay = BASE_DELAY * Math.pow(2, retryCount);
-      console.warn(`Supabase temporary failure (${response.status}). Retrying in ${delay}ms...`);
+      const delay = Math.min(BASE_DELAY * Math.pow(2, retryCount), 15000);
+      console.warn(`Supabase temporary failure (${response.status}). Retrying in ${delay}ms... (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
       await new Promise(resolve => setTimeout(resolve, delay));
       return fetchWithRetry(url, options, retryCount + 1);
     }
     return response;
   } catch (error) {
     if (retryCount < MAX_RETRIES) {
-      const delay = BASE_DELAY * Math.pow(2, retryCount);
+      const delay = Math.min(BASE_DELAY * Math.pow(2, retryCount), 15000);
       await new Promise(resolve => setTimeout(resolve, delay));
       return fetchWithRetry(url, options, retryCount + 1);
     }

@@ -14,12 +14,13 @@ import {
 import {
   AlertTriangle, Bug, CheckCircle, Clock, Filter, Search,
   TrendingUp, XCircle, MessageSquare, RefreshCw, AlertOctagon,
-  Activity, BarChart3, Layers
+  Activity, BarChart3, Layers, ExternalLink
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { withRetry } from '@/lib/supabase-retry';
 
 const SEVERITY_CONFIG = {
   critical: { label: 'Crítico', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300', icon: AlertOctagon },
@@ -102,6 +103,31 @@ export function ErrorMonitoringDashboard() {
     setNoteText('');
   };
 
+  const handleManualRetry = async (error: any) => {
+    try {
+      // Find the associated automation step ID in context
+      const stepId = error.user_context?.step_id;
+      if (!stepId) {
+        toast.error('Nenhum passo de automação associado a este erro');
+        return;
+      }
+
+      const { data, error: retryError } = await supabase.rpc('manual_retry_automation_step', { step_id: stepId });
+      
+      if (retryError) throw retryError;
+      
+      if (data?.success) {
+        toast.success(data.message);
+        handleStatusChange(error.id, 'in_progress');
+      } else {
+        toast.error(data?.message || 'Falha ao reexecutar');
+      }
+    } catch (err: any) {
+      console.error('Retry error:', err);
+      toast.error('Erro ao processar reexecução manual');
+    }
+  };
+
   if (isLoading) return <Skeleton className="h-96 w-full" />;
 
   return (
@@ -165,13 +191,27 @@ export function ErrorMonitoringDashboard() {
             </TableHeader>
             <TableBody>
               {filteredErrors.map((err: any) => (
-                <TableRow key={err.id} onClick={() => setSelectedError(err)} className="cursor-pointer">
+                <TableRow key={err.id} onClick={() => setSelectedError(err)} className="cursor-pointer hover:bg-muted/50 transition-colors">
                   <TableCell><Badge className={STATUS_CONFIG[err.status as keyof typeof STATUS_CONFIG]?.color}>{err.status}</Badge></TableCell>
                   <TableCell><Badge className={SEVERITY_CONFIG[err.severity as keyof typeof SEVERITY_CONFIG]?.color}>{err.severity}</Badge></TableCell>
-                  <TableCell className="max-w-xs truncate font-mono text-xs">{err.error_message}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{err.user_context?.deploy_id || 'N/A'}</TableCell>
+                  <TableCell className="max-w-xs">
+                    <div className="flex flex-col gap-1">
+                      <span className="truncate font-mono text-xs font-medium">{err.error_message}</span>
+                      <span className="text-[10px] text-muted-foreground bg-muted w-fit px-1 rounded">ID: {err.id.split('-')[0]}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-xs font-mono">{err.user_context?.deploy_id || 'N/A'}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleStatusChange(err.id, 'resolved'); }}>Resolver</Button>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleStatusChange(err.id, 'resolved'); }}>
+                        <CheckCircle className="h-4 w-4 mr-1" /> Resolver
+                      </Button>
+                      {err.module?.includes('automation') && (
+                        <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleManualRetry(err); }}>
+                          <RefreshCw className="h-3 w-3 mr-1" /> Reexecutar
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -181,10 +221,36 @@ export function ErrorMonitoringDashboard() {
       </Card>
 
       <Dialog open={!!selectedError} onOpenChange={() => setSelectedError(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Detalhes do Erro</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <div className="flex justify-between items-center pr-6">
+              <DialogTitle>Detalhes do Erro</DialogTitle>
+              <Badge variant="outline" className="font-mono text-[10px]">{selectedError?.id}</Badge>
+            </div>
+          </DialogHeader>
           <div className="space-y-4">
-            <div className="bg-muted p-3 rounded font-mono text-xs overflow-auto max-h-40">{selectedError?.stack_trace || selectedError?.error_message}</div>
+            <div className="grid grid-cols-2 gap-4 text-xs">
+              <div className="p-2 bg-muted rounded">
+                <p className="font-semibold mb-1">Módulo:</p>
+                <p>{selectedError?.module}</p>
+              </div>
+              <div className="p-2 bg-muted rounded">
+                <p className="font-semibold mb-1">Deploy ID:</p>
+                <p className="font-mono">{selectedError?.user_context?.deploy_id || 'N/A'}</p>
+              </div>
+            </div>
+            
+            <div className="bg-slate-950 text-slate-50 p-3 rounded font-mono text-xs overflow-auto max-h-60">
+              <div className="font-bold text-red-400 mb-2">{selectedError?.error_message}</div>
+              <pre className="whitespace-pre-wrap">{selectedError?.stack_trace || 'Sem stack trace disponível'}</pre>
+            </div>
+
+            {selectedError?.user_context && (
+              <div className="p-3 border rounded-lg bg-muted/20">
+                <p className="text-xs font-semibold mb-2">Contexto do Usuário:</p>
+                <pre className="text-[10px] overflow-auto max-h-32">{JSON.stringify(selectedError.user_context, null, 2)}</pre>
+              </div>
+            )}
             <Textarea placeholder="Adicionar comentário técnico..." value={noteText} onChange={e => setNoteText(e.target.value)} />
             <div className="text-xs text-muted-foreground whitespace-pre-wrap">{selectedError?.notes}</div>
           </div>

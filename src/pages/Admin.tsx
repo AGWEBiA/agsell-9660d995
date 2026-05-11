@@ -283,7 +283,12 @@ export default function Admin() {
             <Bug className="h-4 w-4" />
             Auditoria Webhooks
           </TabsTrigger>
+          <TabsTrigger value="health" className="flex items-center gap-2">
+            <HeartPulse className="h-4 w-4" />
+            Saúde (Edge)
+          </TabsTrigger>
         </TabsList>
+
         <TabsContent value="overview" className="space-y-6">
           {/* KPIs */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

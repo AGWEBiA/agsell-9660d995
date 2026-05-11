@@ -102,6 +102,31 @@ export function ErrorMonitoringDashboard() {
     setNoteText('');
   };
 
+  const handleManualRetry = async (error: any) => {
+    try {
+      // Find the associated automation step ID in context
+      const stepId = error.user_context?.step_id;
+      if (!stepId) {
+        toast.error('Nenhum passo de automação associado a este erro');
+        return;
+      }
+
+      const { data, error: retryError } = await supabase.rpc('manual_retry_automation_step', { step_id: stepId });
+      
+      if (retryError) throw retryError;
+      
+      if (data?.success) {
+        toast.success(data.message);
+        handleStatusChange(error.id, 'in_progress');
+      } else {
+        toast.error(data?.message || 'Falha ao reexecutar');
+      }
+    } catch (err: any) {
+      console.error('Retry error:', err);
+      toast.error('Erro ao processar reexecução manual');
+    }
+  };
+
   if (isLoading) return <Skeleton className="h-96 w-full" />;
 
   return (
@@ -165,13 +190,27 @@ export function ErrorMonitoringDashboard() {
             </TableHeader>
             <TableBody>
               {filteredErrors.map((err: any) => (
-                <TableRow key={err.id} onClick={() => setSelectedError(err)} className="cursor-pointer">
+                <TableRow key={err.id} onClick={() => setSelectedError(err)} className="cursor-pointer hover:bg-muted/50 transition-colors">
                   <TableCell><Badge className={STATUS_CONFIG[err.status as keyof typeof STATUS_CONFIG]?.color}>{err.status}</Badge></TableCell>
                   <TableCell><Badge className={SEVERITY_CONFIG[err.severity as keyof typeof SEVERITY_CONFIG]?.color}>{err.severity}</Badge></TableCell>
-                  <TableCell className="max-w-xs truncate font-mono text-xs">{err.error_message}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{err.user_context?.deploy_id || 'N/A'}</TableCell>
+                  <TableCell className="max-w-xs">
+                    <div className="flex flex-col gap-1">
+                      <span className="truncate font-mono text-xs font-medium">{err.error_message}</span>
+                      <span className="text-[10px] text-muted-foreground bg-muted w-fit px-1 rounded">ID: {err.id.split('-')[0]}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-xs font-mono">{err.user_context?.deploy_id || 'N/A'}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleStatusChange(err.id, 'resolved'); }}>Resolver</Button>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleStatusChange(err.id, 'resolved'); }}>
+                        <CheckCircle className="h-4 w-4 mr-1" /> Resolver
+                      </Button>
+                      {err.module?.includes('automation') && (
+                        <Button variant="outline" size="sm" onClick={(e) => { e.stopPropagation(); handleManualRetry(err); }}>
+                          <RefreshCw className="h-3 w-3 mr-1" /> Reexecutar
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

@@ -125,7 +125,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Instagram webhook error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
@@ -206,7 +206,7 @@ async function routeDmToInbox(
     } else {
       console.log("Instagram DM routed to inbox, conversation:", conversationId);
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error routing DM to inbox:", err);
   }
 }
@@ -334,7 +334,7 @@ async function processEvent(
               console.error("Failed to send Instagram DM:", await resp.text());
             }
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error("Error sending auto-reply:", err);
         }
       }
@@ -365,7 +365,7 @@ async function processEvent(
               console.error("Failed to reply to comment:", await resp.text());
             }
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error("Error replying to comment:", err);
         }
       }

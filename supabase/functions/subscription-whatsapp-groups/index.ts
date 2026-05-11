@@ -161,7 +161,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ error: "Ação inválida" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     const message = error instanceof Error ? error.message : "Erro interno";
     console.error("[WA-GROUPS] Error:", error);
     return new Response(

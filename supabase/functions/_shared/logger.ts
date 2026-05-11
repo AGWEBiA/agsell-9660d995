@@ -66,7 +66,7 @@ export async function logToSystem(supabase: SupabaseClient, entry: LogEntry) {
       }
     }
 
-  } catch (err) {
+  } catch (err: any) {
     console.error(`[LOGGER-FATAL]`, err);
   }
   

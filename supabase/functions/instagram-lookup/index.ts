@@ -47,7 +47,7 @@ serve(async (req) => {
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Instagram lookup error:", error);
     return new Response(
       JSON.stringify({ error: "Erro ao buscar dados do Instagram" }),

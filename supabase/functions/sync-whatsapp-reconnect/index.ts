@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
       } else {
         console.log("Failed to fetch chats:", chatsRes.status, await chatsRes.text());
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("Error fetching chats:", e);
     }
 
@@ -278,7 +278,7 @@ Deno.serve(async (req) => {
           .eq("id", conversation.id);
 
         syncedChats++;
-      } catch (e) {
+      } catch (e: any) {
         console.error(`Error syncing chat ${phone}:`, e);
       }
     }
@@ -310,7 +310,7 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify(result), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Sync error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,

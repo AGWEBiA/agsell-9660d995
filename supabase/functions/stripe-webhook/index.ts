@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
 
     try {
       event = stripe.webhooks.constructEvent(rawBody, signature, stripeWebhookSecret);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Webhook signature verification failed:", err);
       return new Response(
         JSON.stringify({ error: "Invalid signature" }),
@@ -306,7 +306,7 @@ async function syncWhatsAppGroupsByEmail(supabase: SupabaseClientType, email: st
     if (user) {
       await callSyncUser(supabase, user.id, shouldBeActive);
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error syncing WhatsApp groups:", err);
   }
 }
@@ -325,7 +325,7 @@ async function callSyncUser(supabase: SupabaseClientType, userId: string, should
     });
     const result = await response.text();
     console.log("WhatsApp group sync result:", result);
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error calling subscription-whatsapp-groups:", err);
   }
 }
@@ -433,7 +433,7 @@ async function sendWelcomeEmail(data: {
       const errorData = await response.text();
       console.error("Resend API error:", errorData);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error sending email:", error);
   }
 }

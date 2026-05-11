@@ -61,7 +61,7 @@ async function lookupIgsidByUsername(
     }
 
     return null;
-  } catch (err) {
+  } catch (err: any) {
     console.error("IGSID lookup failed:", err);
     return null;
   }
@@ -252,7 +252,7 @@ serve(async (req) => {
 
         // Delay between messages to avoid rate limiting (2 seconds)
         await new Promise(resolve => setTimeout(resolve, 2000));
-      } catch (err) {
+      } catch (err: any) {
         console.error(`Error processing @${recipient.username}:`, err);
         await supabaseAdmin.from("instagram_dm_broadcast_recipients").update({
           status: "failed",
@@ -274,7 +274,7 @@ serve(async (req) => {
       JSON.stringify({ success: true, sent: sentCount, failed: failedCount }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Send Instagram DM error:", error);
     return new Response(
       JSON.stringify({ error: "Erro interno ao processar envio" }),

@@ -163,7 +163,7 @@ Deno.serve(async (req) => {
         }
 
         results.push({ id: item.id, status: "completed" });
-      } catch (err) {
+      } catch (err: any) {
         const errorMsg = err instanceof Error ? err.message : String(err);
         const nextRetry = item.retry_count + 1;
         const status = nextRetry >= 3 ? "failed" : "pending";
@@ -191,7 +191,7 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

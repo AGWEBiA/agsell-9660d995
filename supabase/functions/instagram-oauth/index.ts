@@ -397,7 +397,7 @@ serve(async (req) => {
         INSTAGRAM_APP_ID = (metaSettings.value as any).app_id;
         console.log("[INSTAGRAM-OAUTH] Using App ID from platform_settings:", INSTAGRAM_APP_ID);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.warn("[INSTAGRAM-OAUTH] Could not load meta_app settings, using fallback");
     }
 
@@ -629,7 +629,7 @@ serve(async (req) => {
       JSON.stringify({ success: true, updated: false, account: instagramAccount }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Instagram OAuth error:", error);
     return new Response(
       JSON.stringify({ error: "Erro interno ao processar autenticação" }),

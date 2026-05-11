@@ -500,7 +500,7 @@ async function sendWelcomeEmail(supabase: any, data: {
     } else {
       console.log("[GUEST-CHECKOUT] Welcome email sent to", data.email);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("[GUEST-CHECKOUT] Error sending email:", error);
   }
 }

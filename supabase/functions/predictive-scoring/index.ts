@@ -143,7 +143,7 @@ Return a JSON with predicted_score (0-100), confidence (0-1), and factors array 
         }
 
         processed++;
-      } catch (e) {
+      } catch (e: any) {
         console.error(`Error scoring contact ${contact.id}:`, e);
       }
     }
@@ -151,7 +151,7 @@ Return a JSON with predicted_score (0-100), confidence (0-1), and factors array 
     return new Response(JSON.stringify({ processed }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (e) {
+  } catch (e: any) {
     console.error("Predictive scoring error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
       status: 500,

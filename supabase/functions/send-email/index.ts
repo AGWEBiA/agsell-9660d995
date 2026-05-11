@@ -332,7 +332,7 @@ async function sendWithAmazonSES(config: Record<string, string>, emailReq: Email
       JSON.stringify({ success: true, provider: "amazon_ses", id: messageId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Amazon SES request error:", error);
     return new Response(
       JSON.stringify({ error: `Amazon SES request failed: ${error instanceof Error ? error.message : 'Unknown error'}` }),

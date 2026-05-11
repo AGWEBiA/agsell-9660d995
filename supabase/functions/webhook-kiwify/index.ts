@@ -1022,7 +1022,7 @@ async function activateSubscription(
         await logStep(supabase, "Cancelled previous Stripe subscription", {
           subId: existingSub.provider_subscription_id,
         });
-      } catch (err) {
+      } catch (err: any) {
         await logStep(
           supabase,
           "Warning: could not cancel Stripe subscription",
@@ -1134,7 +1134,7 @@ async function callSyncUser(userId: string, shouldBeActive: boolean) {
     );
     const result = await response.text();
     console.log("WhatsApp group sync result", result);
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error calling subscription-whatsapp-groups", err);
   }
 }
@@ -1192,7 +1192,7 @@ async function triggerPurchaseAutomation(
         }).catch(err => console.error("Error dispatching purchase automation:", err));
       }
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error in triggerPurchaseAutomation:", err);
   }
 }
@@ -1311,7 +1311,7 @@ async function sendWelcomeEmail(
     }
 
     await logStep(supabase, "Welcome email sent", { email: data.email });
-  } catch (error) {
+  } catch (error: any) {
     await logStep(supabase, "Error sending email", error);
   }
 }

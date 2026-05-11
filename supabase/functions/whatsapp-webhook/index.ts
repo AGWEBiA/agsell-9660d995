@@ -26,7 +26,7 @@ const logAudit = async (supabase: any, details: {
       payload: details.payload,
       error_details: details.error
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Failed to log audit event:", err);
   }
 };
@@ -609,7 +609,7 @@ Deno.serve(async (req) => {
             }
           }
         }
-      } catch (e) {
+      } catch (e: any) {
         console.error("Failed to piggyback delivery_status from messages.upsert:", e);
       }
 
@@ -1178,7 +1178,7 @@ Deno.serve(async (req) => {
                 const { data: pubUrl } = supabase.storage.from("inbox-attachments").getPublicUrl(storagePath);
                 mediaUrl = pubUrl.publicUrl;
               }
-            } catch (e) {
+            } catch (e: any) {
               console.error("Error uploading inline base64:", e);
             }
           }
@@ -1450,7 +1450,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("WhatsApp webhook error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
@@ -1818,7 +1818,7 @@ async function routeToInbox(
       console.log(`${channel} message routed to inbox, conversation: ${conversationId}`);
     }
     return { contactId, conversationId };
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error routing message to inbox:", err);
     return { contactId: null, conversationId: null };
   }

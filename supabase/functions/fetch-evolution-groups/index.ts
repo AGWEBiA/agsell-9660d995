@@ -171,7 +171,7 @@ const fetchGroupsForInstance = async (
       const groups = parseGroups(groupsData);
       console.log(`Parsed ${groups.length} groups for ${instanceName}`);
       return groups;
-    } catch (error) {
+    } catch (error: any) {
       const message = error instanceof Error ? error.message : String(error);
       const isTimeout = message.includes("timeout") || message.includes("abort") || message.includes("signal");
       console.error(`Error fetching groups for ${instanceName} (attempt ${attempt + 1}, timeout=${isTimeout}):`, message);
@@ -410,7 +410,7 @@ Deno.serve(async (req) => {
           phone_number: phoneFormatted,
           groups,
         });
-      } catch (e) {
+      } catch (e: any) {
         const errMsg = e instanceof Error ? e.message : String(e);
         console.error(`Error fetching groups for ${instanceName}:`, errMsg);
         result.push({
@@ -425,7 +425,7 @@ Deno.serve(async (req) => {
     }
 
     return jsonResponse({ instances: result });
-  } catch (err) {
+  } catch (err: any) {
     console.error("fetch-evolution-groups error:", err);
     return jsonResponse({ error: "Erro interno", instances: [] });
   }

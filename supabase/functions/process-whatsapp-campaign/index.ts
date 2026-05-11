@@ -149,7 +149,7 @@ Deno.serve(async (req) => {
               .eq("campaign_id", campaign_id)
               .eq("contact_id", recipient.contact_id);
           }
-        } catch (err) {
+        } catch (err: any) {
           failedCount++;
           const errMsg = err instanceof Error ? err.message : "Unknown error";
           await supabase

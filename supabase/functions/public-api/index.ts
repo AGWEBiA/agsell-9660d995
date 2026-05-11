@@ -1125,7 +1125,7 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
       JSON.stringify({ success: true, submission_id: submission.id }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Form submit error:", error);
     return new Response(
       JSON.stringify({ error: "Internal server error", code: "INTERNAL_ERROR" }),
@@ -1225,7 +1225,7 @@ async function handleSendMessage(supabase: any, orgId: string, req: Request, isV
           .single();
         trackedMessageId = msgRow?.id || null;
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("v1.1 send: failed to pre-create message row", e);
     }
   }
@@ -1272,7 +1272,7 @@ async function handleSendMessage(supabase: any, orgId: string, req: Request, isV
       };
     }
     return { data: { channel, to, sent: true, ...data } };
-  } catch (e) {
+  } catch (e: any) {
     if (trackedMessageId) {
       await supabase.from("messages").update({ delivery_status: "failed" }).eq("id", trackedMessageId);
     }
@@ -1378,7 +1378,7 @@ async function handleTriggerAutomation(supabase: any, orgId: string, automationI
     const data = await res.json().catch(() => ({}));
     if (!res.ok) return { error: data?.error || "Failed to trigger automation" };
     return { data: { triggered: true, automation_id: automationId, ...data } };
-  } catch (e) {
+  } catch (e: any) {
     return { error: `Failed: ${(e as Error).message}` };
   }
 }
@@ -1498,7 +1498,7 @@ async function handleTestWebhook(supabase: any, orgId: string, webhookId: string
         sent_at: payload.timestamp,
       },
     };
-  } catch (e) {
+  } catch (e: any) {
     return { error: `Delivery failed: ${(e as Error).message}`, code: "DELIVERY_FAILED" };
   }
 }

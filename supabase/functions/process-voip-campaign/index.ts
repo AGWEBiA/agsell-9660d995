@@ -174,7 +174,7 @@ Deno.serve(async (req) => {
 
         // Small delay between calls to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, 500));
-      } catch (err) {
+      } catch (err: any) {
         console.error(`[VOIP-CAMPAIGN] Error processing contact ${contact.id}:`, err);
         failedCount++;
       }

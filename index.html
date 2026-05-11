@@ -261,9 +261,18 @@
   <body>
     <div id="root"></div>
     <script>
+      // Global Deployment ID for correlation (Injected via Build process in prod)
+      window.__DEPLOY_ID__ = 'DEPLOY-' + new Date().toISOString().split('T')[0] + '-' + Math.random().toString(36).substring(2, 7).toUpperCase();
+      
       // Early error tracking to prevent silent white screens
       window.onerror = function(msg, url, line, col, error) {
         console.error("Early Browser Error:", msg, url, line, col, error);
+        
+        // Try to log the early error to telemetry if possible
+        if (window.supabase) {
+           // We can't use full logger yet, but we can try basic fetch
+        }
+
         const root = document.getElementById('root');
         if (root && (!root.innerHTML || root.innerHTML.trim() === '')) {
           root.innerHTML = `
@@ -273,6 +282,7 @@
                 <p style="color: #94A3B8; line-height: 1.6;">Não foi possível iniciar o sistema. Verifique sua conexão ou tente recarregar.</p>
                 <div style="background: #0B1220; border: 1px solid #1F2937; border-radius: 8px; padding: 16px; margin: 20px 0; font-size: 13px; color: #F87171; overflow: auto;">
                   ${msg}
+                  <br><small style="color: #64748B; font-size: 10px;">Deploy ID: ${window.__DEPLOY_ID__}</small>
                 </div>
                 <button onclick="window.location.reload()" style="background: #EF4444; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer;">
                   Recarregar Sistema

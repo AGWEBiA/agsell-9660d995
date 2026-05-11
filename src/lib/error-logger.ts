@@ -18,10 +18,12 @@ export const logSystemError = async ({
   context?: any;
 }) => {
   const deployId = window.__DEPLOY_ID__ || 'unknown';
+  const errorId = crypto.randomUUID();
   
-  console.error(`[${module}] ${message}`, { severity, deployId, stack, context });
+  console.error(`[${module}] [${deployId}] [${errorId}] ${message}`, { severity, stack, context });
 
   const errorData = {
+    id: errorId,
     error_message: message,
     module,
     severity,
@@ -33,6 +35,7 @@ export const logSystemError = async ({
       user_agent: navigator.userAgent
     },
     status: 'open',
+    deploy_id: deployId, // Added column
     created_at: new Date().toISOString()
   };
 
@@ -50,7 +53,10 @@ export const logSystemError = async ({
   } catch (err) {
     saveToLocalStorage(errorData);
   }
+
+  return { errorId, deployId };
 };
+
 
 const saveToLocalStorage = (errorData: any) => {
   try {

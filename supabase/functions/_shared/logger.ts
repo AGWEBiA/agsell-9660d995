@@ -40,7 +40,32 @@ export async function logToSystem(supabase: SupabaseClient, entry: LogEntry) {
 
     if (error) {
       console.error(`[LOGGER-ERROR] Failed to write to system_logs:`, error.message);
+    } else if (entry.level === 'error' || (entry.level as string) === 'critical') {
+      // Trigger internal notification for critical errors
+      try {
+        const supabaseUrl = Deno.env.get('SUPABASE_URL');
+        const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+        if (supabaseUrl && supabaseKey) {
+          fetch(`${supabaseUrl}/functions/v1/notify-error-alert`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseKey}`
+            },
+            body: JSON.stringify({
+              message: entry.message,
+              severity: entry.level,
+              module: entry.source,
+              deploy_id: deployId,
+              stack_trace: entry.metadata?.stack || entry.payload?.stack
+            })
+          }).catch(err => console.error('[LOGGER-ALERT-FAILED]', err));
+        }
+      } catch (alertErr) {
+        console.error('[LOGGER-ALERT-FATAL]', alertErr);
+      }
     }
+
   } catch (err) {
     console.error(`[LOGGER-FATAL]`, err);
   }

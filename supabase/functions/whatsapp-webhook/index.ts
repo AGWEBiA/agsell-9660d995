@@ -1303,7 +1303,8 @@ Deno.serve(async (req) => {
             // This is critical for "AG Sell" where customers buy from different users
             // but might message a central number.
             
-            if (!isFromMe) {
+            if (!isFromMe && senderPhone) {
+              const cleanPhone = senderPhone.replace(/\D/g, "");
               // 1. Get all organizations where this phone is a contact
               const { data: contactEntries } = await supabase
                 .from("contacts")

@@ -552,7 +552,11 @@ export default function Admin() {
         <TabsContent value="webhook-audit">
           <WebhookAuditDashboard />
         </TabsContent>
+        <TabsContent value="health">
+          <EdgeFunctionHealthDashboard />
+        </TabsContent>
       </Tabs>
+
 
       <AssignPlanDialog
         organization={assignPlanOrg}

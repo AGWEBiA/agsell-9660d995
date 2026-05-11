@@ -69,15 +69,14 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const token = authHeader.replace('Bearer ', '').trim();
-    const xInternalCron = req.headers.get('X-Internal-Cron') || req.headers.get('x-internal-cron');
-    const isInternalCron = (xInternalCron === 'true') && 
+    const isInternalCron = (req.headers.get('X-Internal-Cron') === 'true' || req.headers.get('x-internal-cron') === 'true') && 
                           (token === supabaseServiceKey || token === Deno.env.get('SUPABASE_ANON_KEY'));
 
     if (!isInternalCron) {
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);
       if (authError || !user) {
-        console.error("[process-automation] Auth validation failed. isInternalCron:", isInternalCron, "token_match_service:", token === supabaseServiceKey, "xInternalCron:", xInternalCron, "authError:", authError?.message);
-        return new Response(JSON.stringify({ error: 'Invalid or expired session', details: authError?.message }), { 
+        console.error("[process-automation] Auth validation failed:", authError?.message);
+        return new Response(JSON.stringify({ error: 'Invalid or expired session' }), { 
           status: 401, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         });

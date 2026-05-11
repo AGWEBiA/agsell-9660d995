@@ -1652,7 +1652,7 @@ async function routeToInbox(
       : null;
 
     const metadataConv =
-      conversations.find((conv) => {
+      conversations.find((conv: any) => {
         const metadataValue = (conv.metadata as Record<string, unknown> | null)?.[metadataKey];
         const normalizedMetadata = normalizePhone(typeof metadataValue === "string" ? metadataValue : "");
         const localMetadata = extractLocal(normalizedMetadata);

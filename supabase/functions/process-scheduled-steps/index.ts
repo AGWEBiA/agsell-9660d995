@@ -141,6 +141,34 @@ async function processPendingSteps(
     .eq('status', 'processing')
     .lt('scheduled_at', new Date(Date.now() - 5 * 60_000).toISOString());
 
+  // Auto-retry failed steps with backoff (max 5 retries)
+  // Only retry transient errors like timeouts or connection issues
+  const { data: retriableSteps } = await supabase
+    .from('automation_scheduled_steps')
+    .select('id, retry_count, last_error')
+    .eq('status', 'error')
+    .lt('retry_count', 5)
+    .or('last_error.ilike.%timeout%,last_error.ilike.%connection%,last_error.ilike.%544%,last_error.ilike.%failed to fetch%')
+    .limit(10);
+
+  if (retriableSteps && retriableSteps.length > 0) {
+    for (const step of retriableSteps) {
+      const backoffMinutes = Math.pow(2, step.retry_count || 0);
+      const nextRun = new Date(Date.now() + backoffMinutes * 60000).toISOString();
+      
+      await supabase
+        .from('automation_scheduled_steps')
+        .update({ 
+          status: 'pending', 
+          scheduled_at: nextRun,
+          last_error: `Auto-retry scheduled (Attempt ${step.retry_count + 1})`
+        })
+        .eq('id', step.id);
+      
+      console.log(`[ScheduledSteps] Scheduled auto-retry for step ${step.id} in ${backoffMinutes}m`);
+    }
+  }
+
   while (Date.now() - startedAt < HARD_DEADLINE_MS && summary.picked < MAX_STEPS_PER_RUN) {
     const { data: steps, error } = await supabase
       .from('automation_scheduled_steps')

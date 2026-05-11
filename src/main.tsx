@@ -1,21 +1,17 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
-import ErrorBoundary from "./components/ErrorBoundary";
+import { GlobalErrorBoundary } from "./components/GlobalErrorBoundary";
+import { initGlobalErrorHandling } from "./lib/error-logger";
 
-// build: 2026-05-08e — enhanced initialization safety
+// build: 2026-05-11-v1 — integrated centralized logging and resilience
+initGlobalErrorHandling();
 
-// Global error tracking for better debugging in production
-window.onerror = (message, source, lineno, colno, error) => {
-  console.error("Global Error:", { message, source, lineno, colno, error });
-};
-
-window.onunhandledrejection = (event) => {
-  console.error("Unhandled Rejection:", event.reason);
-};
+// Inject dynamic deploy ID for correlation
+window.__DEPLOY_ID__ = "deploy_" + new Date().toISOString().split('T')[0] + "_" + Math.random().toString(36).substring(7);
 
 createRoot(document.getElementById("root")!).render(
-  <ErrorBoundary>
+  <GlobalErrorBoundary module="Root">
     <App />
-  </ErrorBoundary>
+  </GlobalErrorBoundary>
 );

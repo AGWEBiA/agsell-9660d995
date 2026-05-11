@@ -1402,7 +1402,7 @@ Deno.serve(async (req) => {
           organization_id: null,
           routing_status: "unknown_instance",
           details: { instance_name: instanceName },
-        }).then(() => {}).catch(() => {});
+        });
 
         // Upsert into unknown_whatsapp_instances
         const { data: existing } = await supabase

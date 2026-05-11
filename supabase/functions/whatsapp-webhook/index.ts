@@ -1537,7 +1537,7 @@ async function routeToInbox(
       .eq("organization_id", organizationId)
       .limit(2000);
 
-    const allContacts = orgContacts || [];
+    const allContacts = (orgContacts || []) as any[];
     const isAutoCreatedName = (name: string) => /^\+?\d[\d\s\-\.]+$/.test(name.trim());
 
     const matchingContacts = allContacts.filter((contact) => {

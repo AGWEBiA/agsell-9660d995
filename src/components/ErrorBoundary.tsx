@@ -36,21 +36,38 @@ export class ErrorBoundary extends Component<Props, State> {
         console.error("Error parsing organization from localStorage:", e);
       }
 
-      await supabase.from('system_logs').insert({
-        level: 'error',
-        event: 'frontend_crash',
-        source: 'ErrorBoundary',
-        message: error.message || 'Frontend Uncaught Error',
-        payload: {
-          name: error.name,
-          stack: error.stack,
-          componentStack: errorInfo.componentStack,
-          url: window.location.href,
-          userAgent: navigator.userAgent,
-        },
-        user_id: user?.id || null,
-        organization_id: organizationId
-      });
+      await Promise.all([
+        supabase.from('system_logs').insert({
+          level: 'error',
+          event: 'frontend_crash',
+          source: 'ErrorBoundary',
+          message: error.message || 'Frontend Uncaught Error',
+          payload: {
+            name: error.name,
+            stack: error.stack,
+            componentStack: errorInfo.componentStack,
+            url: window.location.href,
+            userAgent: navigator.userAgent,
+          },
+          user_id: user?.id || null,
+          organization_id: organizationId
+        }),
+        supabase.from('system_errors').insert({
+          severity: 'high',
+          module: 'Frontend',
+          error_message: error.message || 'Frontend Uncaught Error',
+          stack_trace: error.stack,
+          error_details: errorInfo.componentStack,
+          endpoint: window.location.pathname,
+          status: 'open',
+          user_id: user?.id || null,
+          organization_id: organizationId,
+          metadata: {
+            url: window.location.href,
+            userAgent: navigator.userAgent,
+          }
+        })
+      ]);
     } catch (logError) {
       console.error("Failed to log error to database:", logError);
     }

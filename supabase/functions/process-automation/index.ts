@@ -1,4 +1,3 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logToSystem } from "../_shared/logger.ts";
 import { handleCors, handleHealthCheck, corsHeaders } from "../_shared/helpers.ts";
@@ -18,7 +17,7 @@ interface ExecutionPayload {
   execution_id?: string;
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const corsRes = handleCors(req);
   if (corsRes) return corsRes;
 

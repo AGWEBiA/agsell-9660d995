@@ -235,7 +235,7 @@ interface ProviderConfig {
   config: Record<string, string>;
 }
 
-async function resolveProvider(supabase: ReturnType<typeof createClient>, orgId: string): Promise<ProviderConfig | null> {
+async function resolveProvider(supabase: any, orgId: string): Promise<any> {
   // Try Evolution API first
   const { data: evolutionInt } = await supabase
     .from("organization_integrations")

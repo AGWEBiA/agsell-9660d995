@@ -373,7 +373,7 @@ Deno.serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ ...result, api_version: apiVersion }), {
-      status: result.error ? 400 : 200,
+      status: (result as any).error ? 400 : 200,
       headers: { ...corsHeaders, "Content-Type": "application/json", "X-API-Version": apiVersion },
     });
   } catch (error: unknown) {

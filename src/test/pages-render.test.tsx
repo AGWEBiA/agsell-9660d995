@@ -32,7 +32,17 @@ vi.mock('@/contexts/AdminViewContext', () => ({ useAdminView: () => ({ isAdminVi
 vi.mock('@/hooks/useSubscriptionStatus', () => ({ useSubscriptionStatus: () => ({ isBlocked: false, isLoading: false }) }));
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: {
-    from: () => ({ select: () => ({ eq: () => ({ order: () => ({ data: [], error: null }), data: [], error: null }), data: [], error: null }), insert: vi.fn(), upsert: vi.fn() }),
+    from: () => ({ 
+      select: () => ({ 
+        eq: () => ({ 
+          order: () => Promise.resolve({ data: [], error: null }),
+          data: [], error: null 
+        }), 
+        data: [], error: null 
+      }), 
+      insert: vi.fn(), 
+      upsert: vi.fn() 
+    }),
     auth: { getUser: vi.fn(), onAuthStateChange: () => ({ data: { subscription: { unsubscribe: vi.fn() } } }) },
     channel: () => ({ on: () => ({ subscribe: vi.fn() }), subscribe: vi.fn() }),
     functions: { invoke: vi.fn() },
@@ -63,8 +73,16 @@ vi.mock('recharts', () => ({
 }));
 
 const { QueryClient, QueryClientProvider } = await import('@tanstack/react-query');
+const { HelmetProvider } = await import('react-helmet-async');
+
 function P({ children }: any) {
-  return <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>{children}</QueryClientProvider>;
+  return (
+    <HelmetProvider>
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+        {children}
+      </QueryClientProvider>
+    </HelmetProvider>
+  );
 }
 
 describe('ChatbotBuilder', () => {
@@ -109,7 +127,7 @@ describe('LandingPages', () => {
 
 describe('ContactPreferences', () => {
   it('renders with channels', async () => {
-    const C = (await import('@/pages/ContactPreferences')).default;
+    const C = (await import('@/pages/CRMSettingsConsolidated')).default;
     render(<P><C /></P>);
     expect(screen.getByText(/Preferências de Contato/i)).toBeInTheDocument();
   });

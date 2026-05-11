@@ -7,11 +7,11 @@ const pagePaths = [
   '@/pages/FunnelBI',
   '@/pages/AutomationMetrics',
   '@/pages/LandingPages',
-  '@/pages/ContactPreferences',
+  '@/pages/CRMSettingsConsolidated',
   '@/pages/FlowBuilder',
   '@/pages/Dashboard',
   '@/pages/Contacts',
-  '@/pages/Pipeline',
+  '@/pages/Deals',
   '@/pages/Inbox',
   '@/pages/Email',
   '@/pages/WhatsApp',
@@ -26,7 +26,7 @@ const pagePaths = [
   '@/pages/GroupRotator',
   '@/pages/PaidGroups',
   '@/pages/VoIP',
-  '@/pages/SMSMarketing',
+  '@/pages/CommunicationCampaigns',
 ];
 
 describe('Route Imports', () => {

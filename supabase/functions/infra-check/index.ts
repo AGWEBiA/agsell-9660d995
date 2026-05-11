@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const FUNCTION_VERSION = "2026-05-07-v7-manifest-precheck";
-const FUNCTION_MANIFEST = ["infra-check", "process-scheduled-steps", "process-automation", "send-whatsapp"];
+const FUNCTION_MANIFEST = ["infra-check", "process-scheduled-steps", "process-automation", "send-whatsapp", "whatsapp-webhook", "notify-error-alert"];
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

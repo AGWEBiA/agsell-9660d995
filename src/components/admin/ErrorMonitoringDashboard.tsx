@@ -106,10 +106,31 @@ export function ErrorMonitoringDashboard() {
 
   return (
     <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="bg-primary/5 border-primary/20">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 mb-2">
+              <Layers className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">Último Deploy</span>
+            </div>
+            <p className="text-2xl font-bold font-mono">{deploys[0] || 'N/A'}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertOctagon className="h-4 w-4 text-destructive" />
+              <span className="text-sm font-medium">Críticos (24h)</span>
+            </div>
+            <p className="text-2xl font-bold">{errors.filter((e: any) => e.severity === 'critical').length}</p>
+          </CardContent>
+        </Card>
+      </div>
+
       <div className="flex flex-wrap gap-3 p-4 bg-muted/30 rounded-lg">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar erros..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9" />
+          <Input placeholder="Buscar por mensagem ou módulo..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-9" />
         </div>
         <Select value={filterSeverity} onValueChange={setFilterSeverity}>
           <SelectTrigger className="w-[140px]"><SelectValue placeholder="Severidade" /></SelectTrigger>
@@ -118,10 +139,11 @@ export function ErrorMonitoringDashboard() {
             <SelectItem value="critical">Crítico</SelectItem>
             <SelectItem value="high">Alto</SelectItem>
             <SelectItem value="medium">Médio</SelectItem>
+            <SelectItem value="low">Baixo</SelectItem>
           </SelectContent>
         </Select>
         <Select value={filterDeploy} onValueChange={setFilterDeploy}>
-          <SelectTrigger className="w-[180px]"><Layers className="h-4 w-4 mr-2" /><SelectValue placeholder="Deploy ID" /></SelectTrigger>
+          <SelectTrigger className="w-[180px]"><Layers className="h-4 w-4 mr-2" /><SelectValue placeholder="Filtrar por Deploy" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos Deploys</SelectItem>
             {deploys.map((d: any) => <SelectItem key={d} value={d}>{d}</SelectItem>)}

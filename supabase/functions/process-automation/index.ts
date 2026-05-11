@@ -1112,7 +1112,7 @@ serve(async (req) => {
           action: action.subtype || action.type,
           status: 'error',
           error: errorMsg,
-          details: errorPayload
+          result: errorPayload
         });
         
         await logTimeline(action.subtype || action.type, 'Erro no Passo', 'error', errorPayload);
@@ -1151,12 +1151,15 @@ serve(async (req) => {
       JSON.stringify({ success: true, execution_id: executionId, results }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error processing automation:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: errorMessage }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
     );
   }
 });

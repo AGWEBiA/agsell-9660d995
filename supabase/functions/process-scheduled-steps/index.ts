@@ -11,7 +11,7 @@ const HARD_DEADLINE_MS = 20_000; // stop pulling new steps after 20s
 const MAX_STEPS_PER_RUN = 10;     // smaller batch to reduce DB pressure
 const STEP_INVOKE_TIMEOUT_MS = 8_000;
 
-async function getAuthenticatedUserId(supabase: ReturnType<typeof createClient>, req: Request) {
+async function getAuthenticatedUserId(supabase: any, req: Request) {
   const authHeader = req.headers.get('Authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.replace('Bearer ', '') : '';
   if (!token) return null;
@@ -20,7 +20,7 @@ async function getAuthenticatedUserId(supabase: ReturnType<typeof createClient>,
   return data.user.id;
 }
 
-async function userCanAccessOrganization(supabase: ReturnType<typeof createClient>, userId: string, organizationId: string) {
+async function userCanAccessOrganization(supabase: any, userId: string, organizationId: string) {
   const [{ data: membership }, { data: role }] = await Promise.all([
     supabase.from('organization_members').select('id').eq('user_id', userId).eq('organization_id', organizationId).maybeSingle(),
     supabase.from('user_roles').select('id').eq('user_id', userId).eq('role', 'admin').maybeSingle(),
@@ -28,7 +28,7 @@ async function userCanAccessOrganization(supabase: ReturnType<typeof createClien
   return Boolean(membership || role);
 }
 
-async function handleManualReprocess(supabase: ReturnType<typeof createClient>, req: Request, stepId: string) {
+async function handleManualReprocess(supabase: any, req: Request, stepId: string) {
   const userId = await getAuthenticatedUserId(supabase, req);
   if (!userId) {
     return new Response(JSON.stringify({ error: 'Sessão inválida' }), {
@@ -64,7 +64,7 @@ async function handleManualReprocess(supabase: ReturnType<typeof createClient>, 
 }
 
 async function processOneStep(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   supabaseUrl: string,
   serviceKey: string,
   step: any,
@@ -127,7 +127,7 @@ async function processOneStep(
 }
 
 async function processPendingSteps(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   supabaseUrl: string,
   serviceKey: string,
 ) {
@@ -240,8 +240,8 @@ serve(async (req) => {
     return new Response(JSON.stringify({ status: 'ok', version: VERSION, ...summary }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: (error as Error).message }), {
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error.message || 'Unknown error' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

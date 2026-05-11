@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
 
 // Route incoming Instagram DM to SAC Inbox (conversations + messages tables)
 async function routeDmToInbox(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   igAccount: { id: string; organization_id: string; connected_by: string },
   eventData: Record<string, unknown>
 ) {

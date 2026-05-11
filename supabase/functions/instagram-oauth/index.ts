@@ -174,7 +174,7 @@ async function exchangeCodeForFacebookUserToken(
   ];
 
   for (const endpoint of endpoints) {
-    const url = `${endpoint}?client_id=${encodeURIComponent(INSTAGRAM_APP_ID)}&redirect_uri=${encodeURIComponent(
+    const url = `${endpoint}?client_id=${encodeURIComponent(Deno.env.get('INSTAGRAM_APP_ID') || INSTAGRAM_APP_ID_FALLBACK)}&redirect_uri=${encodeURIComponent(
       redirectUri,
     )}&client_secret=${encodeURIComponent(appSecret)}&code=${encodeURIComponent(code)}`;
 

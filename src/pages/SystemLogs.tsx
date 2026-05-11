@@ -33,13 +33,17 @@ export default function SystemLogs() {
         .range(page * pageSize, (page + 1) * pageSize - 1);
 
       if (level !== 'all') {
-        query = query.eq('status', level);
+        if (level === 'failure' || level === 'error') {
+          query = query.in('level', ['failure', 'error']);
+        } else {
+          query = query.eq('level', level);
+        }
       }
       if (source) {
         query = query.ilike('source', `%${source}%`);
       }
       if (search) {
-        query = query.or(`message.ilike.%${search}%,event_type.ilike.%${search}%`);
+        query = query.or(`message.ilike.%${search}%,event.ilike.%${search}%`);
       }
       if (currentOrganization?.id) {
         query = query.eq('organization_id', currentOrganization.id);
@@ -52,12 +56,13 @@ export default function SystemLogs() {
     enabled: !!currentOrganization?.id,
   });
 
-  const getLevelBadge = (status: string) => {
-    switch (status) {
-      case 'failure': return <Badge variant="destructive" className="gap-1"><ShieldAlert className="h-3 w-3" /> Falha</Badge>;
+  const getLevelBadge = (level: string) => {
+    switch (level) {
+      case 'failure':
+      case 'error': return <Badge variant="destructive" className="gap-1"><ShieldAlert className="h-3 w-3" /> Falha</Badge>;
       case 'skipped': return <Badge variant="outline" className="text-amber-600 border-amber-600 gap-1 bg-amber-50"><AlertCircle className="h-3 w-3" /> Pulado</Badge>;
       case 'success': return <Badge variant="outline" className="text-emerald-600 border-emerald-600 gap-1 bg-emerald-50"><Info className="h-3 w-3" /> Sucesso</Badge>;
-      default: return <Badge variant="secondary" className="gap-1 font-mono"><Bug className="h-3 w-3" /> {status}</Badge>;
+      default: return <Badge variant="secondary" className="gap-1 font-mono"><Bug className="h-3 w-3" /> {level}</Badge>;
     }
   };
 
@@ -153,9 +158,9 @@ export default function SystemLogs() {
                       <TableCell className="font-mono text-xs text-muted-foreground">
                         {format(new Date(log.created_at), "dd/MM HH:mm:ss", { locale: ptBR })}
                       </TableCell>
-                      <TableCell>{getLevelBadge(log.status)}</TableCell>
+                      <TableCell>{getLevelBadge(log.level)}</TableCell>
                       <TableCell className="font-medium text-xs">{log.source}</TableCell>
-                      <TableCell className="text-xs">{log.event_type}</TableCell>
+                      <TableCell className="text-xs">{log.event}</TableCell>
                       <TableCell className="max-w-md truncate" title={log.message}>
                         {log.message}
                       </TableCell>

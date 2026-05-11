@@ -1,4 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Props {
   children: ReactNode;
@@ -17,9 +18,59 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error, errorInfo: null };
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  async componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("[ErrorBoundary] Uncaught error:", error, errorInfo);
     this.setState({ error, errorInfo });
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Get organization from localStorage if available, as context might not be ready
+      let organizationId = null;
+      try {
+        const orgData = localStorage.getItem('currentOrganization');
+        if (orgData) {
+          organizationId = JSON.parse(orgData).id;
+        }
+      } catch (e) {
+        console.error("Error parsing organization from localStorage:", e);
+      }
+
+      await Promise.all([
+        supabase.from('system_logs').insert({
+          level: 'error',
+          event: 'frontend_crash',
+          source: 'ErrorBoundary',
+          message: error.message || 'Frontend Uncaught Error',
+          payload: {
+            name: error.name,
+            stack: error.stack,
+            componentStack: errorInfo.componentStack,
+            url: window.location.href,
+            userAgent: navigator.userAgent,
+          },
+          user_id: user?.id || null,
+          organization_id: organizationId
+        }),
+        supabase.from('system_errors').insert({
+          severity: 'high',
+          module: 'Frontend',
+          error_message: error.message || 'Frontend Uncaught Error',
+          stack_trace: error.stack,
+          error_details: errorInfo.componentStack,
+          endpoint: window.location.pathname,
+          status: 'open',
+          user_id: user?.id || null,
+          organization_id: organizationId,
+          metadata: {
+            url: window.location.href,
+            userAgent: navigator.userAgent,
+          }
+        })
+      ]);
+    } catch (logError) {
+      console.error("Failed to log error to database:", logError);
+    }
   }
 
   handleReload = () => {

@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
-    } catch (error) {
+    } catch (error: any) {
       const message = error instanceof Error ? error.message : "Erro de conexão";
       return new Response(JSON.stringify({ success: false, error: `Falha ao conectar: ${message}` }), {
         status: 200,
@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
     } finally {
       clearTimeout(timeout);
     }
-  } catch (error) {
+  } catch (error: any) {
     const message = error instanceof Error ? error.message : "Erro interno";
     return new Response(JSON.stringify({ success: false, error: message }), {
       status: 500,

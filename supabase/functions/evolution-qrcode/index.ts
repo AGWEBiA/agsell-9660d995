@@ -192,7 +192,7 @@ Deno.serve(async (req) => {
     } finally {
       clearTimeout(timeout);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("evolution-qrcode error:", error);
     const message = error instanceof Error ? error.message : "Erro interno";
     const isTimeout = message.includes("aborted") || message.includes("AbortError");
@@ -352,7 +352,7 @@ async function logoutInstance(
           instance_name: candidate,
         });
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(`Logout failed for ${candidate}:`, e);
     }
   }
@@ -411,7 +411,7 @@ async function deleteInstance(
           instance_name: candidate,
         });
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(`Delete failed for ${candidate}:`, e);
     }
   }
@@ -448,7 +448,7 @@ async function registerInboundWebhook(
         },
       }),
     });
-  } catch (e) {
+  } catch (e: any) {
     console.error(`Failed to register inbound webhook for ${instanceName}:`, e);
   }
 }
@@ -459,7 +459,7 @@ async function createInstanceAndFetchQRCode(
   instanceName: string,
   supabaseUrl: string,
   signal: AbortSignal,
-) {
+): Promise<any> {
   const createRes = await fetch(`${baseUrl}/instance/create`, {
     method: "POST",
     headers: {
@@ -534,7 +534,7 @@ async function getQRCode(
   supabaseUrl: string,
   signal: AbortSignal,
   allowAutoCreate = true,
-) {
+): Promise<any> {
   const candidates = await resolveInstanceCandidates(baseUrl, apiKey, requestedInstanceName, signal);
 
   for (const candidate of candidates) {

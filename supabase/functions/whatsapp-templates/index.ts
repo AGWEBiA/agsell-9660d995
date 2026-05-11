@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
       default:
         return json({ success: false, error: "Ação inválida" });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("whatsapp-templates error:", error);
     return json({ success: false, error: error instanceof Error ? error.message : "Erro interno" }, 500);
   }

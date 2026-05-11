@@ -78,7 +78,7 @@ export async function handleHealthCheck(req: Request, functionName: string): Pro
           last_deploy_id: deployId,
         }, { onConflict: 'function_name' });
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(`[HEALTHCHECK] Failed to report to DB:`, e);
     }
 

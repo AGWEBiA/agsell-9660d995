@@ -149,7 +149,7 @@ Deno.serve(async (req) => {
               .eq("campaign_id", campaign_id)
               .eq("contact_id", recipient.contact_id);
           }
-        } catch (err) {
+        } catch (err: any) {
           failedCount++;
           const errMsg = err instanceof Error ? err.message : "Unknown error";
           await supabase
@@ -235,7 +235,7 @@ interface ProviderConfig {
   config: Record<string, string>;
 }
 
-async function resolveProvider(supabase: ReturnType<typeof createClient>, orgId: string): Promise<ProviderConfig | null> {
+async function resolveProvider(supabase: any, orgId: string): Promise<any> {
   // Try Evolution API first
   const { data: evolutionInt } = await supabase
     .from("organization_integrations")
@@ -253,8 +253,8 @@ async function resolveProvider(supabase: ReturnType<typeof createClient>, orgId:
       .eq("key", "evolution_api")
       .single();
 
-    const globalEvo = globalConfig?.value as Record<string, string> | null;
-    const orgConfig = evolutionInt.config as Record<string, string>;
+    const globalEvo = (globalConfig as any)?.value as Record<string, string> | null;
+    const orgConfig = (evolutionInt as any).config as Record<string, string>;
 
     const mergedConfig: Record<string, string> = {
       api_url: globalEvo?.api_url || orgConfig.api_url || "",
@@ -277,7 +277,7 @@ async function resolveProvider(supabase: ReturnType<typeof createClient>, orgId:
     .maybeSingle();
 
   if (businessInt) {
-    return { type: "whatsapp_business", config: businessInt.config as Record<string, string> };
+    return { type: "whatsapp_business", config: (businessInt as any).config as Record<string, string> };
   }
 
   return null;

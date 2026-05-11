@@ -79,7 +79,7 @@ No other text, just JSON.`,
     return new Response(JSON.stringify({ success: true, analysis: data }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Sentiment analysis error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,

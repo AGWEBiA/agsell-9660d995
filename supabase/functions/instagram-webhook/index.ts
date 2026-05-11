@@ -125,7 +125,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Instagram webhook error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
 
 // Route incoming Instagram DM to SAC Inbox (conversations + messages tables)
 async function routeDmToInbox(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   igAccount: { id: string; organization_id: string; connected_by: string },
   eventData: Record<string, unknown>
 ) {
@@ -161,8 +161,8 @@ async function routeDmToInbox(
     let conversationId: string;
 
     if (existingConv) {
-      conversationId = existingConv.id;
-      contactId = existingConv.contact_id;
+      conversationId = (existingConv as any).id;
+      contactId = (existingConv as any).contact_id;
 
       // Update last_message_at
       await supabase
@@ -206,14 +206,14 @@ async function routeDmToInbox(
     } else {
       console.log("Instagram DM routed to inbox, conversation:", conversationId);
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error routing DM to inbox:", err);
   }
 }
 
 // Process automation events
 async function processEvent(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   igAccount: { id: string; organization_id: string; connected_by: string },
   eventType: string,
   eventData: Record<string, unknown>
@@ -334,7 +334,7 @@ async function processEvent(
               console.error("Failed to send Instagram DM:", await resp.text());
             }
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error("Error sending auto-reply:", err);
         }
       }
@@ -365,7 +365,7 @@ async function processEvent(
               console.error("Failed to reply to comment:", await resp.text());
             }
           }
-        } catch (err) {
+        } catch (err: any) {
           console.error("Error replying to comment:", err);
         }
       }

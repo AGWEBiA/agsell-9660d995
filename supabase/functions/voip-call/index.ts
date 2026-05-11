@@ -196,7 +196,7 @@ Deno.serve(async (req) => {
               if (statusData.dados?.url_gravacao) {
                 finalRecordingUrl = statusData.dados.url_gravacao;
               }
-            } catch (e) {
+            } catch (e: any) {
               console.error("[VOIP-CALL] Failed to fetch Zenvia recording:", e);
             }
           }

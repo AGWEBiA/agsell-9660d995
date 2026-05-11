@@ -130,7 +130,7 @@ async function exchangeLongLivedToken(shortLivedToken: string, appSecret: string
     igPostBody.append("access_token", tokenCandidate);
     attempts.push({ name: "instagram_post", url: "https://graph.instagram.com/access_token", method: "POST", body: igPostBody });
 
-    const fbGetUrl = `https://graph.facebook.com/${GRAPH_API_VERSION}/oauth/access_token?client_id=${encodeURIComponent(INSTAGRAM_APP_ID)}&client_secret=${encodeURIComponent(appSecret)}&grant_type=fb_exchange_token&fb_exchange_token=${encodeURIComponent(tokenCandidate)}`;
+    const fbGetUrl = `https://graph.facebook.com/${GRAPH_API_VERSION}/oauth/access_token?client_id=${encodeURIComponent(Deno.env.get('INSTAGRAM_APP_ID') || INSTAGRAM_APP_ID_FALLBACK)}&client_secret=${encodeURIComponent(appSecret)}&grant_type=fb_exchange_token&fb_exchange_token=${encodeURIComponent(tokenCandidate)}`;
     attempts.push({ name: "facebook_get", url: fbGetUrl, method: "GET" });
 
     for (const attempt of attempts) {
@@ -174,7 +174,7 @@ async function exchangeCodeForFacebookUserToken(
   ];
 
   for (const endpoint of endpoints) {
-    const url = `${endpoint}?client_id=${encodeURIComponent(INSTAGRAM_APP_ID)}&redirect_uri=${encodeURIComponent(
+    const url = `${endpoint}?client_id=${encodeURIComponent(Deno.env.get('INSTAGRAM_APP_ID') || INSTAGRAM_APP_ID_FALLBACK)}&redirect_uri=${encodeURIComponent(
       redirectUri,
     )}&client_secret=${encodeURIComponent(appSecret)}&code=${encodeURIComponent(code)}`;
 
@@ -397,7 +397,7 @@ serve(async (req) => {
         INSTAGRAM_APP_ID = (metaSettings.value as any).app_id;
         console.log("[INSTAGRAM-OAUTH] Using App ID from platform_settings:", INSTAGRAM_APP_ID);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.warn("[INSTAGRAM-OAUTH] Could not load meta_app settings, using fallback");
     }
 
@@ -629,7 +629,7 @@ serve(async (req) => {
       JSON.stringify({ success: true, updated: false, account: instagramAccount }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Instagram OAuth error:", error);
     return new Response(
       JSON.stringify({ error: "Erro interno ao processar autenticação" }),

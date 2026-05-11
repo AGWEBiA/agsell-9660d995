@@ -353,7 +353,7 @@ async function sendWithEvolutionAPI(
       const webhookErr = await webhookResponse.text();
       console.log(`Webhook config attempt (non-blocking): ${webhookResponse.status} - ${webhookErr}`);
     }
-  } catch (e) {
+  } catch (e: any) {
     console.log("Webhook auto-config failed (non-blocking):", e);
   }
 
@@ -589,7 +589,7 @@ async function sendWithEvolutionAPI(
         stickerValid = false;
         validationReason = `content-type=${stickerContentType}`;
       }
-    } catch (e) {
+    } catch (e: any) {
       stickerValid = false;
       validationReason = `fetch failed: ${e instanceof Error ? e.message : String(e)}`;
     }

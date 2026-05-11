@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
         await supabase.from("email_domains").update(updateData).eq("id", domainRecord.id);
 
         results.push({ domain, status: newStatus, spfVerified, dkimVerified, dmarcVerified, mxVerified });
-      } catch (err) {
+      } catch (err: any) {
         console.error(`Error verifying ${domainRecord.domain}:`, err);
         results.push({ domain: domainRecord.domain, error: err instanceof Error ? err.message : "Unknown error" });
       }
@@ -136,7 +136,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ message: `Verified ${results.length} domains`, results }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Cron verification error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),

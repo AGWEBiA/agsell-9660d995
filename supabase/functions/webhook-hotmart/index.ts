@@ -263,7 +263,7 @@ async function syncWhatsAppGroupsByEmail(supabase: any, email: string, shouldBeA
       const result = await response.text();
       console.log("WhatsApp group sync result:", result);
     }
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error syncing WhatsApp groups:", err);
   }
 }

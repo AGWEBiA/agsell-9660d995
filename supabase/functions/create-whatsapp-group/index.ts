@@ -182,7 +182,7 @@ Deno.serve(async (req) => {
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     const message = error instanceof Error ? error.message : "Erro interno";
     console.error("[CREATE-GROUP] Error:", error);
     return new Response(

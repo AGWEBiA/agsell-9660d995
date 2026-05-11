@@ -351,7 +351,7 @@ Deno.serve(async (req) => {
               participants: [jid],
             }),
           });
-        } catch (err) {
+        } catch (err: any) {
           console.error("Error updating participant:", err);
         }
       } else {
@@ -366,7 +366,7 @@ Deno.serve(async (req) => {
               participants: [jid],
             }),
           });
-        } catch (err) {
+        } catch (err: any) {
           console.error("Error removing participant:", err);
         }
       }

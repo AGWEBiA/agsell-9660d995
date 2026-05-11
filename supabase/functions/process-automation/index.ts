@@ -75,7 +75,7 @@ serve(async (req) => {
     let payload: ExecutionPayload;
     try {
       payload = parsedBody as ExecutionPayload;
-    } catch (e) {
+    } catch (e: any) {
       return new Response(JSON.stringify({ error: 'Invalid JSON payload' }), { 
         status: 400, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 

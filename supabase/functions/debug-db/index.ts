@@ -9,7 +9,7 @@ serve(async (req) => {
     );
     const { data, error } = await supabase.from('profiles').select('email, full_name').ilike('full_name', '%Bruno%').limit(5);
     return new Response(JSON.stringify({ data, error }), { headers: { 'Content-Type': 'application/json' } });
-  } catch (err) {
+  } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
 });

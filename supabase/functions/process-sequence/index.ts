@@ -130,7 +130,7 @@ serve(async (req) => {
       JSON.stringify({ processed, errors, total: pendingEnrollments.length }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Process sequence error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),

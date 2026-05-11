@@ -212,7 +212,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ success: true, conversation_id: conversationId }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Email inbound error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),

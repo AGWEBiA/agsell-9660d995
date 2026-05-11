@@ -335,7 +335,7 @@ Deno.serve(async (req) => {
       status: 405,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Portal error:", err);
     return new Response(
       JSON.stringify({ error: "Erro interno do servidor" }),

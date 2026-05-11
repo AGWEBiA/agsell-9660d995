@@ -113,7 +113,7 @@ async function registerDomainOnResend(
     }
 
     return { id: data.id, records: data.records || [], status: data.status || null };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error registering domain on Resend:", error);
     return null;
   }
@@ -141,7 +141,7 @@ async function enableReceiving(apiKey: string, domainId: string): Promise<void> 
       headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({ capabilities: { sending: "enabled", receiving: "enabled" } }),
     });
-  } catch (e) {
+  } catch (e: any) {
     console.error("Error enabling receiving:", e);
   }
 }
@@ -436,7 +436,7 @@ Deno.serve(async (req) => {
       dkim_records: allDkimRecords,
       dmarc_records: dmarcRecords, mx_records: allMxRecords,
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error verifying domain:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },

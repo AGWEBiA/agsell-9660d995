@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
       update.next_retry_at = null;
       failed++;
       if (d.webhook_id) {
-        await supabase.rpc("increment_automation_executions", { automation_id: d.webhook_id }).catch(() => {});
+        try { await supabase.rpc("increment_automation_executions", { automation_id: d.webhook_id }); } catch (e) { console.error("Error incrementing automation executions:", e); }
         await supabase.from("api_webhook_subscriptions")
           .update({ failure_count: ((d as any).failure_count ?? 0) + 1 })
           .eq("id", d.webhook_id);

@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
     let payload;
     try {
       payload = JSON.parse(rawBody);
-    } catch (e) {
+    } catch (e: any) {
       console.error("[Unified Webhook] JSON Parse Error:", e.message);
       return new Response(JSON.stringify({ error: "Invalid JSON" }), {
         status: 400,

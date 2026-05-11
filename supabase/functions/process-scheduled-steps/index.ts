@@ -113,7 +113,7 @@ async function processOneStep(
       .eq('id', step.id);
 
     return { ok: true };
-  } catch (err) {
+  } catch (err: any) {
     const msg = (err as Error).message || 'unknown';
     await supabase.from('automation_scheduled_steps')
       .update({

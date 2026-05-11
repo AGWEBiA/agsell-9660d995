@@ -358,7 +358,7 @@ Deno.serve(async (req) => {
       payload.Product?.product_name || payload.product_name;
     
     // Resolve organization ID for this event
-    let targetOrgId: string;
+    let targetOrgId: string | undefined;
     
     // 1. Try from query param (best for multi-tenancy)
     targetOrgId = url.searchParams.get("org_id") || undefined;

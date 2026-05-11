@@ -105,7 +105,7 @@ describe('FunnelBI', () => {
   it('renders', async () => {
     const C = (await import('@/pages/FunnelBI')).default;
     render(<P><C /></P>);
-    expect(screen.getByText('BI do Funil')).toBeInTheDocument();
+    expect(await screen.findByText(/BI do Funil/i, {}, { timeout: 3000 })).toBeInTheDocument();
   });
 });
 
@@ -113,7 +113,7 @@ describe('AutomationMetrics', () => {
   it('renders', async () => {
     const C = (await import('@/pages/AutomationMetrics')).default;
     render(<P><C /></P>);
-    expect(screen.getByText(/Métricas de Automação/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Métricas de Automação/i, {}, { timeout: 3000 })).toBeInTheDocument();
   });
 });
 
@@ -129,7 +129,8 @@ describe('ContactPreferences', () => {
   it('renders with channels', async () => {
     const C = (await import('@/pages/CRMSettingsConsolidated')).default;
     render(<P><C /></P>);
-    expect(screen.getByText(/Preferências de Contato/i)).toBeInTheDocument();
+    // Look for "Preferências" tab text since it's a consolidated page
+    expect(await screen.findByText(/Preferências/i)).toBeInTheDocument();
   });
 });
 

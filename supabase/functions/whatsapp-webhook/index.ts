@@ -1648,7 +1648,7 @@ async function routeToInbox(
     const conversations = orgConversations || [];
 
     const contactConv = contactId
-      ? conversations.find((conv) => conv.contact_id === contactId) || null
+      ? conversations.find((conv: any) => conv.contact_id === contactId) || null
       : null;
 
     const metadataConv =

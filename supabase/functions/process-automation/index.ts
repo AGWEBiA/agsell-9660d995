@@ -1078,8 +1078,8 @@ serve(async (req) => {
           default:
             actionResult = { skipped: true, reason: `Unhandled action type: ${actionType}` };
             console.log(`[AUTOMATION] Unhandled action: ${actionType}`);
-        }
-
+            await logTimeline('unhandled_action', 'Ação Não Suportada', 'warning', { action_type: actionType });
+            break;
         results.push({
           step: currentStep,
           action: actionType,
@@ -1096,13 +1096,30 @@ serve(async (req) => {
       } catch (actionError) {
         const errorMsg = actionError instanceof Error ? actionError.message : 'Unknown error';
         console.error(`[AUTOMATION] Step ${currentStep} error:`, errorMsg);
+        
+        // Detailed error context
+        const errorPayload = { 
+          error: errorMsg,
+          step_index: i,
+          action_type: action.subtype || action.type,
+          config_keys: Object.keys(action.config || {})
+        };
+
         results.push({
           step: currentStep,
           action: action.subtype || action.type,
           status: 'error',
           error: errorMsg,
+          details: errorPayload
         });
-        await logTimeline(action.subtype || action.type, 'Erro', 'error', { error: errorMsg });
+        
+        await logTimeline(action.subtype || action.type, 'Erro no Passo', 'error', errorPayload);
+        
+        // Optionally stop execution on critical errors (like auth/config issues)
+        if (errorMsg.includes('Unauthorized') || errorMsg.includes('401')) {
+          console.warn("[AUTOMATION] Critical auth error, stopping execution");
+          break;
+        }
       }
     }
 

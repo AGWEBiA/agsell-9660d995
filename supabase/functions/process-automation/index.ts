@@ -1,11 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logToSystem } from "../_shared/logger.ts";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
-};
+import { handleCors, handleHealthCheck, corsHeaders } from "../_shared/helpers.ts";
 
 interface AutomationAction {
   type: string;
@@ -23,9 +19,11 @@ interface ExecutionPayload {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsRes = handleCors(req);
+  if (corsRes) return corsRes;
+
+  const healthRes = await handleHealthCheck(req, 'process-automation');
+  if (healthRes) return healthRes;
 
   try {
     const bodyText = await req.text();
@@ -38,15 +36,6 @@ serve(async (req) => {
       }
     }
 
-    if (parsedBody?.action === 'ping') {
-      return new Response(JSON.stringify({
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        version: '2026-05-07-v2-fast-ping',
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');

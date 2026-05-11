@@ -1483,7 +1483,7 @@ interface RouteToInboxParams {
 }
 
 async function routeToInbox(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   params: RouteToInboxParams
 ): Promise<{ contactId: string | null; conversationId: string | null }> {
 
@@ -1537,7 +1537,7 @@ async function routeToInbox(
       .eq("organization_id", organizationId)
       .limit(2000);
 
-    const allContacts = orgContacts || [];
+    const allContacts = (orgContacts || []) as any[];
     const isAutoCreatedName = (name: string) => /^\+?\d[\d\s\-\.]+$/.test(name.trim());
 
     const matchingContacts = allContacts.filter((contact) => {
@@ -1648,11 +1648,11 @@ async function routeToInbox(
     const conversations = orgConversations || [];
 
     const contactConv = contactId
-      ? conversations.find((conv) => conv.contact_id === contactId) || null
+      ? conversations.find((conv: any) => conv.contact_id === contactId) || null
       : null;
 
     const metadataConv =
-      conversations.find((conv) => {
+      conversations.find((conv: any) => {
         const metadataValue = (conv.metadata as Record<string, unknown> | null)?.[metadataKey];
         const normalizedMetadata = normalizePhone(typeof metadataValue === "string" ? metadataValue : "");
         const localMetadata = extractLocal(normalizedMetadata);

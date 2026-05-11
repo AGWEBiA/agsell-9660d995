@@ -358,10 +358,10 @@ Deno.serve(async (req) => {
       payload.Product?.product_name || payload.product_name;
     
     // Resolve organization ID for this event
-    let targetOrgId: string;
+    let targetOrgId: string = "";
     
     // 1. Try from query param (best for multi-tenancy)
-    targetOrgId = url.searchParams.get("org_id") || undefined;
+    targetOrgId = url.searchParams.get("org_id") || "";
     
     // 2. Try from checkout_leads
     if (!targetOrgId && customerEmail) {
@@ -373,7 +373,7 @@ Deno.serve(async (req) => {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      targetOrgId = leadOrg?.organization_id || undefined;
+      targetOrgId = leadOrg?.organization_id || "";
     }
 
     // 3. Fallback: find any org that has this product ID in their integrations or plans

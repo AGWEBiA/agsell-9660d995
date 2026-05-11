@@ -1080,6 +1080,8 @@ serve(async (req) => {
             console.log(`[AUTOMATION] Unhandled action: ${actionType}`);
             await logTimeline('unhandled_action', 'Ação Não Suportada', 'warning', { action_type: actionType });
             break;
+        }
+
         results.push({
           step: currentStep,
           action: actionType,

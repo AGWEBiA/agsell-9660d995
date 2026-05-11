@@ -161,8 +161,8 @@ async function routeDmToInbox(
     let conversationId: string;
 
     if (existingConv) {
-      conversationId = existingConv.id;
-      contactId = existingConv.contact_id;
+      conversationId = (existingConv as any).id;
+      contactId = (existingConv as any).contact_id;
 
       // Update last_message_at
       await supabase

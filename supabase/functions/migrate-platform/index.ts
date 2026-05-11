@@ -266,10 +266,10 @@ serve(async (req) => {
     }
 
     throw new Error("Ação inválida");
-  } catch (error) {
+  } catch (error: any) {
     console.error("Migration error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error.message || 'Unknown error' }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

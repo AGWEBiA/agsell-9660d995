@@ -358,10 +358,10 @@ Deno.serve(async (req) => {
       payload.Product?.product_name || payload.product_name;
     
     // Resolve organization ID for this event
-    let targetOrgId: string | undefined;
+    let targetOrgId: string = "";
     
     // 1. Try from query param (best for multi-tenancy)
-    targetOrgId = url.searchParams.get("org_id") || undefined;
+    targetOrgId = url.searchParams.get("org_id") || "";
     
     // 2. Try from checkout_leads
     if (!targetOrgId && customerEmail) {

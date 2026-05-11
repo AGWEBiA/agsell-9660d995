@@ -39,15 +39,20 @@ export class ErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
+      const deployId = window.__DEPLOY_ID__ || 'N/A';
+
       return (
         <div className="min-h-[200px] w-full flex flex-col items-center justify-center p-6 bg-destructive/5 rounded-lg border border-destructive/20 my-4">
           <AlertCircle className="h-10 w-10 text-destructive mb-4" />
           <h2 className="text-xl font-semibold text-foreground mb-2">
             Algo deu errado nesta seção
           </h2>
-          <p className="text-sm text-muted-foreground text-center mb-6 max-w-md">
+          <p className="text-sm text-muted-foreground text-center mb-2 max-w-md">
             Ocorreu um erro ao carregar este componente. Nossa equipe já foi notificada.
           </p>
+          <div className="text-[10px] font-mono text-muted-foreground mb-6 bg-muted px-2 py-1 rounded">
+            Deploy ID: {deployId}
+          </div>
           <Button
             variant="outline"
             onClick={() => this.setState({ hasError: false })}
@@ -59,6 +64,7 @@ export class ErrorBoundary extends Component<Props, State> {
         </div>
       );
     }
+
 
     return this.props.children;
   }

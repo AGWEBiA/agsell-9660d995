@@ -373,7 +373,7 @@ Deno.serve(async (req) => {
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      targetOrgId = leadOrg?.organization_id || undefined;
+      targetOrgId = leadOrg?.organization_id || "";
     }
 
     // 3. Fallback: find any org that has this product ID in their integrations or plans

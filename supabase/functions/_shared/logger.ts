@@ -11,12 +11,15 @@ export interface LogEntry {
   payload?: any;
   metadata?: any;
   level?: LogLevel;
+  deploy_id?: string;
 }
 
 /**
  * Standardized logger for Edge Functions to write to system_logs table
  */
 export async function logToSystem(supabase: SupabaseClient, entry: LogEntry) {
+  const deployId = entry.deploy_id || Deno.env.get('DENO_DEPLOYMENT_ID') || 'local-dev';
+  
   try {
     const { error } = await supabase
       .from("system_logs")
@@ -28,7 +31,11 @@ export async function logToSystem(supabase: SupabaseClient, entry: LogEntry) {
         event: entry.event,
         message: entry.message,
         payload: entry.payload,
-        metadata: entry.metadata,
+        metadata: {
+          ...(entry.metadata || {}),
+          deploy_id: deployId
+        },
+        deploy_id: deployId, // Added column
       });
 
     if (error) {
@@ -40,7 +47,7 @@ export async function logToSystem(supabase: SupabaseClient, entry: LogEntry) {
   
   // Also log to console for Supabase logs
   const levelPrefix = `[${(entry.level || 'info').toUpperCase()}]`;
-  console.log(`${levelPrefix} [${entry.source}] ${entry.event}: ${entry.message || ''}`, entry.payload || '');
+  console.log(`${levelPrefix} [${entry.source}] [${deployId}] ${entry.event}: ${entry.message || ''}`, entry.payload || '');
 }
 
 /**
@@ -69,3 +76,4 @@ export async function updateWebhookEvent(
     console.error(`[LOGGER-ERROR] Failed to update webhook_event ${id}:`, error.message);
   }
 }
+

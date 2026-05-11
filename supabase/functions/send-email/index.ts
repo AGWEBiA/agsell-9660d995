@@ -259,7 +259,7 @@ async function sendWithAmazonSES(config: Record<string, string>, emailReq: Email
   const body = params.toString();
 
   try {
-    const { AwsClient } = await import("npm:aws4fetch@1.0.20");
+    const { AwsClient } = await import("https://esm.sh/aws4fetch@1.0.20");
     // SES config validated
     
     // Use SESv2 SendEmail API (JSON-based, simpler signing)

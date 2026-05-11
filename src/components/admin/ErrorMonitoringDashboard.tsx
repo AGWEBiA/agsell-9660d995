@@ -14,12 +14,13 @@ import {
 import {
   AlertTriangle, Bug, CheckCircle, Clock, Filter, Search,
   TrendingUp, XCircle, MessageSquare, RefreshCw, AlertOctagon,
-  Activity, BarChart3, Layers
+  Activity, BarChart3, Layers, ExternalLink
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { withRetry } from '@/lib/supabase-retry';
 
 const SEVERITY_CONFIG = {
   critical: { label: 'Crítico', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300', icon: AlertOctagon },
@@ -220,10 +221,36 @@ export function ErrorMonitoringDashboard() {
       </Card>
 
       <Dialog open={!!selectedError} onOpenChange={() => setSelectedError(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader><DialogTitle>Detalhes do Erro</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <div className="flex justify-between items-center pr-6">
+              <DialogTitle>Detalhes do Erro</DialogTitle>
+              <Badge variant="outline" className="font-mono text-[10px]">{selectedError?.id}</Badge>
+            </div>
+          </DialogHeader>
           <div className="space-y-4">
-            <div className="bg-muted p-3 rounded font-mono text-xs overflow-auto max-h-40">{selectedError?.stack_trace || selectedError?.error_message}</div>
+            <div className="grid grid-cols-2 gap-4 text-xs">
+              <div className="p-2 bg-muted rounded">
+                <p className="font-semibold mb-1">Módulo:</p>
+                <p>{selectedError?.module}</p>
+              </div>
+              <div className="p-2 bg-muted rounded">
+                <p className="font-semibold mb-1">Deploy ID:</p>
+                <p className="font-mono">{selectedError?.user_context?.deploy_id || 'N/A'}</p>
+              </div>
+            </div>
+            
+            <div className="bg-slate-950 text-slate-50 p-3 rounded font-mono text-xs overflow-auto max-h-60">
+              <div className="font-bold text-red-400 mb-2">{selectedError?.error_message}</div>
+              <pre className="whitespace-pre-wrap">{selectedError?.stack_trace || 'Sem stack trace disponível'}</pre>
+            </div>
+
+            {selectedError?.user_context && (
+              <div className="p-3 border rounded-lg bg-muted/20">
+                <p className="text-xs font-semibold mb-2">Contexto do Usuário:</p>
+                <pre className="text-[10px] overflow-auto max-h-32">{JSON.stringify(selectedError.user_context, null, 2)}</pre>
+              </div>
+            )}
             <Textarea placeholder="Adicionar comentário técnico..." value={noteText} onChange={e => setNoteText(e.target.value)} />
             <div className="text-xs text-muted-foreground whitespace-pre-wrap">{selectedError?.notes}</div>
           </div>

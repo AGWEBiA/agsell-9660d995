@@ -1112,7 +1112,7 @@ serve(async (req) => {
           action: action.subtype || action.type,
           status: 'error',
           error: errorMsg,
-          details: errorPayload
+          result: errorPayload
         });
         
         await logTimeline(action.subtype || action.type, 'Erro no Passo', 'error', errorPayload);

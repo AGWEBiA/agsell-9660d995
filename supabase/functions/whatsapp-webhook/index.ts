@@ -1483,7 +1483,7 @@ interface RouteToInboxParams {
 }
 
 async function routeToInbox(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   params: RouteToInboxParams
 ): Promise<{ contactId: string | null; conversationId: string | null }> {
 

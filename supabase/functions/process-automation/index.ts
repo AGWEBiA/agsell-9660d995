@@ -1151,8 +1151,7 @@ serve(async (req) => {
       JSON.stringify({ success: true, execution_id: executionId, results }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error processing automation:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(

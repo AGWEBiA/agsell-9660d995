@@ -59,7 +59,7 @@ serve(async (req) => {
         "Content-Length": audioBuffer.byteLength.toString(),
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error:", error.message);
     return new Response(
       JSON.stringify({ error: error.message }),

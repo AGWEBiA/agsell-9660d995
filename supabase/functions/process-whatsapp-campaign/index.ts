@@ -277,7 +277,7 @@ async function resolveProvider(supabase: any, orgId: string): Promise<any> {
     .maybeSingle();
 
   if (businessInt) {
-    return { type: "whatsapp_business", config: businessInt.config as Record<string, string> };
+    return { type: "whatsapp_business", config: (businessInt as any).config as Record<string, string> };
   }
 
   return null;

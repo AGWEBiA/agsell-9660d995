@@ -367,6 +367,7 @@ Deno.serve(async (req) => {
       instance_label: string;
       phone_number: string;
       groups: Array<{ id: string; subject: string; size: number; creation: number }>;
+      error?: string;
     }> = [];
 
     for (const inst of connectedInstances) {

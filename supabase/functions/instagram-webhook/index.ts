@@ -213,7 +213,7 @@ async function routeDmToInbox(
 
 // Process automation events
 async function processEvent(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   igAccount: { id: string; organization_id: string; connected_by: string },
   eventType: string,
   eventData: Record<string, unknown>

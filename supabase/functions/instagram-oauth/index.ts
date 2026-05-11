@@ -130,7 +130,7 @@ async function exchangeLongLivedToken(shortLivedToken: string, appSecret: string
     igPostBody.append("access_token", tokenCandidate);
     attempts.push({ name: "instagram_post", url: "https://graph.instagram.com/access_token", method: "POST", body: igPostBody });
 
-    const fbGetUrl = `https://graph.facebook.com/${GRAPH_API_VERSION}/oauth/access_token?client_id=${encodeURIComponent(INSTAGRAM_APP_ID)}&client_secret=${encodeURIComponent(appSecret)}&grant_type=fb_exchange_token&fb_exchange_token=${encodeURIComponent(tokenCandidate)}`;
+    const fbGetUrl = `https://graph.facebook.com/${GRAPH_API_VERSION}/oauth/access_token?client_id=${encodeURIComponent(Deno.env.get('INSTAGRAM_APP_ID') || INSTAGRAM_APP_ID_FALLBACK)}&client_secret=${encodeURIComponent(appSecret)}&grant_type=fb_exchange_token&fb_exchange_token=${encodeURIComponent(tokenCandidate)}`;
     attempts.push({ name: "facebook_get", url: fbGetUrl, method: "GET" });
 
     for (const attempt of attempts) {

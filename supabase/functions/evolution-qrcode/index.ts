@@ -459,7 +459,7 @@ async function createInstanceAndFetchQRCode(
   instanceName: string,
   supabaseUrl: string,
   signal: AbortSignal,
-) {
+): Promise<any> {
   const createRes = await fetch(`${baseUrl}/instance/create`, {
     method: "POST",
     headers: {
@@ -534,7 +534,7 @@ async function getQRCode(
   supabaseUrl: string,
   signal: AbortSignal,
   allowAutoCreate = true,
-) {
+): Promise<any> {
   const candidates = await resolveInstanceCandidates(baseUrl, apiKey, requestedInstanceName, signal);
 
   for (const candidate of candidates) {

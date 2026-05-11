@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
 import { supabase } from '@/integrations/supabase/client';
 import Pricing from '@/pages/Pricing';
 import { VendasPlansBox } from '@/components/vendas/VendasPlansBox';
@@ -42,7 +43,7 @@ describe('Active Plans Validation', () => {
     
     // Default mock implementation
     (supabase.from as any).mockImplementation((table: string) => {
-      if (table === 'plans_public') {
+      if (table === 'plans' || table === 'plans_public') {
         return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
@@ -63,9 +64,11 @@ describe('Active Plans Validation', () => {
 
   it('should only show active plans on the Pricing page', async () => {
     render(
-      <MemoryRouter>
-        <Pricing />
-      </MemoryRouter>
+      <HelmetProvider>
+        <MemoryRouter>
+          <Pricing />
+        </MemoryRouter>
+      </HelmetProvider>
     );
 
     // Check if active plan is visible after loading
@@ -77,9 +80,11 @@ describe('Active Plans Validation', () => {
 
   it('should only show active plans in VendasPlansBox', async () => {
     render(
-      <MemoryRouter>
-        <VendasPlansBox />
-      </MemoryRouter>
+      <HelmetProvider>
+        <MemoryRouter>
+          <VendasPlansBox />
+        </MemoryRouter>
+      </HelmetProvider>
     );
 
     // Check if active plan is visible after loading

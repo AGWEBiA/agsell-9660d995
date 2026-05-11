@@ -253,8 +253,8 @@ async function resolveProvider(supabase: any, orgId: string): Promise<any> {
       .eq("key", "evolution_api")
       .single();
 
-    const globalEvo = globalConfig?.value as Record<string, string> | null;
-    const orgConfig = evolutionInt.config as Record<string, string>;
+    const globalEvo = (globalConfig as any)?.value as Record<string, string> | null;
+    const orgConfig = (evolutionInt as any).config as Record<string, string>;
 
     const mergedConfig: Record<string, string> = {
       api_url: globalEvo?.api_url || orgConfig.api_url || "",

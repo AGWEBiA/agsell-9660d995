@@ -772,6 +772,7 @@ export type Database = {
           current_step: number | null
           error_message: string | null
           id: string
+          organization_id: string | null
           results: Json | null
           started_at: string | null
           status: string
@@ -787,6 +788,7 @@ export type Database = {
           current_step?: number | null
           error_message?: string | null
           id?: string
+          organization_id?: string | null
           results?: Json | null
           started_at?: string | null
           status?: string
@@ -802,6 +804,7 @@ export type Database = {
           current_step?: number | null
           error_message?: string | null
           id?: string
+          organization_id?: string | null
           results?: Json | null
           started_at?: string | null
           status?: string
@@ -822,6 +825,13 @@ export type Database = {
             columns: ["contact_id"]
             isOneToOne: false
             referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "automation_executions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

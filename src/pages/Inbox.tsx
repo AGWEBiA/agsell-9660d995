@@ -147,6 +147,11 @@ export default function Inbox() {
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [pendingFile, setPendingFile] = useState<{ file: File; preview?: string; type: string } | null>(null);
+  const [pendingExternal, setPendingExternal] = useState<{ url: string; name: string; type: string; mime?: string } | null>(null);
+  const [attachMenuOpen, setAttachMenuOpen] = useState(false);
+  const [externalLinkOpen, setExternalLinkOpen] = useState(false);
+  const [externalUrl, setExternalUrl] = useState('');
+  const [externalName, setExternalName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [queueTab, setQueueTab] = useState<QueueTab>('fila');

@@ -20,8 +20,12 @@ import {
   Smile,
   Sticker,
   AtSign,
+  Upload,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useOrganization } from '@/contexts/OrganizationContext';
+import { toast } from 'sonner';
 
 export type WhatsAppMessageKind =
   | 'text'
@@ -50,7 +54,9 @@ interface ListSection { title: string; rows: ListRow[] }
  * Mounts inside WhatsAppNodeConfig — the `text` kind keeps the original UX intact.
  */
 export function WhatsAppInteractiveConfig({ config, onChange }: Props) {
+  const { currentOrganization } = useOrganization();
   const kind: WhatsAppMessageKind = (config.message_kind as WhatsAppMessageKind) || 'text';
+  const [isUploading, setIsUploading] = React.useState(false);
   const setKind = (k: WhatsAppMessageKind) => {
     const next: Record<string, unknown> = { ...config, message_kind: k };
     if (k === 'media' && !config.media_type) next.media_type = 'image';
@@ -62,6 +68,71 @@ export function WhatsAppInteractiveConfig({ config, onChange }: Props) {
 
   const sections = (config.list_sections as ListSection[]) || [{ title: 'Opções', rows: [] }];
   const setSections = (s: ListSection[]) => onChange({ ...config, list_sections: s });
+
+  const handleFileUpload = async (file: File) => {
+    if (!currentOrganization?.id) {
+      toast.error('Selecione uma organização antes de enviar arquivos.');
+      return;
+    }
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error('Arquivo muito grande. Máximo: 25MB.');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const ext = file.name.split('.').pop() || 'bin';
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const path = `automation-media/${currentOrganization.id}/${Date.now()}-${safeName}.${ext}`;
+      const { error } = await supabase.storage.from('inbox-attachments').upload(path, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type || undefined,
+      });
+      if (error) throw error;
+
+      const { data } = supabase.storage.from('inbox-attachments').getPublicUrl(path);
+      const publicUrl = data.publicUrl;
+      const detectedType = file.type.startsWith('image/') ? 'image'
+        : file.type.startsWith('video/') ? 'video'
+          : file.type.startsWith('audio/') ? 'audio'
+            : 'document';
+
+      if (kind === 'audio_ptt') {
+        onChange({ ...config, audio_url: publicUrl, media_url: publicUrl, media_filename: file.name });
+      } else if (kind === 'sticker') {
+        onChange({ ...config, sticker_url: publicUrl, media_url: publicUrl, media_filename: file.name });
+      } else {
+        onChange({ ...config, media_url: publicUrl, media_type: detectedType, media_filename: file.name });
+      }
+      toast.success('Arquivo enviado e URL preenchida.');
+    } catch (err) {
+      toast.error('Erro no upload: ' + (err instanceof Error ? err.message : 'erro desconhecido'));
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const renderUploadField = (accept: string) => (
+    <div className="space-y-1">
+      <Label className="text-xs">Upload do arquivo</Label>
+      <div className="flex items-center gap-2">
+        <Input
+          type="file"
+          accept={accept}
+          disabled={isUploading}
+          onChange={e => {
+            const file = e.target.files?.[0];
+            if (file) void handleFileUpload(file);
+            e.currentTarget.value = '';
+          }}
+        />
+        <Button type="button" variant="outline" size="icon" disabled={isUploading} className="shrink-0">
+          <Upload className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
 
   const kindOptions: { value: WhatsAppMessageKind; label: string; icon: React.ElementType; desc: string }[] = [
     { value: 'text', label: 'Texto', icon: Type, desc: 'Mensagem padrão de texto' },

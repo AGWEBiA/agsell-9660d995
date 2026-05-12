@@ -116,7 +116,6 @@ Deno.serve(async (req) => {
   const { error: enqueueError } = await supabase.rpc('enqueue_email', {
     queue_name: 'auth_emails',
     payload: {
-      run_id: `password-recovery-${messageId}`,
       message_id: messageId,
       to: email,
       from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,

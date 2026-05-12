@@ -1,0 +1,45 @@
+name: Sync Migrations to External Supabase
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/functions/**'
+      - 'supabase/config.toml'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      PROJECT_REF: ggkjishigcahzjdlwfat
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link to external project
+        run: supabase link --project-ref $PROJECT_REF
+
+      - name: Push database migrations
+        run: supabase db push --include-all
+
+      - name: Deploy edge functions
+        run: |
+          if [ -d "supabase/functions" ]; then
+            for fn in supabase/functions/*/; do
+              name=$(basename "$fn")
+              if [ "$name" != "_shared" ]; then
+                echo "Deploying $name..."
+                supabase functions deploy "$name" --project-ref $PROJECT_REF --no-verify-jwt || true
+              fi
+            done
+          fi

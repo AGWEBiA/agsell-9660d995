@@ -68,6 +68,7 @@ Deno.serve(async (req) => {
     .select('id')
     .eq('template_name', 'recovery')
     .eq('recipient_email', email)
+    .in('status', ['pending', 'sent', 'rate_limited'])
     .gte('created_at', since)
     .limit(1)
     .maybeSingle()

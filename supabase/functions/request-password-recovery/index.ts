@@ -68,6 +68,7 @@ Deno.serve(async (req) => {
     .select('id')
     .eq('template_name', 'recovery')
     .eq('recipient_email', email)
+    .in('status', ['pending', 'sent', 'rate_limited'])
     .gte('created_at', since)
     .limit(1)
     .maybeSingle()
@@ -116,7 +117,6 @@ Deno.serve(async (req) => {
   const { error: enqueueError } = await supabase.rpc('enqueue_email', {
     queue_name: 'auth_emails',
     payload: {
-      run_id: `password-recovery-${messageId}`,
       message_id: messageId,
       to: email,
       from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
       subject: 'Reset your password',
       html,
       text,
-      purpose: 'transactional',
+      purpose: 'auth',
       label: 'recovery',
       idempotency_key: `password-recovery-${messageId}`,
       queued_at: now,

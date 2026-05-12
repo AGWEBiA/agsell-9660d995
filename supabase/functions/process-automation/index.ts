@@ -316,31 +316,65 @@ Deno.serve(async (req) => {
           case 'send_whatsapp_group': {
             // Send message to a WhatsApp group session.
             // Falls back to the group_id captured by the trigger (e.g. group_tag_added → context group)
+            // Delegates to send-whatsapp so all media/interactive kinds are supported.
             const contact = await getContact();
             const groupId = (action.config.group_id as string) || (triggerContext.group_id as string | undefined) || '';
-            const message = replaceVars(action.config.message as string, contact);
-            if (groupId && message) {
+            const message = replaceVars((action.config.message as string) || '', contact);
+            if (groupId) {
               const { data: group } = await supabase
                 .from('whatsapp_groups')
                 .select('external_group_id, settings')
                 .eq('id', groupId)
                 .single();
               if (group?.external_group_id) {
-                const { data: globalConfig } = await supabase
-                  .from('platform_settings').select('value').eq('key', 'evolution_api').single();
-                const evo = globalConfig?.value as Record<string, string> | null;
-                if (evo?.api_url && evo?.api_key) {
-                  const instanceName = (action.config.instance_name as string) || ((group.settings as Record<string, string>)?.instance_name) || '';
-                  const resp = await fetch(`${evo.api_url.replace(/\/+$/, '')}/message/sendText/${instanceName}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', apikey: evo.api_key },
-                    body: JSON.stringify({ number: group.external_group_id, text: message }),
-                  });
-                  actionResult = { success: resp.ok };
-                }
+                const instanceName =
+                  (action.config.instance_name as string) ||
+                  ((group.settings as Record<string, string>)?.instance_name) ||
+                  '';
+                const cfg = action.config as Record<string, unknown>;
+                const payload: Record<string, unknown> = {
+                  organization_id: automation.organization_id,
+                  to: group.external_group_id,
+                  message,
+                  message_kind: (cfg.message_kind as string) || 'text',
+                  instance_name: instanceName,
+                  // forward media + interactive fields when present
+                  media_url: cfg.media_url,
+                  media_type: cfg.media_type,
+                  media_filename: cfg.media_filename,
+                  caption: cfg.caption,
+                  buttons: cfg.buttons,
+                  buttons_footer: cfg.buttons_footer,
+                  list_button_text: cfg.list_button_text,
+                  list_sections: cfg.list_sections,
+                  list_footer: cfg.list_footer,
+                  latitude: cfg.latitude,
+                  longitude: cfg.longitude,
+                  location_name: cfg.location_name,
+                  location_address: cfg.location_address,
+                  contact_name: cfg.contact_name,
+                  contact_phone: cfg.contact_phone,
+                  poll_name: cfg.poll_name,
+                  poll_options: cfg.poll_options,
+                  poll_selectable_count: cfg.poll_selectable_count,
+                  reaction_emoji: cfg.reaction_emoji,
+                  reaction_message_id: cfg.reaction_message_id,
+                  sticker_url: cfg.sticker_url,
+                  presence_duration_ms: cfg.presence_duration_ms,
+                };
+                const resp = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },
+                  body: JSON.stringify(payload),
+                });
+                actionResult = await resp.json().catch(() => ({ success: resp.ok }));
+              } else {
+                actionResult = { success: false, reason: 'Group has no external_group_id' };
               }
+            } else {
+              actionResult = { success: false, reason: 'Missing group_id' };
             }
-            await logTimeline(actionType, 'WhatsApp Grupo', 'success');
+            await logTimeline(actionType, 'WhatsApp Grupo', actionResult?.success ? 'success' : 'failed', actionResult);
             break;
           }
           case 'send_whatsapp_campaign': {

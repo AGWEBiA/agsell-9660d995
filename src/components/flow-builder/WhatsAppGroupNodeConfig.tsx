@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useWhatsAppInstances } from '@/hooks/useWhatsAppInstances';
+import { WhatsAppInteractiveConfig } from './WhatsAppInteractiveConfig';
 
 interface WhatsAppGroupNodeConfigProps {
   config: Record<string, unknown>;
@@ -125,24 +126,30 @@ export function WhatsAppGroupNodeConfig({ config, onChange }: WhatsAppGroupNodeC
         </div>
       </div>
 
-      {/* Message */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="flex items-center gap-2">
-            <MessageSquare className="h-4 w-4" /> Mensagem
-          </Label>
-          <span className="text-xs text-muted-foreground">
-            {String(config.message || '').length}/500
-          </span>
+      {/* Message — hidden for kinds without body text */}
+      {!['presence', 'audio_ptt', 'location', 'contact', 'reaction', 'sticker'].includes(String(config.message_kind || '')) && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              {config.message_kind === 'media' ? 'Legenda (opcional)' : 'Mensagem'}
+            </Label>
+            <span className="text-xs text-muted-foreground">
+              {String(config.message || '').length}/500
+            </span>
+          </div>
+          <Textarea
+            placeholder="Digite a mensagem que será enviada nos grupos..."
+            rows={5}
+            maxLength={500}
+            value={String(config.message || '')}
+            onChange={e => onChange({ ...config, message: e.target.value })}
+          />
         </div>
-        <Textarea
-          placeholder="Digite a mensagem que será enviada nos grupos..."
-          rows={5}
-          maxLength={500}
-          value={String(config.message || '')}
-          onChange={e => onChange({ ...config, message: e.target.value })}
-        />
-      </div>
+      )}
+
+      {/* Media + interactive kinds (mídia, áudio PTT, localização, contato, botões, lista, enquete, reação, figurinha, presença) */}
+      <WhatsAppInteractiveConfig config={config} onChange={onChange} />
 
       {selectedGroup && !selectedGroup.external_group_id && (
         <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10 p-3">

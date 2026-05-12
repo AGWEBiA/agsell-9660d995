@@ -1197,7 +1197,21 @@ export default function Inbox() {
               </div>
             )}
 
-            {/* Reply preview */}
+            {/* Pending external link preview */}
+            {pendingExternal && (
+              <div className="px-4 pt-2 border-t shrink-0">
+                <div className="flex items-center gap-2.5 p-2 rounded-lg bg-muted">
+                  <FileIcon className="h-5 w-5 text-primary" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate">🔗 {pendingExternal.name}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{pendingExternal.url}</p>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => setPendingExternal(null)}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            )}
             {replyingTo && (
               <div className="px-4 pt-2 border-t shrink-0">
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-muted border-l-2 border-primary">

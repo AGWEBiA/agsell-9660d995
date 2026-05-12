@@ -473,8 +473,10 @@ export function WhatsAppInteractiveConfig({ config, onChange }: Props) {
           </Label>
           <p className="text-xs text-muted-foreground -mt-2">
             Envia como mensagem de voz no formato nativo do WhatsApp (forma de onda + reprodução automática).
-            Use arquivos OGG/Opus, MP3 ou M4A acessíveis via URL pública.
+            Faça upload ou use arquivos OGG/Opus, MP3 ou M4A acessíveis via URL pública.
           </p>
+
+          {renderUploadField('audio/*,.ogg,.opus,.mp3,.m4a')}
 
           <div className="space-y-1">
             <Label className="text-xs">URL do áudio</Label>
@@ -741,8 +743,9 @@ export function WhatsAppInteractiveConfig({ config, onChange }: Props) {
         <div className="space-y-3 rounded-lg border border-pink-200 dark:border-pink-800 bg-pink-50/50 dark:bg-pink-900/10 p-4">
           <Label className="text-sm font-medium text-pink-700 dark:text-pink-400">Figurinha (sticker)</Label>
           <p className="text-xs text-muted-foreground -mt-2">
-            Envia uma figurinha animada ou estática (formato WebP, ideal 512x512). Use uma URL pública.
+            Envia uma figurinha animada ou estática (formato WebP, ideal 512x512). Faça upload ou use uma URL pública.
           </p>
+          {renderUploadField('image/webp,.webp')}
           <div className="space-y-1">
             <Label className="text-xs">URL do sticker (.webp)</Label>
             <Input

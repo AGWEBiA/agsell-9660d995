@@ -425,7 +425,7 @@ export default function Inbox() {
   };
 
   const handleSendMessage = async () => {
-    if ((!messageInput.trim() && !pendingFile) || !selectedConversation) return;
+    if ((!messageInput.trim() && !pendingFile && !pendingExternal) || !selectedConversation) return;
     setIsUploading(!!pendingFile);
     let mediaUrl: string | null = null;
     let messageType = 'text';
@@ -437,12 +437,17 @@ export default function Inbox() {
       messageType = pendingFile.type;
       mediaMimeType = pendingFile.file.type;
       fileName = pendingFile.file.name;
+    } else if (pendingExternal) {
+      mediaUrl = pendingExternal.url;
+      messageType = pendingExternal.type;
+      mediaMimeType = pendingExternal.mime || null;
+      fileName = pendingExternal.name;
     }
     const wasQuotedReply = !!replyingTo;
     const sentContent = messageInput;
     sendMessage.mutate({
       conversation_id: selectedConversation.id,
-      content: messageInput || (pendingFile ? `📎 ${pendingFile.file.name}` : ''),
+      content: messageInput || (pendingFile ? `📎 ${pendingFile.file.name}` : pendingExternal ? `🔗 ${pendingExternal.name}` : ''),
       sender_type: 'user',
       message_type: messageType,
       media_url: mediaUrl,

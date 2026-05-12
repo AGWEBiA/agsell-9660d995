@@ -16,6 +16,7 @@ import { useAutomations } from '@/hooks/useAutomations';
 import { useFlowNodeAnalytics } from '@/hooks/useFlowNodeAnalytics';
 import { useForms } from '@/hooks/useForms';
 import { useGatewayProducts } from '@/hooks/useGatewayProducts';
+import { useWhatsAppGroups } from '@/hooks/useWhatsAppGroups';
 import { cn } from '@/lib/utils';
 import type { Json } from '@/integrations/supabase/types';
 import { findOrphanGroupNodes, flattenWithSubflows, type FlowNodeLike } from '@/lib/flow/groupTargeting';

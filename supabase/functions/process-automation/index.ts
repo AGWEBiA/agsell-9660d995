@@ -57,8 +57,10 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const token = authHeader.replace('Bearer ', '').trim();
-    const isInternalCron = (req.headers.get('X-Internal-Cron') === 'true' || req.headers.get('x-internal-cron') === 'true') && 
-                          (token === supabaseServiceKey || token === Deno.env.get('SUPABASE_ANON_KEY'));
+    const hasInternalCronHeader = req.headers.get('X-Internal-Cron') === 'true' || req.headers.get('x-internal-cron') === 'true';
+    const isServiceRoleToken = token === supabaseServiceKey;
+    const isTrustedCronToken = hasInternalCronHeader && token === Deno.env.get('SUPABASE_ANON_KEY');
+    const isInternalCron = isServiceRoleToken || isTrustedCronToken;
 
     if (!isInternalCron) {
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);
@@ -342,9 +344,11 @@ Deno.serve(async (req) => {
                   media_url: cfg.media_url,
                   media_type: cfg.media_type,
                   media_filename: cfg.media_filename,
-                  caption: cfg.caption,
+                  media_caption: cfg.media_caption || cfg.caption,
+                  audio_url: cfg.audio_url,
                   buttons: cfg.buttons,
                   buttons_footer: cfg.buttons_footer,
+                  list_title: cfg.list_title,
                   list_button_text: cfg.list_button_text,
                   list_sections: cfg.list_sections,
                   list_footer: cfg.list_footer,
@@ -352,15 +356,21 @@ Deno.serve(async (req) => {
                   longitude: cfg.longitude,
                   location_name: cfg.location_name,
                   location_address: cfg.location_address,
-                  contact_name: cfg.contact_name,
+                  contact_full_name: cfg.contact_full_name || cfg.contact_name,
                   contact_phone: cfg.contact_phone,
+                  contact_organization: cfg.contact_organization,
+                  contact_email: cfg.contact_email,
                   poll_name: cfg.poll_name,
-                  poll_options: cfg.poll_options,
+                  poll_values: cfg.poll_values || cfg.poll_options,
                   poll_selectable_count: cfg.poll_selectable_count,
                   reaction_emoji: cfg.reaction_emoji,
-                  reaction_message_id: cfg.reaction_message_id,
+                  reaction_external_id: cfg.reaction_external_id || cfg.reaction_message_id,
+                  reaction_from_me: cfg.reaction_from_me,
                   sticker_url: cfg.sticker_url,
-                  presence_duration_ms: cfg.presence_duration_ms,
+                  presence_state: cfg.presence_state,
+                  presence_delay_ms: cfg.presence_delay_ms || cfg.presence_duration_ms,
+                  mentions: cfg.mentions,
+                  mentions_everyone: cfg.mentions_everyone,
                 };
                 const resp = await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
                   method: 'POST',
@@ -374,7 +384,8 @@ Deno.serve(async (req) => {
             } else {
               actionResult = { success: false, reason: 'Missing group_id' };
             }
-            await logTimeline(actionType, 'WhatsApp Grupo', actionResult?.success ? 'success' : 'failed', actionResult);
+            const groupActionResult = (actionResult ?? {}) as Record<string, unknown>;
+            await logTimeline(actionType, 'WhatsApp Grupo', groupActionResult.success ? 'success' : 'failed', groupActionResult);
             break;
           }
           case 'send_whatsapp_campaign': {

@@ -20,8 +20,12 @@ import {
   Smile,
   Sticker,
   AtSign,
+  Upload,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useOrganization } from '@/contexts/OrganizationContext';
+import { toast } from 'sonner';
 
 export type WhatsAppMessageKind =
   | 'text'
@@ -50,7 +54,9 @@ interface ListSection { title: string; rows: ListRow[] }
  * Mounts inside WhatsAppNodeConfig — the `text` kind keeps the original UX intact.
  */
 export function WhatsAppInteractiveConfig({ config, onChange }: Props) {
+  const { currentOrganization } = useOrganization();
   const kind: WhatsAppMessageKind = (config.message_kind as WhatsAppMessageKind) || 'text';
+  const [isUploading, setIsUploading] = React.useState(false);
   const setKind = (k: WhatsAppMessageKind) => {
     const next: Record<string, unknown> = { ...config, message_kind: k };
     if (k === 'media' && !config.media_type) next.media_type = 'image';
@@ -62,6 +68,71 @@ export function WhatsAppInteractiveConfig({ config, onChange }: Props) {
 
   const sections = (config.list_sections as ListSection[]) || [{ title: 'Opções', rows: [] }];
   const setSections = (s: ListSection[]) => onChange({ ...config, list_sections: s });
+
+  const handleFileUpload = async (file: File) => {
+    if (!currentOrganization?.id) {
+      toast.error('Selecione uma organização antes de enviar arquivos.');
+      return;
+    }
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error('Arquivo muito grande. Máximo: 25MB.');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const ext = file.name.split('.').pop() || 'bin';
+      const baseName = file.name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9._-]/g, '_') || 'arquivo';
+      const path = `automation-media/${currentOrganization.id}/${Date.now()}-${baseName}.${ext}`;
+      const { error } = await supabase.storage.from('inbox-attachments').upload(path, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type || undefined,
+      });
+      if (error) throw error;
+
+      const { data } = supabase.storage.from('inbox-attachments').getPublicUrl(path);
+      const publicUrl = data.publicUrl;
+      const detectedType = file.type.startsWith('image/') ? 'image'
+        : file.type.startsWith('video/') ? 'video'
+          : file.type.startsWith('audio/') ? 'audio'
+            : 'document';
+
+      if (kind === 'audio_ptt') {
+        onChange({ ...config, audio_url: publicUrl, media_url: publicUrl, media_filename: file.name });
+      } else if (kind === 'sticker') {
+        onChange({ ...config, sticker_url: publicUrl, media_url: publicUrl, media_filename: file.name });
+      } else {
+        onChange({ ...config, media_url: publicUrl, media_type: detectedType, media_filename: file.name });
+      }
+      toast.success('Arquivo enviado e URL preenchida.');
+    } catch (err) {
+      toast.error('Erro no upload: ' + (err instanceof Error ? err.message : 'erro desconhecido'));
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const renderUploadField = (accept: string) => (
+    <div className="space-y-1">
+      <Label className="text-xs">Upload do arquivo</Label>
+      <div className="flex items-center gap-2">
+        <Input
+          type="file"
+          accept={accept}
+          disabled={isUploading}
+          onChange={e => {
+            const file = e.target.files?.[0];
+            if (file) void handleFileUpload(file);
+            e.currentTarget.value = '';
+          }}
+        />
+        <Button type="button" variant="outline" size="icon" disabled={isUploading} className="shrink-0">
+          <Upload className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
 
   const kindOptions: { value: WhatsAppMessageKind; label: string; icon: React.ElementType; desc: string }[] = [
     { value: 'text', label: 'Texto', icon: Type, desc: 'Mensagem padrão de texto' },
@@ -344,14 +415,14 @@ export function WhatsAppInteractiveConfig({ config, onChange }: Props) {
         </div>
       )}
 
-      {/* ── MEDIA CONFIG (image / video / document) ── */}
+      {/* ── MEDIA CONFIG (image / video / audio / document) ── */}
       {kind === 'media' && (
         <div className="space-y-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10 p-4">
           <Label className="text-sm font-medium text-amber-700 dark:text-amber-400">
-            Mídia (imagem, vídeo ou documento)
+            Mídia (imagem, vídeo, áudio ou documento)
           </Label>
           <p className="text-xs text-muted-foreground -mt-2">
-            Envia o arquivo a partir de uma URL pública. A mensagem acima será usada como legenda.
+            Faça upload ou informe uma URL pública. A mensagem acima será usada como legenda quando suportado.
           </p>
 
           <div className="space-y-1">
@@ -364,10 +435,13 @@ export function WhatsAppInteractiveConfig({ config, onChange }: Props) {
               <SelectContent>
                 <SelectItem value="image">🖼️ Imagem (JPG/PNG)</SelectItem>
                 <SelectItem value="video">🎥 Vídeo (MP4)</SelectItem>
+                <SelectItem value="audio">🎧 Áudio (MP3/OGG/M4A)</SelectItem>
                 <SelectItem value="document">📄 Documento (PDF, DOCX, XLSX)</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {renderUploadField('image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt')}
 
           <div className="space-y-1">
             <Label className="text-xs">URL do arquivo</Label>
@@ -399,8 +473,10 @@ export function WhatsAppInteractiveConfig({ config, onChange }: Props) {
           </Label>
           <p className="text-xs text-muted-foreground -mt-2">
             Envia como mensagem de voz no formato nativo do WhatsApp (forma de onda + reprodução automática).
-            Use arquivos OGG/Opus, MP3 ou M4A acessíveis via URL pública.
+            Faça upload ou use arquivos OGG/Opus, MP3 ou M4A acessíveis via URL pública.
           </p>
+
+          {renderUploadField('audio/*,.ogg,.opus,.mp3,.m4a')}
 
           <div className="space-y-1">
             <Label className="text-xs">URL do áudio</Label>
@@ -667,8 +743,9 @@ export function WhatsAppInteractiveConfig({ config, onChange }: Props) {
         <div className="space-y-3 rounded-lg border border-pink-200 dark:border-pink-800 bg-pink-50/50 dark:bg-pink-900/10 p-4">
           <Label className="text-sm font-medium text-pink-700 dark:text-pink-400">Figurinha (sticker)</Label>
           <p className="text-xs text-muted-foreground -mt-2">
-            Envia uma figurinha animada ou estática (formato WebP, ideal 512x512). Use uma URL pública.
+            Envia uma figurinha animada ou estática (formato WebP, ideal 512x512). Faça upload ou use uma URL pública.
           </p>
+          {renderUploadField('image/webp,.webp')}
           <div className="space-y-1">
             <Label className="text-xs">URL do sticker (.webp)</Label>
             <Input

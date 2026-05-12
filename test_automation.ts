@@ -12,7 +12,8 @@ async function runTest() {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${serviceRoleKey}`,
-      'X-Internal-Cron': 'true'
+      'X-Internal-Cron': 'true',
+      'x-internal-cron': 'true'
     },
     body: JSON.stringify({
       automation_id: automationId,
@@ -21,9 +22,15 @@ async function runTest() {
     })
   });
   
-  const result = await response.json();
+  // Try reading raw text if JSON fails
+  const text = await response.text();
   console.log('Response Status:', response.status);
-  console.log('Result:', JSON.stringify(result, null, 2));
+  try {
+    const result = JSON.parse(text);
+    console.log('Result:', JSON.stringify(result, null, 2));
+  } catch (e) {
+    console.log('Result (raw text):', text);
+  }
 }
 
 runTest();

@@ -175,6 +175,7 @@ const App = () => {
                 {/* Removed RuntimeProtection to fix white screen issue */}
                 <BrowserRouter>
                   <GlobalSearch />
+                  <RecoveryHashRedirect />
                   <Routes>
                 {/* Public Routes */}
                   <Route path="/" element={<Index />} />

@@ -82,8 +82,8 @@ export function WhatsAppInteractiveConfig({ config, onChange }: Props) {
     setIsUploading(true);
     try {
       const ext = file.name.split('.').pop() || 'bin';
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const path = `automation-media/${currentOrganization.id}/${Date.now()}-${safeName}.${ext}`;
+      const baseName = file.name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9._-]/g, '_') || 'arquivo';
+      const path = `automation-media/${currentOrganization.id}/${Date.now()}-${baseName}.${ext}`;
       const { error } = await supabase.storage.from('inbox-attachments').upload(path, file, {
         cacheControl: '3600',
         upsert: false,
@@ -415,14 +415,14 @@ export function WhatsAppInteractiveConfig({ config, onChange }: Props) {
         </div>
       )}
 
-      {/* ── MEDIA CONFIG (image / video / document) ── */}
+      {/* ── MEDIA CONFIG (image / video / audio / document) ── */}
       {kind === 'media' && (
         <div className="space-y-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10 p-4">
           <Label className="text-sm font-medium text-amber-700 dark:text-amber-400">
-            Mídia (imagem, vídeo ou documento)
+            Mídia (imagem, vídeo, áudio ou documento)
           </Label>
           <p className="text-xs text-muted-foreground -mt-2">
-            Envia o arquivo a partir de uma URL pública. A mensagem acima será usada como legenda.
+            Faça upload ou informe uma URL pública. A mensagem acima será usada como legenda quando suportado.
           </p>
 
           <div className="space-y-1">
@@ -435,10 +435,13 @@ export function WhatsAppInteractiveConfig({ config, onChange }: Props) {
               <SelectContent>
                 <SelectItem value="image">🖼️ Imagem (JPG/PNG)</SelectItem>
                 <SelectItem value="video">🎥 Vídeo (MP4)</SelectItem>
+                <SelectItem value="audio">🎧 Áudio (MP3/OGG/M4A)</SelectItem>
                 <SelectItem value="document">📄 Documento (PDF, DOCX, XLSX)</SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {renderUploadField('image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt')}
 
           <div className="space-y-1">
             <Label className="text-xs">URL do arquivo</Label>

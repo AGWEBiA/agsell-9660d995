@@ -481,6 +481,7 @@ export default function Inbox() {
     });
     setMessageInput('');
     setPendingFile(null);
+    setPendingExternal(null);
     setIsUploading(false);
     setReplyingTo(null);
     setTimeout(() => textareaRef.current?.focus(), 50);

@@ -14,7 +14,8 @@ Deno.serve(async (req) => {
   const result: Record<string, unknown> = {
     timestamp: new Date().toISOString(),
     secrets: {
-      TARGET_SUPABASE_URL: targetUrl ? `${targetUrl.slice(0, 30)}...` : "MISSING",
+      TARGET_SUPABASE_URL: targetUrl || "MISSING",
+      TARGET_SUPABASE_URL_host: targetUrl ? (() => { try { return new URL(targetUrl).host; } catch { return "INVALID_URL"; } })() : "MISSING",
       TARGET_SUPABASE_SERVICE_ROLE_KEY: targetKey ? `***${targetKey.slice(-6)} (len=${targetKey.length})` : "MISSING",
     },
   };

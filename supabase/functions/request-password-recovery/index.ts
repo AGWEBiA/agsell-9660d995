@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
       subject: 'Reset your password',
       html,
       text,
-      purpose: 'transactional',
+      purpose: 'auth',
       label: 'recovery',
       idempotency_key: `password-recovery-${messageId}`,
       queued_at: now,

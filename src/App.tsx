@@ -18,13 +18,18 @@ const GlobalSearch = React.lazy(() => import("@/components/search/GlobalSearch")
 const FeatureRequiredPage = React.lazy(() => import("@/components/permissions/FeatureRequiredPage").then(m => ({ default: m.FeatureRequiredPage })));
 const RuntimeProtection = React.lazy(() => import("@/components/security/RuntimeProtection").then(m => ({ default: m.RuntimeProtection })));
 
-// Redirects Supabase auth recovery links (which land on "/" with #type=recovery) to /reset-password
+const isRecoveryHash = () =>
+  typeof window !== "undefined" && window.location.hash.includes("type=recovery");
+
+if (isRecoveryHash() && window.location.pathname !== "/reset-password") {
+  window.history.replaceState(null, "", `/reset-password${window.location.hash}`);
+}
+
+// Redirects auth recovery links (which can land on "/" with #type=recovery) to /reset-password
 function RecoveryHashRedirect() {
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const hash = window.location.hash || "";
-    if (hash.includes("type=recovery") && window.location.pathname !== "/reset-password") {
-      window.location.replace(`/reset-password${hash}`);
+    if (isRecoveryHash() && window.location.pathname !== "/reset-password") {
+      window.history.replaceState(null, "", `/reset-password${window.location.hash}`);
     }
   }, []);
   return null;

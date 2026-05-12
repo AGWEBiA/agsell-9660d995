@@ -18,6 +18,18 @@ const GlobalSearch = React.lazy(() => import("@/components/search/GlobalSearch")
 const FeatureRequiredPage = React.lazy(() => import("@/components/permissions/FeatureRequiredPage").then(m => ({ default: m.FeatureRequiredPage })));
 const RuntimeProtection = React.lazy(() => import("@/components/security/RuntimeProtection").then(m => ({ default: m.RuntimeProtection })));
 
+// Redirects Supabase auth recovery links (which land on "/" with #type=recovery) to /reset-password
+function RecoveryHashRedirect() {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash || "";
+    if (hash.includes("type=recovery") && window.location.pathname !== "/reset-password") {
+      window.location.replace(`/reset-password${hash}`);
+    }
+  }, []);
+  return null;
+}
+
 // Loading fallback
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[60vh]">

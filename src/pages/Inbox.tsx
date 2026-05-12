@@ -147,6 +147,11 @@ export default function Inbox() {
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [pendingFile, setPendingFile] = useState<{ file: File; preview?: string; type: string } | null>(null);
+  const [pendingExternal, setPendingExternal] = useState<{ url: string; name: string; type: string; mime?: string } | null>(null);
+  const [attachMenuOpen, setAttachMenuOpen] = useState(false);
+  const [externalLinkOpen, setExternalLinkOpen] = useState(false);
+  const [externalUrl, setExternalUrl] = useState('');
+  const [externalName, setExternalName] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [queueTab, setQueueTab] = useState<QueueTab>('fila');
@@ -420,7 +425,7 @@ export default function Inbox() {
   };
 
   const handleSendMessage = async () => {
-    if ((!messageInput.trim() && !pendingFile) || !selectedConversation) return;
+    if ((!messageInput.trim() && !pendingFile && !pendingExternal) || !selectedConversation) return;
     setIsUploading(!!pendingFile);
     let mediaUrl: string | null = null;
     let messageType = 'text';
@@ -432,12 +437,17 @@ export default function Inbox() {
       messageType = pendingFile.type;
       mediaMimeType = pendingFile.file.type;
       fileName = pendingFile.file.name;
+    } else if (pendingExternal) {
+      mediaUrl = pendingExternal.url;
+      messageType = pendingExternal.type;
+      mediaMimeType = pendingExternal.mime || null;
+      fileName = pendingExternal.name;
     }
     const wasQuotedReply = !!replyingTo;
     const sentContent = messageInput;
     sendMessage.mutate({
       conversation_id: selectedConversation.id,
-      content: messageInput || (pendingFile ? `📎 ${pendingFile.file.name}` : ''),
+      content: messageInput || (pendingFile ? `📎 ${pendingFile.file.name}` : pendingExternal ? `🔗 ${pendingExternal.name}` : ''),
       sender_type: 'user',
       message_type: messageType,
       media_url: mediaUrl,
@@ -471,6 +481,7 @@ export default function Inbox() {
     });
     setMessageInput('');
     setPendingFile(null);
+    setPendingExternal(null);
     setIsUploading(false);
     setReplyingTo(null);
     setTimeout(() => textareaRef.current?.focus(), 50);
@@ -1186,7 +1197,21 @@ export default function Inbox() {
               </div>
             )}
 
-            {/* Reply preview */}
+            {/* Pending external link preview */}
+            {pendingExternal && (
+              <div className="px-4 pt-2 border-t shrink-0">
+                <div className="flex items-center gap-2.5 p-2 rounded-lg bg-muted">
+                  <FileIcon className="h-5 w-5 text-primary" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate">🔗 {pendingExternal.name}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{pendingExternal.url}</p>
+                  </div>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => setPendingExternal(null)}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            )}
             {replyingTo && (
               <div className="px-4 pt-2 border-t shrink-0">
                 <div className="flex items-center gap-2 p-2 rounded-lg bg-muted border-l-2 border-primary">
@@ -1226,10 +1251,41 @@ export default function Inbox() {
             {/* Message Input */}
             <div className="p-2.5 border-t shrink-0">
               <div className="flex items-end gap-1 max-w-3xl mx-auto">
-                <input ref={fileInputRef} type="file" className="hidden" accept="image/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar" onChange={handleFileSelect} />
-                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => fileInputRef.current?.click()}>
-                  <Paperclip className="h-4 w-4" />
-                </Button>
+                <input ref={fileInputRef} type="file" className="hidden" accept="image/*,audio/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar" onChange={handleFileSelect} />
+                <Popover open={attachMenuOpen} onOpenChange={setAttachMenuOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                      <Paperclip className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" side="top" className="w-56 p-1">
+                    <button
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent text-left"
+                      onClick={() => { setAttachMenuOpen(false); fileInputRef.current?.click(); }}
+                    >
+                      <ArrowDownToLine className="h-4 w-4 text-primary" />
+                      <div>
+                        <div className="font-medium">Envio interno</div>
+                        <div className="text-[10px] text-muted-foreground">Upload do dispositivo</div>
+                      </div>
+                    </button>
+                    <button
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent text-left"
+                      onClick={() => {
+                        setAttachMenuOpen(false);
+                        setExternalUrl('');
+                        setExternalName('');
+                        setExternalLinkOpen(true);
+                      }}
+                    >
+                      <Hash className="h-4 w-4 text-primary" />
+                      <div>
+                        <div className="font-medium">Link externo</div>
+                        <div className="text-[10px] text-muted-foreground">Colar URL pública</div>
+                      </div>
+                    </button>
+                  </PopoverContent>
+                </Popover>
                 <AudioTranscription onTranscription={(text) => setMessageInput(prev => prev + text)} />
                 <textarea
                   ref={textareaRef}
@@ -1523,6 +1579,60 @@ export default function Inbox() {
                 </Button>
               </>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* External Link Dialog */}
+      <Dialog open={externalLinkOpen} onOpenChange={setExternalLinkOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Anexar link externo</DialogTitle>
+            <DialogDescription>
+              Cole a URL pública do arquivo. Funciona com imagens, vídeos, áudios e documentos.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="ext-url">URL do arquivo</Label>
+              <Input
+                id="ext-url"
+                placeholder="https://exemplo.com/arquivo.pdf"
+                value={externalUrl}
+                onChange={(e) => setExternalUrl(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ext-name">Nome (opcional)</Label>
+              <Input
+                id="ext-name"
+                placeholder="arquivo.pdf"
+                value={externalName}
+                onChange={(e) => setExternalName(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExternalLinkOpen(false)}>Cancelar</Button>
+            <Button
+              onClick={() => {
+                const url = externalUrl.trim();
+                if (!url) { toast.error('Informe a URL do arquivo'); return; }
+                try { new URL(url); } catch { toast.error('URL inválida'); return; }
+                const lower = url.toLowerCase().split('?')[0];
+                let type = 'file';
+                let mime: string | undefined;
+                if (/\.(jpg|jpeg|png|gif|webp|bmp)$/.test(lower)) { type = 'image'; mime = 'image/' + (lower.split('.').pop() || 'jpeg').replace('jpg','jpeg'); }
+                else if (/\.(mp4|mov|webm|mkv)$/.test(lower)) { type = 'video'; mime = 'video/' + lower.split('.').pop(); }
+                else if (/\.(mp3|wav|ogg|m4a|opus|aac)$/.test(lower)) { type = 'audio'; mime = 'audio/' + lower.split('.').pop(); }
+                const name = externalName.trim() || url.split('/').pop()?.split('?')[0] || 'arquivo';
+                setPendingExternal({ url, name, type, mime });
+                setExternalLinkOpen(false);
+              }}
+            >
+              Anexar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

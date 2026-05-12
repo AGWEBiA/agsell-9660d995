@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useWhatsAppInstances } from '@/hooks/useWhatsAppInstances';
+import { WhatsAppInteractiveConfig } from './WhatsAppInteractiveConfig';
 
 interface WhatsAppGroupNodeConfigProps {
   config: Record<string, unknown>;

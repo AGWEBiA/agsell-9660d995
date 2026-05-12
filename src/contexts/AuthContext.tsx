@@ -20,6 +20,21 @@ const isValidUUID = (id: string): boolean => {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 };
 
+const isBadJwtError = (error: unknown): boolean => {
+  const message = error instanceof Error ? error.message : String(error ?? '');
+  return /bad_jwt|invalid claim|missing sub claim|malformed jwt|jwt/i.test(message);
+};
+
+const clearAuthStorage = () => {
+  if (typeof window === 'undefined') return;
+
+  Object.keys(window.localStorage).forEach((key) => {
+    if (key.startsWith('sb-') || key.includes('supabase.auth.token')) {
+      window.localStorage.removeItem(key);
+    }
+  });
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -96,7 +111,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // INITIAL load
     const initializeAuth = async () => {
       try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          throw sessionError;
+        }
+
+        if (currentSession?.access_token) {
+          const { error: userError } = await supabase.auth.getUser(currentSession.access_token);
+          if (userError) {
+            throw userError;
+          }
+        }
+
         if (!isMounted) return;
 
         setSession(currentSession);
@@ -109,6 +136,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('Error during initial auth setup:', error);
+        if (isBadJwtError(error)) {
+          clearAuthStorage();
+          await supabase.auth.signOut({ scope: 'local' });
+        }
         if (isMounted) {
           setUser(null);
           setSession(null);

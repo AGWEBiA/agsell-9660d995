@@ -219,11 +219,36 @@ async function handleWebhook(req: Request): Promise<Response> {
   }
 
   // Build template props from payload.data (HookData structure)
+  // Handle URL transformation to ensure links point to the external domain if they are wrong
+  let confirmationUrl = payload.data.url
+  const targetDomain = "site.agsell.com.br"
+  
+  if (confirmationUrl && (
+    confirmationUrl.includes('localhost:3000') || 
+    confirmationUrl.includes('agsell.lovable.app')
+  )) {
+    try {
+      const url = new URL(confirmationUrl)
+      url.protocol = 'https:'
+      url.host = targetDomain
+      
+      // If it's a recovery link and lost the path, ensure it goes to /reset-password
+      if (emailType === 'recovery' && (url.pathname === '/' || url.pathname === '')) {
+        url.pathname = '/reset-password'
+      }
+      
+      confirmationUrl = url.toString()
+      console.log('Transformed confirmation URL', { original: payload.data.url, new: confirmationUrl })
+    } catch (e) {
+      console.error('Failed to parse confirmation URL', { url: confirmationUrl, error: e })
+    }
+  }
+
   const templateProps = {
     siteName: SITE_NAME,
-    siteUrl: `https://${ROOT_DOMAIN}`,
+    siteUrl: `https://${targetDomain}`,
     recipient: payload.data.email,
-    confirmationUrl: payload.data.url,
+    confirmationUrl: confirmationUrl,
     token: payload.data.token,
     email: payload.data.email,
     oldEmail: payload.data.old_email,

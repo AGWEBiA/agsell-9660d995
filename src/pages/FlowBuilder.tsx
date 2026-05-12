@@ -452,6 +452,57 @@ function NodeConfigDialog({ node, open, onClose, onSave }: {
         return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Acionado quando alguém entra em um grupo do WhatsApp.</p><div><Label>Grupo específico (opcional)</Label><Input placeholder="Nome ou ID do grupo" value={String(config.group_name || '')} onChange={e => setConfig({ ...config, group_name: e.target.value })} /></div><div><Label className="font-semibold">Tag(s) do grupo</Label><p className="text-xs text-muted-foreground mb-1">Selecione as tags associadas a este grupo para filtrar os leads.</p><SearchableTagSelect selectedTags={(config.group_tags as string[]) || []} onTagsChange={tags => setConfig({ ...config, group_tags: tags })} placeholder="Buscar ou criar tag do grupo..." /></div><div><Label>Tag automática ao entrar (opcional)</Label><Input placeholder="Ex: membro_grupo" value={String(config.auto_tag || '')} onChange={e => setConfig({ ...config, auto_tag: e.target.value })} /></div></div>);
       case 'whatsapp_group_leave':
         return (<div className="space-y-4"><p className="text-sm text-muted-foreground">Acionado quando alguém sai de um grupo do WhatsApp.</p><div><Label>Grupo específico (opcional)</Label><Input placeholder="Nome ou ID do grupo" value={String(config.group_name || '')} onChange={e => setConfig({ ...config, group_name: e.target.value })} /></div><div><Label className="font-semibold">Tag(s) do grupo</Label><p className="text-xs text-muted-foreground mb-1">Selecione as tags associadas a este grupo para filtrar os leads.</p><SearchableTagSelect selectedTags={(config.group_tags as string[]) || []} onTagsChange={tags => setConfig({ ...config, group_tags: tags })} placeholder="Buscar ou criar tag do grupo..." /></div><div><Label>Tag de saída (opcional)</Label><Input placeholder="Ex: saiu_grupo" value={String(config.exit_tag || '')} onChange={e => setConfig({ ...config, exit_tag: e.target.value })} /></div></div>);
+      case 'group_tag_added':
+      case 'group_tag_removed': {
+        const targetIds = (config.target_group_ids as string[]) || [];
+        const toggleGroup = (id: string) => {
+          const next = targetIds.includes(id) ? targetIds.filter(x => x !== id) : [...targetIds, id];
+          setConfig({ ...config, target_group_ids: next });
+        };
+        return (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {node.subtype === 'group_tag_added'
+                ? 'Acionado quando uma tag é adicionada a um grupo do WhatsApp.'
+                : 'Acionado quando uma tag é removida de um grupo do WhatsApp.'}
+            </p>
+            <div>
+              <Label>Nome da Tag (opcional)</Label>
+              <Input
+                placeholder="Ex: aquecimento, contagem_regressiva (vazio = qualquer tag)"
+                value={String(config.tag_name || '')}
+                onChange={e => setConfig({ ...config, tag_name: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground mt-1">Deixe em branco para disparar com qualquer tag.</p>
+            </div>
+            <div>
+              <Label className="font-semibold">Grupos alvo (opcional)</Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Selecione os grupos que devem disparar este fluxo. Vazio = todos os grupos da organização.
+              </p>
+              <div className="max-h-56 overflow-y-auto rounded-md border p-2 space-y-1">
+                {whatsappGroups.length === 0 && (
+                  <p className="text-xs text-muted-foreground p-2">Nenhum grupo encontrado.</p>
+                )}
+                {whatsappGroups.map(g => (
+                  <label key={g.id} className="flex items-center gap-2 px-2 py-1 rounded hover:bg-muted cursor-pointer text-sm">
+                    <input
+                      type="checkbox"
+                      checked={targetIds.includes(g.id)}
+                      onChange={() => toggleGroup(g.id)}
+                    />
+                    <span className="flex-1 truncate">{g.name}</span>
+                    <span className="text-xs text-muted-foreground">{g.member_count} membros</span>
+                  </label>
+                ))}
+              </div>
+              {targetIds.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">{targetIds.length} grupo(s) selecionado(s)</p>
+              )}
+            </div>
+          </div>
+        );
+      }
       default:
         return <p className="text-sm text-muted-foreground">Nenhuma configuração adicional necessária.</p>;
     }

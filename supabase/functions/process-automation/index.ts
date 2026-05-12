@@ -384,7 +384,8 @@ Deno.serve(async (req) => {
             } else {
               actionResult = { success: false, reason: 'Missing group_id' };
             }
-            await logTimeline(actionType, 'WhatsApp Grupo', actionResult?.success ? 'success' : 'failed', actionResult);
+            const groupActionResult = (actionResult ?? {}) as Record<string, unknown>;
+            await logTimeline(actionType, 'WhatsApp Grupo', groupActionResult.success ? 'success' : 'failed', groupActionResult);
             break;
           }
           case 'send_whatsapp_campaign': {

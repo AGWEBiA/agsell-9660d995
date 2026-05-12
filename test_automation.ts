@@ -12,7 +12,8 @@ async function runTest() {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${serviceRoleKey}`,
-      'X-Internal-Cron': 'true'
+      'X-Internal-Cron': 'true',
+      'x-internal-cron': 'true'
     },
     body: JSON.stringify({
       automation_id: automationId,

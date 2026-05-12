@@ -107,6 +107,40 @@ Deno.serve(async (req) => {
   const messageId = crypto.randomUUID()
   const now = new Date().toISOString()
 
+  // Get-or-create unsubscribe token for this recipient (required by Lovable Email API
+  // for transactional emails — auth recovery is enqueued under purpose=transactional
+  // because there is no Supabase auth webhook run_id available here).
+  let unsubscribeToken: string | null = null
+  {
+    const { data: existing } = await supabase
+      .from('email_unsubscribe_tokens')
+      .select('token')
+      .eq('email', email)
+      .maybeSingle()
+
+    if (existing?.token) {
+      unsubscribeToken = existing.token as string
+    } else {
+      const newToken = crypto.randomUUID().replace(/-/g, '')
+      const { data: inserted, error: tokenError } = await supabase
+        .from('email_unsubscribe_tokens')
+        .insert({ email, token: newToken })
+        .select('token')
+        .single()
+      if (tokenError) {
+        // Race: another request inserted first — re-read.
+        const { data: reread } = await supabase
+          .from('email_unsubscribe_tokens')
+          .select('token')
+          .eq('email', email)
+          .maybeSingle()
+        unsubscribeToken = (reread?.token as string) ?? newToken
+      } else {
+        unsubscribeToken = inserted.token as string
+      }
+    }
+  }
+
   await supabase.from('email_send_log').insert({
     message_id: messageId,
     template_name: 'recovery',
@@ -121,12 +155,13 @@ Deno.serve(async (req) => {
       to: email,
       from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
       sender_domain: SENDER_DOMAIN,
-      subject: 'Reset your password',
+      subject: 'Redefinir sua senha',
       html,
       text,
-      purpose: 'auth',
+      purpose: 'transactional',
       label: 'recovery',
       idempotency_key: `password-recovery-${messageId}`,
+      unsubscribe_token: unsubscribeToken,
       queued_at: now,
     },
   })

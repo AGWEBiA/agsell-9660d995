@@ -1582,6 +1582,60 @@ export default function Inbox() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* External Link Dialog */}
+      <Dialog open={externalLinkOpen} onOpenChange={setExternalLinkOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Anexar link externo</DialogTitle>
+            <DialogDescription>
+              Cole a URL pública do arquivo. Funciona com imagens, vídeos, áudios e documentos.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="ext-url">URL do arquivo</Label>
+              <Input
+                id="ext-url"
+                placeholder="https://exemplo.com/arquivo.pdf"
+                value={externalUrl}
+                onChange={(e) => setExternalUrl(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ext-name">Nome (opcional)</Label>
+              <Input
+                id="ext-name"
+                placeholder="arquivo.pdf"
+                value={externalName}
+                onChange={(e) => setExternalName(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setExternalLinkOpen(false)}>Cancelar</Button>
+            <Button
+              onClick={() => {
+                const url = externalUrl.trim();
+                if (!url) { toast.error('Informe a URL do arquivo'); return; }
+                try { new URL(url); } catch { toast.error('URL inválida'); return; }
+                const lower = url.toLowerCase().split('?')[0];
+                let type = 'file';
+                let mime: string | undefined;
+                if (/\.(jpg|jpeg|png|gif|webp|bmp)$/.test(lower)) { type = 'image'; mime = 'image/' + (lower.split('.').pop() || 'jpeg').replace('jpg','jpeg'); }
+                else if (/\.(mp4|mov|webm|mkv)$/.test(lower)) { type = 'video'; mime = 'video/' + lower.split('.').pop(); }
+                else if (/\.(mp3|wav|ogg|m4a|opus|aac)$/.test(lower)) { type = 'audio'; mime = 'audio/' + lower.split('.').pop(); }
+                const name = externalName.trim() || url.split('/').pop()?.split('?')[0] || 'arquivo';
+                setPendingExternal({ url, name, type, mime });
+                setExternalLinkOpen(false);
+              }}
+            >
+              Anexar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

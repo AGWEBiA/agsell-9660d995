@@ -184,11 +184,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const resetPassword = async (email: string) => {
-    // Sempre envia o link para o domínio externo, independente de onde o usuário solicitou
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://site.agsell.com.br/reset-password',
+    const { error } = await supabase.functions.invoke('request-password-recovery', {
+      body: { email },
     });
-    return { error };
+
+    return { error: error ? new Error(error.message) : null };
   };
 
   return (

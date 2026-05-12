@@ -200,6 +200,7 @@ function NodeConfigDialog({ node, open, onClose, onSave }: {
   const { forms } = useForms();
   const { automations } = useAutomations();
   const { data: gatewayProducts = [] } = useGatewayProducts(String(config.gateway || 'any'));
+  const { groups: whatsappGroups = [] } = useWhatsAppGroups();
 
   useEffect(() => { if (node) setConfig(node.config); }, [node]);
 

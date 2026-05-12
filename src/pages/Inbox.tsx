@@ -1251,10 +1251,41 @@ export default function Inbox() {
             {/* Message Input */}
             <div className="p-2.5 border-t shrink-0">
               <div className="flex items-end gap-1 max-w-3xl mx-auto">
-                <input ref={fileInputRef} type="file" className="hidden" accept="image/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar" onChange={handleFileSelect} />
-                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => fileInputRef.current?.click()}>
-                  <Paperclip className="h-4 w-4" />
-                </Button>
+                <input ref={fileInputRef} type="file" className="hidden" accept="image/*,audio/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar" onChange={handleFileSelect} />
+                <Popover open={attachMenuOpen} onOpenChange={setAttachMenuOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                      <Paperclip className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" side="top" className="w-56 p-1">
+                    <button
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent text-left"
+                      onClick={() => { setAttachMenuOpen(false); fileInputRef.current?.click(); }}
+                    >
+                      <ArrowDownToLine className="h-4 w-4 text-primary" />
+                      <div>
+                        <div className="font-medium">Envio interno</div>
+                        <div className="text-[10px] text-muted-foreground">Upload do dispositivo</div>
+                      </div>
+                    </button>
+                    <button
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-accent text-left"
+                      onClick={() => {
+                        setAttachMenuOpen(false);
+                        setExternalUrl('');
+                        setExternalName('');
+                        setExternalLinkOpen(true);
+                      }}
+                    >
+                      <Hash className="h-4 w-4 text-primary" />
+                      <div>
+                        <div className="font-medium">Link externo</div>
+                        <div className="text-[10px] text-muted-foreground">Colar URL pública</div>
+                      </div>
+                    </button>
+                  </PopoverContent>
+                </Popover>
                 <AudioTranscription onTranscription={(text) => setMessageInput(prev => prev + text)} />
                 <textarea
                   ref={textareaRef}

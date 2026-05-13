@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     emailReq.to = validTo.length === 1 ? validTo[0] : validTo;
 
     // Validate organization membership
-    if (emailReq.organization_id) {
+    if (emailReq.organization_id && !isServiceRoleToken && user) {
       const { data: isMember } = await supabase.rpc('is_org_member', {
         _org_id: emailReq.organization_id,
         _user_id: user.id,

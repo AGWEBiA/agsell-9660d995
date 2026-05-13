@@ -85,7 +85,8 @@ Deno.test("Process Automation - Validação de Gatilho de Keyword", async () => 
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${SERVICE_ROLE_KEY}`
+      "Authorization": `Bearer ${SERVICE_ROLE_KEY}`,
+      "X-Internal-Cron": "true"
     },
     body: JSON.stringify(payload)
   });

@@ -128,19 +128,27 @@ Deno.serve(async (req) => {
       );
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const token = authHeader.replace("Bearer ", "").trim();
+    const isServiceRoleToken = token === supabaseServiceKey;
+    
+    let user = null;
+    if (isServiceRoleToken) {
+      console.log("[send-whatsapp] Service role bypass");
+    } else {
+      const { data: authData, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !authData.user) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized", details: authError?.message }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      user = authData.user;
     }
 
     const whatsappReq = parsedBody as WhatsAppRequest;
 
     // Validate organization membership
-    if (whatsappReq.organization_id) {
+    if (whatsappReq.organization_id && !isServiceRoleToken && user) {
       const { data: isMember } = await supabase.rpc('is_org_member', {
         _org_id: whatsappReq.organization_id,
         _user_id: user.id,

@@ -63,12 +63,12 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const token = authHeader.replace('Bearer ', '').trim();
-    // Validação de Bypass para Chamadas Internas (Crons e Gatilhos de Sistema)
-    const hasInternalCronHeader = req.headers.get("X-Internal-Cron") === "true" || req.headers.get("x-internal-cron") === "true";
+    
+    // Bypass logic for internal calls
     const isServiceRoleToken = token === supabaseServiceKey;
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
-    const isTrustedCronToken = hasInternalCronHeader && anonKey && token === anonKey;
-    const isInternalCron = isServiceRoleToken || isTrustedCronToken;
+    const hasInternalCronHeader = req.headers.get("X-Internal-Cron") === "true" || req.headers.get("x-internal-cron") === "true";
+    const isInternalCron = isServiceRoleToken || (hasInternalCronHeader && anonKey && token === anonKey);
 
     if (!isInternalCron) {
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);

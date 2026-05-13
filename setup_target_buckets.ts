@@ -32,3 +32,9 @@ async function createBucket(name: string, isPublic: boolean) {
 
 await createBucket("inbox-attachments", true);
 await createBucket("voip-audio", false);
+await createBucket("avatars", true);
+await createBucket("contacts", false);
+await createBucket("organization-assets", true);
+await createBucket("automation-assets", true);
+await createBucket("content", true);
+await createBucket("campaigns", true);

@@ -41,7 +41,8 @@ Deno.serve(async (req) => {
     const token = authHeader.replace("Bearer ", "").trim();
     const isServiceRoleToken = token === serviceKey;
     const hasInternalCronHeader = req.headers.get("X-Internal-Cron") === "true" || req.headers.get("x-internal-cron") === "true";
-    const isTrustedCronToken = hasInternalCronHeader && token === Deno.env.get("SUPABASE_ANON_KEY");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    const isTrustedCronToken = hasInternalCronHeader && anonKey && token === anonKey;
     const isInternalCron = isServiceRoleToken || isTrustedCronToken;
 
     let user = null;

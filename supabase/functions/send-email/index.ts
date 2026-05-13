@@ -35,13 +35,21 @@ Deno.serve(async (req) => {
       );
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const token = authHeader.replace("Bearer ", "").trim();
+    const isServiceRoleToken = token === supabaseServiceKey;
+    
+    let user = null;
+    if (isServiceRoleToken) {
+      console.log("[send-email] Service role bypass");
+    } else {
+      const { data: authData, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !authData.user) {
+        return new Response(
+          JSON.stringify({ error: "Unauthorized", details: authError?.message }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      user = authData.user;
     }
 
   const emailReq = (await req.json()) as EmailRequest;

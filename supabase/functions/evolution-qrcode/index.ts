@@ -96,6 +96,8 @@ Deno.serve(async (req) => {
 
     // Save user_id on the integration record when connecting
     const saveUserOnIntegration = async () => {
+      if (!user?.id) return; // Skip if no user (internal cron)
+      
       if (body.integration_id) {
         await supabase
           .from("organization_integrations")

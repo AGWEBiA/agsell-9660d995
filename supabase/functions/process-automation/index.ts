@@ -67,8 +67,12 @@ Deno.serve(async (req) => {
     const hasInternalCronHeader = req.headers.get("X-Internal-Cron") === "true" || req.headers.get("x-internal-cron") === "true";
     const isServiceRoleToken = token === supabaseServiceKey;
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
-    const isTrustedCronToken = hasInternalCronHeader && anonKey && token === anonKey;
+    const isTrustedCronToken = (hasInternalCronHeader || isServiceRoleToken) && anonKey && token === anonKey;
     const isInternalCron = isServiceRoleToken || isTrustedCronToken;
+
+    if (isServiceRoleToken) {
+      console.log("[process-automation] Valid Service Role Token");
+    }
 
     if (!isInternalCron) {
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);

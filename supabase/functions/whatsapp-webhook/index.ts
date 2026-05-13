@@ -1531,6 +1531,8 @@ async function routeToInbox(
       new Set([cleanPhone, `55${localClean}`, localClean].filter(Boolean))
     );
 
+    const isAutoCreatedName = (name: string) => /^\+?\d[\d\s\-\.]+$/.test(name.trim());
+    
     // Optimized lookup: search for matching phone numbers directly in DB
     const { data: matchingContacts, error: lookupError } = await supabase
       .from("contacts")

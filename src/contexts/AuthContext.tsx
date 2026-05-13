@@ -1,3 +1,8 @@
+/**
+ * Contexto de Autenticação Centralizado.
+ * 
+ * Fornece estado e métodos para gerenciar a sessão do usuário e permissões admin.
+ */
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';

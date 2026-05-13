@@ -1,3 +1,9 @@
+/**
+ * Engine de Processamento de Automações (Flow Builder)
+ * 
+ * Esta função executa sequencialmente as ações configuradas em um fluxo de automação.
+ * Ela suporta disparos imediatos e agendamentos futuros (timers/delays).
+ */
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logToSystem } from "../_shared/logger.ts";
 import { handleCors, handleHealthCheck, corsHeaders } from "../_shared/helpers.ts";
@@ -57,7 +63,8 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
     const token = authHeader.replace('Bearer ', '').trim();
-    const hasInternalCronHeader = req.headers.get('X-Internal-Cron') === 'true' || req.headers.get('x-internal-cron') === 'true';
+    // Validação de Bypass para Chamadas Internas (Crons e Gatilhos de Sistema)
+    const hasInternalCronHeader = req.headers.get("X-Internal-Cron") === "true" || req.headers.get("x-internal-cron") === "true";
     const isServiceRoleToken = token === supabaseServiceKey;
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
     const isTrustedCronToken = hasInternalCronHeader && anonKey && token === anonKey;

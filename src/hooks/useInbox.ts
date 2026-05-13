@@ -1,3 +1,11 @@
+/**
+ * Hook customizado para gerenciar o SAC (Inbox) em tempo real.
+ * 
+ * Responsabilidades:
+ * - Buscar conversas e mensagens com suporte a sincronização em tempo real.
+ * - Gerenciar o estado de leitura das mensagens.
+ * - Facilitar o envio de mensagens multicanal.
+ */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';

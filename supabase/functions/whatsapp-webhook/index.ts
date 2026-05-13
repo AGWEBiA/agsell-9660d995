@@ -1,3 +1,9 @@
+/**
+ * WhatsApp Inbound Webhook
+ * 
+ * Este webhook é o ponto de entrada central para todas as mensagens recebidas do WhatsApp.
+ * Ele suporta tanto a API Oficial (WhatsApp Business Cloud API) quanto a API Não-Oficial (Evolution API).
+ */
 // WhatsApp Inbound Webhook - Routes incoming WhatsApp messages to SAC Inbox
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -1531,6 +1537,11 @@ async function routeToInbox(
       new Set([cleanPhone, `55${localClean}`, localClean].filter(Boolean))
     );
 
+    /**
+     * BUSCA OTIMIZADA DE CONTATOS:
+     * Em vez de carregar milhares de contatos para a memória, realizamos a busca diretamente 
+     * no banco de dados filtrando pelos números de telefone possíveis (nacional, internacional, local).
+     */
     const isAutoCreatedName = (name: string) => /^\+?\d[\d\s\-\.]+$/.test(name.trim());
     
     // Optimized lookup: search for matching phone numbers directly in DB

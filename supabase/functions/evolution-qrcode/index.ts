@@ -1,3 +1,9 @@
+/**
+ * Gerenciador de QR Codes e Instâncias (Evolution API)
+ * 
+ * Responsável por criar instâncias no servidor de WhatsApp, gerar QR Codes para conexão,
+ * monitorar o status da bateria/sinal e desconectar sessões.
+ */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const VERSION = "1.0.1";

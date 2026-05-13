@@ -119,7 +119,7 @@ export default function CommunicationCampaigns() {
   const estimatedVoipCredits = contactCount * voipForm.credits_per_call;
   const hasEnoughVoipCredits = (credits?.balance ?? 0) >= estimatedVoipCredits;
 
-  // Audio upload
+  // Gerenciamento de Upload de Áudio (Torpedo de Voz)
   const handleAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;

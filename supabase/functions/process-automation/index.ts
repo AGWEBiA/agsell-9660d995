@@ -1,3 +1,9 @@
+/**
+ * Engine de Processamento de Automações (Flow Builder)
+ * 
+ * Esta função executa sequencialmente as ações configuradas em um fluxo de automação.
+ * Ela suporta disparos imediatos e agendamentos futuros (timers/delays).
+ */
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logToSystem } from "../_shared/logger.ts";
 import { handleCors, handleHealthCheck, corsHeaders } from "../_shared/helpers.ts";

@@ -1,3 +1,9 @@
+/**
+ * WhatsApp Inbound Webhook
+ * 
+ * Este webhook é o ponto de entrada central para todas as mensagens recebidas do WhatsApp.
+ * Ele suporta tanto a API Oficial (WhatsApp Business Cloud API) quanto a API Não-Oficial (Evolution API).
+ */
 // WhatsApp Inbound Webhook - Routes incoming WhatsApp messages to SAC Inbox
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 

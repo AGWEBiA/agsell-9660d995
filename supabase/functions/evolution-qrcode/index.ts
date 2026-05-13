@@ -38,10 +38,21 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: false, error: "Unauthorized" }, 401);
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user) {
-      return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+    const token = authHeader.replace("Bearer ", "").trim();
+    const isServiceRoleToken = token === serviceKey;
+    const hasInternalCronHeader = req.headers.get("X-Internal-Cron") === "true" || req.headers.get("x-internal-cron") === "true";
+    const isTrustedCronToken = hasInternalCronHeader && token === Deno.env.get("SUPABASE_ANON_KEY");
+    const isInternalCron = isServiceRoleToken || isTrustedCronToken;
+
+    let user = null;
+    if (!isInternalCron) {
+      const { data: authData, error: authError } = await supabase.auth.getUser(token);
+      if (authError || !authData.user) {
+        return jsonResponse({ success: false, error: "Unauthorized" }, 401);
+      }
+      user = authData.user;
+    } else {
+      console.log("[evolution-qrcode] Running with internal/service-role bypass");
     }
 
     const body = (await req.json()) as QRCodeRequest;
@@ -49,7 +60,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: false, error: "instance_name é obrigatório" });
     }
 
-    if (body.organization_id) {
+    if (body.organization_id && user && !isInternalCron) {
       const [{ data: isMember }, { data: isAdmin }] = await Promise.all([
         supabase.rpc("is_org_member", {
           _org_id: body.organization_id,

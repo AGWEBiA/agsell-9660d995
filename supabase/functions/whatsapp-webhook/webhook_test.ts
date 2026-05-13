@@ -3,6 +3,21 @@ import { assertEquals, assertExists } from "https://deno.land/std@0.224.0/assert
 
 /**
  * Suite de Testes de Integração para Automações e Webhooks
+ */
+Deno.test("Conectividade das Edge Functions", async () => {
+  const functions = ['whatsapp-webhook', 'process-automation', 'send-whatsapp', 'evolution-qrcode'];
+  for (const name of functions) {
+    const res = await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/${name}`, {
+      method: 'OPTIONS',
+      headers: { 'Origin': 'http://localhost:3000' }
+    });
+    assertEquals(res.status, 204, `Function ${name} deve responder ao preflight CORS`);
+  }
+});
+
+
+/**
+ * Suite de Testes de Integração para Automações e Webhooks
  * 
  * Este script valida:
  * 1. Conectividade das Edge Functions críticas.

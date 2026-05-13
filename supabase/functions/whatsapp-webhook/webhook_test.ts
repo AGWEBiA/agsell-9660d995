@@ -47,7 +47,11 @@ Deno.test("WhatsApp Webhook - Simulação de Recebimento", async () => {
 });
 
 Deno.test("Process Automation - Validação de Gatilho de Keyword", async () => {
-  // 1. Criar uma organização temporária para o teste
+  // 1. Obter um usuário real para associar à automação (necessário para RLS/Audit)
+  const { data: userData } = await supabase.from('profiles').select('user_id').limit(1).single();
+  const userId = userData?.user_id;
+
+  // 2. Criar uma organização temporária para o teste
   const { data: org } = await supabase.from('organizations').insert({
     name: "Org de Teste Automação",
     slug: "test-automation-" + Date.now()
@@ -55,9 +59,10 @@ Deno.test("Process Automation - Validação de Gatilho de Keyword", async () => 
 
   assertExists(org, "Deve criar organização de teste");
 
-  // 2. Criar uma automação de teste com trigger de keyword
+  // 3. Criar uma automação de teste com trigger de keyword
   const { data: automation } = await supabase.from('automations').insert({
     organization_id: org.id,
+    user_id: userId,
     name: "Automação Teste Keyword",
     trigger_type: "whatsapp_keyword",
     trigger_config: { keyword: "teste_unitario" },

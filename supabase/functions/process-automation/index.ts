@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
     // Bypass logic for internal calls
     const isServiceRoleToken = token === supabaseServiceKey;
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
-    const hasInternalCronHeader = req.headers.get("X-Internal-Cron") === "true" || req.headers.get("x-internal-cron") === "true" || token === SERVICE_ROLE_KEY;
+    const hasInternalCronHeader = req.headers.get("X-Internal-Cron") === "true" || req.headers.get("x-internal-cron") === "true";
     const isInternalCron = isServiceRoleToken || (hasInternalCronHeader && anonKey && token === anonKey);
 
     if (!isInternalCron) {

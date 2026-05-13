@@ -1,5 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+const VERSION = "1.0.1";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -20,6 +22,8 @@ interface EvolutionConfig {
 }
 
 Deno.serve(async (req) => {
+  console.log(`[evolution-qrcode] v${VERSION} request received: ${req.method}`);
+  
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }

@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   MessageSquare, Smartphone, CheckCircle2, Users, Send, Settings, Star,
-  Server, Trash2, Power, Loader2, Copy, Gauge, Phone, Headphones, Globe, Monitor, Building2,
+  Server, Trash2, Power, Loader2, Copy, Gauge, Phone, Headphones, Globe, Monitor, Building2, RefreshCw,
 } from 'lucide-react';
 import { WhatsAppProviderSetup } from '@/components/integrations/WhatsAppProviderSetup';
 import { WhatsAppGroupsManager } from '@/components/whatsapp/WhatsAppGroupsManager';
@@ -367,9 +367,17 @@ export default function WhatsApp() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Page header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">WhatsApp</h1>
-        <p className="text-muted-foreground text-sm">Gerencie conexões, grupos e campanhas</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">WhatsApp</h1>
+            <Badge variant="outline" className="text-[10px] h-5 gap-1 border-emerald-500/50 text-emerald-600 bg-emerald-50/50 dark:bg-emerald-950/20">
+              <RefreshCw className="h-2.5 w-2.5 animate-spin-slow" />
+              GitHub Sync Ativo
+            </Badge>
+          </div>
+          <p className="text-muted-foreground text-sm">Gerencie conexões, grupos e campanhas</p>
+        </div>
       </div>
 
       {/* ===== INSTANCE SELECTOR BAR ===== */}

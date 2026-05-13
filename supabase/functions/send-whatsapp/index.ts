@@ -148,7 +148,7 @@ Deno.serve(async (req) => {
     const whatsappReq = parsedBody as WhatsAppRequest;
 
     // Validate organization membership
-    if (whatsappReq.organization_id) {
+    if (whatsappReq.organization_id && !isServiceRoleToken && user) {
       const { data: isMember } = await supabase.rpc('is_org_member', {
         _org_id: whatsappReq.organization_id,
         _user_id: user.id,

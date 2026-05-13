@@ -1531,32 +1531,22 @@ async function routeToInbox(
       new Set([cleanPhone, `55${localClean}`, localClean].filter(Boolean))
     );
 
-    const { data: orgContacts } = await supabase
+    // Optimized lookup: search for matching phone numbers directly in DB
+    const { data: matchingContacts, error: lookupError } = await supabase
       .from("contacts")
       .select("id, first_name, phone, whatsapp, source")
       .eq("organization_id", organizationId)
-      .limit(2000);
+      .or(`whatsapp.in.(${comparablePhones.join(',')}),phone.in.(${comparablePhones.join(',')})`);
 
-    const allContacts = (orgContacts || []) as any[];
-    const isAutoCreatedName = (name: string) => /^\+?\d[\d\s\-\.]+$/.test(name.trim());
+    if (lookupError) {
+      console.error("[routeToInbox] Error searching contacts:", lookupError);
+    }
 
-    const matchingContacts = allContacts.filter((contact) => {
-      const phone = normalizePhone(contact.phone);
-      const whatsapp = normalizePhone(contact.whatsapp);
-
-      // Exact or local match
-      if (comparablePhones.includes(phone) || comparablePhones.includes(whatsapp)) return true;
-      if (localClean && (extractLocal(phone) === localClean || extractLocal(whatsapp) === localClean)) return true;
-      // Brazilian DDD+8 match (handles 8→9 digit migration)
-      if (brKey.length >= 10) {
-        if ((phone && normalizeBR(phone) === brKey) || (whatsapp && normalizeBR(whatsapp) === brKey)) return true;
-      }
-      return false;
-    });
-
+    const matchedContacts = (matchingContacts || []) as any[];
+    
     // Prefer "real" contacts (manually created, with actual names) over auto-created ones
-    const realContact = matchingContacts.find((c) => c.source !== "whatsapp_inbound" && !isAutoCreatedName(c.first_name));
-    const anyContact = matchingContacts[0];
+    const realContact = matchedContacts.find((c) => c.source !== "whatsapp_inbound" && !isAutoCreatedName(c.first_name));
+    const anyContact = matchedContacts[0];
     const matchedContact = realContact || anyContact || null;
 
     if (matchedContact) {

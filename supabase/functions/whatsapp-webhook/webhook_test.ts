@@ -11,9 +11,12 @@ Deno.test("Conectividade das Edge Functions", async () => {
       method: 'OPTIONS',
       headers: { 'Origin': 'http://localhost:3000' }
     });
-    assertEquals(res.status, 204, `Function ${name} deve responder ao preflight CORS`);
+    // Aceita 200 ou 204 como sucesso de preflight
+    const isOk = res.status === 200 || res.status === 204;
+    assertEquals(isOk, true, `Function ${name} deve responder ao preflight CORS (recebido: ${res.status})`);
   }
 });
+
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;

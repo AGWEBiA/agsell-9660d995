@@ -66,11 +66,13 @@ Deno.serve(async (req) => {
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);
       if (authError || !user) {
         console.error("[process-automation] Auth validation failed:", authError?.message);
-        return new Response(JSON.stringify({ error: 'Invalid or expired session' }), { 
+        return new Response(JSON.stringify({ error: 'Invalid or expired session', details: authError?.message }), { 
           status: 401, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         });
       }
+    } else {
+      console.log("[process-automation] Running with internal/service-role bypass");
     }
 
     let payload: ExecutionPayload;

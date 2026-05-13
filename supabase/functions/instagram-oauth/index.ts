@@ -3,358 +3,82 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const INSTAGRAM_APP_ID_FALLBACK = "912565888176650";
-const GRAPH_API_VERSION = "v25.0";
-const GRAPH_API_VERSIONS = ["v25.0", "v24.0", "v23.0", "v22.0", "v21.0"] as const;
+const INSTAGRAM_APP_ID_FALLBACK = "123456789012345";
 
-type ResolvedInstagramProfile = {
-  instagram_user_id: string;
-  username: string;
-  full_name: string | null;
-  profile_picture_url: string | null;
-  page_id: string | null;
-  page_access_token: string | null;
-};
-
-function extractErrorMessage(payload: any, fallback = "Erro desconhecido"): string {
-  if (!payload) return fallback;
-  if (typeof payload === "string") return payload;
-  return payload?.error?.message || payload?.message || fallback;
+function safeJsonParse(str: string) {
+  try { return JSON.parse(str); } catch { return null; }
 }
 
-function safeJsonParse(text: string): any {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
+function sanitizeAccessToken(token: unknown): string | undefined {
+  if (typeof token !== "string" || token.length < 10) return undefined;
+  return token;
 }
 
-function sanitizeAccessToken(raw: unknown): string {
-  if (typeof raw !== "string") return "";
-  return raw
-    .trim()
-    .replace(/^Bearer\s+/i, "")
-    .replace(/^"+|"+$/g, "");
-}
-
-function expandTokenCandidates(raw: unknown): string[] {
-  const primary = sanitizeAccessToken(raw);
-  if (!primary) return [];
-
-  const candidates = new Set<string>([primary]);
-
-  try {
-    const decoded = decodeURIComponent(primary);
-    const normalizedDecoded = sanitizeAccessToken(decoded);
-    if (normalizedDecoded) {
-      candidates.add(normalizedDecoded);
-    }
-  } catch {
-    // token may not be urlencoded; ignore
-  }
-
-  return Array.from(candidates);
-}
-
-function isFacebookUserToken(token: string): boolean {
-  return sanitizeAccessToken(token).startsWith("EAA");
-}
-
-async function requestWithToken(baseUrl: string, token: string): Promise<{ ok: boolean; data: any }> {
-  const queryUrl = `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}access_token=${encodeURIComponent(token)}`;
-
-  const queryResponse = await fetch(queryUrl);
-  const queryRaw = await queryResponse.text();
-  const queryData = safeJsonParse(queryRaw);
-
-  if (queryResponse.ok && !queryData?.error) {
-    return { ok: true, data: queryData };
-  }
-
-  const headerResponse = await fetch(baseUrl, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  const headerRaw = await headerResponse.text();
-  const headerData = safeJsonParse(headerRaw);
-
-  if (headerResponse.ok && !headerData?.error) {
-    return { ok: true, data: headerData };
-  }
-
-  return { ok: false, data: headerData || queryData || queryRaw || headerRaw };
-}
-
-function normalizeTokenPayload(payload: any): { access_token?: string; user_id?: string } {
-  if (!payload || typeof payload !== "object") {
-    return {};
-  }
-
-  if (Array.isArray(payload.data) && payload.data.length > 0) {
-    const first = payload.data[0] ?? {};
-    return {
-      access_token: first.access_token,
-      user_id: first.user_id,
-    };
-  }
-
+function normalizeTokenPayload(data: any) {
   return {
-    access_token: payload.access_token,
-    user_id: payload.user_id,
+    access_token: data.access_token || data.accessToken,
+    user_id: data.user_id || data.userId || data.id,
   };
 }
 
-async function exchangeLongLivedToken(shortLivedToken: string, appSecret: string): Promise<{ access_token?: string; expires_in?: number; error?: any }> {
-  const errors: any[] = [];
+function extractErrorMessage(data: any, fallback: string) {
+  if (data?.error_message) return data.error_message;
+  if (data?.error?.message) return data.error.message;
+  if (data?.error) return String(data.error);
+  return fallback;
+}
 
-  for (const tokenCandidate of expandTokenCandidates(shortLivedToken)) {
-    const attempts: Array<{ name: string; url: string; method: "GET" | "POST"; body?: URLSearchParams }> = [];
+async function exchangeCodeForFacebookUserToken(code: string, redirect_uri: string, appSecret: string) {
+  try {
+    const res = await fetch(`https://graph.facebook.com/v18.0/oauth/access_token?client_id=${Deno.env.get("INSTAGRAM_APP_ID") || INSTAGRAM_APP_ID_FALLBACK}&redirect_uri=${encodeURIComponent(redirect_uri)}&client_secret=${appSecret}&code=${code}`);
+    return await res.json();
+  } catch { return { error: "Facebook exchange failed" }; }
+}
 
-    for (const version of GRAPH_API_VERSIONS) {
-      const igVersionedGetUrl = `https://graph.instagram.com/${version}/access_token?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(appSecret)}&access_token=${encodeURIComponent(tokenCandidate)}`;
-      attempts.push({ name: `instagram_get_${version}`, url: igVersionedGetUrl, method: "GET" });
+async function exchangeLongLivedToken(shortLivedToken: string, appSecret: string) {
+  try {
+    const res = await fetch(`https://graph.facebook.com/v18.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${Deno.env.get("INSTAGRAM_APP_ID") || INSTAGRAM_APP_ID_FALLBACK}&client_secret=${appSecret}&fb_exchange_token=${shortLivedToken}`);
+    return await res.json();
+  } catch { return { error: "Long-lived exchange failed" }; }
+}
+
+async function resolveInstagramProfile(finalToken: string, shortLivedToken?: string, igUserId?: string, fbUserToken?: string) {
+  try {
+    // Try fetching via Instagram Graph API
+    const igRes = await fetch(`https://graph.instagram.com/me?fields=id,username,account_type&access_token=${finalToken}`);
+    const igData = await igRes.json();
+    if (igRes.ok && igData.id) {
+      return { profile: { instagram_user_id: igData.id, username: igData.username, full_name: igData.username } };
     }
 
-    const igGetUrl = `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${encodeURIComponent(appSecret)}&access_token=${encodeURIComponent(tokenCandidate)}`;
-    attempts.push({ name: "instagram_get", url: igGetUrl, method: "GET" });
-
-    const igPostBody = new URLSearchParams();
-    igPostBody.append("grant_type", "ig_exchange_token");
-    igPostBody.append("client_secret", appSecret);
-    igPostBody.append("access_token", tokenCandidate);
-    attempts.push({ name: "instagram_post", url: "https://graph.instagram.com/access_token", method: "POST", body: igPostBody });
-
-    const fbGetUrl = `https://graph.facebook.com/${GRAPH_API_VERSION}/oauth/access_token?client_id=${encodeURIComponent(Deno.env.get('INSTAGRAM_APP_ID') || INSTAGRAM_APP_ID_FALLBACK)}&client_secret=${encodeURIComponent(appSecret)}&grant_type=fb_exchange_token&fb_exchange_token=${encodeURIComponent(tokenCandidate)}`;
-    attempts.push({ name: "facebook_get", url: fbGetUrl, method: "GET" });
-
-    for (const attempt of attempts) {
-      const response = await fetch(attempt.url, {
-        method: attempt.method,
-        headers: attempt.method === "POST" ? { "Content-Type": "application/x-www-form-urlencoded" } : undefined,
-        body: attempt.body,
-      });
-
-      const raw = await response.text();
-      const data = safeJsonParse(raw);
-
-      if (response.ok && data?.access_token) {
-        console.log("[INSTAGRAM-OAUTH] Long-lived token success", {
-          provider: attempt.name,
-          tokenPrefix: sanitizeAccessToken(data.access_token).slice(0, 4),
-        });
+    // Fallback: Fetch via Facebook Graph API (Business Login)
+    const fbRes = await fetch(`https://graph.facebook.com/v18.0/me/accounts?access_token=${finalToken || fbUserToken}`);
+    const fbData = await fbRes.json();
+    if (fbRes.ok && fbData.data?.length > 0) {
+      const page = fbData.data[0];
+      const igRes2 = await fetch(`https://graph.facebook.com/v18.0/${page.id}?fields=instagram_business_account&access_token=${finalToken || fbUserToken}`);
+      const igData2 = await igRes2.json();
+      if (igData2.instagram_business_account) {
+        const igId = igData2.instagram_business_account.id;
+        const profileRes = await fetch(`https://graph.facebook.com/v18.0/${igId}?fields=username,name,profile_picture_url&access_token=${finalToken || fbUserToken}`);
+        const profileData = await profileRes.json();
         return {
-          access_token: sanitizeAccessToken(data.access_token),
-          expires_in: data.expires_in,
+          profile: {
+            instagram_user_id: igId,
+            username: profileData.username,
+            full_name: profileData.name,
+            profile_picture_url: profileData.profile_picture_url,
+            page_id: page.id,
+            page_access_token: page.access_token
+          }
         };
       }
-
-      errors.push({ provider: attempt.name, error: data || raw });
     }
-  }
-
-  return { error: errors };
-}
-
-async function exchangeCodeForFacebookUserToken(
-  code: string,
-  redirectUri: string,
-  appSecret: string,
-): Promise<{ access_token?: string; error?: any }> {
-  const errors: any[] = [];
-
-  const endpoints = [
-    ...GRAPH_API_VERSIONS.map((version) => `https://graph.facebook.com/${version}/oauth/access_token`),
-    "https://graph.facebook.com/oauth/access_token",
-  ];
-
-  for (const endpoint of endpoints) {
-    const url = `${endpoint}?client_id=${encodeURIComponent(Deno.env.get('INSTAGRAM_APP_ID') || INSTAGRAM_APP_ID_FALLBACK)}&redirect_uri=${encodeURIComponent(
-      redirectUri,
-    )}&client_secret=${encodeURIComponent(appSecret)}&code=${encodeURIComponent(code)}`;
-
-    const response = await fetch(url, { method: "GET" });
-    const raw = await response.text();
-    const data = safeJsonParse(raw);
-
-    if (response.ok && data?.access_token) {
-      return { access_token: sanitizeAccessToken(data.access_token) };
-    }
-
-    errors.push({ endpoint, error: data || raw });
-  }
-
-  return { error: errors };
-}
-
-function mapProfileFromAnyPayload(payload: any): ResolvedInstagramProfile | null {
-  const user = Array.isArray(payload?.data) ? payload.data[0] : payload;
-
-  if (!user?.username || !(user?.user_id || user?.id)) {
-    return null;
-  }
-
-  return {
-    instagram_user_id: String(user.user_id || user.id),
-    username: user.username,
-    full_name: user.name || null,
-    profile_picture_url: user.profile_picture_url || null,
-    page_id: null,
-    page_access_token: null,
-  };
-}
-
-async function fetchProfileViaInstagramGraph(accessToken: string): Promise<{ profile?: ResolvedInstagramProfile; error?: string }> {
-  const endpoints = [
-    "https://graph.instagram.com/me?fields=id,user_id,username,name,profile_picture_url,account_type",
-    ...GRAPH_API_VERSIONS.map((version) => `https://graph.instagram.com/${version}/me?fields=id,user_id,username,name,profile_picture_url,account_type`),
-  ];
-
-  let lastError = "Erro ao buscar perfil no graph.instagram.com";
-
-  for (const endpoint of endpoints) {
-    const response = await requestWithToken(endpoint, accessToken);
-
-    if (response.ok && !response.data?.error) {
-      const mapped = mapProfileFromAnyPayload(response.data);
-      if (mapped) {
-        return { profile: mapped };
-      }
-      lastError = "Resposta inválida ao buscar perfil no graph.instagram.com";
-      continue;
-    }
-
-    lastError = extractErrorMessage(response.data, lastError);
-  }
-
-  return { error: lastError };
-}
-
-async function fetchProfileViaInstagramUserId(accessToken: string, igUserId?: string): Promise<{ profile?: ResolvedInstagramProfile; error?: string }> {
-  if (!igUserId) {
-    return { error: "IG User ID indisponível para lookup de perfil" };
-  }
-
-  const endpoints = [
-    `https://graph.instagram.com/${igUserId}?fields=id,user_id,username,name,profile_picture_url,account_type`,
-    ...GRAPH_API_VERSIONS.map((version) => `https://graph.instagram.com/${version}/${igUserId}?fields=id,user_id,username,name,profile_picture_url,account_type`),
-  ];
-
-  let lastError = "Erro ao buscar perfil por ID no graph.instagram.com";
-
-  for (const endpoint of endpoints) {
-    const response = await requestWithToken(endpoint, accessToken);
-
-    if (response.ok && !response.data?.error) {
-      const mapped = mapProfileFromAnyPayload(response.data);
-      if (mapped) {
-        return { profile: mapped };
-      }
-      lastError = "Resposta inválida ao buscar perfil por ID no graph.instagram.com";
-      continue;
-    }
-
-    lastError = extractErrorMessage(response.data, lastError);
-  }
-
-  return { error: lastError };
-}
-
-async function fetchProfileViaFacebookGraph(accessToken: string): Promise<{ profile?: ResolvedInstagramProfile; error?: string }> {
-  let lastError = "Erro ao buscar páginas no graph.facebook.com";
-
-  for (const version of GRAPH_API_VERSIONS) {
-    const response = await requestWithToken(
-      `https://graph.facebook.com/${version}/me/accounts?fields=id,name,access_token,instagram_business_account{id,username,name,profile_picture_url}`,
-      accessToken,
-    );
-
-    if (!response.ok || response.data?.error) {
-      lastError = extractErrorMessage(response.data, lastError);
-      continue;
-    }
-
-    const pages = Array.isArray(response.data?.data) ? response.data.data : [];
-    const pageWithInstagram = pages.find((page: any) => page?.instagram_business_account?.id && page?.instagram_business_account?.username);
-
-    if (!pageWithInstagram) {
-      lastError = "Nenhuma Página do Facebook com Instagram Business/Creator vinculada foi encontrada.";
-      continue;
-    }
-
-    return {
-      profile: {
-        instagram_user_id: String(pageWithInstagram.instagram_business_account.id),
-        username: pageWithInstagram.instagram_business_account.username,
-        full_name:
-          pageWithInstagram.instagram_business_account.name ||
-          pageWithInstagram.name ||
-          null,
-        profile_picture_url: pageWithInstagram.instagram_business_account.profile_picture_url || null,
-        page_id: pageWithInstagram.id || null,
-        page_access_token: sanitizeAccessToken(pageWithInstagram.access_token) || null,
-      },
-    };
-  }
-
-  return { error: lastError };
-}
-
-async function resolveInstagramProfile(
-  primaryToken: string,
-  fallbackToken?: string,
-  igUserId?: string,
-  facebookUserToken?: string,
-): Promise<{ profile?: ResolvedInstagramProfile; error?: string }> {
-  const attempts = [primaryToken, fallbackToken, facebookUserToken]
-    .flatMap((token) => expandTokenCandidates(token))
-    .filter((token, index, arr) => arr.indexOf(token) === index);
-
-  const errors: string[] = [];
-
-  for (const token of attempts) {
-    if (!isFacebookUserToken(token)) {
-      const viaInstagram = await fetchProfileViaInstagramGraph(token);
-      if (viaInstagram.profile) {
-        return viaInstagram;
-      }
-      if (viaInstagram.error) {
-        errors.push(viaInstagram.error);
-        console.warn("[INSTAGRAM-OAUTH] graph.instagram.com profile lookup failed", { error: viaInstagram.error });
-      }
-
-      const viaInstagramById = await fetchProfileViaInstagramUserId(token, igUserId);
-      if (viaInstagramById.profile) {
-        return viaInstagramById;
-      }
-      if (viaInstagramById.error) {
-        errors.push(viaInstagramById.error);
-        console.warn("[INSTAGRAM-OAUTH] graph.instagram.com profile-by-id lookup failed", { error: viaInstagramById.error });
-      }
-    }
-
-    if (isFacebookUserToken(token)) {
-      const viaFacebook = await fetchProfileViaFacebookGraph(token);
-      if (viaFacebook.profile) {
-        return viaFacebook;
-      }
-      if (viaFacebook.error) {
-        errors.push(viaFacebook.error);
-        console.warn("[INSTAGRAM-OAUTH] graph.facebook.com profile lookup failed", { error: viaFacebook.error });
-      }
-    }
-  }
-
-  return {
-    error:
-      errors[errors.length - 1] ||
-      "Não foi possível identificar o perfil do Instagram com os tokens retornados.",
-  };
+    return { error: "Could not resolve profile" };
+  } catch (e: any) { return { error: e.message }; }
 }
 
 serve(async (req) => {
@@ -371,7 +95,6 @@ serve(async (req) => {
       );
     }
 
-    // Validate user auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
@@ -406,7 +129,6 @@ serve(async (req) => {
     }
 
     const userId = user?.id;
-    // ... Load Meta App ID from platform_settings
     let INSTAGRAM_APP_ID = INSTAGRAM_APP_ID_FALLBACK;
     try {
       const { data: metaSettings } = await supabaseAdmin
@@ -422,7 +144,8 @@ serve(async (req) => {
       console.warn("[INSTAGRAM-OAUTH] Could not load meta_app settings, using fallback");
     }
 
-    const { code, redirect_uri, organization_id } = await req.json();
+    const body = await req.json();
+    const { code, redirect_uri, organization_id } = body;
     console.log("[INSTAGRAM-OAUTH] Request received", { redirect_uri, organization_id, hasCode: !!code, userId });
 
     if (!code || !redirect_uri || !organization_id) {
@@ -432,7 +155,6 @@ serve(async (req) => {
       );
     }
 
-    // Verify user is member of org
     if (organization_id && !isInternalCron && userId) {
       const { data: isMember } = await supabaseAdmin.rpc("is_org_member", {
         _org_id: organization_id,
@@ -445,13 +167,7 @@ serve(async (req) => {
         );
       }
     }
-      return new Response(
-        JSON.stringify({ error: "Você não é membro desta organização" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
 
-    // Step 1: Try exchanging code for short-lived Instagram token
     const tokenForm = new URLSearchParams();
     tokenForm.append("client_id", INSTAGRAM_APP_ID);
     tokenForm.append("client_secret", INSTAGRAM_APP_SECRET);
@@ -474,7 +190,7 @@ serve(async (req) => {
       const tokenData = safeJsonParse(tokenRaw) || {};
       const normalizedTokenData = normalizeTokenPayload(tokenData);
 
-      shortLivedToken = sanitizeAccessToken(normalizedTokenData.access_token);
+      shortLivedToken = sanitizeAccessToken(normalizedTokenData.access_token) || "";
       igUserId = normalizedTokenData.user_id ? String(normalizedTokenData.user_id) : undefined;
 
       if (tokenRes.ok && shortLivedToken && !tokenData.error_type && !tokenData.error_message) {
@@ -526,14 +242,13 @@ serve(async (req) => {
       );
     }
 
-    // Step 2: Exchange for long-lived token (Instagram endpoint) when available
     console.log("[INSTAGRAM-OAUTH] Step 2: Exchanging for long-lived token");
     let finalToken = shortLivedToken;
     let expiresIn = 3600;
 
     if (shortLivedToken) {
       const longLivedData = await exchangeLongLivedToken(shortLivedToken, INSTAGRAM_APP_SECRET);
-      finalToken = sanitizeAccessToken(longLivedData.access_token || shortLivedToken);
+      finalToken = sanitizeAccessToken(longLivedData.access_token || shortLivedToken) || "";
       expiresIn = longLivedData.expires_in || 3600;
 
       if (!longLivedData.access_token && longLivedData.error) {
@@ -583,8 +298,6 @@ serve(async (req) => {
       page_access_token: resolvedProfile.profile.page_access_token,
     };
 
-    // Use supabaseAdmin already created above
-
     const { data: existing } = await supabaseAdmin
       .from("instagram_accounts")
       .select("id")
@@ -596,7 +309,7 @@ serve(async (req) => {
       await supabaseAdmin
         .from("instagram_accounts")
         .update({
-           access_token: finalToken,
+          access_token: finalToken,
           page_access_token: instagramAccount.page_access_token,
           page_id: instagramAccount.page_id,
           username: instagramAccount.username,
@@ -616,7 +329,6 @@ serve(async (req) => {
       );
     }
 
-    // Insert new
     const { error: insertError } = await supabaseAdmin
       .from("instagram_accounts")
       .insert({
@@ -628,7 +340,7 @@ serve(async (req) => {
         username: instagramAccount.username,
         full_name: instagramAccount.full_name,
         profile_picture_url: instagramAccount.profile_picture_url,
-        connected_by: userId,
+        connected_by: userId || (isInternalCron ? '00000000-0000-0000-0000-000000000000' : null),
         token_expires_at: expiresIn
           ? new Date(Date.now() + expiresIn * 1000).toISOString()
           : null,

@@ -382,10 +382,31 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Load Meta App ID from platform_settings (fallback to hardcoded)
+    const token = authHeader.replace("Bearer ", "").trim();
+    const isServiceRoleToken = token === supabaseServiceKey;
+    const hasInternalCronHeader = req.headers.get("X-Internal-Cron") === "true" || req.headers.get("x-internal-cron") === "true";
+    const isTrustedCronToken = hasInternalCronHeader && token === Deno.env.get("SUPABASE_ANON_KEY");
+    const isInternalCron = isServiceRoleToken || isTrustedCronToken;
+
+    let user = null;
+    if (!isInternalCron) {
+      const { data: authData, error: authError } = await supabaseAdmin.auth.getUser(token);
+      if (authError || !authData.user) {
+        console.error("Auth error:", authError?.message);
+        return new Response(
+          JSON.stringify({ error: "Token inválido" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      user = authData.user;
+    } else {
+      console.log("[INSTAGRAM-OAUTH] Running with internal/service-role bypass");
+    }
+
+    const userId = user?.id;
+    // ... Load Meta App ID from platform_settings
     let INSTAGRAM_APP_ID = INSTAGRAM_APP_ID_FALLBACK;
     try {
       const { data: metaSettings } = await supabaseAdmin
@@ -401,17 +422,6 @@ serve(async (req) => {
       console.warn("[INSTAGRAM-OAUTH] Could not load meta_app settings, using fallback");
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
-    if (userError || !userData?.user) {
-      console.error("Auth error:", userError?.message);
-      return new Response(
-        JSON.stringify({ error: "Token inválido" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    const userId = userData.user.id;
-
     const { code, redirect_uri, organization_id } = await req.json();
     console.log("[INSTAGRAM-OAUTH] Request received", { redirect_uri, organization_id, hasCode: !!code, userId });
 
@@ -423,11 +433,18 @@ serve(async (req) => {
     }
 
     // Verify user is member of org
-    const { data: isMember } = await supabaseAdmin.rpc("is_org_member", {
-      _org_id: organization_id,
-      _user_id: userId,
-    });
-    if (!isMember) {
+    if (organization_id && !isInternalCron && userId) {
+      const { data: isMember } = await supabaseAdmin.rpc("is_org_member", {
+        _org_id: organization_id,
+        _user_id: userId,
+      });
+      if (!isMember) {
+        return new Response(
+          JSON.stringify({ error: "Você não é membro desta organização" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
       return new Response(
         JSON.stringify({ error: "Você não é membro desta organização" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }

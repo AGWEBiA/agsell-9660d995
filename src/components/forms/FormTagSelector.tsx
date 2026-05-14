@@ -152,14 +152,17 @@ export function FormTagSelector({ tagId, tagName, onChange }: FormTagSelectorPro
           <input
             value={query}
             onChange={(e) => {
-              setQuery(e.target.value);
+              setQuery(normalizeTagInput(e.target.value));
               setOpen(true);
             }}
             onFocus={() => setOpen(true)}
             onKeyDown={handleKeyDown}
-            placeholder={hasSelection ? '' : 'Digite para buscar ou criar uma tag…'}
+            placeholder={hasSelection ? '' : 'digite-para-buscar-ou-criar…'}
             disabled={isLoading}
-            className="flex-1 min-w-[120px] bg-transparent outline-none placeholder:text-muted-foreground"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            className="flex-1 min-w-[120px] bg-transparent outline-none placeholder:text-muted-foreground lowercase"
           />
           <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
         </div>

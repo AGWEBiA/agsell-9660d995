@@ -1164,7 +1164,6 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
         await supabase.from("form_submissions").update({ crm_sync_error: syncErr.message }).eq("id", submission.id);
       }
     }
-    }
 
     // Trigger automations (locally)
     try {

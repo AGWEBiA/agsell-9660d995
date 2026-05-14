@@ -350,6 +350,61 @@ async function getConnectionStatus(
   });
 }
 
+async function updateIntegrationConnectionState(
+  supabase: any,
+  organizationId: string | undefined,
+  requestedInstanceName: string,
+  realInstanceName: string,
+  state: string,
+  statusData: any,
+) {
+  if (!organizationId) return;
+
+  const normalize = (value: string) => value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[\s_-]+/g, "");
+  const requested = normalize(requestedInstanceName || "");
+  const real = normalize(realInstanceName || "");
+
+  const { data: integrations } = await supabase
+    .from("organization_integrations")
+    .select("id, name, config")
+    .eq("organization_id", organizationId)
+    .eq("integration_type", "evolution_api")
+    .eq("is_active", true);
+
+  const match = (integrations || []).find((row: any) => {
+    const config = (row.config || {}) as Record<string, unknown>;
+    const candidates = [config.instance_name, row.name, config.evolution_instance_id, config.instance_id]
+      .filter((value) => typeof value === "string" && value.trim())
+      .map((value) => normalize(String(value)));
+    return candidates.includes(requested) || candidates.includes(real);
+  });
+
+  if (!match) return;
+
+  const config = (match.config || {}) as Record<string, unknown>;
+  const instancePayload = statusData?.instance || statusData || {};
+  const ownerJid = instancePayload?.ownerJid || instancePayload?.owner || statusData?.ownerJid || "";
+  const ownerPhone = typeof ownerJid === "string" ? ownerJid.replace(/@.*$/, "").replace(/\D/g, "") : "";
+  const normalizedState = String(state || "unknown").toLowerCase();
+
+  const nextConfig = {
+    ...config,
+    instance_name: realInstanceName || requestedInstanceName,
+    connection_status: normalizedState,
+    connection_state: normalizedState,
+    last_status_check_at: new Date().toISOString(),
+    ...(instancePayload?.instanceId ? { evolution_instance_id: instancePayload.instanceId } : {}),
+    ...(ownerJid ? { owner_jid: ownerJid } : {}),
+    ...(ownerPhone && !config.phone_number ? { phone_number: `+${ownerPhone}` } : {}),
+    ...(["open", "connected"].includes(normalizedState) ? { connected_at: new Date().toISOString() } : {}),
+  };
+
+  await supabase
+    .from("organization_integrations")
+    .update({ name: realInstanceName || match.name, config: nextConfig, last_sync_at: new Date().toISOString() })
+    .eq("id", match.id);
+}
+
 async function logoutInstance(
   baseUrl: string,
   apiKey: string,

@@ -351,9 +351,11 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+      </ErrorBoundary>
 
       {/* Sales Performance Summary for Admins */}
       {(currentRole === 'owner' || currentRole === 'admin') && (
+        <ErrorBoundary fallback={<SectionFallback label="a performance do time" />}>
         <Card className="bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -377,7 +379,7 @@ export default function Dashboard() {
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Comissões Geradas</p>
                 <p className="text-2xl font-bold text-orange-500">
-                  {formatCurrency((stats?.totalDealsValue || 0) * 0.1)} {/* Mocking a general 10% if not calculated yet */}
+                  {formatCurrency((stats?.totalDealsValue || 0) * 0.1)}
                 </p>
               </div>
               <div className="space-y-1">
@@ -390,9 +392,11 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
+        </ErrorBoundary>
       )}
 
       {/* Charts Row */}
+      <ErrorBoundary fallback={<SectionFallback label="os gráficos" />}>
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
         {/* Leads Chart */}
         <Card className="lg:col-span-4">

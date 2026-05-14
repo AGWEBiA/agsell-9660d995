@@ -14,7 +14,7 @@ type OrgInstance = {
   config: IntegrationConfig;
 };
 
-const GROUP_FETCH_TIMEOUT_MS = 90000; // 90s for instances with many groups
+const GROUP_FETCH_TIMEOUT_MS = 50000; // 50s to stay under Supabase 60s limit
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 3000;
 

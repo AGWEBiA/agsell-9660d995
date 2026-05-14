@@ -1131,12 +1131,8 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
       }
     }
 
-    // Update submissions count
-    const { error: rpcError } = await supabase.rpc("increment_form_submissions", { form_id_param: formId });
-    if (rpcError) {
-      console.error("RPC increment failed, falling back to direct update:", rpcError);
-      await supabase.from("forms").update({ submissions_count: (form.submissions_count || 0) + 1 }).eq("id", formId);
-    }
+    // The database trigger attached to form_submissions is the single source of truth
+    // for incrementing submissions_count, linking contacts and applying form tags.
 
     // SYNC TO TARGET SUPABASE (Production)
     if (form.send_to_crm !== false) {

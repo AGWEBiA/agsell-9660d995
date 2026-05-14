@@ -397,6 +397,18 @@ Deno.serve(async (req) => {
 
     console.log("Connected instances count:", connectedInstances.length);
 
+    if (connectedInstances.length === 0 && normalizedFilter) {
+      const fallbackOrgInstance = orgInstancesByNormalizedName.get(normalizedFilter);
+      if (fallbackOrgInstance) {
+        connectedInstances.push({
+          instanceName: fallbackOrgInstance.instance_name,
+          connectionStatus: "connected",
+          instance: { instanceName: fallbackOrgInstance.instance_name },
+        });
+        console.log(`No listed connected match; falling back to direct group fetch for requested instance ${fallbackOrgInstance.instance_name}`);
+      }
+    }
+
     const result: Array<{
       instance_id: string | null;
       instance_name: string;

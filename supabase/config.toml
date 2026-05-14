@@ -7,3 +7,7 @@ project_id = "rcxrkvwxlzwzrllwdwgz"
     verify_jwt = false
   [functions.process-email-queue]
     verify_jwt = true
+  [functions.fetch-evolution-groups]
+    verify_jwt = false
+  [functions.upload-media]
+    verify_jwt = false

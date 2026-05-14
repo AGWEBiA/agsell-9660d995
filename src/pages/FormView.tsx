@@ -165,6 +165,17 @@ export default function FormView() {
 
     setSubmitting(true);
     try {
+      // Merge search params (UTM tags, etc.) into the data sent to the API
+      const searchParamsData: Record<string, string> = {};
+      searchParams.forEach((value, key) => {
+        searchParamsData[key] = value;
+      });
+
+      const payload = {
+        ...searchParamsData,
+        ...formData,
+      };
+
       // Use the public API endpoint to ensure webhooks and automations are triggered
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-api/forms/${formId}/submit`, {
@@ -173,7 +184,7 @@ export default function FormView() {
           'Content-Type': 'application/json',
           ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {})
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {

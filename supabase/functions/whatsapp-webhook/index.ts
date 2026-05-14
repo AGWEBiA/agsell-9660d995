@@ -6,6 +6,7 @@
  */
 // WhatsApp Inbound Webhook - Routes incoming WhatsApp messages to SAC Inbox
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { syncLeadToCRM } from "../_shared/crm-sync.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1676,7 +1677,23 @@ async function routeToInbox(
         .select("id")
         .single();
 
-      if (newContact) contactId = newContact.id;
+      if (newContact) {
+        contactId = newContact.id;
+        // Sincroniza para o CRM externo (best-effort, não bloqueia o webhook)
+        try {
+          const [first, ...rest] = (displayName || "").split(" ");
+          await syncLeadToCRM(supabase, organizationId, {
+            firstName: first || displayName,
+            lastName: rest.join(" ") || "WhatsApp",
+            phone: cleanPhone,
+            email: null,
+            source: "whatsapp_inbound",
+            notes: `Lead recebido via WhatsApp inbound (${cleanPhone}).`,
+          });
+        } catch (e: any) {
+          console.error("CRM sync (whatsapp_inbound) failed:", e?.message || e);
+        }
+      }
     }
 
     // Find or create conversation (prioritize canonical conversation for this lead)

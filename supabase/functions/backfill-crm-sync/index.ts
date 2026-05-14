@@ -12,7 +12,7 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  // Auth simples por header X-Admin-Token (deve ser igual ao SUPABASE_SERVICE_ROLE_KEY)
+  // Auth via X-Admin-Token (deve ser igual ao SUPABASE_SERVICE_ROLE_KEY)
   const token = req.headers.get("X-Admin-Token");
   if (token !== Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -47,6 +47,7 @@ Deno.serve(async (req) => {
     .order("created_at", { ascending: true });
 
   const { data: pending, error: pErr } = await q;
+  console.log("Backfill query result:", { count: pending?.length, error: pErr?.message });
   if (pErr) return new Response(JSON.stringify({ error: pErr.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   const ok: string[] = [];

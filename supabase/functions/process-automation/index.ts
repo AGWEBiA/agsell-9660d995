@@ -6,6 +6,7 @@
  */
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logToSystem } from "../_shared/logger.ts";
+import { syncLeadToCRM } from "../_shared/crm-sync.ts";
 import { handleCors, handleHealthCheck, corsHeaders } from "../_shared/helpers.ts";
 
 interface AutomationAction {
@@ -406,6 +407,30 @@ Deno.serve(async (req) => {
             }
             const groupActionResult = (actionResult ?? {}) as Record<string, unknown>;
             await logTimeline(actionType, 'WhatsApp Grupo', groupActionResult.success ? 'success' : 'failed', groupActionResult);
+            break;
+          }
+          case 'sync_to_crm': {
+            const contact = await getContact();
+            if (contact) {
+              const syncResult = await syncLeadToCRM(supabase, automation.organization_id, {
+                email: contact.email,
+                phone: contact.whatsapp || contact.phone,
+                firstName: contact.first_name || 'Lead',
+                lastName: contact.last_name || 'Manual',
+                source: contact.source || 'Automação',
+                notes: `Sincronizado via automação: ${automation.name}`
+              });
+              
+              if (syncResult.success) {
+                await supabase.from("contacts").update({ last_crm_sync_at: new Date().toISOString() }).eq("id", contact.id);
+                await logTimeline(actionType, 'Sincronizar CRM', 'success');
+              } else {
+                await logTimeline(actionType, 'Sincronizar CRM', 'error', { error: syncResult.error });
+              }
+              actionResult = syncResult;
+            } else {
+              actionResult = { skipped: true, reason: 'Contact not found' };
+            }
             break;
           }
           case 'send_whatsapp_campaign': {

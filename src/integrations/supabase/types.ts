@@ -1552,6 +1552,7 @@ export type Database = {
           email: string | null
           first_name: string
           id: string
+          last_crm_sync_at: string | null
           last_name: string | null
           lead_score: number | null
           notes: string | null
@@ -1570,6 +1571,7 @@ export type Database = {
           email?: string | null
           first_name: string
           id?: string
+          last_crm_sync_at?: string | null
           last_name?: string | null
           lead_score?: number | null
           notes?: string | null
@@ -1588,6 +1590,7 @@ export type Database = {
           email?: string | null
           first_name?: string
           id?: string
+          last_crm_sync_at?: string | null
           last_name?: string | null
           lead_score?: number | null
           notes?: string | null
@@ -2722,23 +2725,32 @@ export type Database = {
         Row: {
           contact_id: string | null
           created_at: string
+          crm_sync_error: string | null
           data: Json
           form_id: string
           id: string
+          synced_at: string | null
+          was_sent_to_crm: boolean | null
         }
         Insert: {
           contact_id?: string | null
           created_at?: string
+          crm_sync_error?: string | null
           data?: Json
           form_id: string
           id?: string
+          synced_at?: string | null
+          was_sent_to_crm?: boolean | null
         }
         Update: {
           contact_id?: string | null
           created_at?: string
+          crm_sync_error?: string | null
           data?: Json
           form_id?: string
           id?: string
+          synced_at?: string | null
+          was_sent_to_crm?: boolean | null
         }
         Relationships: [
           {
@@ -2766,6 +2778,7 @@ export type Database = {
           is_active: boolean | null
           name: string
           organization_id: string | null
+          send_to_crm: boolean
           settings: Json | null
           submissions_count: number | null
           updated_at: string
@@ -2781,6 +2794,7 @@ export type Database = {
           is_active?: boolean | null
           name: string
           organization_id?: string | null
+          send_to_crm?: boolean
           settings?: Json | null
           submissions_count?: number | null
           updated_at?: string
@@ -2796,6 +2810,7 @@ export type Database = {
           is_active?: boolean | null
           name?: string
           organization_id?: string | null
+          send_to_crm?: boolean
           settings?: Json | null
           submissions_count?: number | null
           updated_at?: string
@@ -8006,6 +8021,7 @@ export type Database = {
           is_active: boolean | null
           name: string
           organization_id: string | null
+          send_to_crm: boolean
           settings: Json | null
           submissions_count: number | null
           updated_at: string

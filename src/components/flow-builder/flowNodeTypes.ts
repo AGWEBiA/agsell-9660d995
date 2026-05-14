@@ -161,6 +161,7 @@ export const nodeCategories = [
     label: 'Integrar',
     nodes: [
       { id: 'add_to_whatsapp_group', label: 'Adicionar ao Grupo', icon: UserPlus, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
+      { id: 'sync_to_crm', label: 'Sincronizar CRM', icon: ArrowRightLeft, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
       { id: 'edit_whatsapp_group', label: 'Editar Grupo', icon: Pencil, color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
       { id: 'full_page', label: 'Full Page', icon: LayoutTemplate, color: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' },
       { id: 'pixel', label: 'Pixel', icon: MousePointer, color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },

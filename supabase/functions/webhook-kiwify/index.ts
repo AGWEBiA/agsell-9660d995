@@ -133,6 +133,82 @@ Deno.serve(async (req) => {
       event_id: webhookEventId,
     });
 
+    // --- Handle alternative Kiwify payload schemas (flat structure) ---
+    // Cart abandonment, subscription lifecycle and other non-order events
+    // use a flat shape (email/status at root, no Customer.* or order_status).
+    const flatEmail = (payload as any).email as string | undefined;
+    const flatStatus = (payload as any).status as string | undefined;
+    if (!payload.order_status && !payload.Customer && (flatEmail || flatStatus)) {
+      const flatProductId = (payload as any).product_id as string | undefined;
+      const flatCheckout = (payload as any).checkout_link as string | undefined;
+      let mappedType = `flat.${flatStatus || "unknown"}`;
+      if (flatStatus === "abandoned") mappedType = "cart.abandoned";
+
+      // Try to match the AG Sell plan by product_id / checkout_link
+      let isAgsellPlan = false;
+      if (flatProductId || flatCheckout) {
+        const { data: agPlans } = await supabase
+          .from("plans")
+          .select("id, kiwify_product_id, kiwify_product_id_yearly, kiwify_checkout_url, kiwify_checkout_url_yearly")
+          .eq("is_active", true);
+        isAgsellPlan = !!agPlans?.some((p: any) =>
+          (flatProductId && (p.kiwify_product_id === flatProductId || p.kiwify_product_id_yearly === flatProductId)) ||
+          (flatCheckout && ((p.kiwify_checkout_url || "").includes(flatCheckout) || (p.kiwify_checkout_url_yearly || "").includes(flatCheckout)))
+        );
+      }
+
+      // Persist abandoned/lifecycle leads in checkout_leads when relevant
+      if (flatEmail && isAgsellPlan && flatStatus === "abandoned") {
+        const lower = flatEmail.toLowerCase();
+        const { data: existing } = await supabase
+          .from("checkout_leads")
+          .select("id")
+          .ilike("email", lower)
+          .maybeSingle();
+        const leadPayload: Record<string, unknown> = {
+          email: lower,
+          name: (payload as any).name || (payload as any).first_name || "Kiwify Lead",
+          source: "kiwify",
+          status: "abandoned",
+          updated_at: new Date().toISOString(),
+        };
+        if (existing) {
+          await supabase.from("checkout_leads").update(leadPayload).eq("id", existing.id);
+        } else {
+          await supabase.from("checkout_leads").insert(leadPayload);
+        }
+      }
+
+      await supabase
+        .from("webhook_events")
+        .update({
+          event_type: mappedType,
+          processed: true,
+          processed_at: new Date().toISOString(),
+          error_message: isAgsellPlan
+            ? null
+            : "Skipped: non-AG Sell product (flat payload)",
+        })
+        .eq("id", webhookEventId);
+
+      await logStep(supabase, "Flat-schema webhook handled", {
+        mappedType,
+        isAgsellPlan,
+        email: flatEmail,
+        productId: flatProductId,
+      });
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          event_id: webhookEventId,
+          handled: mappedType,
+          is_agsell_plan: isAgsellPlan,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     // --- Signature verification ---
     const kiwifySecret = Deno.env.get("KIWIFY_WEBHOOK_SECRET");
     if (kiwifySecret && signature) {

@@ -6,7 +6,7 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERSION = "1.0.1";
+const VERSION = "1.0.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -196,12 +196,15 @@ Deno.serve(async (req) => {
         const resultBody = await result.clone().json().catch(() => ({}));
         if (resultBody.success && resultBody.instance_name) {
           await syncInstanceMetadata(resultBody.instance_name);
+          if (resultBody.state) {
+            await updateIntegrationConnectionState(supabase, body.organization_id, body.instance_name, resultBody.instance_name, String(resultBody.state), resultBody);
+          }
         }
         return result;
       }
 
       if (action === "status") {
-        return await getConnectionStatus(baseUrl, apiKey, instanceName, controller.signal);
+        return await getConnectionStatus(supabase, body.organization_id, baseUrl, apiKey, instanceName, controller.signal);
       }
 
       if (action === "logout") {

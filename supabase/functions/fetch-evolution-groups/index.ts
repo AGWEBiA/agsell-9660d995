@@ -140,7 +140,11 @@ const fetchGroupsForInstance = async (
 ): Promise<any[]> => {
   const encodedInstance = encodeURIComponent(instanceName);
   const getParticipants = adminOnly ? "true" : "false";
-  const endpoint = `${baseUrl}/group/fetchAllGroups/${encodedInstance}?getParticipants=${getParticipants}`;
+  const endpoints = normalizeBaseUrlCandidates(baseUrl).flatMap((url) => [
+    `${url}/group/fetchAllGroups/${encodedInstance}?getParticipants=${getParticipants}`,
+    `${url}/group/fetchAll/${encodedInstance}?getParticipants=${getParticipants}`,
+    `${url}/group/findGroups/${encodedInstance}?getParticipants=${getParticipants}`,
+  ]);
 
   let lastErrorMessage = "";
 
@@ -151,39 +155,37 @@ const fetchGroupsForInstance = async (
     }
 
     try {
-      console.log(`Fetching groups from: ${endpoint} (attempt ${attempt + 1})`);
+      for (const endpoint of endpoints) {
+        console.log(`Fetching groups from: ${endpoint} (attempt ${attempt + 1})`);
 
-      const groupsResp = await fetch(endpoint, {
-        headers: { apikey: apiKey },
-        signal: AbortSignal.timeout(GROUP_FETCH_TIMEOUT_MS),
-      });
+        const groupsResp = await fetch(endpoint, {
+          headers: { apikey: apiKey },
+          signal: AbortSignal.timeout(GROUP_FETCH_TIMEOUT_MS),
+        });
 
-      if (!groupsResp.ok) {
-        const errText = await groupsResp.text();
-        console.error(`Failed ${instanceName} (${groupsResp.status}):`, errText?.substring(0, 500));
-        lastErrorMessage = `${groupsResp.status} ${errText || "request_failed"}`;
-        // Don't retry on 4xx client errors (except 408/429)
-        if (groupsResp.status >= 400 && groupsResp.status < 500 && groupsResp.status !== 408 && groupsResp.status !== 429) {
+        const rawText = await groupsResp.text();
+        if (!groupsResp.ok) {
+          console.error(`Failed ${instanceName} (${groupsResp.status}) at ${endpoint}:`, rawText?.substring(0, 500));
+          lastErrorMessage = `${groupsResp.status} ${rawText || "request_failed"}`;
+          if ([400, 404, 405].includes(groupsResp.status)) continue;
           break;
         }
-        continue;
+
+        console.log(`Groups response for ${instanceName}: ${rawText.length} bytes, first 500: ${rawText.substring(0, 500)}`);
+
+        let groupsData: unknown;
+        try {
+          groupsData = JSON.parse(rawText);
+        } catch {
+          console.error(`Invalid JSON for ${instanceName} (${rawText.length} bytes)`);
+          lastErrorMessage = "invalid_json_response";
+          continue;
+        }
+
+        const groups = parseGroups(groupsData);
+        console.log(`Parsed ${groups.length} groups for ${instanceName}`);
+        return groups;
       }
-
-      const rawText = await groupsResp.text();
-      console.log(`Groups response for ${instanceName}: ${rawText.length} bytes, first 500: ${rawText.substring(0, 500)}`);
-
-      let groupsData: unknown;
-      try {
-        groupsData = JSON.parse(rawText);
-      } catch {
-        console.error(`Invalid JSON for ${instanceName} (${rawText.length} bytes)`);
-        lastErrorMessage = "invalid_json_response";
-        continue; // Retry — may be partial response
-      }
-
-      const groups = parseGroups(groupsData);
-      console.log(`Parsed ${groups.length} groups for ${instanceName}`);
-      return groups;
     } catch (error: any) {
       const message = error instanceof Error ? error.message : String(error);
       const isTimeout = message.includes("timeout") || message.includes("abort") || message.includes("signal");

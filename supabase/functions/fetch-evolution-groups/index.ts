@@ -201,6 +201,9 @@ const toOrgInstance = (row: any): OrgInstance => {
 };
 
 Deno.serve(async (req) => {
+  const requestId = Math.random().toString(36).substring(7);
+  console.log(`[${requestId}] Request ${req.method} to fetch-evolution-groups`);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -208,38 +211,35 @@ Deno.serve(async (req) => {
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
+      console.warn(`[${requestId}] No Bearer token found in Authorization header`);
       return jsonResponse({ error: "Unauthorized" }, 401);
     }
 
-    const userClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || serviceRoleKey;
 
-    const { data: { user }, error: userError } = await userClient.auth.getUser();
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    
     if (userError || !user) {
-      return jsonResponse({ error: "Unauthorized" }, 401);
+      console.error(`[${requestId}] Auth error:`, userError);
+      return jsonResponse({ error: "Sessão inválida ou expirada" }, 401);
     }
 
-    const { organization_id, instance_name: filterInstance, admin_only: adminOnly } = await req.json();
+    console.log(`[${requestId}] User authenticated: ${user.id}`);
+
+    const body = await req.json().catch(() => ({}));
+    const { organization_id, instance_name: filterInstance, admin_only: adminOnly } = body;
+
     if (!organization_id) {
+      console.warn(`[${requestId}] Missing organization_id`);
       return jsonResponse({ error: "organization_id required" }, 400);
     }
 
-    const { data: isMember, error: memberError } = await userClient.rpc("is_org_member", {
-      _org_id: organization_id,
-      _user_id: user.id,
-    });
-
-    if (memberError || !isMember) {
-      return jsonResponse({ error: "Sem permissão para esta organização" }, 403);
-    }
-
-    const adminClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
+    const adminClient = supabase; // Already using service role key
 
     const { data: orgIntegrationRows, error: integrationError } = await adminClient
       .from("organization_integrations")

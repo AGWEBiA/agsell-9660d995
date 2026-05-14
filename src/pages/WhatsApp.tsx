@@ -587,8 +587,12 @@ export default function WhatsApp() {
           <WhatsAppWebhookLogs />
         </TabsContent>
 
-        <TabsContent value="audit">
+        <TabsContent value="audit" className="space-y-6">
           <WhatsAppAuditLog />
+        </TabsContent>
+
+        <TabsContent value="history">
+          <WhatsAppConnectionHistory />
         </TabsContent>
       </Tabs>
 

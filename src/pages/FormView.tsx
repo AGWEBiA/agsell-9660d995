@@ -165,35 +165,27 @@ export default function FormView() {
 
     setSubmitting(true);
     try {
-      const { error } = await supabase
-        .from('form_submissions')
-        .insert({ form_id: formId, data: formData });
-      if (error) throw error;
+      // Use the public API endpoint to ensure webhooks and automations are triggered
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/public-api/forms/${formId}/submit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {})
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erro ao enviar formulário');
+      }
 
       try {
         window.parent.postMessage({ type: 'agsell-form-height', formId, height: document.body.scrollHeight }, '*');
       } catch {}
 
-      try {
-        const orgId = form?.organization_id;
-        if (orgId) {
-          const { data: automations } = await supabase
-            .from('automations')
-            .select('id')
-            .eq('organization_id', orgId)
-            .eq('trigger_type', 'form_submitted')
-            .eq('is_active', true);
-          if (automations?.length) {
-            await Promise.allSettled(
-              automations.map((a) =>
-                supabase.functions.invoke('process-automation', {
-                  body: { automation_id: a.id, contact_id: null, trigger_event: 'form_submitted' },
-                })
-              )
-            );
-          }
-        }
-      } catch {}
+      // Automations are now handled by the public-api edge function
 
       // Redirect if configured
       if (s.redirectUrl?.trim()) {

@@ -204,7 +204,7 @@ Deno.serve(async (req) => {
       }
 
       if (action === "status") {
-        return await getConnectionStatus(supabase, body.organization_id, baseUrl, apiKey, instanceName, controller.signal);
+        return await getConnectionStatus(supabase, body.organization_id, baseUrl, apiKey, instanceName, controller.signal, body.action_source || "manual_sync");
       }
 
       if (action === "logout") {
@@ -300,6 +300,7 @@ async function getConnectionStatus(
   apiKey: string,
   requestedInstanceName: string,
   signal: AbortSignal,
+  eventSource: string = "qrcode_check"
 ) {
   const candidates = await resolveInstanceCandidates(baseUrl, apiKey, requestedInstanceName, signal);
 
@@ -319,7 +320,7 @@ async function getConnectionStatus(
 
     if (statusRes.ok) {
       const state = String(statusData?.instance?.state || statusData?.state || statusData?.status || "").toLowerCase();
-      await updateIntegrationConnectionState(supabase, organizationId, requestedInstanceName, candidate, state || "unknown", statusData);
+      await updateIntegrationConnectionState(supabase, organizationId, requestedInstanceName, candidate, state || "unknown", statusData, eventSource);
 
       if (state === "open" || state === "connected") {
         await registerInboundWebhook(baseUrl, apiKey, candidate, Deno.env.get("SUPABASE_URL")!);
@@ -339,7 +340,7 @@ async function getConnectionStatus(
     }
   }
 
-  await updateIntegrationConnectionState(supabase, organizationId, requestedInstanceName, lastError?.instance || requestedInstanceName, "not_found", lastError?.details || null);
+  await updateIntegrationConnectionState(supabase, organizationId, requestedInstanceName, lastError?.instance || requestedInstanceName, "not_found", lastError?.details || null, eventSource);
 
   return jsonResponse({
     success: false,
@@ -357,6 +358,7 @@ async function updateIntegrationConnectionState(
   realInstanceName: string,
   state: string,
   statusData: any,
+  eventSource: string = "qrcode_check"
 ) {
   if (!organizationId) return;
 
@@ -379,13 +381,26 @@ async function updateIntegrationConnectionState(
     return candidates.includes(requested) || candidates.includes(real);
   });
 
-  if (!match) return;
+  if (!match) {
+    console.log(`[evolution-qrcode][AUDIT] No matching integration found for ${requestedInstanceName} (${realInstanceName}) in org ${organizationId}`);
+    return;
+  }
 
   const config = (match.config || {}) as Record<string, unknown>;
   const instancePayload = statusData?.instance || statusData || {};
   const ownerJid = instancePayload?.ownerJid || instancePayload?.owner || statusData?.ownerJid || "";
   const ownerPhone = typeof ownerJid === "string" ? ownerJid.replace(/@.*$/, "").replace(/\D/g, "") : "";
-  const normalizedState = String(state || "unknown").toLowerCase();
+  
+  // Implement fallback/retry logic for unknown states
+  let normalizedState = String(state || "unknown").toLowerCase();
+  
+  if (normalizedState === "unknown" || normalizedState === "undefined") {
+    console.log(`[evolution-qrcode][RETRY] State is unknown for ${realInstanceName}, marking for retry.`);
+    // We could potentially trigger another check here, but for now we label it clearly
+    normalizedState = "unknown_retry_pending";
+  }
+
+  const oldStatus = String(config.connection_status || "unknown");
 
   const nextConfig = {
     ...config,
@@ -403,6 +418,19 @@ async function updateIntegrationConnectionState(
     .from("organization_integrations")
     .update({ name: realInstanceName || match.name, config: nextConfig, last_sync_at: new Date().toISOString() })
     .eq("id", match.id);
+
+  // Log audit trail if status changed
+  if (oldStatus !== normalizedState) {
+    console.log(`[evolution-qrcode][AUDIT] Status changed for ${match.id}: ${oldStatus} -> ${normalizedState} via ${eventSource}`);
+    await supabase.rpc('log_whatsapp_connection_change', {
+      _org_id: organizationId,
+      _integration_id: match.id,
+      _old_status: oldStatus,
+      _new_status: normalizedState,
+      _source: eventSource,
+      _payload: statusData
+    });
+  }
 }
 
 async function logoutInstance(

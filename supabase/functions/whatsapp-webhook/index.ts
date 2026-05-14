@@ -257,6 +257,8 @@ Deno.serve(async (req) => {
       const instanceName = (body.instance || data.instance || "").trim();
       const state = String(data.state || data.status || "").toLowerCase();
 
+      console.log(`[whatsapp-webhook][CONNECTION] Event received for instance: ${instanceName}, state: ${state}`);
+
       // Find the organization that owns this instance and persist the real connection state.
       const { data: activeIntegrations } = await supabase
         .from("organization_integrations")
@@ -284,21 +286,46 @@ Deno.serve(async (req) => {
       });
 
       if (integration) {
+        console.log(`[whatsapp-webhook][CONNECTION] Matched integration: ${integration.id} for org: ${integration.organization_id}`);
         const config = (integration.config || {}) as Record<string, unknown>;
+        const oldStatus = String(config.connection_status || "unknown");
+        
+        // Handle fallback/retry for unknown states
+        let normalizedState = state || "unknown";
+        if (normalizedState === "unknown" || normalizedState === "undefined") {
+           console.log(`[whatsapp-webhook][RETRY] Connection state for ${instanceName} is unknown, marked for retry.`);
+           normalizedState = "unknown_retry_pending";
+        }
+
         const nextConfig = {
           ...config,
           ...(instanceName ? { instance_name: instanceName } : {}),
-          connection_status: state || "unknown",
-          connection_state: state || "unknown",
+          connection_status: normalizedState,
+          connection_state: normalizedState,
           last_status_check_at: new Date().toISOString(),
           ...(incomingInstanceId ? { evolution_instance_id: incomingInstanceId } : {}),
-          ...(["open", "connected"].includes(state) ? { connected_at: new Date().toISOString() } : {}),
+          ...(["open", "connected"].includes(normalizedState) ? { connected_at: new Date().toISOString() } : {}),
         };
 
         await supabase
           .from("organization_integrations")
           .update({ config: nextConfig, last_sync_at: new Date().toISOString() })
           .eq("id", integration.id);
+          
+        // Log to audit trail if status changed
+        if (oldStatus !== normalizedState) {
+          console.log(`[whatsapp-webhook][AUDIT] Status changed for ${integration.id}: ${oldStatus} -> ${normalizedState} via webhook`);
+          await supabase.rpc('log_whatsapp_connection_change', {
+            _org_id: integration.organization_id,
+            _integration_id: integration.id,
+            _old_status: oldStatus,
+            _new_status: normalizedState,
+            _source: 'webhook',
+            _payload: body
+          });
+        }
+      } else {
+        console.warn(`[whatsapp-webhook][CONNECTION] No matching integration found for instance name: ${instanceName} or instanceId: ${incomingInstanceId}`);
       }
 
       if (state === "close" || state === "disconnected") {

@@ -14,6 +14,7 @@ import { WhatsAppCampaignsManager } from '@/components/whatsapp/WhatsAppCampaign
 import { WhatsAppGroupMessages } from '@/components/whatsapp/WhatsAppGroupMessages';
 import { WhatsAppAuditLog } from '@/components/whatsapp/WhatsAppAuditLog';
 import { WhatsAppWebhookLogs } from '@/components/whatsapp/WhatsAppWebhookLogs';
+import { WhatsAppConnectionHistory } from '@/components/whatsapp/WhatsAppConnectionHistory';
 import { useWhatsAppInstances, WhatsAppInstance } from '@/hooks/useWhatsAppInstances';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { Button } from '@/components/ui/button';
@@ -311,7 +312,7 @@ function InstanceSelectorBar({
 export default function WhatsApp() {
   const {
     instances, activeInstances, defaultInstance, isLoading,
-    deleteInstance, toggleInstance, setDefaultInstance,
+    deleteInstance, toggleInstance, setDefaultInstance, syncInstanceStatus
   } = useWhatsAppInstances();
   const { groups } = useWhatsAppGroups();
   const { organizations, currentOrganization, setCurrentOrganization } = useOrganization();
@@ -377,6 +378,22 @@ export default function WhatsApp() {
             </Badge>
           </div>
           <p className="text-muted-foreground text-sm">Gerencie conexões, grupos e campanhas</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-2 h-9"
+            onClick={() => syncInstanceStatus.mutate()}
+            disabled={syncInstanceStatus.isPending || isLoading}
+          >
+            {syncInstanceStatus.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            Forçar Sincronização
+          </Button>
         </div>
       </div>
 
@@ -544,6 +561,10 @@ export default function WhatsApp() {
             <Settings className="h-4 w-4" />
             <span className="hidden sm:inline">Histórico</span>
           </TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            <span className="hidden sm:inline">Conexão History</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="connection" className="space-y-6">
@@ -566,8 +587,12 @@ export default function WhatsApp() {
           <WhatsAppWebhookLogs />
         </TabsContent>
 
-        <TabsContent value="audit">
+        <TabsContent value="audit" className="space-y-6">
           <WhatsAppAuditLog />
+        </TabsContent>
+
+        <TabsContent value="history">
+          <WhatsAppConnectionHistory />
         </TabsContent>
       </Tabs>
 

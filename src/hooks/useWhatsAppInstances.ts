@@ -410,6 +410,45 @@ export function useWhatsAppInstances() {
     },
   });
 
+  // Force synchronization of all instances
+  const syncInstanceStatus = useMutation({
+    mutationFn: async () => {
+      if (!currentOrganization?.id) throw new Error('No organization selected');
+      
+      const targets = (instancesQuery.data || []).filter(
+        (instance) => instance.integration_type === 'evolution_api' && instance.is_active,
+      );
+
+      if (targets.length === 0) {
+        toast.info('Nenhuma instância ativa para sincronizar');
+        return;
+      }
+
+      const results = await Promise.allSettled(
+        targets.map((instance) => supabase.functions.invoke('evolution-qrcode', {
+          body: {
+            organization_id: currentOrganization.id,
+            instance_name: instance.instance_name || (instance.config?.instance_name as string) || instance.name,
+            action: 'status',
+            action_source: 'manual_sync'
+          },
+        })),
+      );
+
+      const failed = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value.error)).length;
+      if (failed > 0) {
+        throw new Error(`${failed} instância(s) falharam na sincronização`);
+      }
+    },
+    onSuccess: () => {
+      instancesQuery.refetch();
+      toast.success('Sincronização concluída!');
+    },
+    onError: (error) => {
+      toast.error('Erro na sincronização: ' + error.message);
+    }
+  });
+
   return {
     instances: instancesQuery.data ?? [],
     activeInstances,
@@ -420,5 +459,6 @@ export function useWhatsAppInstances() {
     deleteInstance,
     toggleInstance,
     setDefaultInstance,
+    syncInstanceStatus,
   };
 }

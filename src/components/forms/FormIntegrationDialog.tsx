@@ -277,6 +277,8 @@ Content-Type: application/json
             </div>
 
             <Separator />
+            <div>
+              <h3 className="font-semibold text-sm mb-1">Webhook de Saída</h3>
               <p className="text-xs text-muted-foreground mb-4">
                 Configure uma URL para receber os dados de cada submissão automaticamente via POST. Ideal para integrar com ferramentas externas, n8n, Make, Zapier, ou seu próprio sistema.
               </p>

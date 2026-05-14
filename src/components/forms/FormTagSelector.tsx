@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tag as TagIcon, X, Check, Plus, ChevronDown } from 'lucide-react';
 import { useTags } from '@/hooks/useTags';
 import { cn } from '@/lib/utils';
+import { normalizeTagInput, normalizeTagFinal } from '@/lib/tag-utils';
 
 interface FormTagSelectorProps {
   tagId?: string | null;

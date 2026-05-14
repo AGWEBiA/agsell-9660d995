@@ -4601,6 +4601,7 @@ export type Database = {
           name: string
           price_monthly: number | null
           price_yearly: number | null
+          show_in_pricing: boolean | null
           slug: string
           stripe_price_id_monthly: string | null
           stripe_price_id_yearly: string | null
@@ -4630,6 +4631,7 @@ export type Database = {
           name: string
           price_monthly?: number | null
           price_yearly?: number | null
+          show_in_pricing?: boolean | null
           slug: string
           stripe_price_id_monthly?: string | null
           stripe_price_id_yearly?: string | null
@@ -4659,6 +4661,7 @@ export type Database = {
           name?: string
           price_monthly?: number | null
           price_yearly?: number | null
+          show_in_pricing?: boolean | null
           slug?: string
           stripe_price_id_monthly?: string | null
           stripe_price_id_yearly?: string | null
@@ -7892,6 +7895,7 @@ export type Database = {
           name: string | null
           price_monthly: number | null
           price_yearly: number | null
+          show_in_pricing: boolean | null
           slug: string | null
           updated_at: string | null
         }
@@ -7914,6 +7918,7 @@ export type Database = {
           name?: string | null
           price_monthly?: number | null
           price_yearly?: number | null
+          show_in_pricing?: boolean | null
           slug?: string | null
           updated_at?: string | null
         }
@@ -7936,6 +7941,7 @@ export type Database = {
           name?: string | null
           price_monthly?: number | null
           price_yearly?: number | null
+          show_in_pricing?: boolean | null
           slug?: string | null
           updated_at?: string | null
         }

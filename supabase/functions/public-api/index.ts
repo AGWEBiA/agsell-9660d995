@@ -125,15 +125,22 @@ Deno.serve(async (req) => {
     // Supports: /public-api/forms/:id/submit (legacy) and /public-api/v1[.1]/forms/:id/submit
     const url = new URL(req.url);
     const pathParts = url.pathname.split("/").filter(Boolean);
-    const _maybeVer = (pathParts[1] || "").toLowerCase();
-    const _verOffset = (_maybeVer === "v1" || _maybeVer === "v1.1") ? 1 : 0;
+    
+    // Adjust pathParts to find the start of the public-api route
+    const apiIndex = pathParts.indexOf("public-api");
+    const relevantParts = apiIndex !== -1 ? pathParts.slice(apiIndex + 1) : pathParts;
+
+    const _maybeVer = (relevantParts[0] || "").toLowerCase();
+    const _isVer = _maybeVer === "v1" || _maybeVer === "v1.1";
+    const _verOffset = _isVer ? 1 : 0;
+    
     if (
-      pathParts[1 + _verOffset] === "forms" &&
-      pathParts[2 + _verOffset] &&
-      pathParts[3 + _verOffset] === "submit" &&
+      relevantParts[_verOffset] === "forms" &&
+      relevantParts[1 + _verOffset] &&
+      relevantParts[2 + _verOffset] === "submit" &&
       req.method === "POST"
     ) {
-      return await handlePublicFormSubmit(supabase, pathParts[2 + _verOffset], req);
+      return await handlePublicFormSubmit(supabase, relevantParts[1 + _verOffset], req);
     }
 
     // Extract API key from header
@@ -233,18 +240,14 @@ Deno.serve(async (req) => {
       .eq("id", apiKeyData.id);
 
     // Determine version + resource from already-parsed URL.
-    // Supabase pathname is /public-api/<rest>, so pathParts[0] === "public-api".
-    // Supported layouts:
-    //   /public-api/v1/<resource>/<id>/<sub>      (versioned, recommended)
-    //   /public-api/v1.1/<resource>/<id>/<sub>    (versioned v1.1)
-    //   /public-api/<resource>/<id>/<sub>         (legacy, no version)
-    const maybeVersion = (pathParts[1] || "").toLowerCase();
+    // relevantParts is already calculated above for public-api relative paths
+    const maybeVersion = (relevantParts[0] || "").toLowerCase();
     const isVersioned = maybeVersion === "v1" || maybeVersion === "v1.1";
     const apiVersion = isVersioned ? maybeVersion : "v1";
     const isV11 = apiVersion === "v1.1";
-    const resource = isVersioned ? pathParts[2] : pathParts[1];
-    const resourceId = isVersioned ? pathParts[3] : pathParts[2];
-    const subResource = isVersioned ? pathParts[4] : pathParts[3];
+    const resource = isVersioned ? relevantParts[1] : relevantParts[0];
+    const resourceId = isVersioned ? relevantParts[2] : relevantParts[1];
+    const subResource = isVersioned ? relevantParts[3] : relevantParts[2];
 
     // Check permissions
     const permissions = apiKeyData.permissions as string[];
@@ -1045,10 +1048,49 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
       );
     }
 
+    // Try to identify/create contact from form data
+    let contactId = null;
+    try {
+      const email = (body.email || body.Email || body.E-mail || "").trim().toLowerCase();
+      const phone = String(body.phone || body.Phone || body.telefone || body.Telefone || body.whatsapp || body.whatsapp || body.zap || body.celular || "").trim();
+      const name = (body.name || body.Name || body.nome || body.Nome || "").trim();
+      const firstName = (body.first_name || body.firstName || name.split(" ")[0] || "Form Lead").trim();
+      const lastName = (body.last_name || body.lastName || name.split(" ").slice(1).join(" ") || "").trim();
+
+      if (email || phone) {
+        // Find existing contact
+        let query = supabase.from("contacts").select("id").eq("organization_id", form.organization_id);
+        if (email) query = query.eq("email", email);
+        else query = query.eq("whatsapp", phone);
+
+        const { data: existingContact } = await query.maybeSingle();
+
+        if (existingContact) {
+          contactId = existingContact.id;
+        } else {
+          // Create new contact
+          const ownerId = await getOrgOwnerUserId(supabase, form.organization_id);
+          const { data: newContact } = await supabase.from("contacts").insert({
+            organization_id: form.organization_id,
+            user_id: ownerId,
+            first_name: firstName,
+            last_name: lastName || null,
+            email: email || null,
+            whatsapp: phone || null,
+            phone: phone || null,
+            source: "form",
+          }).select("id").single();
+          if (newContact) contactId = newContact.id;
+        }
+      }
+    } catch (contactErr) {
+      console.error("Error identifying/creating contact from form:", contactErr);
+    }
+
     // Insert submission
     const { data: submission, error: subError } = await supabase
       .from("form_submissions")
-      .insert({ form_id: formId, data: body })
+      .insert({ form_id: formId, data: body, contact_id: contactId })
       .select()
       .single();
 

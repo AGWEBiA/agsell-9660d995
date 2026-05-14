@@ -310,9 +310,12 @@ async function getConnectionStatus(
     );
 
     const statusRaw = await statusRes.text();
-    const statusData = parseUnknown(statusRaw);
+    const statusData = parseUnknown(statusRaw) as any;
 
     if (statusRes.ok) {
+      if (statusData?.instance?.state === "open" || statusData?.state === "open") {
+        await registerInboundWebhook(baseUrl, apiKey, candidate, Deno.env.get("SUPABASE_URL")!);
+      }
       return jsonResponse({
         success: true,
         data: statusData,

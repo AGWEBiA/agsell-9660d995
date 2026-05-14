@@ -23,5 +23,14 @@ Este documento registra falhas identificadas, soluções aplicadas e lições ap
 - **Problema:** Ao vincular contas via processos automáticos (sem interação manual do usuário), o campo `connected_by` ficava nulo, o que era rejeitado por restrições de integridade da tabela.
 - **Solução:** Adicionado fallback para um UUID de sistema ("00000000-0000-0000-0000-000000000000") quando a operação é disparada internamente.
 
+## [14/05/2026] Falha Crítica: Lead não chega ao Formulário (PFPL)
+- **Problema:** A função `public-api` falhava ao processar submissões de formulários públicos devido a um bug no parse da URL (não considerava o prefixo `/functions/v1/`). Além disso, submissões não criavam leads no CRM, ficando "invisíveis" no painel.
+- **Solução:** Refatoração da lógica de roteamento em `public-api` e implementação de criação/vínculo automático de contatos com base nos dados submetidos (email/whatsapp).
+- **Prevenção:** Testar endpoints públicos simulando o caminho completo do gateway.
+
+## [14/05/2026] WhatsApp QR Code e Webhook Sync
+- **Problema:** Instâncias do WhatsApp podiam ficar sem o webhook configurado se o usuário apenas consultasse o status ou se o scan ocorresse após o timeout da função original.
+- **Solução:** Adicionada chamada obrigatória para `registerInboundWebhook` dentro da função `getConnectionStatus` sempre que o estado da instância for detectado como "open".
+
 ---
 *Este log deve ser consultado antes de qualquer alteração estrutural nas Edge Functions ou no Schema do Banco de Dados.*

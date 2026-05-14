@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tag as TagIcon, X, Check, Plus, ChevronDown } from 'lucide-react';
 import { useTags } from '@/hooks/useTags';
 import { cn } from '@/lib/utils';
+import { normalizeTagInput, normalizeTagFinal } from '@/lib/tag-utils';
 
 interface FormTagSelectorProps {
   tagId?: string | null;
@@ -56,7 +57,7 @@ export function FormTagSelector({ tagId, tagName, onChange }: FormTagSelectorPro
   };
 
   const handleCreateNew = () => {
-    const name = query.trim();
+    const name = normalizeTagFinal(query);
     if (!name) return;
     onChange({ tag_id: null, tag_name: name });
     setQuery('');
@@ -151,14 +152,17 @@ export function FormTagSelector({ tagId, tagName, onChange }: FormTagSelectorPro
           <input
             value={query}
             onChange={(e) => {
-              setQuery(e.target.value);
+              setQuery(normalizeTagInput(e.target.value));
               setOpen(true);
             }}
             onFocus={() => setOpen(true)}
             onKeyDown={handleKeyDown}
-            placeholder={hasSelection ? '' : 'Digite para buscar ou criar uma tag…'}
+            placeholder={hasSelection ? '' : 'digite-para-buscar-ou-criar…'}
             disabled={isLoading}
-            className="flex-1 min-w-[120px] bg-transparent outline-none placeholder:text-muted-foreground"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            className="flex-1 min-w-[120px] bg-transparent outline-none placeholder:text-muted-foreground lowercase"
           />
           <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
         </div>

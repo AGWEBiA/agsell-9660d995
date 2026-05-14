@@ -26,6 +26,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { SearchableTagSelect } from '@/components/whatsapp/SearchableTagSelect';
+import { buildStoragePath, uploadMediaFile } from '@/lib/storagePaths';
 
 interface VoipCampaign {
   id: string;
@@ -84,20 +85,11 @@ const VoipCampaigns = () => {
 
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop() || 'mp3';
-      const filePath = `${user.id}/${Date.now()}.${ext}`;
+      const scopeId = orgId || user.id;
+      const filePath = buildStoragePath(scopeId, file, 'voip');
+      const publicUrl = await uploadMediaFile('voip-audio', filePath, file);
 
-      const { error: uploadError } = await supabase.storage
-        .from('voip-audio')
-        .upload(filePath, file, { contentType: file.type });
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from('voip-audio')
-        .getPublicUrl(filePath);
-
-      setCampaignForm(f => ({ ...f, audio_url: urlData.publicUrl }));
+      setCampaignForm(f => ({ ...f, audio_url: publicUrl }));
       setAudioFileName(file.name);
       toast.success('Áudio enviado com sucesso!');
     } catch (err: any) {

@@ -23,9 +23,9 @@ import {
   Upload,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
+import { buildStoragePath, uploadMediaFile } from '@/lib/storagePaths';
 
 export type WhatsAppMessageKind =
   | 'text'
@@ -81,18 +81,8 @@ export function WhatsAppInteractiveConfig({ config, onChange }: Props) {
 
     setIsUploading(true);
     try {
-      const ext = file.name.split('.').pop() || 'bin';
-      const baseName = file.name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9._-]/g, '_') || 'arquivo';
-      const path = `automation-media/${currentOrganization.id}/${Date.now()}-${baseName}.${ext}`;
-      const { error } = await supabase.storage.from('inbox-attachments').upload(path, file, {
-        cacheControl: '3600',
-        upsert: false,
-        contentType: file.type || undefined,
-      });
-      if (error) throw error;
-
-      const { data } = supabase.storage.from('inbox-attachments').getPublicUrl(path);
-      const publicUrl = data.publicUrl;
+      const path = buildStoragePath(currentOrganization.id, file, 'automation-media');
+      const publicUrl = await uploadMediaFile('inbox-attachments', path, file);
       const detectedType = file.type.startsWith('image/') ? 'image'
         : file.type.startsWith('video/') ? 'video'
           : file.type.startsWith('audio/') ? 'audio'

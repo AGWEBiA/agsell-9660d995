@@ -12,9 +12,10 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
-  // Auth via X-Admin-Token (deve ser igual ao SUPABASE_SERVICE_ROLE_KEY)
+  // Token de uso único (será deletado após backfill)
+  const ONE_TIME_TOKEN = "bf_ag_2026_05_14_xK9pQ3mN7vR2tL8wY";
   const token = req.headers.get("X-Admin-Token");
-  if (token !== Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
+  if (token !== ONE_TIME_TOKEN) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 

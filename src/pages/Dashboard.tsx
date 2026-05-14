@@ -282,8 +282,10 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+      </ErrorBoundary>
 
       {/* Health & Queue Status */}
+      <ErrorBoundary fallback={<SectionFallback label="o status do sistema" />}>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card className={`border-2 ${healthStatus?.status === 'critical' ? 'border-red-500 bg-red-50/50' : healthStatus?.status === 'warning' ? 'border-amber-500 bg-amber-50/50' : 'border-green-500/20'}`}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">

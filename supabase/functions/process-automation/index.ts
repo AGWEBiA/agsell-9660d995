@@ -68,9 +68,19 @@ Deno.serve(async (req) => {
     const isServiceRoleToken = token === supabaseServiceKey;
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY');
     const hasInternalCronHeader = req.headers.get("X-Internal-Cron") === "true" || req.headers.get("x-internal-cron") === "true";
-    const isInternalCron = isServiceRoleToken || (hasInternalCronHeader && anonKey && token === anonKey);
+    
+    // Improved bypass check: service role key OR internal cron header with either service key or anon key
+    const isInternalCron = isServiceRoleToken || (hasInternalCronHeader && (token === supabaseServiceKey || (anonKey && token === anonKey)));
 
     if (!isInternalCron) {
+      if (!token || token.split('.').length !== 3) {
+        console.error("[process-automation] Auth validation failed: Invalid token format");
+        return new Response(JSON.stringify({ error: 'Invalid or missing session token' }), { 
+          status: 401, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        });
+      }
+
       const { data: { user }, error: authError } = await supabase.auth.getUser(token);
       if (authError || !user) {
         console.error("[process-automation] Auth validation failed:", authError?.message);

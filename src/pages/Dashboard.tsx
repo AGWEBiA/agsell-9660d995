@@ -54,6 +54,15 @@ import {
   useTopLeads,
 } from '@/hooks/useDashboard';
 import { useGamification } from '@/hooks/useGamification';
+import ErrorBoundary from '@/components/ErrorBoundary';
+
+const SectionFallback = ({ label }: { label: string }) => (
+  <Card className="border-dashed">
+    <CardContent className="py-8 text-center text-sm text-muted-foreground">
+      Não foi possível carregar {label}. Tente atualizar a página.
+    </CardContent>
+  </Card>
+);
 
 const activityIcons: Record<string, React.ElementType> = {
   email_sent: Mail,

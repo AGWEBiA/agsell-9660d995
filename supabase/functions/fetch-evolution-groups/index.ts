@@ -14,7 +14,8 @@ type OrgInstance = {
   config: IntegrationConfig;
 };
 
-const GROUP_FETCH_TIMEOUT_MS = 50000; // 50s to stay under Supabase 60s limit
+const REQUEST_TIMEOUT_MS = 25000;
+const GROUP_FETCH_TIMEOUT_MS = 90000;
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 3000;
 
@@ -88,8 +89,20 @@ const parseGroups = (payload: unknown): any[] => {
     const record = payload as Record<string, unknown>;
     if (Array.isArray(record.groups)) return record.groups;
     if (Array.isArray(record.data)) return record.data;
+    if (Array.isArray(record.result)) return record.result;
+    if (record.response && typeof record.response === "object") {
+      const response = record.response as Record<string, unknown>;
+      if (Array.isArray(response.groups)) return response.groups;
+      if (Array.isArray(response.data)) return response.data;
+    }
   }
   return [];
+};
+
+const normalizeBaseUrlCandidates = (baseUrl: string) => {
+  const trimmed = baseUrl.replace(/\/+$/, "");
+  const withoutManager = trimmed.replace(/\/manager\/?$/, "");
+  return Array.from(new Set([trimmed, withoutManager, `${withoutManager}/manager`].filter(Boolean)));
 };
 
 const buildOrgInstanceNameIndex = (instances: OrgInstance[]) => {

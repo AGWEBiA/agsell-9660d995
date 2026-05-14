@@ -30,7 +30,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { SearchableTagSelect } from '@/components/whatsapp/SearchableTagSelect';
-import { buildStoragePath } from '@/lib/storagePaths';
+import { buildStoragePath, uploadMediaFile } from '@/lib/storagePaths';
 
 interface VoipCampaign {
   id: string;
@@ -137,14 +137,8 @@ export default function CommunicationCampaigns() {
     try {
       if (!orgId) throw new Error('Selecione uma organização antes de enviar arquivos.');
       const path = buildStoragePath(orgId, file, 'voip');
-      const { error: uploadError } = await supabase.storage.from('voip-audio').upload(path, file, {
-        cacheControl: '3600',
-        upsert: false,
-        contentType: file.type || undefined,
-      });
-      if (uploadError) throw uploadError;
-      const { data: urlData } = supabase.storage.from('voip-audio').getPublicUrl(path);
-      setVoipForm(f => ({ ...f, audio_url: urlData.publicUrl }));
+      const publicUrl = await uploadMediaFile('voip-audio', path, file);
+      setVoipForm(f => ({ ...f, audio_url: publicUrl }));
       setAudioFileName(file.name);
       toast.success('Áudio enviado com sucesso!');
     } catch (err: any) {

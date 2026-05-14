@@ -1102,10 +1102,12 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
     }
 
     // Update submissions count
-    await supabase.rpc("increment_form_submissions", { form_id_param: formId }).catch(() => {
+    const { error: rpcError } = await supabase.rpc("increment_form_submissions", { form_id_param: formId });
+    if (rpcError) {
+      console.error("RPC increment failed, falling back to direct update:", rpcError);
       // Fallback: direct update
-      supabase.from("forms").update({ submissions_count: form.submissions_count + 1 }).eq("id", formId);
-    });
+      await supabase.from("forms").update({ submissions_count: (form.submissions_count || 0) + 1 }).eq("id", formId);
+    }
 
     // Trigger automations
     try {

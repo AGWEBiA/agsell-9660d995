@@ -8115,6 +8115,10 @@ export type Database = {
         Args: { automation_id: string }
         Returns: undefined
       }
+      increment_form_submissions: {
+        Args: { form_id_param: string }
+        Returns: undefined
+      }
       increment_rotator_entry_clicks: {
         Args: { _entry_id: string }
         Returns: undefined

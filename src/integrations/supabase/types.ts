@@ -7339,6 +7339,54 @@ export type Database = {
           },
         ]
       }
+      whatsapp_connection_history: {
+        Row: {
+          created_at: string
+          event_source: string
+          id: string
+          integration_id: string
+          new_status: string
+          old_status: string | null
+          organization_id: string
+          payload: Json | null
+        }
+        Insert: {
+          created_at?: string
+          event_source: string
+          id?: string
+          integration_id: string
+          new_status: string
+          old_status?: string | null
+          organization_id: string
+          payload?: Json | null
+        }
+        Update: {
+          created_at?: string
+          event_source?: string
+          id?: string
+          integration_id?: string
+          new_status?: string
+          old_status?: string | null
+          organization_id?: string
+          payload?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_connection_history_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "organization_integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_connection_history_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_flow_submissions: {
         Row: {
           completed_at: string | null
@@ -8165,6 +8213,17 @@ export type Database = {
           _resource_type: string
         }
         Returns: undefined
+      }
+      log_whatsapp_connection_change: {
+        Args: {
+          _integration_id: string
+          _new_status: string
+          _old_status: string
+          _org_id: string
+          _payload?: Json
+          _source: string
+        }
+        Returns: string
       }
       merge_contacts: {
         Args: { _keep_id: string; _remove_id: string }

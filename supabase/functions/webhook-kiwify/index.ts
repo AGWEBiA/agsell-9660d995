@@ -250,6 +250,8 @@ Deno.serve(async (req) => {
     }
 
     // --- Map Kiwify status ---
+    // Prefer the native `webhook_event_type` field (more precise) and fall back to order_status.
+    const nativeEventType = (payload as any).webhook_event_type as string | undefined;
     const eventTypeMap: Record<string, string> = {
       paid: "purchase.approved",
       waiting_payment: "purchase.pending",
@@ -258,8 +260,21 @@ Deno.serve(async (req) => {
       chargedback: "purchase.chargeback",
       completed: "purchase.approved",
     };
+    const nativeMap: Record<string, string> = {
+      order_approved: "purchase.approved",
+      subscription_renewed: "subscription.renewed",
+      subscription_canceled: "subscription.canceled",
+      subscription_late: "subscription.late",
+      pix_created: "purchase.pending",
+      billet_created: "purchase.pending",
+      order_rejected: "purchase.refused",
+      order_refunded: "purchase.refunded",
+      chargeback: "purchase.chargeback",
+    };
     const eventType =
-      eventTypeMap[payload.order_status] || `unknown.${payload.order_status}`;
+      (nativeEventType && nativeMap[nativeEventType]) ||
+      eventTypeMap[payload.order_status] ||
+      `unknown.${nativeEventType || payload.order_status}`;
 
     // --- Find plan by Kiwify product ID ---
     let plan: {

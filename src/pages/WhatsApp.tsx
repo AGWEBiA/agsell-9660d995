@@ -257,7 +257,7 @@ function InstanceSelectorBar({
         const isSelected = selectedId === instance.id;
         const phone = instance.phone_number || (instance.config?.phone_number as string) || '';
         const displayName = phone || instance.name;
-        const isConnected = instance.is_active;
+        const isConnected = instance.is_connected;
         const hasSac = instance.config?.use_for_sac === true;
 
         return (
@@ -362,7 +362,7 @@ export default function WhatsApp() {
     return () => window.removeEventListener('navigate-to-contacts-import', handler);
   }, [navigate]);
 
-  const sacInstances = instances.filter(i => i.config?.use_for_sac === true && i.is_active);
+  const sacInstances = instances.filter(i => i.config?.use_for_sac === true && i.is_connected);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -439,9 +439,10 @@ export default function WhatsApp() {
             {selectedInstance && (
               <div className="flex items-center justify-between pt-2 border-t text-xs text-muted-foreground">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                  <CheckCircle2 className={`h-3.5 w-3.5 ${selectedInstance.is_connected ? 'text-emerald-500' : 'text-muted-foreground'}`} />
                   <span>
                     Exibindo dados de: <strong className="text-foreground">{selectedInstance.phone_number || selectedInstance.name}</strong>
+                    {!selectedInstance.is_connected && ' (aguardando conexão real)'}
                   </span>
                 </div>
                 <div className="flex items-center gap-1">

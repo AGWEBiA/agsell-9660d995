@@ -6554,21 +6554,6 @@ export type Database = {
           },
         ]
       }
-      temp_user_confirmation: {
-        Row: {
-          email: string | null
-          email_confirmed_at: string | null
-        }
-        Insert: {
-          email?: string | null
-          email_confirmed_at?: string | null
-        }
-        Update: {
-          email?: string | null
-          email_confirmed_at?: string | null
-        }
-        Relationships: []
-      }
       unknown_whatsapp_instances: {
         Row: {
           acknowledged: boolean

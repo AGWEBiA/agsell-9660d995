@@ -8239,6 +8239,18 @@ export type Database = {
         Returns: number
       }
       normalize_br_phone: { Args: { phone: string }; Returns: string }
+      normalize_form_submission_data: {
+        Args: { _payload: Json }
+        Returns: Json
+      }
+      process_form_submission_contact_and_tag: {
+        Args: {
+          _enqueue_automations?: boolean
+          _increment_count?: boolean
+          _submission_id: string
+        }
+        Returns: string
+      }
       process_import_job: { Args: { _job_id: string }; Returns: Json }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }

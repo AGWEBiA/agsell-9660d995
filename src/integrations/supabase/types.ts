@@ -8267,6 +8267,7 @@ export type Database = {
         }[]
       }
       reprocess_scheduled_step: { Args: { _step_id: string }; Returns: Json }
+      resolve_edge_function_cron_config: { Args: never; Returns: Json }
       simulate_group_tag_trigger: {
         Args: {
           _group_id: string

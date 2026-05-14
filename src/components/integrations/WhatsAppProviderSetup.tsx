@@ -259,7 +259,7 @@ export function WhatsAppProviderSetup() {
     if (testResult?.status === 'connected') return 'bg-emerald-500';
     if (testResult?.status === 'disconnected') return 'bg-amber-500';
     if (testResult?.status === 'error') return 'bg-destructive';
-    return instance.is_active ? 'bg-emerald-500' : 'bg-muted-foreground/40';
+    return instance.is_connected ? 'bg-emerald-500' : 'bg-muted-foreground/40';
   };
 
   const getTypeLabel = (instance: WhatsAppInstance) => {
@@ -443,8 +443,8 @@ export function WhatsAppProviderSetup() {
                     <p className="font-medium">{getTypeLabel(selectedInstance)}</p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Status</span>
-                    <p className="font-medium">{selectedInstance.is_active ? 'Ativo' : 'Inativo'}</p>
+                    <span className="text-muted-foreground">Conexão</span>
+                    <p className="font-medium">{selectedInstance.is_connected ? 'Conectado' : 'Desconectado'}</p>
                   </div>
                   {selectedInstance.config.instance_name && (
                     <div>

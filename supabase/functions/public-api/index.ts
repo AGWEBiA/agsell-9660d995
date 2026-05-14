@@ -240,18 +240,14 @@ Deno.serve(async (req) => {
       .eq("id", apiKeyData.id);
 
     // Determine version + resource from already-parsed URL.
-    // Supabase pathname is /public-api/<rest>, so pathParts[0] === "public-api".
-    // Supported layouts:
-    //   /public-api/v1/<resource>/<id>/<sub>      (versioned, recommended)
-    //   /public-api/v1.1/<resource>/<id>/<sub>    (versioned v1.1)
-    //   /public-api/<resource>/<id>/<sub>         (legacy, no version)
-    const maybeVersion = (pathParts[1] || "").toLowerCase();
+    // relevantParts is already calculated above for public-api relative paths
+    const maybeVersion = (relevantParts[0] || "").toLowerCase();
     const isVersioned = maybeVersion === "v1" || maybeVersion === "v1.1";
     const apiVersion = isVersioned ? maybeVersion : "v1";
     const isV11 = apiVersion === "v1.1";
-    const resource = isVersioned ? pathParts[2] : pathParts[1];
-    const resourceId = isVersioned ? pathParts[3] : pathParts[2];
-    const subResource = isVersioned ? pathParts[4] : pathParts[3];
+    const resource = isVersioned ? relevantParts[1] : relevantParts[0];
+    const resourceId = isVersioned ? relevantParts[2] : relevantParts[1];
+    const subResource = isVersioned ? relevantParts[3] : relevantParts[2];
 
     // Check permissions
     const permissions = apiKeyData.permissions as string[];

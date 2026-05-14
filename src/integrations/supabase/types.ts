@@ -6554,39 +6554,18 @@ export type Database = {
           },
         ]
       }
-      temp_user_check: {
-        Row: {
-          created_at: string | null
-          email: string | null
-          exists: boolean | null
-        }
-        Insert: {
-          created_at?: string | null
-          email?: string | null
-          exists?: boolean | null
-        }
-        Update: {
-          created_at?: string | null
-          email?: string | null
-          exists?: boolean | null
-        }
-        Relationships: []
-      }
-      temp_user_roles_emails: {
+      temp_user_confirmation: {
         Row: {
           email: string | null
-          role: string | null
-          user_id: string | null
+          email_confirmed_at: string | null
         }
         Insert: {
           email?: string | null
-          role?: string | null
-          user_id?: string | null
+          email_confirmed_at?: string | null
         }
         Update: {
           email?: string | null
-          role?: string | null
-          user_id?: string | null
+          email_confirmed_at?: string | null
         }
         Relationships: []
       }

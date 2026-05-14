@@ -54,6 +54,15 @@ import {
   useTopLeads,
 } from '@/hooks/useDashboard';
 import { useGamification } from '@/hooks/useGamification';
+import ErrorBoundary from '@/components/ErrorBoundary';
+
+const SectionFallback = ({ label }: { label: string }) => (
+  <Card className="border-dashed">
+    <CardContent className="py-8 text-center text-sm text-muted-foreground">
+      Não foi possível carregar {label}. Tente atualizar a página.
+    </CardContent>
+  </Card>
+);
 
 const activityIcons: Record<string, React.ElementType> = {
   email_sent: Mail,
@@ -170,6 +179,7 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Cards */}
+      <ErrorBoundary fallback={<SectionFallback label="os indicadores" />}>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -183,7 +193,7 @@ export default function Dashboard() {
               <Skeleton className="h-8 w-20" />
             ) : (
               <>
-                <div className="text-2xl font-bold">{stats?.totalContacts.toLocaleString('pt-BR') || 0}</div>
+                <div className="text-2xl font-bold">{(stats?.totalContacts ?? 0).toLocaleString('pt-BR')}</div>
                 <div className={`flex items-center text-xs ${(stats?.contactsGrowth || 0) >= 0 ? 'text-green-600' : 'text-destructive'}`}>
                   {(stats?.contactsGrowth || 0) >= 0 ? (
                     <ArrowUpRight className="mr-1 h-3 w-3" />
@@ -272,8 +282,10 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+      </ErrorBoundary>
 
       {/* Health & Queue Status */}
+      <ErrorBoundary fallback={<SectionFallback label="o status do sistema" />}>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card className={`border-2 ${healthStatus?.status === 'critical' ? 'border-red-500 bg-red-50/50' : healthStatus?.status === 'warning' ? 'border-amber-500 bg-amber-50/50' : 'border-green-500/20'}`}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -339,9 +351,11 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+      </ErrorBoundary>
 
       {/* Sales Performance Summary for Admins */}
       {(currentRole === 'owner' || currentRole === 'admin') && (
+        <ErrorBoundary fallback={<SectionFallback label="a performance do time" />}>
         <Card className="bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -365,7 +379,7 @@ export default function Dashboard() {
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Comissões Geradas</p>
                 <p className="text-2xl font-bold text-orange-500">
-                  {formatCurrency((stats?.totalDealsValue || 0) * 0.1)} {/* Mocking a general 10% if not calculated yet */}
+                  {formatCurrency((stats?.totalDealsValue || 0) * 0.1)}
                 </p>
               </div>
               <div className="space-y-1">
@@ -378,9 +392,11 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
+        </ErrorBoundary>
       )}
 
       {/* Charts Row */}
+      <ErrorBoundary fallback={<SectionFallback label="os gráficos" />}>
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
         {/* Leads Chart */}
         <Card className="lg:col-span-4">
@@ -480,8 +496,10 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+      </ErrorBoundary>
 
       {/* Bottom Row */}
+      <ErrorBoundary fallback={<SectionFallback label="atividades e leads" />}>
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
         {/* Recent Activities */}
         <Card className="lg:col-span-4">
@@ -578,6 +596,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+      </ErrorBoundary>
     </div>
   );
 }

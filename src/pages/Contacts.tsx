@@ -423,6 +423,7 @@ export default function Contacts() {
                   <TableHead>Empresa</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Score</TableHead>
+                  <TableHead>Fonte</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -482,6 +483,11 @@ export default function Contacts() {
                     <TableCell>
                       <Badge variant={contact.lead_score && contact.lead_score >= 80 ? 'default' : contact.lead_score && contact.lead_score >= 60 ? 'secondary' : 'outline'}>
                         {contact.lead_score || 0}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="font-normal capitalize whitespace-nowrap">
+                        {contact.source || 'Manual'}
                       </Badge>
                     </TableCell>
                     <TableCell>

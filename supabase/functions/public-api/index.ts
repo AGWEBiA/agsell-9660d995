@@ -1022,7 +1022,7 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
     // Validate form exists and is active
     const { data: form, error: formError } = await supabase
       .from("forms")
-      .select("id, is_active, organization_id")
+      .select("id, is_active, organization_id, name, submissions_count")
       .eq("id", formId)
       .single();
 
@@ -1050,18 +1050,23 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
 
     // Try to identify/create contact from form data
     let contactId = null;
+    let firstName = "Lead";
+    let lastName = "Form";
+    let email = null;
+    let phone = null;
+    let source = form.name || "Form";
+
     try {
-      // Robustness: if this is a synced submission from another instance, the data might be nested
       const formData = (body.event === "form_submission" && body.data) ? body.data : body;
       
-      const email = (formData.email || formData.Email || formData.E-mail || "").trim().toLowerCase();
-      const phone = String(formData.phone || formData.Phone || formData.telefone || formData.Telefone || formData.whatsapp || formData.whatsapp || formData.zap || formData.celular || "").trim();
+      email = (formData.email || formData.Email || formData.E-mail || "").trim().toLowerCase() || null;
+      phone = String(formData.phone || formData.Phone || formData.telefone || formData.Telefone || formData.whatsapp || formData.whatsapp || formData.zap || formData.celular || "").trim() || null;
       const name = (formData.name || formData.Name || formData.nome || formData.Nome || "").trim();
-      const firstName = (formData.first_name || formData.firstName || name.split(" ")[0] || "Form Lead").trim();
-      const lastName = (formData.last_name || formData.lastName || name.split(" ").slice(1).join(" ") || "").trim();
+      firstName = (formData.first_name || formData.firstName || name.split(" ")[0] || "Lead").trim();
+      lastName = (formData.last_name || formData.lastName || name.split(" ").slice(1).join(" ") || "Form").trim();
+      source = (formData.source || formData.Source || formData.origem || formData.utm_source || form.name || "Form").trim();
 
       if (email || phone) {
-        // Find existing contact
         let query = supabase.from("contacts").select("id").eq("organization_id", form.organization_id);
         if (email) query = query.eq("email", email);
         else query = query.eq("whatsapp", phone);
@@ -1070,18 +1075,19 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
 
         if (existingContact) {
           contactId = existingContact.id;
+          // Update source if it's currently "form" or generic
+          await supabase.from("contacts").update({ source }).eq("id", contactId);
         } else {
-          // Create new contact
           const ownerId = await getOrgOwnerUserId(supabase, form.organization_id);
           const { data: newContact } = await supabase.from("contacts").insert({
             organization_id: form.organization_id,
             user_id: ownerId,
             first_name: firstName,
-            last_name: lastName || null,
-            email: email || null,
-            whatsapp: phone || null,
-            phone: phone || null,
-            source: "form",
+            last_name: lastName,
+            email,
+            whatsapp: phone,
+            phone,
+            source,
           }).select("id").single();
           if (newContact) contactId = newContact.id;
         }
@@ -1104,15 +1110,95 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
       );
     }
 
+    // Create Deal in Pipeline (locally)
+    if (contactId) {
+      try {
+        const ownerId = await getOrgOwnerUserId(supabase, form.organization_id);
+        const { data: stage } = await supabase.from("pipeline_stages").select("id").eq("organization_id", form.organization_id).eq("name", "Novo Lead").limit(1).maybeSingle();
+        
+        await supabase.from("deals").insert({
+          organization_id: form.organization_id,
+          user_id: ownerId,
+          contact_id: contactId,
+          title: `[${source}] ${firstName} ${lastName}`,
+          status: "open",
+          stage_id: stage?.id || "8592093e-20c5-46d7-8481-55eadf48336a",
+          notes: `Lead capturado via formulário: ${form.name}. Dados: ${JSON.stringify(body)}`,
+        });
+      } catch (dealErr) {
+        console.error("Error creating deal:", dealErr);
+      }
+    }
+
     // Update submissions count
     const { error: rpcError } = await supabase.rpc("increment_form_submissions", { form_id_param: formId });
     if (rpcError) {
       console.error("RPC increment failed, falling back to direct update:", rpcError);
-      // Fallback: direct update
       await supabase.from("forms").update({ submissions_count: (form.submissions_count || 0) + 1 }).eq("id", formId);
     }
 
-    // Trigger automations
+    // SYNC TO TARGET SUPABASE (Production)
+    const targetUrl = Deno.env.get("TARGET_SUPABASE_URL");
+    const targetKey = Deno.env.get("TARGET_SUPABASE_SERVICE_ROLE_KEY");
+    if (targetUrl && targetKey) {
+      try {
+        const targetSupabase = createClient(targetUrl, targetKey);
+        
+        // 1. Get target org and owner
+        const { data: orgs } = await targetSupabase.from("organizations").select("id").limit(1);
+        const targetOrgId = orgs?.[0]?.id;
+        
+        if (targetOrgId) {
+          const { data: owner } = await targetSupabase.from("organization_members").select("user_id").eq("organization_id", targetOrgId).eq("role", "owner").limit(1).maybeSingle();
+          const targetOwnerId = owner?.user_id;
+
+          // 2. Sync contact to target
+          let targetContactId = null;
+          if (email || phone) {
+            let tQuery = targetSupabase.from("contacts").select("id").eq("organization_id", targetOrgId);
+            if (email) tQuery = tQuery.eq("email", email);
+            else tQuery = tQuery.eq("whatsapp", phone);
+            
+            const { data: tExisting } = await tQuery.maybeSingle();
+            
+            if (tExisting) {
+              targetContactId = tExisting.id;
+              await targetSupabase.from("contacts").update({ source }).eq("id", targetContactId);
+            } else {
+              const { data: tNew } = await targetSupabase.from("contacts").insert({
+                organization_id: targetOrgId,
+                user_id: targetOwnerId,
+                first_name: firstName,
+                last_name: lastName,
+                email,
+                whatsapp: phone,
+                phone,
+                source,
+              }).select("id").single();
+              if (tNew) targetContactId = tNew.id;
+            }
+          }
+
+          // 3. Sync deal to target
+          if (targetContactId) {
+            const { data: tStage } = await targetSupabase.from("pipeline_stages").select("id").eq("organization_id", targetOrgId).eq("name", "Novo Lead").limit(1).maybeSingle();
+            await targetSupabase.from("deals").insert({
+              organization_id: targetOrgId,
+              user_id: targetOwnerId,
+              contact_id: targetContactId,
+              title: `[${source}] ${firstName} ${lastName}`,
+              status: "open",
+              stage_id: tStage?.id || "8592093e-20c5-46d7-8481-55eadf48336a",
+              notes: `Lead capturado via formulário Lovable: ${form.name}.`,
+            });
+          }
+        }
+      } catch (syncErr) {
+        console.error("Target sync error:", syncErr);
+      }
+    }
+
+    // Trigger automations (locally)
     try {
       const { data: automations } = await supabase
         .from("automations")
@@ -1132,7 +1218,7 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
       }
     } catch {}
 
-    // Dispatch outbound webhook if configured
+    // Dispatch outbound webhook (legacy / generic)
     try {
       const { data: formWithWebhook } = await supabase
         .from("forms")
@@ -1141,33 +1227,27 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
         .single();
 
       if (formWithWebhook?.webhook_url) {
+        // Only call external webhooks, avoid recursive sync calls if possible
         const isAgSellSync = formWithWebhook.webhook_url.includes("/functions/v1/public-api/forms/");
-        const webhookPayload = isAgSellSync ? body : {
-          event: "form_submission",
-          form_id: formId,
-          form_name: formWithWebhook.name,
-          submission_id: submission.id,
-          contact_id: submission.contact_id || null,
-          data: body,
-          submitted_at: new Date().toISOString(),
-        };
+        if (!isAgSellSync) {
+          const webhookPayload = {
+            event: "form_submission",
+            form_id: formId,
+            form_name: formWithWebhook.name,
+            submission_id: submission.id,
+            contact_id: submission.contact_id || null,
+            data: body,
+            submitted_at: new Date().toISOString(),
+          };
 
-        const webhookHeaders: Record<string, string> = {
-          "Content-Type": "application/json",
-          "User-Agent": "AGSell-Webhook/1.0",
-          ...(formWithWebhook.webhook_headers || {}),
-        };
-
-        // Fire-and-forget — don't block the response
-        fetch(formWithWebhook.webhook_url, {
-          method: "POST",
-          headers: webhookHeaders,
-          body: JSON.stringify(webhookPayload),
-        }).catch((err) => console.error("Webhook dispatch failed:", err));
+          fetch(formWithWebhook.webhook_url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...(formWithWebhook.webhook_headers || {}) },
+            body: JSON.stringify(webhookPayload),
+          }).catch(() => {});
+        }
       }
-    } catch (webhookErr) {
-      console.error("Webhook lookup error:", webhookErr);
-    }
+    } catch {}
 
     return new Response(
       JSON.stringify({ success: true, submission_id: submission.id }),

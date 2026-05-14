@@ -239,7 +239,18 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "organization_id required" }, 400);
     }
 
-    const adminClient = supabase; // Already using service role key
+    const adminClient = supabase;
+
+    const { data: isMember, error: memberError } = await adminClient.rpc("is_org_member", {
+      _org_id: organization_id,
+      _user_id: user.id,
+    });
+
+    if (memberError || !isMember) {
+      console.warn(`[${requestId}] Permission denied: User ${user.id} is not member of org ${organization_id}`);
+      return jsonResponse({ error: "Sem permissão para esta organização" }, 403);
+    }
+
 
     const { data: orgIntegrationRows, error: integrationError } = await adminClient
       .from("organization_integrations")

@@ -94,6 +94,25 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
 
   const { instances: whatsAppInstances, activeInstances } = useWhatsAppInstances();
 
+  const getFunctionErrorMessage = async (error: unknown) => {
+    const context = (error as { context?: Response })?.context;
+    if (context?.clone) {
+      try {
+        const payload = await context.clone().json();
+        return payload?.error || payload?.message || JSON.stringify(payload);
+      } catch {
+        try {
+          const text = await context.clone().text();
+          if (text) return text;
+        } catch {
+          // Keep the default error message below.
+        }
+      }
+    }
+
+    return error instanceof Error ? error.message : 'Erro desconhecido';
+  };
+
   // Auto-fetch groups from Evolution API on first load only (once per session)
   useEffect(() => {
     if (!hasAutoFetchedRef.current && !isLoadingGroups && groups.length === 0 && activeInstances.length > 0 && currentOrganization?.id) {
@@ -122,7 +141,7 @@ export function WhatsAppGroupsManager({ filterInstanceName, onClearFilter }: { f
       const { data, error } = await supabase.functions.invoke('fetch-evolution-groups', {
         body: { organization_id: currentOrganization.id, instance_name: instanceFilter || undefined, admin_only: adminOnly ?? adminOnlyFilter },
       });
-      if (error) throw error;
+      if (error) throw new Error(await getFunctionErrorMessage(error));
 
       if (data?.error) {
         toast.warning(data.error);

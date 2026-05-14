@@ -1161,25 +1161,8 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
       }
     }
 
-    // Trigger automations (locally)
-    try {
-      const { data: automations } = await supabase
-        .from("automations")
-        .select("id")
-        .eq("organization_id", form.organization_id)
-        .eq("trigger_type", "form_submitted")
-        .eq("is_active", true);
-
-      if (automations?.length) {
-        await Promise.allSettled(
-          automations.map((a: { id: string }) =>
-            supabase.functions.invoke("process-automation", {
-              body: { automation_id: a.id, contact_id: submission?.contact_id ?? null, trigger_event: "form_submitted" },
-            })
-          )
-        );
-      }
-    } catch {}
+    // Form-submitted automations are queued by the database trigger so every
+    // submission path behaves the same and automations are not duplicated.
 
     // Dispatch outbound webhook (legacy / generic)
     try {

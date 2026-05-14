@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
+import { buildStoragePath } from '@/lib/storagePaths';
 
 export type WhatsAppMessageKind =
   | 'text'
@@ -81,9 +82,7 @@ export function WhatsAppInteractiveConfig({ config, onChange }: Props) {
 
     setIsUploading(true);
     try {
-      const ext = file.name.split('.').pop() || 'bin';
-      const baseName = file.name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9._-]/g, '_') || 'arquivo';
-      const path = `automation-media/${currentOrganization.id}/${Date.now()}-${baseName}.${ext}`;
+      const path = buildStoragePath(currentOrganization.id, file, 'automation-media');
       const { error } = await supabase.storage.from('inbox-attachments').upload(path, file, {
         cacheControl: '3600',
         upsert: false,

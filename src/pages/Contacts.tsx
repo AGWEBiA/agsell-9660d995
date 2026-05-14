@@ -486,6 +486,11 @@ export default function Contacts() {
                       </Badge>
                     </TableCell>
                     <TableCell>
+                      <Badge variant="outline" className="font-normal capitalize whitespace-nowrap">
+                        {contact.source || 'Manual'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon">

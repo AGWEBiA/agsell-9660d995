@@ -6554,6 +6554,24 @@ export type Database = {
           },
         ]
       }
+      temp_user_check: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          exists: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          exists?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          exists?: boolean | null
+        }
+        Relationships: []
+      }
       unknown_whatsapp_instances: {
         Row: {
           acknowledged: boolean

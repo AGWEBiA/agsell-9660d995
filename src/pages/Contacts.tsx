@@ -423,6 +423,7 @@ export default function Contacts() {
                   <TableHead>Empresa</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Score</TableHead>
+                  <TableHead>Fonte</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>

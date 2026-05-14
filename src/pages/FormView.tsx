@@ -185,26 +185,7 @@ export default function FormView() {
         window.parent.postMessage({ type: 'agsell-form-height', formId, height: document.body.scrollHeight }, '*');
       } catch {}
 
-      try {
-        const orgId = form?.organization_id;
-        if (orgId) {
-          const { data: automations } = await supabase
-            .from('automations')
-            .select('id')
-            .eq('organization_id', orgId)
-            .eq('trigger_type', 'form_submitted')
-            .eq('is_active', true);
-          if (automations?.length) {
-            await Promise.allSettled(
-              automations.map((a) =>
-                supabase.functions.invoke('process-automation', {
-                  body: { automation_id: a.id, contact_id: null, trigger_event: 'form_submitted' },
-                })
-              )
-            );
-          }
-        }
-      } catch {}
+      // Automations are now handled by the public-api edge function
 
       // Redirect if configured
       if (s.redirectUrl?.trim()) {

@@ -1,0 +1,1 @@
+UPDATE public.plans SET is_active = true WHERE slug = 'vip-professional';

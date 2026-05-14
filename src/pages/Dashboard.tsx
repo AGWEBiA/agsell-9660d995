@@ -192,7 +192,7 @@ export default function Dashboard() {
               <Skeleton className="h-8 w-20" />
             ) : (
               <>
-                <div className="text-2xl font-bold">{stats?.totalContacts.toLocaleString('pt-BR') || 0}</div>
+                <div className="text-2xl font-bold">{(stats?.totalContacts ?? 0).toLocaleString('pt-BR')}</div>
                 <div className={`flex items-center text-xs ${(stats?.contactsGrowth || 0) >= 0 ? 'text-green-600' : 'text-destructive'}`}>
                   {(stats?.contactsGrowth || 0) >= 0 ? (
                     <ArrowUpRight className="mr-1 h-3 w-3" />

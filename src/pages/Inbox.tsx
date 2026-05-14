@@ -46,7 +46,7 @@ import { Label } from '@/components/ui/label';
 import {
   Tooltip, TooltipContent, TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { buildStoragePath } from '@/lib/storagePaths';
+import { buildStoragePath, uploadMediaFile } from '@/lib/storagePaths';
 
 const channelColors: Record<string, string> = {
   whatsapp: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
@@ -401,14 +401,12 @@ export default function Inbox() {
     const scopeId = currentOrganization?.id || user?.id;
     if (!scopeId) { toast.error('Faça login antes de enviar arquivos.'); return null; }
     const path = buildStoragePath(scopeId, file, 'inbox');
-    const { error } = await supabase.storage.from('inbox-attachments').upload(path, file, {
-      cacheControl: '3600',
-      upsert: false,
-      contentType: file.type || undefined,
-    });
-    if (error) { toast.error('Erro ao fazer upload: ' + error.message); return null; }
-    const { data: urlData } = supabase.storage.from('inbox-attachments').getPublicUrl(path);
-    return urlData.publicUrl;
+    try {
+      return await uploadMediaFile('inbox-attachments', path, file);
+    } catch (error) {
+      toast.error('Erro ao fazer upload: ' + (error instanceof Error ? error.message : 'erro desconhecido'));
+      return null;
+    }
   };
 
   const handleWhatsappInstanceChange = (instanceId: string) => {

@@ -1141,7 +1141,8 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
         .single();
 
       if (formWithWebhook?.webhook_url) {
-        const webhookPayload = {
+        const isAgSellSync = formWithWebhook.webhook_url.includes("/functions/v1/public-api/forms/");
+        const webhookPayload = isAgSellSync ? body : {
           event: "form_submission",
           form_id: formId,
           form_name: formWithWebhook.name,

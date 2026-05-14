@@ -43,6 +43,30 @@ export const documentation_articles: HelpArticle[] = [
 Para detalhes completos sobre tabelas, endpoints e arquitetura, consulte o (/manual-tecnico).`,
   },
   {
+    id: 'system-memory-doc',
+    categoryId: 'documentation',
+    title: 'Documento de Memória do Sistema',
+    icon: Brain,
+    description: 'Registro histórico de alterações, decisões técnicas e evolução da plataforma.',
+    content: `Este documento serve como a memória viva do AG Sell, registrando as principais mudanças e evoluções do sistema.
+
+## Registro Histórico de Versões
+
+### v2.4 (Maio 2026)
+- **Integração CRM Flexível**: Adicionada opção nos formulários para definir se o lead deve ser enviado automaticamente ao CRM ou não.
+- **Sincronização por Tags**: Implementada automação que permite enviar contatos para o CRM ao adicionar uma tag específica, permitindo controle manual de qualificação.
+
+### v2.3 (Maio 2026)
+- **Central de Ajuda & RAG**: Lançamento da Central de Ajuda integrada ao Agente de Suporte IA (RAG).
+- **Segurança**: Aplicação de \`search_path\` em funções SQL e hardening de políticas RLS.
+
+### v2.2 (Abril 2026)
+- **Inbox Omnichannel**: Implementação de exportação PDF de conversas, cópia com metadados e citações de mensagens.
+
+## Diretrizes de Memória
+Toda alteração significativa no banco de dados, novas rotas ou mudanças em regras de negócio críticas devem ser registradas aqui e no (/manual-tecnico).`,
+  },
+  {
     id: 'api-docs-article',
     categoryId: 'documentation',
     title: 'Documentação da API REST',

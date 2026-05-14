@@ -5,11 +5,11 @@ import { Copy, ArrowLeft, Loader2 } from 'lucide-react';
 const MANUAL_CONTENT = `# MANUAL TÉCNICO COMPLETO — AG SELL
 ## Plataforma CRM + Automação Omnichannel + IA
 
-**Versão:** 2.2  
+**Versão:** 2.4  
 **Data:** Maio 2026  
 **Classificação:** Documentação Interna — Uso Técnico e Estratégico
 
-> **Novidades 2.3:** Central de Ajuda integrada com o Manual Técnico. Sincronização automática de base de conhecimento para o Agente de Suporte IA. Hardening de segurança com \`search_path\` em funções PostgreSQL e índices de performance em tabelas críticas (deals, webhooks, wa_sync_queue). SAC com cópia de mensagens, exportação PDF e Agente de Suporte AG Sell (RAG) integrados.
+> **Novidades 2.4:** Controle de CRM por formulário (enviar ou não leads automaticamente). Novas automações baseadas em tags para sincronização manual com o CRM. Central de Ajuda integrada com o Manual Técnico. Sincronização automática de base de conhecimento para o Agente de Suporte IA. Hardening de segurança com \`search_path\` em funções PostgreSQL e índices de performance em tabelas críticas (deals, webhooks, wa_sync_queue). SAC com cópia de mensagens, exportação PDF e Agente de Suporte AG Sell (RAG) integrados.
 
 ---
 
@@ -1058,7 +1058,7 @@ Os administradores podem acessar a rota **\`/system-logs\`** para visualizar a e
 | \`sequence_steps\` | Passos das sequências | via sequence |
 | \`sequence_enrollments\` | Inscrições em sequências | via sequence |
 | \`forms\` | Formulários de captura | organization_id |
-| \`form_submissions\` | Submissões de formulários | via form |
+| \`form_submissions\` | Submissões de formulários (CRM sync control) | via form |
 | \`email_campaigns\` | Campanhas de e-mail | organization_id |
 | \`email_domains\` | Domínios verificados | organization_id |
 | \`plans\` | Planos de assinatura | — (global) |

@@ -384,6 +384,13 @@ Clique em qualquer nó para configurar seus parâmetros:
     readTime: '6 min',
     content: `As Sequências permitem criar campanhas de nutrição com envios automáticos em intervalos programados — o famoso "drip marketing".
 
+## CRM & Automação de Entrada
+Você pode agora controlar se leads vindos de formulários entram automaticamente no CRM ou se prefere fazer isso manualmente via automação de tags.
+
+### Sincronização Flexível
+- **Opção no Formulário**: No editor de formulários, escolha "Sincronizar com CRM" para envio automático.
+- **Automação por Tag**: Configure uma automação para que, ao adicionar a tag "Enviar para CRM", o contato seja sincronizado e uma oportunidade seja criada.
+
 [presentation:sequences]
 
 ## O que são Sequências?

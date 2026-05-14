@@ -1051,11 +1051,14 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
     // Try to identify/create contact from form data
     let contactId = null;
     try {
-      const email = (body.email || body.Email || body.E-mail || "").trim().toLowerCase();
-      const phone = String(body.phone || body.Phone || body.telefone || body.Telefone || body.whatsapp || body.whatsapp || body.zap || body.celular || "").trim();
-      const name = (body.name || body.Name || body.nome || body.Nome || "").trim();
-      const firstName = (body.first_name || body.firstName || name.split(" ")[0] || "Form Lead").trim();
-      const lastName = (body.last_name || body.lastName || name.split(" ").slice(1).join(" ") || "").trim();
+      // Robustness: if this is a synced submission from another instance, the data might be nested
+      const formData = (body.event === "form_submission" && body.data) ? body.data : body;
+      
+      const email = (formData.email || formData.Email || formData.E-mail || "").trim().toLowerCase();
+      const phone = String(formData.phone || formData.Phone || formData.telefone || formData.Telefone || formData.whatsapp || formData.whatsapp || formData.zap || formData.celular || "").trim();
+      const name = (formData.name || formData.Name || formData.nome || formData.Nome || "").trim();
+      const firstName = (formData.first_name || formData.firstName || name.split(" ")[0] || "Form Lead").trim();
+      const lastName = (formData.last_name || formData.lastName || name.split(" ").slice(1).join(" ") || "").trim();
 
       if (email || phone) {
         // Find existing contact

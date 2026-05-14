@@ -43,6 +43,7 @@ Deno.serve(async (req) => {
     .order("created_at", { ascending: true });
 
   const { data: pending, error: pErr } = await q;
+  console.log("Backfill query result:", { count: pending?.length, error: pErr?.message });
   if (pErr) return new Response(JSON.stringify({ error: pErr.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   const ok: string[] = [];

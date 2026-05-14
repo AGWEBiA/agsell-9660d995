@@ -496,8 +496,10 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+      </ErrorBoundary>
 
       {/* Bottom Row */}
+      <ErrorBoundary fallback={<SectionFallback label="atividades e leads" />}>
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
         {/* Recent Activities */}
         <Card className="lg:col-span-4">

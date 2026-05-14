@@ -14,7 +14,8 @@ type OrgInstance = {
   config: IntegrationConfig;
 };
 
-const GROUP_FETCH_TIMEOUT_MS = 50000; // 50s to stay under Supabase 60s limit
+const REQUEST_TIMEOUT_MS = 25000;
+const GROUP_FETCH_TIMEOUT_MS = 90000;
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 3000;
 
@@ -88,8 +89,20 @@ const parseGroups = (payload: unknown): any[] => {
     const record = payload as Record<string, unknown>;
     if (Array.isArray(record.groups)) return record.groups;
     if (Array.isArray(record.data)) return record.data;
+    if (Array.isArray(record.result)) return record.result;
+    if (record.response && typeof record.response === "object") {
+      const response = record.response as Record<string, unknown>;
+      if (Array.isArray(response.groups)) return response.groups;
+      if (Array.isArray(response.data)) return response.data;
+    }
   }
   return [];
+};
+
+const normalizeBaseUrlCandidates = (baseUrl: string) => {
+  const trimmed = baseUrl.replace(/\/+$/, "");
+  const withoutManager = trimmed.replace(/\/manager\/?$/, "");
+  return Array.from(new Set([trimmed, withoutManager, `${withoutManager}/manager`].filter(Boolean)));
 };
 
 const buildOrgInstanceNameIndex = (instances: OrgInstance[]) => {
@@ -127,7 +140,11 @@ const fetchGroupsForInstance = async (
 ): Promise<any[]> => {
   const encodedInstance = encodeURIComponent(instanceName);
   const getParticipants = adminOnly ? "true" : "false";
-  const endpoint = `${baseUrl}/group/fetchAllGroups/${encodedInstance}?getParticipants=${getParticipants}`;
+  const endpoints = normalizeBaseUrlCandidates(baseUrl).flatMap((url) => [
+    `${url}/group/fetchAllGroups/${encodedInstance}?getParticipants=${getParticipants}`,
+    `${url}/group/fetchAll/${encodedInstance}?getParticipants=${getParticipants}`,
+    `${url}/group/findGroups/${encodedInstance}?getParticipants=${getParticipants}`,
+  ]);
 
   let lastErrorMessage = "";
 
@@ -138,39 +155,37 @@ const fetchGroupsForInstance = async (
     }
 
     try {
-      console.log(`Fetching groups from: ${endpoint} (attempt ${attempt + 1})`);
+      for (const endpoint of endpoints) {
+        console.log(`Fetching groups from: ${endpoint} (attempt ${attempt + 1})`);
 
-      const groupsResp = await fetch(endpoint, {
-        headers: { apikey: apiKey },
-        signal: AbortSignal.timeout(GROUP_FETCH_TIMEOUT_MS),
-      });
+        const groupsResp = await fetch(endpoint, {
+          headers: { apikey: apiKey },
+          signal: AbortSignal.timeout(GROUP_FETCH_TIMEOUT_MS),
+        });
 
-      if (!groupsResp.ok) {
-        const errText = await groupsResp.text();
-        console.error(`Failed ${instanceName} (${groupsResp.status}):`, errText?.substring(0, 500));
-        lastErrorMessage = `${groupsResp.status} ${errText || "request_failed"}`;
-        // Don't retry on 4xx client errors (except 408/429)
-        if (groupsResp.status >= 400 && groupsResp.status < 500 && groupsResp.status !== 408 && groupsResp.status !== 429) {
+        const rawText = await groupsResp.text();
+        if (!groupsResp.ok) {
+          console.error(`Failed ${instanceName} (${groupsResp.status}) at ${endpoint}:`, rawText?.substring(0, 500));
+          lastErrorMessage = `${groupsResp.status} ${rawText || "request_failed"}`;
+          if ([400, 404, 405].includes(groupsResp.status)) continue;
           break;
         }
-        continue;
+
+        console.log(`Groups response for ${instanceName}: ${rawText.length} bytes, first 500: ${rawText.substring(0, 500)}`);
+
+        let groupsData: unknown;
+        try {
+          groupsData = JSON.parse(rawText);
+        } catch {
+          console.error(`Invalid JSON for ${instanceName} (${rawText.length} bytes)`);
+          lastErrorMessage = "invalid_json_response";
+          continue;
+        }
+
+        const groups = parseGroups(groupsData);
+        console.log(`Parsed ${groups.length} groups for ${instanceName}`);
+        return groups;
       }
-
-      const rawText = await groupsResp.text();
-      console.log(`Groups response for ${instanceName}: ${rawText.length} bytes, first 500: ${rawText.substring(0, 500)}`);
-
-      let groupsData: unknown;
-      try {
-        groupsData = JSON.parse(rawText);
-      } catch {
-        console.error(`Invalid JSON for ${instanceName} (${rawText.length} bytes)`);
-        lastErrorMessage = "invalid_json_response";
-        continue; // Retry — may be partial response
-      }
-
-      const groups = parseGroups(groupsData);
-      console.log(`Parsed ${groups.length} groups for ${instanceName}`);
-      return groups;
     } catch (error: any) {
       const message = error instanceof Error ? error.message : String(error);
       const isTimeout = message.includes("timeout") || message.includes("abort") || message.includes("signal");
@@ -326,24 +341,34 @@ Deno.serve(async (req) => {
 
     let instances: any[] = [];
     try {
-      const fetchUrl = `${baseUrl}/instance/fetchInstances`;
-      console.log("Fetching instances from:", fetchUrl);
-      const instancesResp = await fetch(fetchUrl, {
-        headers: { apikey: apiKey },
-        signal: AbortSignal.timeout(GROUP_FETCH_TIMEOUT_MS),
-      });
+      let lastFetchError = "";
+      for (const candidateUrl of normalizeBaseUrlCandidates(baseUrl)) {
+        const fetchUrl = `${candidateUrl}/instance/fetchInstances`;
+        console.log("Fetching instances from:", fetchUrl);
+        const instancesResp = await fetch(fetchUrl, {
+          headers: { apikey: apiKey },
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        });
 
-      if (!instancesResp.ok) {
-        const errText = await instancesResp.text();
-        console.error("Failed to fetch instances:", errText);
+        const rawInstances = await instancesResp.text();
+        if (!instancesResp.ok) {
+          lastFetchError = rawInstances;
+          console.error("Failed to fetch instances:", rawInstances?.substring(0, 500));
+          continue;
+        }
+
+        instances = JSON.parse(rawInstances);
+        baseUrl = candidateUrl;
+        break;
+      }
+
+      if (!Array.isArray(instances)) {
         return jsonResponse({
           error: "Erro ao conectar com Evolution API",
-          detail: errText,
+          detail: lastFetchError || "Resposta inválida ao listar instâncias",
           instances: [],
         });
       }
-
-      instances = await instancesResp.json();
       console.log("Raw instances response:", JSON.stringify(instances).substring(0, 2000));
       console.log("Total instances returned:", Array.isArray(instances) ? instances.length : "not-array");
     } catch (fetchErr) {
@@ -371,6 +396,18 @@ Deno.serve(async (req) => {
       : [];
 
     console.log("Connected instances count:", connectedInstances.length);
+
+    if (connectedInstances.length === 0 && normalizedFilter) {
+      const fallbackOrgInstance = orgInstancesByNormalizedName.get(normalizedFilter);
+      if (fallbackOrgInstance) {
+        connectedInstances.push({
+          instanceName: fallbackOrgInstance.instance_name,
+          connectionStatus: "connected",
+          instance: { instanceName: fallbackOrgInstance.instance_name },
+        });
+        console.log(`No listed connected match; falling back to direct group fetch for requested instance ${fallbackOrgInstance.instance_name}`);
+      }
+    }
 
     const result: Array<{
       instance_id: string | null;

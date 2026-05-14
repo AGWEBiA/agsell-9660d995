@@ -57,7 +57,7 @@ export function FormTagSelector({ tagId, tagName, onChange }: FormTagSelectorPro
   };
 
   const handleCreateNew = () => {
-    const name = query.trim();
+    const name = normalizeTagFinal(query);
     if (!name) return;
     onChange({ tag_id: null, tag_name: name });
     setQuery('');

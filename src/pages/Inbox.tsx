@@ -46,6 +46,7 @@ import { Label } from '@/components/ui/label';
 import {
   Tooltip, TooltipContent, TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { buildStoragePath } from '@/lib/storagePaths';
 
 const channelColors: Record<string, string> = {
   whatsapp: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
@@ -397,9 +398,14 @@ export default function Inbox() {
   };
 
   const uploadFile = async (file: File): Promise<string | null> => {
-    const ext = file.name.split('.').pop();
-    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from('inbox-attachments').upload(path, file);
+    const scopeId = currentOrganization?.id || user?.id;
+    if (!scopeId) { toast.error('Faça login antes de enviar arquivos.'); return null; }
+    const path = buildStoragePath(scopeId, file, 'inbox');
+    const { error } = await supabase.storage.from('inbox-attachments').upload(path, file, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: file.type || undefined,
+    });
     if (error) { toast.error('Erro ao fazer upload: ' + error.message); return null; }
     const { data: urlData } = supabase.storage.from('inbox-attachments').getPublicUrl(path);
     return urlData.publicUrl;

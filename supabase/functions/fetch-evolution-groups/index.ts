@@ -341,24 +341,34 @@ Deno.serve(async (req) => {
 
     let instances: any[] = [];
     try {
-      const fetchUrl = `${baseUrl}/instance/fetchInstances`;
-      console.log("Fetching instances from:", fetchUrl);
-      const instancesResp = await fetch(fetchUrl, {
-        headers: { apikey: apiKey },
-        signal: AbortSignal.timeout(GROUP_FETCH_TIMEOUT_MS),
-      });
+      let lastFetchError = "";
+      for (const candidateUrl of normalizeBaseUrlCandidates(baseUrl)) {
+        const fetchUrl = `${candidateUrl}/instance/fetchInstances`;
+        console.log("Fetching instances from:", fetchUrl);
+        const instancesResp = await fetch(fetchUrl, {
+          headers: { apikey: apiKey },
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        });
 
-      if (!instancesResp.ok) {
-        const errText = await instancesResp.text();
-        console.error("Failed to fetch instances:", errText);
+        const rawInstances = await instancesResp.text();
+        if (!instancesResp.ok) {
+          lastFetchError = rawInstances;
+          console.error("Failed to fetch instances:", rawInstances?.substring(0, 500));
+          continue;
+        }
+
+        instances = JSON.parse(rawInstances);
+        baseUrl = candidateUrl;
+        break;
+      }
+
+      if (!Array.isArray(instances)) {
         return jsonResponse({
           error: "Erro ao conectar com Evolution API",
-          detail: errText,
+          detail: lastFetchError || "Resposta inválida ao listar instâncias",
           instances: [],
         });
       }
-
-      instances = await instancesResp.json();
       console.log("Raw instances response:", JSON.stringify(instances).substring(0, 2000));
       console.log("Total instances returned:", Array.isArray(instances) ? instances.length : "not-array");
     } catch (fetchErr) {

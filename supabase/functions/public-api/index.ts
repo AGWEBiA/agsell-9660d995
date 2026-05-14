@@ -1139,68 +1139,31 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
     }
 
     // SYNC TO TARGET SUPABASE (Production)
-    const targetUrl = Deno.env.get("TARGET_SUPABASE_URL");
-    const targetKey = Deno.env.get("TARGET_SUPABASE_SERVICE_ROLE_KEY");
-    if (targetUrl && targetKey && form.send_to_crm !== false) {
+    if (form.send_to_crm !== false) {
       try {
-        const targetSupabase = createClient(targetUrl, targetKey);
-        
-        // 1. Get target org and owner
-        const { data: orgs } = await targetSupabase.from("organizations").select("id").limit(1);
-        const targetOrgId = orgs?.[0]?.id;
-        
-        if (targetOrgId) {
-          const { data: owner } = await targetSupabase.from("organization_members").select("user_id").eq("organization_id", targetOrgId).eq("role", "owner").limit(1).maybeSingle();
-          const targetOwnerId = owner?.user_id;
+        const syncResult = await syncLeadToCRM(supabase, form.organization_id, {
+          email,
+          phone,
+          firstName,
+          lastName,
+          source,
+          notes: `Lead capturado via formulário Lovable: ${form.name}.`,
+          data: body
+        });
 
-          // 2. Sync contact to target
-          let targetContactId = null;
-          if (email || phone) {
-            let tQuery = targetSupabase.from("contacts").select("id").eq("organization_id", targetOrgId);
-            if (email) tQuery = tQuery.eq("email", email);
-            else tQuery = tQuery.eq("whatsapp", phone);
-            
-            const { data: tExisting } = await tQuery.maybeSingle();
-            
-            if (tExisting) {
-              targetContactId = tExisting.id;
-              await targetSupabase.from("contacts").update({ source }).eq("id", targetContactId);
-            } else {
-              const { data: tNew } = await targetSupabase.from("contacts").insert({
-                organization_id: targetOrgId,
-                user_id: targetOwnerId,
-                first_name: firstName,
-                last_name: lastName,
-                email,
-                whatsapp: phone,
-                phone,
-                source,
-              }).select("id").single();
-              if (tNew) targetContactId = tNew.id;
-            }
-          }
-
-          // 3. Sync deal to target
-          if (targetContactId) {
-            const { data: tStage } = await targetSupabase.from("pipeline_stages").select("id").eq("organization_id", targetOrgId).eq("name", "Novo Lead").limit(1).maybeSingle();
-            await targetSupabase.from("deals").insert({
-              organization_id: targetOrgId,
-              user_id: targetOwnerId,
-              contact_id: targetContactId,
-              title: `[${source}] ${firstName} ${lastName}`,
-              status: "open",
-              stage_id: tStage?.id || "8592093e-20c5-46d7-8481-55eadf48336a",
-              notes: `Lead capturado via formulário Lovable: ${form.name}.`,
-            });
-          }
-        }
-          // 4. Update sync status
+        if (syncResult.success) {
           await supabase.from("form_submissions").update({ was_sent_to_crm: true, synced_at: new Date().toISOString() }).eq("id", submission.id);
+          if (contactId) {
+            await supabase.from("contacts").update({ last_crm_sync_at: new Date().toISOString() }).eq("id", contactId);
+          }
+        } else if (syncResult.error) {
+          await supabase.from("form_submissions").update({ crm_sync_error: syncResult.error }).eq("id", submission.id);
         }
       } catch (syncErr: any) {
         console.error("Target sync error:", syncErr);
         await supabase.from("form_submissions").update({ crm_sync_error: syncErr.message }).eq("id", submission.id);
       }
+    }
     }
 
     // Trigger automations (locally)

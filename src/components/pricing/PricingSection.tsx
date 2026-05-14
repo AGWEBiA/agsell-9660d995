@@ -97,7 +97,7 @@ function PricingCard({ plan, billingCycle, onSelect }: PricingCardProps) {
           </div>
           <div className="flex items-center gap-2.5 text-sm">
             <Brain className="h-4 w-4 text-primary flex-shrink-0" />
-            <span>IA ilimitada</span>
+            <span>{plan.max_ai_requests_per_month === -1 ? 'IA ilimitada' : `${plan.max_ai_requests_per_month.toLocaleString()} créditos de IA`}</span>
           </div>
         </div>
 

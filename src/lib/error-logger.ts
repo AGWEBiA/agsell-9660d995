@@ -28,14 +28,13 @@ export const logSystemError = async ({
     module,
     severity,
     stack_trace: stack,
-    user_context: {
+    metadata: {
       ...context,
       deploy_id: deployId,
       url: window.location.href,
       user_agent: navigator.userAgent
     },
     status: 'open',
-    deploy_id: deployId, // Added column
     created_at: new Date().toISOString()
   };
 

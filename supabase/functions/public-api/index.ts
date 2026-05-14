@@ -1048,10 +1048,49 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
       );
     }
 
+    // Try to identify/create contact from form data
+    let contactId = null;
+    try {
+      const email = (body.email || body.Email || body.E-mail || "").trim().toLowerCase();
+      const phone = String(body.phone || body.Phone || body.telefone || body.Telefone || body.whatsapp || body.whatsapp || body.zap || body.celular || "").trim();
+      const name = (body.name || body.Name || body.nome || body.Nome || "").trim();
+      const firstName = (body.first_name || body.firstName || name.split(" ")[0] || "Form Lead").trim();
+      const lastName = (body.last_name || body.lastName || name.split(" ").slice(1).join(" ") || "").trim();
+
+      if (email || phone) {
+        // Find existing contact
+        let query = supabase.from("contacts").select("id").eq("organization_id", form.organization_id);
+        if (email) query = query.eq("email", email);
+        else query = query.eq("whatsapp", phone);
+
+        const { data: existingContact } = await query.maybeSingle();
+
+        if (existingContact) {
+          contactId = existingContact.id;
+        } else {
+          // Create new contact
+          const ownerId = await getOrgOwnerUserId(supabase, form.organization_id);
+          const { data: newContact } = await supabase.from("contacts").insert({
+            organization_id: form.organization_id,
+            user_id: ownerId,
+            first_name: firstName,
+            last_name: lastName || null,
+            email: email || null,
+            whatsapp: phone || null,
+            phone: phone || null,
+            source: "form",
+          }).select("id").single();
+          if (newContact) contactId = newContact.id;
+        }
+      }
+    } catch (contactErr) {
+      console.error("Error identifying/creating contact from form:", contactErr);
+    }
+
     // Insert submission
     const { data: submission, error: subError } = await supabase
       .from("form_submissions")
-      .insert({ form_id: formId, data: body })
+      .insert({ form_id: formId, data: body, contact_id: contactId })
       .select()
       .single();
 

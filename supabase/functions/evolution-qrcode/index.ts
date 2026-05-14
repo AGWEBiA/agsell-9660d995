@@ -294,6 +294,8 @@ async function resolveEvolutionConfig(
 }
 
 async function getConnectionStatus(
+  supabase: any,
+  organizationId: string | undefined,
   baseUrl: string,
   apiKey: string,
   requestedInstanceName: string,
@@ -316,13 +318,17 @@ async function getConnectionStatus(
     const statusData = parseUnknown(statusRaw) as any;
 
     if (statusRes.ok) {
-      if (statusData?.instance?.state === "open" || statusData?.state === "open") {
+      const state = String(statusData?.instance?.state || statusData?.state || statusData?.status || "").toLowerCase();
+      await updateIntegrationConnectionState(supabase, organizationId, requestedInstanceName, candidate, state || "unknown", statusData);
+
+      if (state === "open" || state === "connected") {
         await registerInboundWebhook(baseUrl, apiKey, candidate, Deno.env.get("SUPABASE_URL")!);
       }
       return jsonResponse({
         success: true,
         data: statusData,
         instance_name: candidate,
+        state: state || null,
       });
     }
 
@@ -332,6 +338,8 @@ async function getConnectionStatus(
       break;
     }
   }
+
+  await updateIntegrationConnectionState(supabase, organizationId, requestedInstanceName, lastError?.instance || requestedInstanceName, "not_found", lastError?.details || null);
 
   return jsonResponse({
     success: false,

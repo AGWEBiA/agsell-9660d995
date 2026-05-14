@@ -6,7 +6,7 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERSION = "1.0.1";
+const VERSION = "1.0.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -196,12 +196,15 @@ Deno.serve(async (req) => {
         const resultBody = await result.clone().json().catch(() => ({}));
         if (resultBody.success && resultBody.instance_name) {
           await syncInstanceMetadata(resultBody.instance_name);
+          if (resultBody.state) {
+            await updateIntegrationConnectionState(supabase, body.organization_id, body.instance_name, resultBody.instance_name, String(resultBody.state), resultBody);
+          }
         }
         return result;
       }
 
       if (action === "status") {
-        return await getConnectionStatus(baseUrl, apiKey, instanceName, controller.signal);
+        return await getConnectionStatus(supabase, body.organization_id, baseUrl, apiKey, instanceName, controller.signal);
       }
 
       if (action === "logout") {
@@ -291,6 +294,8 @@ async function resolveEvolutionConfig(
 }
 
 async function getConnectionStatus(
+  supabase: any,
+  organizationId: string | undefined,
   baseUrl: string,
   apiKey: string,
   requestedInstanceName: string,
@@ -313,13 +318,17 @@ async function getConnectionStatus(
     const statusData = parseUnknown(statusRaw) as any;
 
     if (statusRes.ok) {
-      if (statusData?.instance?.state === "open" || statusData?.state === "open") {
+      const state = String(statusData?.instance?.state || statusData?.state || statusData?.status || "").toLowerCase();
+      await updateIntegrationConnectionState(supabase, organizationId, requestedInstanceName, candidate, state || "unknown", statusData);
+
+      if (state === "open" || state === "connected") {
         await registerInboundWebhook(baseUrl, apiKey, candidate, Deno.env.get("SUPABASE_URL")!);
       }
       return jsonResponse({
         success: true,
         data: statusData,
         instance_name: candidate,
+        state: state || null,
       });
     }
 
@@ -330,6 +339,8 @@ async function getConnectionStatus(
     }
   }
 
+  await updateIntegrationConnectionState(supabase, organizationId, requestedInstanceName, lastError?.instance || requestedInstanceName, "not_found", lastError?.details || null);
+
   return jsonResponse({
     success: false,
     error: lastError ? `Erro ao consultar status: ${lastError.status}` : "Instância não encontrada",
@@ -337,6 +348,61 @@ async function getConnectionStatus(
     instance_name: lastError?.instance || requestedInstanceName,
     instance_candidates: candidates,
   });
+}
+
+async function updateIntegrationConnectionState(
+  supabase: any,
+  organizationId: string | undefined,
+  requestedInstanceName: string,
+  realInstanceName: string,
+  state: string,
+  statusData: any,
+) {
+  if (!organizationId) return;
+
+  const normalize = (value: string) => value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[\s_-]+/g, "");
+  const requested = normalize(requestedInstanceName || "");
+  const real = normalize(realInstanceName || "");
+
+  const { data: integrations } = await supabase
+    .from("organization_integrations")
+    .select("id, name, config")
+    .eq("organization_id", organizationId)
+    .eq("integration_type", "evolution_api")
+    .eq("is_active", true);
+
+  const match = (integrations || []).find((row: any) => {
+    const config = (row.config || {}) as Record<string, unknown>;
+    const candidates = [config.instance_name, row.name, config.evolution_instance_id, config.instance_id]
+      .filter((value) => typeof value === "string" && value.trim())
+      .map((value) => normalize(String(value)));
+    return candidates.includes(requested) || candidates.includes(real);
+  });
+
+  if (!match) return;
+
+  const config = (match.config || {}) as Record<string, unknown>;
+  const instancePayload = statusData?.instance || statusData || {};
+  const ownerJid = instancePayload?.ownerJid || instancePayload?.owner || statusData?.ownerJid || "";
+  const ownerPhone = typeof ownerJid === "string" ? ownerJid.replace(/@.*$/, "").replace(/\D/g, "") : "";
+  const normalizedState = String(state || "unknown").toLowerCase();
+
+  const nextConfig = {
+    ...config,
+    instance_name: realInstanceName || requestedInstanceName,
+    connection_status: normalizedState,
+    connection_state: normalizedState,
+    last_status_check_at: new Date().toISOString(),
+    ...(instancePayload?.instanceId ? { evolution_instance_id: instancePayload.instanceId } : {}),
+    ...(ownerJid ? { owner_jid: ownerJid } : {}),
+    ...(ownerPhone && !config.phone_number ? { phone_number: `+${ownerPhone}` } : {}),
+    ...(["open", "connected"].includes(normalizedState) ? { connected_at: new Date().toISOString() } : {}),
+  };
+
+  await supabase
+    .from("organization_integrations")
+    .update({ name: realInstanceName || match.name, config: nextConfig, last_sync_at: new Date().toISOString() })
+    .eq("id", match.id);
 }
 
 async function logoutInstance(

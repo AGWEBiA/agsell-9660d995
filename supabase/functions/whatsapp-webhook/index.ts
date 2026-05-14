@@ -255,26 +255,54 @@ Deno.serve(async (req) => {
     if (body.event === "connection.update" || body.event === "CONNECTION_UPDATE") {
       const data = body.data || body;
       const instanceName = (body.instance || data.instance || "").trim();
-      const state = data.state || data.status || "";
+      const state = String(data.state || data.status || "").toLowerCase();
 
-      if (state === "close" || state === "disconnected" || state === "DISCONNECTED") {
-        console.log(`WhatsApp instance disconnected: ${instanceName}`);
+      // Find the organization that owns this instance and persist the real connection state.
+      const { data: activeIntegrations } = await supabase
+        .from("organization_integrations")
+        .select("id, organization_id, config, name")
+        .eq("integration_type", "evolution_api")
+        .eq("is_active", true);
 
-        // Find the organization that owns this instance
-        const { data: activeIntegrations } = await supabase
-          .from("organization_integrations")
-          .select("organization_id, config, name")
-          .eq("integration_type", "evolution_api")
-          .eq("is_active", true);
+      const normalizeInstanceName = (value: string) => value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[\s_-]+/g, "");
+      const normalizedIncoming = normalizeInstanceName(instanceName);
+      const incomingInstanceId = typeof data.instanceId === "string" ? data.instanceId.trim() : "";
 
-        const normalizeInstanceName = (value: string) => value.toLowerCase().replace(/[\s_-]+/g, "");
-        const normalizedIncoming = normalizeInstanceName(instanceName);
+      const integration = (activeIntegrations || []).find((item) => {
+        const config = (item.config || {}) as Record<string, unknown>;
+        const candidates = [
+          typeof config.instance_name === "string" ? config.instance_name : "",
+          typeof item.name === "string" ? item.name : "",
+          typeof config.instance_id === "string" ? config.instance_id : "",
+          typeof config.evolution_instance_id === "string" ? config.evolution_instance_id : "",
+        ].filter(Boolean);
 
-        const integration = (activeIntegrations || []).find((item) => {
-          const config = (item.config || {}) as Record<string, unknown>;
-          const configuredInstance = typeof config.instance_name === "string" ? config.instance_name : "";
-          return normalizeInstanceName(configuredInstance) === normalizedIncoming;
+        return candidates.some((candidate) => {
+          if (incomingInstanceId && String(candidate) === incomingInstanceId) return true;
+          return normalizeInstanceName(String(candidate)) === normalizedIncoming;
         });
+      });
+
+      if (integration) {
+        const config = (integration.config || {}) as Record<string, unknown>;
+        const nextConfig = {
+          ...config,
+          ...(instanceName ? { instance_name: instanceName } : {}),
+          connection_status: state || "unknown",
+          connection_state: state || "unknown",
+          last_status_check_at: new Date().toISOString(),
+          ...(incomingInstanceId ? { evolution_instance_id: incomingInstanceId } : {}),
+          ...(["open", "connected"].includes(state) ? { connected_at: new Date().toISOString() } : {}),
+        };
+
+        await supabase
+          .from("organization_integrations")
+          .update({ config: nextConfig, last_sync_at: new Date().toISOString() })
+          .eq("id", integration.id);
+      }
+
+      if (state === "close" || state === "disconnected") {
+        console.log(`WhatsApp instance disconnected: ${instanceName}`);
 
         if (integration) {
           // Get all org members to notify

@@ -4,6 +4,7 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { Json } from '@/integrations/supabase/types';
+import { useEffect } from 'react';
 
 const logWhatsAppAudit = async (orgId: string, action: string, details?: Record<string, unknown>) => {
   try {
@@ -26,6 +27,7 @@ export interface WhatsAppInstance {
   integration_type: 'evolution_api' | 'whatsapp_business';
   config: Record<string, unknown>;
   is_active: boolean;
+  is_connected: boolean;
   is_default: boolean;
   phone_number?: string;
   instance_name?: string;
@@ -89,6 +91,29 @@ const extractPhoneFromConfig = (config: Record<string, unknown>): string | undef
   return undefined;
 };
 
+const normalizeConnectionStatus = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  return value.trim().toLowerCase();
+};
+
+const isInstanceConnected = (
+  integrationType: 'evolution_api' | 'whatsapp_business',
+  config: Record<string, unknown>,
+  isActive: boolean,
+): boolean => {
+  if (!isActive) return false;
+
+  if (integrationType === 'whatsapp_business') {
+    return Boolean(config.phone_number_id && config.access_token);
+  }
+
+  const status = normalizeConnectionStatus(
+    config.connection_status || config.connection_state || config.status,
+  );
+
+  return ['open', 'connected', 'online'].includes(status);
+};
+
 export function useWhatsAppInstances() {
   const { currentOrganization } = useOrganization();
   const queryClient = useQueryClient();
@@ -111,14 +136,17 @@ export function useWhatsAppInstances() {
       
       return (data || []).map(item => {
         const config = (item.config as Record<string, unknown>) || {};
+        const integrationType = item.integration_type as 'evolution_api' | 'whatsapp_business';
+        const isActive = item.is_active ?? false;
 
         return {
           id: item.id,
           organization_id: item.organization_id,
           name: item.name,
-          integration_type: item.integration_type as 'evolution_api' | 'whatsapp_business',
+          integration_type: integrationType,
           config,
-          is_active: item.is_active ?? false,
+          is_active: isActive,
+          is_connected: isInstanceConnected(integrationType, config, isActive),
           is_default: config?.is_default === true,
           phone_number: extractPhoneFromConfig(config),
           instance_name: typeof config?.instance_name === 'string' ? config.instance_name : item.name,
@@ -134,8 +162,41 @@ export function useWhatsAppInstances() {
     enabled: !!currentOrganization?.id,
   });
 
+  const statusSyncQuery = useQuery({
+    queryKey: ['whatsapp_instance_status_sync', currentOrganization?.id],
+    queryFn: async () => {
+      const targets = (instancesQuery.data || []).filter(
+        (instance) => instance.integration_type === 'evolution_api' && instance.is_active,
+      );
+
+      await Promise.allSettled(
+        targets.map((instance) => supabase.functions.invoke('evolution-qrcode', {
+          body: {
+            organization_id: currentOrganization?.id,
+            instance_name: instance.instance_name || (instance.config?.instance_name as string) || instance.name,
+            action: 'status',
+          },
+        })),
+      );
+
+      return Date.now();
+    },
+    enabled: !!currentOrganization?.id && !!user?.id && !instancesQuery.isLoading && (instancesQuery.data || []).some(
+      (instance) => instance.integration_type === 'evolution_api' && instance.is_active,
+    ),
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
+  });
+
+  useEffect(() => {
+    if (statusSyncQuery.data) {
+      instancesQuery.refetch();
+    }
+  }, [statusSyncQuery.data]);
+
   // Get active instances only
-  const activeInstances = instancesQuery.data?.filter(i => i.is_active) || [];
+  const activeInstances = instancesQuery.data?.filter(i => i.is_active && i.is_connected) || [];
 
   // Get the default instance
   const defaultInstance = instancesQuery.data?.find(i => i.is_default && i.is_active) || 

@@ -20,7 +20,7 @@ import { usePlans } from '@/hooks/usePlans';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 interface EvolutionAPIConfig {
@@ -36,6 +36,7 @@ export function WhatsAppProviderSetup() {
   } = useWhatsAppInstances();
   const { currentPlan, isLoading: plansLoading } = usePlans();
   const { currentOrganization } = useOrganization();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null);
@@ -92,7 +93,12 @@ export function WhatsAppProviderSetup() {
       });
       if (error) throw error;
       if (!data?.success) { setQrError(data?.error || 'Erro ao obter QR Code'); setQrStatus('error'); return; }
-      if (data.action === 'connected') { setQrStatus('connected'); toast.success('Instância já está conectada!'); return; }
+      if (data.action === 'connected') {
+        setQrStatus('connected');
+        queryClient.invalidateQueries({ queryKey: ['whatsapp_instances'] });
+        toast.success('Instância já está conectada!');
+        return;
+      }
       if (data.qrcode) {
         const base64 = data.qrcode.startsWith('data:') ? data.qrcode : `data:image/png;base64,${data.qrcode}`;
         setQrCodeBase64(base64);
@@ -104,13 +110,15 @@ export function WhatsAppProviderSetup() {
             body: { instance_name: instName, organization_id: orgId, action: 'status' },
           });
           if (statusData?.data?.instance?.state === 'open') {
-            setQrStatus('connected'); stopPolling(); toast.success('WhatsApp conectado com sucesso!');
+            setQrStatus('connected'); stopPolling();
+            queryClient.invalidateQueries({ queryKey: ['whatsapp_instances'] });
+            toast.success('WhatsApp conectado com sucesso!');
           }
         } catch { /* ignore */ }
       }, 5000);
     } catch (err) { setQrError(err instanceof Error ? err.message : 'Erro desconhecido'); setQrStatus('error'); }
     finally { setQrLoading(false); }
-  }, [stopPolling]);
+  }, [queryClient, stopPolling]);
 
   const handleCloseQRDialog = useCallback(() => {
     stopPolling(); setShowQRDialog(false); setQrCodeBase64(null); setQrPairingCode(null); setQrStatus('idle'); setQrError(null);
@@ -259,7 +267,7 @@ export function WhatsAppProviderSetup() {
     if (testResult?.status === 'connected') return 'bg-emerald-500';
     if (testResult?.status === 'disconnected') return 'bg-amber-500';
     if (testResult?.status === 'error') return 'bg-destructive';
-    return instance.is_active ? 'bg-emerald-500' : 'bg-muted-foreground/40';
+    return instance.is_connected ? 'bg-emerald-500' : 'bg-muted-foreground/40';
   };
 
   const getTypeLabel = (instance: WhatsAppInstance) => {
@@ -443,8 +451,8 @@ export function WhatsAppProviderSetup() {
                     <p className="font-medium">{getTypeLabel(selectedInstance)}</p>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Status</span>
-                    <p className="font-medium">{selectedInstance.is_active ? 'Ativo' : 'Inativo'}</p>
+                    <span className="text-muted-foreground">Conexão</span>
+                    <p className="font-medium">{selectedInstance.is_connected ? 'Conectado' : 'Desconectado'}</p>
                   </div>
                   {selectedInstance.config.instance_name && (
                     <div>

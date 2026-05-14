@@ -6572,6 +6572,24 @@ export type Database = {
         }
         Relationships: []
       }
+      temp_user_roles_emails: {
+        Row: {
+          email: string | null
+          role: string | null
+          user_id: string | null
+        }
+        Insert: {
+          email?: string | null
+          role?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          email?: string | null
+          role?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       unknown_whatsapp_instances: {
         Row: {
           acknowledged: boolean

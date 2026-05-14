@@ -311,7 +311,7 @@ function InstanceSelectorBar({
 export default function WhatsApp() {
   const {
     instances, activeInstances, defaultInstance, isLoading,
-    deleteInstance, toggleInstance, setDefaultInstance,
+    deleteInstance, toggleInstance, setDefaultInstance, syncInstanceStatus
   } = useWhatsAppInstances();
   const { groups } = useWhatsAppGroups();
   const { organizations, currentOrganization, setCurrentOrganization } = useOrganization();
@@ -377,6 +377,22 @@ export default function WhatsApp() {
             </Badge>
           </div>
           <p className="text-muted-foreground text-sm">Gerencie conexões, grupos e campanhas</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-2 h-9"
+            onClick={() => syncInstanceStatus.mutate()}
+            disabled={syncInstanceStatus.isPending || isLoading}
+          >
+            {syncInstanceStatus.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            Forçar Sincronização
+          </Button>
         </div>
       </div>
 

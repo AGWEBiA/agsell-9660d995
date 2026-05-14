@@ -1131,9 +1131,11 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
     }
 
     // Update submissions count
-    await supabase.rpc("increment_form_submissions", { form_id_param: formId }).catch(() => {
-      supabase.from("forms").update({ submissions_count: (form.submissions_count || 0) + 1 }).eq("id", formId);
-    });
+    const { error: rpcError } = await supabase.rpc("increment_form_submissions", { form_id_param: formId });
+    if (rpcError) {
+      console.error("RPC increment failed, falling back to direct update:", rpcError);
+      await supabase.from("forms").update({ submissions_count: (form.submissions_count || 0) + 1 }).eq("id", formId);
+    }
 
     // SYNC TO TARGET SUPABASE (Production)
     const targetUrl = Deno.env.get("TARGET_SUPABASE_URL");

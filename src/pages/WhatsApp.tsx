@@ -14,6 +14,7 @@ import { WhatsAppCampaignsManager } from '@/components/whatsapp/WhatsAppCampaign
 import { WhatsAppGroupMessages } from '@/components/whatsapp/WhatsAppGroupMessages';
 import { WhatsAppAuditLog } from '@/components/whatsapp/WhatsAppAuditLog';
 import { WhatsAppWebhookLogs } from '@/components/whatsapp/WhatsAppWebhookLogs';
+import { WhatsAppConnectionHistory } from '@/components/whatsapp/WhatsAppConnectionHistory';
 import { useWhatsAppInstances, WhatsAppInstance } from '@/hooks/useWhatsAppInstances';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { Button } from '@/components/ui/button';
@@ -559,6 +560,10 @@ export default function WhatsApp() {
           <TabsTrigger value="audit" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             <span className="hidden sm:inline">Histórico</span>
+          </TabsTrigger>
+          <TabsTrigger value="history" className="flex items-center gap-2">
+            <Activity className="h-4 w-4" />
+            <span className="hidden sm:inline">Conexão History</span>
           </TabsTrigger>
         </TabsList>
 

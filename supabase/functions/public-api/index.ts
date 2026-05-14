@@ -1,5 +1,6 @@
 // Public REST API Gateway with API Key Authentication, Rate Limiting, Cursor Pagination & Input Validation
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { syncLeadToCRM } from "../_shared/crm-sync.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

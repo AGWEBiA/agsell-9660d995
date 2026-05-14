@@ -1022,7 +1022,7 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
     // Validate form exists and is active
     const { data: form, error: formError } = await supabase
       .from("forms")
-      .select("id, is_active, organization_id, name, submissions_count")
+      .select("id, is_active, organization_id, name, submissions_count, send_to_crm")
       .eq("id", formId)
       .single();
 
@@ -1140,7 +1140,7 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
     // SYNC TO TARGET SUPABASE (Production)
     const targetUrl = Deno.env.get("TARGET_SUPABASE_URL");
     const targetKey = Deno.env.get("TARGET_SUPABASE_SERVICE_ROLE_KEY");
-    if (targetUrl && targetKey) {
+    if (targetUrl && targetKey && form.send_to_crm !== false) {
       try {
         const targetSupabase = createClient(targetUrl, targetKey);
         
@@ -1193,8 +1193,12 @@ async function handlePublicFormSubmit(supabase: any, formId: string, req: Reques
             });
           }
         }
-      } catch (syncErr) {
+          // 4. Update sync status
+          await supabase.from("form_submissions").update({ was_sent_to_crm: true, synced_at: new Date().toISOString() }).eq("id", submission.id);
+        }
+      } catch (syncErr: any) {
         console.error("Target sync error:", syncErr);
+        await supabase.from("form_submissions").update({ crm_sync_error: syncErr.message }).eq("id", submission.id);
       }
     }
 

@@ -32,6 +32,7 @@ export function FormIntegrationDialog({ open, onOpenChange, formId, formName }: 
   const [styles, setStyles] = useState(DEFAULT_STYLES);
   const [webhookUrl, setWebhookUrl] = useState('');
   const [webhookHeaders, setWebhookHeaders] = useState('');
+  const [sendToCrm, setSendToCrm] = useState(true);
   const [savingWebhook, setSavingWebhook] = useState(false);
 
   // Load existing webhook config
@@ -39,13 +40,14 @@ export function FormIntegrationDialog({ open, onOpenChange, formId, formName }: 
     if (open && formId) {
       supabase
         .from('forms')
-        .select('webhook_url, webhook_headers')
+        .select('webhook_url, webhook_headers, send_to_crm')
         .eq('id', formId)
         .single()
         .then(({ data }) => {
           if (data) {
             setWebhookUrl(data.webhook_url || '');
             setWebhookHeaders(data.webhook_headers ? JSON.stringify(data.webhook_headers, null, 2) : '');
+            setSendToCrm(data.send_to_crm ?? true);
           }
         });
     }
@@ -70,6 +72,7 @@ export function FormIntegrationDialog({ open, onOpenChange, formId, formName }: 
         .update({
           webhook_url: webhookUrl.trim() || null,
           webhook_headers: parsedHeaders,
+          send_to_crm: sendToCrm,
         })
         .eq('id', formId);
 
@@ -259,10 +262,21 @@ Content-Type: application/json
             </TabsTrigger>
           </TabsList>
 
-          {/* WEBHOOK DE SAÍDA */}
           <TabsContent value="webhook-out" className="space-y-4 mt-4">
-            <div>
-              <h3 className="font-semibold text-sm mb-1">Webhook de Saída</h3>
+            <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20">
+              <div className="space-y-0.5">
+                <Label className="text-sm font-medium">Enviar para o CRM automaticamente</Label>
+                <p className="text-xs text-muted-foreground">Sincroniza novos leads com o servidor de produção e pipeline.</p>
+              </div>
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                checked={sendToCrm}
+                onChange={(e) => setSendToCrm(e.target.checked)}
+              />
+            </div>
+
+            <Separator />
               <p className="text-xs text-muted-foreground mb-4">
                 Configure uma URL para receber os dados de cada submissão automaticamente via POST. Ideal para integrar com ferramentas externas, n8n, Make, Zapier, ou seu próprio sistema.
               </p>

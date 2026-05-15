@@ -16,10 +16,10 @@ type OrgInstance = {
   config: IntegrationConfig;
 };
 
-const REQUEST_TIMEOUT_MS = 25000;
-const GROUP_FETCH_TIMEOUT_MS = 90000;
-const MAX_RETRIES = 2;
-const RETRY_DELAY_MS = 3000;
+const REQUEST_TIMEOUT_MS = 20000;
+const GROUP_FETCH_TIMEOUT_MS = 45000;
+const MAX_RETRIES = 1;
+const RETRY_DELAY_MS = 2000;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 

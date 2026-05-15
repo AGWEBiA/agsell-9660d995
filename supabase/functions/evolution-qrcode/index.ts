@@ -286,12 +286,12 @@ async function resolveEvolutionConfig(
 
     const target = normalize(trimmedInstance);
 
-    const matched = rows.find((row) => {
+    const matched = (integrations || []).find((row: any) => {
       const name = row.config?.instance_name?.trim();
       return !!name && normalize(name) === target;
     });
 
-    integrationConfig = matched?.config || rows[0]?.config || null;
+    integrationConfig = matched?.config || (integrations || [])[0]?.config || null;
   }
 
   const { data: globalConfig } = await supabase

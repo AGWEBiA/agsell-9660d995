@@ -30,10 +30,10 @@ Deno.serve(async (req) => {
 
   const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
 
-  // Fetch pending or retrying deliveries due now
+  // Fetch pending or retrying deliveries due now (no FK embed — webhook_id is not a constrained FK)
   const { data: deliveries, error } = await supabase
     .from("webhook_deliveries")
-    .select("*, api_webhook_subscriptions:webhook_id(secret)")
+    .select("*")
     .in("status", ["pending", "retrying"])
     .lte("next_retry_at", new Date().toISOString())
     .order("next_retry_at", { ascending: true })
@@ -46,6 +46,19 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Manually fetch related webhook secrets in one query
+  const webhookIds = Array.from(new Set((deliveries || []).map((d: any) => d.webhook_id).filter(Boolean)));
+  const secretsMap = new Map<string, string>();
+  if (webhookIds.length > 0) {
+    const { data: subs } = await supabase
+      .from("api_webhook_subscriptions")
+      .select("id, secret")
+      .in("id", webhookIds);
+    for (const s of subs || []) {
+      if (s.secret) secretsMap.set(s.id, s.secret);
+    }
+  }
+
   let success = 0;
   let failed = 0;
 
@@ -53,7 +66,7 @@ Deno.serve(async (req) => {
     const attempts = (d.attempts ?? 0) + 1;
     const maxAttempts = d.max_attempts ?? 5;
     const body = JSON.stringify(d.payload);
-    const secret = (d as any).api_webhook_subscriptions?.secret as string | null;
+    const secret = d.webhook_id ? (secretsMap.get(d.webhook_id) ?? null) : null;
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",

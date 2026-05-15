@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
     const attempts = (d.attempts ?? 0) + 1;
     const maxAttempts = d.max_attempts ?? 5;
     const body = JSON.stringify(d.payload);
-    const secret = (d as any).api_webhook_subscriptions?.secret as string | null;
+    const secret = d.webhook_id ? (secretsMap.get(d.webhook_id) ?? null) : null;
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",

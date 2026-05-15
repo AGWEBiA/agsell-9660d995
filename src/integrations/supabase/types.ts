@@ -916,6 +916,33 @@ export type Database = {
           },
         ]
       }
+      automation_test_checklist: {
+        Row: {
+          created_at: string | null
+          criteria_text: string
+          expected_outcome: string
+          id: string
+          trigger_type: string
+          validation_steps: string[]
+        }
+        Insert: {
+          created_at?: string | null
+          criteria_text: string
+          expected_outcome: string
+          id?: string
+          trigger_type: string
+          validation_steps: string[]
+        }
+        Update: {
+          created_at?: string | null
+          criteria_text?: string
+          expected_outcome?: string
+          id?: string
+          trigger_type?: string
+          validation_steps?: string[]
+        }
+        Relationships: []
+      }
       automations: {
         Row: {
           actions: Json | null

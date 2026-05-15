@@ -17,6 +17,7 @@ const DashboardLayout = React.lazy(() => import("@/components/layout/DashboardLa
 const GlobalSearch = React.lazy(() => import("@/components/search/GlobalSearch").then(m => ({ default: m.GlobalSearch })));
 const FeatureRequiredPage = React.lazy(() => import("@/components/permissions/FeatureRequiredPage").then(m => ({ default: m.FeatureRequiredPage })));
 const RuntimeProtection = React.lazy(() => import("@/components/security/RuntimeProtection").then(m => ({ default: m.RuntimeProtection })));
+const AdminRoute = React.lazy(() => import("@/components/auth/AdminRoute").then(m => ({ default: m.AdminRoute })));
 
 const isRecoveryHash = () =>
   typeof window !== "undefined" && window.location.hash.includes("type=recovery");
@@ -295,7 +296,7 @@ const App = () => {
                     <Route path="funnel-planner" element={<FunnelPlanner />} />
                     <Route path="funnel-bi" element={<FunnelBI />} />
                     <Route path="automation-metrics" element={<AutomationMetrics />} />
-                    <Route path="automations-monitor" element={<AutomationsMonitor />} />
+                    <Route path="automations-monitor" element={<AdminRoute><AutomationsMonitor /></AdminRoute>} />
                     <Route path="cron-metrics" element={<CronMetrics />} />
                     <Route path="group-trigger-tester" element={<GroupTriggerTester />} />
                     <Route path="support" element={<SupportTickets />} />

@@ -30,7 +30,8 @@ interface EvolutionConfig {
 }
 
 Deno.serve(async (req) => {
-  console.log(`[evolution-qrcode] v${VERSION} request received: ${req.method}`);
+  const requestId = Math.random().toString(36).substring(7);
+  console.log(`[evolution-qrcode][${requestId}] Request received: ${req.method}`);
   
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -43,6 +44,7 @@ Deno.serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
+      console.warn(`[evolution-qrcode][${requestId}] Unauthorized: No valid auth header`);
       return jsonResponse({ success: false, error: "Unauthorized" }, 401);
     }
 
@@ -57,14 +59,25 @@ Deno.serve(async (req) => {
     if (!isInternalCron) {
       const { data: authData, error: authError } = await supabase.auth.getUser(token);
       if (authError || !authData.user) {
+        console.warn(`[evolution-qrcode][${requestId}] Auth failure:`, authError);
         return jsonResponse({ success: false, error: "Unauthorized" }, 401);
       }
       user = authData.user;
     } else {
-      console.log("[evolution-qrcode] Running with internal/service-role bypass");
+      console.log(`[evolution-qrcode][${requestId}] Running with internal/service-role bypass`);
     }
 
-    const body = (await req.json()) as QRCodeRequest;
+    // Safer body parsing
+    let body: QRCodeRequest;
+    try {
+      const rawBody = await req.text();
+      body = rawBody ? JSON.parse(rawBody) : {};
+      console.log(`[evolution-qrcode][${requestId}] Body:`, JSON.stringify(body));
+    } catch (e) {
+      console.error(`[evolution-qrcode][${requestId}] Failed to parse body:`, e);
+      return jsonResponse({ success: false, error: "Request body inválido" }, 400);
+    }
+
     if (!body.instance_name?.trim()) {
       return jsonResponse({ success: false, error: "instance_name é obrigatório" });
     }
@@ -82,12 +95,15 @@ Deno.serve(async (req) => {
       ]);
 
       if (!isMember && !isAdmin) {
+        console.warn(`[evolution-qrcode][${requestId}] Permission denied for user ${user.id} in org ${body.organization_id}`);
         return jsonResponse({ success: false, error: "Sem permissão nesta organização" }, 403);
       }
     }
 
     const action = body.action || "connect";
     const evoConfig = await resolveEvolutionConfig(supabase, body.organization_id, body.instance_name);
+
+    console.log(`[evolution-qrcode][${requestId}] Resolved config: URL=${evoConfig.api_url}, Instance=${evoConfig.instance_name}`);
 
     if (!evoConfig.api_url || !evoConfig.api_key) {
       return jsonResponse({
@@ -101,7 +117,10 @@ Deno.serve(async (req) => {
     const instanceName = evoConfig.instance_name;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 20000);
+    const timeout = setTimeout(() => {
+      console.warn(`[evolution-qrcode][${requestId}] Action ${action} timed out after 25s`);
+      controller.abort();
+    }, 25000); // Slightly increased to 25s
 
     // Save user_id on the integration record when connecting
     const saveUserOnIntegration = async () => {

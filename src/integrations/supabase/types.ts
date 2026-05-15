@@ -7825,6 +7825,18 @@ export type Database = {
       }
     }
     Views: {
+      automation_trigger_health_report: {
+        Row: {
+          completed_count: number | null
+          error_count: number | null
+          health_status: string | null
+          last_execution: string | null
+          running_count: number | null
+          trigger_type: string | null
+          triggered_count: number | null
+        }
+        Relationships: []
+      }
       instagram_accounts_safe: {
         Row: {
           connected_by: string | null
@@ -7994,6 +8006,7 @@ export type Database = {
         }
         Returns: Json
       }
+      check_cron_liveness: { Args: never; Returns: undefined }
       check_plan_limit: {
         Args: { _current_count?: number; _org_id: string; _resource: string }
         Returns: Json
@@ -8062,6 +8075,14 @@ export type Database = {
         Returns: {
           out_event_count: number
           out_status: string
+        }[]
+      }
+      get_automation_queue_performance: {
+        Args: never
+        Returns: {
+          avg_processing_time_ms: number
+          p90_processing_time_ms: number
+          throughput_last_hour: number
         }[]
       }
       get_cron_queue_metrics: { Args: never; Returns: Json }
@@ -8278,6 +8299,10 @@ export type Database = {
         Returns: Json
       }
       unify_sac_contacts: { Args: never; Returns: Json }
+      validate_trigger_e2e: {
+        Args: { payload: Json; target_trigger_type: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_action:

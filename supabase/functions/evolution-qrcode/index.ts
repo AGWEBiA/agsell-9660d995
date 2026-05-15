@@ -262,8 +262,10 @@ async function resolveEvolutionConfig(
   const trimmedInstance = requestedInstanceName.trim();
   let integrationConfig: Record<string, string> | null = null;
 
-  if (organizationId) {
-    const { data: integrations } = await supabase
+  const isUuid = (id?: string) => !!id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+
+  if (organizationId && isUuid(organizationId)) {
+    const { data: integrations, error: intError } = await supabase
       .from("organization_integrations")
       .select("config")
       .eq("organization_id", organizationId)
@@ -271,7 +273,9 @@ async function resolveEvolutionConfig(
       .eq("is_active", true)
       .order("created_at", { ascending: false });
 
-    const rows = (integrations || []) as Array<{ config: Record<string, string> | null }>;
+    if (intError) {
+      console.error(`[evolution-qrcode] Error fetching integrations:`, intError);
+    }
 
     const normalize = (value: string) =>
       value

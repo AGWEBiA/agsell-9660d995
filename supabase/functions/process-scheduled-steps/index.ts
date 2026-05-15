@@ -237,6 +237,14 @@ serve(async (req) => {
     // Default: process pending scheduled steps (cron entrypoint)
     const summary = await processPendingSteps(supabase, supabaseUrl, serviceKey);
 
+    // Heartbeat for cron health monitoring
+    await supabase.from('system_logs').insert({
+      source: 'process-scheduled-steps',
+      event: 'cron_run',
+      message: `Cron executed at ${new Date().toISOString()}`,
+      payload: summary
+    });
+
     return new Response(JSON.stringify({ status: 'ok', version: VERSION, ...summary }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

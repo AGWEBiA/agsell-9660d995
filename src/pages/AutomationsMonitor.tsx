@@ -163,7 +163,7 @@ export default function AutomationsMonitor() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         {['pending', 'processing', 'completed', 'error', 'failed'].map(status => (
           <Card key={status} className="border-l-4" style={{ borderLeftColor: status === 'error' || status === 'failed' ? '#ef4444' : (status === 'completed' ? '#22c55e' : '#94a3b8') }}>
             <CardContent className="pt-6">
@@ -172,11 +172,13 @@ export default function AutomationsMonitor() {
             </CardContent>
           </Card>
         ))}
+        <PerformanceKPI orgId={orgId} />
       </div>
 
       <Tabs defaultValue="steps">
         <TabsList className="grid w-full grid-cols-3 max-w-[500px]">
           <TabsTrigger value="steps">Steps Ativos</TabsTrigger>
+          <TabsTrigger value="health">Saúde dos Triggers</TabsTrigger>
           <TabsTrigger value="alerts">Alertas de Falha</TabsTrigger>
           <TabsTrigger value="system">Diagnóstico</TabsTrigger>
         </TabsList>
@@ -284,6 +286,10 @@ export default function AutomationsMonitor() {
           )}
         </TabsContent>
 
+        <TabsContent value="health" className="pt-4">
+          <TriggerHealthReport />
+        </TabsContent>
+
         <TabsContent value="alerts" className="pt-4">
           <div className="grid gap-4">
             {alertsQuery.data?.map((alert: any) => (
@@ -358,5 +364,93 @@ export default function AutomationsMonitor() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function PerformanceKPI({ orgId }: { orgId?: string }) {
+  const { data } = useQuery({
+    queryKey: ['automation-queue-performance', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_automation_queue_performance' as any);
+      if (error) throw error;
+      return data?.[0] || { avg_processing_time_ms: 0, p90_processing_time_ms: 0, throughput_last_hour: 0 };
+    },
+    enabled: !!orgId,
+    refetchInterval: 30_000,
+  });
+
+  return (
+    <Card className="border-l-4 border-l-primary">
+      <CardContent className="pt-6">
+        <p className="text-sm font-medium uppercase text-muted-foreground">Tempo Médio</p>
+        <p className="text-3xl font-bold">{Math.round(data?.avg_processing_time_ms || 0)}ms</p>
+        <p className="text-[10px] text-muted-foreground mt-1">P90: {Math.round(data?.p90_processing_time_ms || 0)}ms</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function TriggerHealthReport() {
+  const { data, isLoading } = useQuery({
+    queryKey: ['automation-trigger-health'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('automation_trigger_health_report' as any).select('*');
+      if (error) throw error;
+      return data;
+    },
+    refetchInterval: 60_000,
+  });
+
+  if (isLoading) return <div className="p-10 text-center"><Loader2 className="animate-spin inline mr-2" /> Carregando relatório...</div>;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Status dos Triggers (7 dias)</CardTitle>
+        <CardDescription>Monitoramento de taxa de sucesso e atividade por tipo de evento.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Trigger</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Disparos</TableHead>
+              <TableHead>Erros</TableHead>
+              <TableHead>Último</TableHead>
+              <TableHead className="text-right">Ação</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data?.map((t: any) => (
+              <TableRow key={t.trigger_type}>
+                <TableCell className="font-medium">{t.trigger_type}</TableCell>
+                <TableCell>
+                  <Badge className={t.health_status === 'verde' ? 'bg-green-500' : t.health_status === 'amarelo' ? 'bg-yellow-500' : 'bg-red-500'}>
+                    {t.health_status.toUpperCase()}
+                  </Badge>
+                </TableCell>
+                <TableCell>{t.triggered_count}</TableCell>
+                <TableCell className={t.error_count > 0 ? 'text-destructive font-bold' : ''}>{t.error_count}</TableCell>
+                <TableCell className="text-xs">{t.last_execution ? new Date(t.last_execution).toLocaleString('pt-BR') : '—'}</TableCell>
+                <TableCell className="text-right">
+                  <Button variant="ghost" size="sm" onClick={() => {
+                    toast.info(`Validando trigger ${t.trigger_type}...`);
+                    supabase.rpc('validate_trigger_e2e' as any, { target_trigger_type: t.trigger_type, payload: {} })
+                      .then(({ data, error }: any) => {
+                        if (error) toast.error(error.message);
+                        else toast.success(data.message);
+                      });
+                  }}>Validar</Button>
+                </TableCell>
+              </TableRow>
+            ))}
+            {(!data || data.length === 0) && (
+              <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">Nenhum trigger registrado recentemente.</TableCell></TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 }

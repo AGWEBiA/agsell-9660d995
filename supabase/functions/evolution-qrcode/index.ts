@@ -6,12 +6,14 @@
  */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VERSION = "1.0.2";
+const VERSION = "1.0.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Max-Age": "86400",
 };
 
 interface QRCodeRequest {
@@ -99,7 +101,7 @@ Deno.serve(async (req) => {
     const instanceName = evoConfig.instance_name;
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30000);
+    const timeout = setTimeout(() => controller.abort(), 20000);
 
     // Save user_id on the integration record when connecting
     const saveUserOnIntegration = async () => {
@@ -227,7 +229,7 @@ Deno.serve(async (req) => {
     return jsonResponse({
       success: false,
       error: isTimeout
-        ? "A Evolution API não respondeu a tempo (30s). Verifique se a URL está acessível via HTTPS na porta 443."
+        ? "A Evolution API não respondeu a tempo (20s). Verifique se a URL está acessível via HTTPS na porta 443."
         : message,
     }, isTimeout ? 504 : 500);
   }

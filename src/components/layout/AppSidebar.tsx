@@ -107,7 +107,7 @@ const menuSections: MenuSection[] = [
       { label: 'Analytics', icon: BarChart3, path: '/analytics', featureRequired: 'analytics' },
       { label: 'BI do Funil', icon: Target, path: '/funnel-bi' },
       { label: 'Métricas Automação', icon: Activity, path: '/automation-metrics' },
-      { label: 'Monitor Automações', icon: Activity, path: '/automations-monitor' },
+      { label: 'Monitor Automações', icon: Activity, path: '/automations-monitor', adminOnly: true },
       { label: 'Custom Reports', icon: ListChecks, path: '/custom-reports' },
       { label: 'Revenue', icon: DollarSign, path: '/revenue-reporting' },
       { label: 'Atribuição', icon: GitBranch, path: '/attribution' },

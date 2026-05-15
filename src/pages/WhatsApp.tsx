@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   MessageSquare, Smartphone, CheckCircle2, Users, Send, Settings, Star,
-  Server, Trash2, Power, Loader2, Copy, Gauge, Phone, Headphones, Globe, Monitor, Building2, RefreshCw,
+  Server, Trash2, Power, Loader2, Copy, Gauge, Phone, Headphones, Globe, Monitor, Building2, RefreshCw, Activity,
 } from 'lucide-react';
 import { WhatsAppProviderSetup } from '@/components/integrations/WhatsAppProviderSetup';
 import { WhatsAppGroupsManager } from '@/components/whatsapp/WhatsAppGroupsManager';

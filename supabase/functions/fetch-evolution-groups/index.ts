@@ -2,7 +2,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Max-Age": "86400",
 };
 
 type IntegrationConfig = Record<string, unknown>;
@@ -14,10 +16,10 @@ type OrgInstance = {
   config: IntegrationConfig;
 };
 
-const REQUEST_TIMEOUT_MS = 25000;
-const GROUP_FETCH_TIMEOUT_MS = 90000;
-const MAX_RETRIES = 2;
-const RETRY_DELAY_MS = 3000;
+const REQUEST_TIMEOUT_MS = 20000;
+const GROUP_FETCH_TIMEOUT_MS = 45000;
+const MAX_RETRIES = 1;
+const RETRY_DELAY_MS = 2000;
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 

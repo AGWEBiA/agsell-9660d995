@@ -365,6 +365,7 @@ export default function AutomationsMonitor() {
       </Tabs>
     </div>
   );
+}
 
 function PerformanceKPI({ orgId }: { orgId?: string }) {
   const { data } = useQuery({

@@ -788,12 +788,13 @@ async function resolveInstanceCandidates(
       signal,
     });
 
+    const rawText = await instancesResponse.text();
     if (!instancesResponse.ok) {
-      await instancesResponse.text();
+      console.warn(`[evolution-qrcode] Failed to fetch instances from ${baseUrl}: ${instancesResponse.status}`);
       return Array.from(candidates).filter(Boolean);
     }
 
-    const rawInstances = await instancesResponse.json();
+    const rawInstances = parseUnknown(rawText);
     const instances = Array.isArray(rawInstances) ? rawInstances : [];
 
     for (const item of instances) {

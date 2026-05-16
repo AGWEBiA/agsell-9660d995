@@ -260,7 +260,16 @@ export default function Organization() {
               <Building2 className="h-4 w-4" />
               Configurações
             </TabsTrigger>
+            <TabsTrigger value="subscription" className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Assinatura
+            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="subscription" className="space-y-6">
+            <SubscriptionTab />
+          </TabsContent>
+
 
           <TabsContent value="members" className="space-y-6">
             {/* Stats */}

@@ -51,9 +51,29 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log("Stripe webhook received:", event.type);
+    console.log("Stripe webhook received:", event.type, event.id);
 
-    switch (event.type) {
+    // IDEMPOTENCY: Check if event was already processed
+    const { data: existingEvent, error: eventError } = await supabase
+      .from('stripe_events')
+      .select('id')
+      .eq('event_id', event.id)
+      .maybeSingle();
+
+    if (existingEvent) {
+      console.log(`Event ${event.id} already processed. Skipping.`);
+      return new Response(
+        JSON.stringify({ received: true, message: "Duplicate event" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Mark event as processing
+    await supabase.from('stripe_events').insert({
+      event_id: event.id,
+      status: 'processing'
+    });
+
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         console.log("Checkout session completed:", session.id);

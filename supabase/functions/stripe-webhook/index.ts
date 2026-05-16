@@ -262,6 +262,55 @@ async function handleNewUserSignup(
   console.log("New user account created successfully:", email);
 }
 
+async function updateSubscriptionForExistingOrg(
+  supabase: SupabaseClientType,
+  organizationId: string,
+  planId: string,
+  billingCycle: string,
+  session: Stripe.Checkout.Session
+) {
+  const periodDays = billingCycle === 'yearly' ? 365 : 30;
+  const currentPeriodEnd = new Date(Date.now() + periodDays * 24 * 60 * 60 * 1000).toISOString();
+
+  // Update organization plan
+  await supabase
+    .from('organizations')
+    .update({ plan_id: planId })
+    .eq('id', organizationId);
+
+  // Update or insert subscription record
+  const { data: existingSub } = await supabase
+    .from('subscriptions')
+    .select('id')
+    .eq('organization_id', organizationId)
+    .maybeSingle();
+
+  const subData = {
+    organization_id: organizationId,
+    plan_id: planId,
+    status: 'active',
+    billing_cycle: billingCycle,
+    payment_provider: 'stripe',
+    stripe_customer_id: session.customer as string,
+    stripe_subscription_id: session.subscription as string,
+    current_period_start: new Date().toISOString(),
+    current_period_end: currentPeriodEnd,
+  };
+
+  if (existingSub) {
+    await supabase
+      .from('subscriptions')
+      .update(subData)
+      .eq('id', existingSub.id);
+  } else {
+    await supabase
+      .from('subscriptions')
+      .insert(subData);
+  }
+
+  console.log(`[STRIPE] Subscription linked to existing organization ${organizationId}`);
+}
+
 async function handleSubscriptionUpdate(
   supabase: SupabaseClientType,
   subscription: Stripe.Subscription

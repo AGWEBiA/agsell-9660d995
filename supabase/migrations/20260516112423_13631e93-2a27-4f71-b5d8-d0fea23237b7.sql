@@ -1,0 +1,1 @@
+ALTER TABLE public.stripe_events ADD COLUMN IF NOT EXISTS status_message TEXT;

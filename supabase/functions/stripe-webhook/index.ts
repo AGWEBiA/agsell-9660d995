@@ -51,8 +51,28 @@ Deno.serve(async (req) => {
       );
     }
 
-    console.log("Stripe webhook received:", event.type);
+    console.log("Stripe webhook received:", event.type, event.id);
 
+    // IDEMPOTENCY: Check if event was already processed
+    const { data: existingEvent, error: eventError } = await supabase
+      .from('stripe_events')
+      .select('id')
+      .eq('event_id', event.id)
+      .maybeSingle();
+
+    if (existingEvent) {
+      console.log(`Event ${event.id} already processed. Skipping.`);
+      return new Response(
+        JSON.stringify({ received: true, message: "Duplicate event" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Mark event as processing
+    await supabase.from('stripe_events').insert({
+      event_id: event.id,
+      status: 'processing'
+    });
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
@@ -121,12 +141,25 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Mark event as completed
+    await supabase.from('stripe_events')
+      .update({ status: 'completed', processed_at: new Date().toISOString() })
+      .eq('event_id', event.id);
+
     return new Response(
       JSON.stringify({ received: true }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {
     console.error("Stripe webhook error:", error);
+    
+    // Mark event as failed if we have the event ID
+    if (typeof event !== 'undefined' && event?.id) {
+      await supabase.from('stripe_events')
+        .update({ status: 'failed', status_message: error instanceof Error ? error.message : 'Unknown error' })
+        .eq('event_id', event.id);
+    }
+
     return new Response(
       JSON.stringify({ error: "Webhook processing failed" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

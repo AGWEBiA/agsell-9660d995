@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { AgencySettingsPanel } from '@/components/agency/AgencySettingsPanel';
+import { SubscriptionTab } from '@/components/organization/SubscriptionTab';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,6 +45,7 @@ import {
   Clock,
   Check,
   X,
+  CreditCard,
 } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useOrganizationMembers } from '@/hooks/useOrganizationMembers';
@@ -259,7 +261,16 @@ export default function Organization() {
               <Building2 className="h-4 w-4" />
               Configurações
             </TabsTrigger>
+            <TabsTrigger value="subscription" className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4" />
+              Assinatura
+            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="subscription" className="space-y-6">
+            <SubscriptionTab />
+          </TabsContent>
+
 
           <TabsContent value="members" className="space-y-6">
             {/* Stats */}

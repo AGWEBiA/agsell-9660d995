@@ -9,9 +9,9 @@ export function useSubscriptionStatus() {
 
   const query = useQuery({
     queryKey: ['subscription-status', currentOrganization?.id],
-    queryFn: async (): Promise<{ status: SubscriptionStatus; isBlocked: boolean; isPastDue: boolean }> => {
+    queryFn: async (): Promise<{ status: SubscriptionStatus; isBlocked: boolean; isPastDue: boolean; isLegacyKiwify: boolean }> => {
       if (!currentOrganization?.id) {
-        return { status: 'no_subscription', isBlocked: false, isPastDue: false };
+        return { status: 'no_subscription', isBlocked: false, isPastDue: false, isLegacyKiwify: false };
       }
 
       // Check if org has a plan_id (free plans don't need subscription)
@@ -23,7 +23,7 @@ export function useSubscriptionStatus() {
 
       if (!org?.plan_id) {
         // No plan assigned = free tier, allow access
-        return { status: 'no_subscription', isBlocked: false, isPastDue: false };
+        return { status: 'no_subscription', isBlocked: false, isPastDue: false, isLegacyKiwify: false };
       }
 
       // Check if plan is free (default)
@@ -35,13 +35,13 @@ export function useSubscriptionStatus() {
 
       if (plan?.is_default || (plan?.price_monthly ?? 0) === 0) {
         // Free plan, no subscription needed
-        return { status: 'active', isBlocked: false, isPastDue: false };
+        return { status: 'active', isBlocked: false, isPastDue: false, isLegacyKiwify: false };
       }
 
       // Paid plan - check subscription
       const { data: subscription } = await supabase
         .from('subscriptions')
-        .select('status, current_period_end, cancel_at_period_end')
+        .select('status, current_period_end, cancel_at_period_end, payment_provider')
         .eq('organization_id', currentOrganization.id)
         .order('current_period_end', { ascending: false })
         .limit(1)
@@ -49,24 +49,25 @@ export function useSubscriptionStatus() {
 
       if (!subscription) {
         // Paid plan but no subscription record = blocked
-        return { status: 'expired', isBlocked: true, isPastDue: false };
+        return { status: 'expired', isBlocked: true, isPastDue: false, isLegacyKiwify: false };
       }
 
       const isPastDue = subscription.status === 'past_due';
+      const isLegacyKiwify = subscription.payment_provider === 'kiwify' && subscription.status === 'active';
       const isActive = ['active', 'trialing'].includes(subscription.status);
       const isExpired = subscription.current_period_end
         ? new Date(subscription.current_period_end) < new Date()
         : false;
 
       if (isPastDue) {
-        return { status: 'past_due' as SubscriptionStatus, isBlocked: false, isPastDue: true };
+        return { status: 'past_due' as SubscriptionStatus, isBlocked: false, isPastDue: true, isLegacyKiwify: false };
       }
 
       if (!isActive || isExpired) {
-        return { status: 'expired', isBlocked: true, isPastDue: false };
+        return { status: 'expired', isBlocked: true, isPastDue: false, isLegacyKiwify: false };
       }
 
-      return { status: subscription.status as SubscriptionStatus, isBlocked: false, isPastDue: false };
+      return { status: subscription.status as SubscriptionStatus, isBlocked: false, isPastDue: false, isLegacyKiwify };
     },
     enabled: !!currentOrganization?.id,
     refetchInterval: 5 * 60 * 1000, // Re-check every 5 minutes
@@ -77,6 +78,7 @@ export function useSubscriptionStatus() {
     status: query.data?.status ?? 'loading',
     isBlocked: query.data?.isBlocked ?? false,
     isPastDue: query.data?.isPastDue ?? false,
+    isLegacyKiwify: query.data?.isLegacyKiwify ?? false,
     isLoading: query.isLoading,
   };
 }

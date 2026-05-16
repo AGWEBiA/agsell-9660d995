@@ -56,15 +56,26 @@ Deno.serve(async (req) => {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
+        console.log("Checkout session completed:", session.id);
         
-        // Check if this is a new user signup
-        if (session.metadata?.is_new_user === 'true') {
+        const metadata = session.metadata || {};
+        
+        // Handle new user signup OR renewal/upgrade from guest checkout
+        if (metadata.is_new_user === 'true') {
           await handleNewUserSignup(supabase, session);
+        } 
+        // Handle checkout from logged-in user (create-checkout function)
+        else if (metadata.organization_id) {
+          console.log("Internal checkout completed for organization:", metadata.organization_id);
+          const planId = metadata.plan_id;
+          const billingCycle = metadata.billing_cycle || 'monthly';
+          await updateSubscriptionForExistingOrg(supabase, metadata.organization_id, planId, billingCycle, session);
         }
 
         // Sync WhatsApp groups for the user
-        if (session.customer_details?.email) {
-          await syncWhatsAppGroupsByEmail(supabase, session.customer_details.email, true);
+        const customerEmail = session.customer_details?.email || metadata.user_email;
+        if (customerEmail) {
+          await syncWhatsAppGroupsByEmail(supabase, customerEmail, true);
         }
         break;
       }

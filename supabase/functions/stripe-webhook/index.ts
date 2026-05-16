@@ -56,15 +56,26 @@ Deno.serve(async (req) => {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
+        console.log("Checkout session completed:", session.id);
         
-        // Check if this is a new user signup
-        if (session.metadata?.is_new_user === 'true') {
+        const metadata = session.metadata || {};
+        
+        // Handle new user signup OR renewal/upgrade from guest checkout
+        if (metadata.is_new_user === 'true') {
           await handleNewUserSignup(supabase, session);
+        } 
+        // Handle checkout from logged-in user (create-checkout function)
+        else if (metadata.organization_id) {
+          console.log("Internal checkout completed for organization:", metadata.organization_id);
+          const planId = metadata.plan_id;
+          const billingCycle = metadata.billing_cycle || 'monthly';
+          await updateSubscriptionForExistingOrg(supabase, metadata.organization_id, planId, billingCycle, session);
         }
 
         // Sync WhatsApp groups for the user
-        if (session.customer_details?.email) {
-          await syncWhatsAppGroupsByEmail(supabase, session.customer_details.email, true);
+        const customerEmail = session.customer_details?.email || metadata.user_email;
+        if (customerEmail) {
+          await syncWhatsAppGroupsByEmail(supabase, customerEmail, true);
         }
         break;
       }
@@ -140,26 +151,27 @@ async function handleNewUserSignup(
   }
 
   // Check if user already exists
-  const { data: existingUser } = await supabase.auth.admin.listUsers();
-  const userExists = existingUser.users.some((u: { email?: string }) => u.email === email);
+  const { data: userSearch } = await supabase.auth.admin.listUsers();
+  // Using listUsers as a fallback, but let's try to find specifically
+  const existingUser = userSearch.users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
   
-  if (userExists) {
+  if (existingUser) {
     console.log("User already exists, checking for organization to link subscription:", email);
-    const { data: userRecord } = await supabase.auth.admin.listUsers();
-    const existingUser = userRecord.users.find((u: { email?: string }) => u.email === email);
     
-    if (existingUser) {
-      const { data: membership } = await supabase
-        .from('organization_members')
-        .select('organization_id')
-        .eq('user_id', existingUser.id)
-        .eq('role', 'owner')
-        .maybeSingle();
-      
-      if (membership) {
-        console.log("Linking new subscription to existing organization:", membership.organization_id);
-        await updateSubscriptionForExistingOrg(supabase, membership.organization_id, planId, billingCycle, session);
-      }
+    const { data: membership } = await supabase
+      .from('organization_members')
+      .select('organization_id')
+      .eq('user_id', existingUser.id)
+      .eq('role', 'owner')
+      .maybeSingle();
+    
+    if (membership) {
+      console.log("Linking new subscription to existing organization:", membership.organization_id);
+      await updateSubscriptionForExistingOrg(supabase, membership.organization_id, planId, billingCycle, session);
+    } else {
+      // User exists but has no organization? Create one or link to first available
+      console.log("User exists but no 'owner' membership found. Creating new organization.");
+      await createNewOrgForUser(supabase, existingUser.id, organizationName, planId, billingCycle, session);
     }
     return;
   }
@@ -262,7 +274,49 @@ async function handleNewUserSignup(
   console.log("New user account created successfully:", email);
 }
 
-async function updateSubscriptionForExistingOrg(
+async function createNewOrgForUser(
+  supabase: SupabaseClientType,
+  userId: string,
+  organizationName: string,
+  planId: string,
+  billingCycle: string,
+  session: Stripe.Checkout.Session
+) {
+  const slug = organizationName.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  const { data: orgId, error: orgError } = await supabase.rpc('create_organization_with_owner_service', {
+    org_name: organizationName,
+    org_slug: `${slug}-${Date.now()}`,
+    owner_id: userId
+  });
+
+  if (orgError) {
+    console.error("Error creating organization with RPC:", orgError);
+    // Fallback if RPC fails
+    const { data: newOrg } = await supabase.from('organizations').insert({
+      name: organizationName,
+      slug: `${slug}-${Date.now()}`,
+      plan_id: planId
+    }).select('id').single();
+    
+    if (newOrg) {
+      await supabase.from('organization_members').insert({
+        organization_id: newOrg.id,
+        user_id: userId,
+        role: 'owner'
+      });
+      await updateSubscriptionForExistingOrg(supabase, newOrg.id, planId, billingCycle, session);
+    }
+    return;
+  }
+
+  await updateSubscriptionForExistingOrg(supabase, orgId as string, planId, billingCycle, session);
+}
+
+
   supabase: SupabaseClientType,
   organizationId: string,
   planId: string,

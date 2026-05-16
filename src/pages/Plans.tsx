@@ -9,7 +9,7 @@ import { useContacts } from '@/hooks/useContacts';
 import { useAutomations } from '@/hooks/useAutomations';
 import { useForms } from '@/hooks/useForms';
 import { useOrganizationMembers } from '@/hooks/useOrganizationMembers';
-import { Check, Crown, Zap, Users, Mail, MessageSquare, Bot, FileText, Loader2, Brain, Settings, ArrowUpDown } from 'lucide-react';
+import { Check, Crown, Zap, Users, Mail, MessageSquare, Bot, FileText, Loader2, Brain, Settings, ArrowUpDown, AlertTriangle, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlanCheckout } from '@/components/stripe/PlanCheckout';
 import { supabase } from '@/integrations/supabase/client';
@@ -219,7 +219,8 @@ function SubscriptionManagement({ subscription }: { subscription: any }) {
 
   if (!subscription) return null;
 
-  const providerLabel = subscription.payment_provider === 'kiwify' ? 'Kiwify' : 'Stripe';
+  const isLegacy = subscription.payment_provider === 'kiwify';
+  const providerLabel = isLegacy ? 'Kiwify (Legado)' : 'Stripe';
   const periodEnd = subscription.current_period_end
     ? new Date(subscription.current_period_end).toLocaleDateString('pt-BR')
     : null;
@@ -264,10 +265,24 @@ function SubscriptionManagement({ subscription }: { subscription: any }) {
         )}
       </CardContent>
       <CardFooter>
-        <Button variant="outline" onClick={handleManageSubscription} disabled={isLoadingPortal}>
+        <Button 
+          variant={isLegacy ? "default" : "outline"} 
+          className={cn(isLegacy && "bg-indigo-600 hover:bg-indigo-700 text-white")}
+          onClick={handleManageSubscription} 
+          disabled={isLoadingPortal}
+        >
           {isLoadingPortal && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-          <Settings className="h-4 w-4 mr-2" />
-          {subscription.payment_provider === 'kiwify' ? 'Gerenciar na Kiwify' : 'Gerenciar Assinatura'}
+          {isLegacy ? (
+            <>
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Acessar Kiwify para Cancelar
+            </>
+          ) : (
+            <>
+              <Settings className="h-4 w-4 mr-2" />
+              Gerenciar Assinatura
+            </>
+          )}
         </Button>
       </CardFooter>
     </Card>

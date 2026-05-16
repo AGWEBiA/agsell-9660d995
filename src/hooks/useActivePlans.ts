@@ -34,6 +34,7 @@ export function useActivePlans() {
           .from('plans' as any)
           .select('*')
           .eq('is_active', true)
+          .eq('show_in_pricing', true)
           .order('price_monthly', { ascending: true });
 
         if (error) {

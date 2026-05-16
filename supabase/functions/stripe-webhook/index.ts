@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
       event_id: event.id,
       status: 'processing'
     });
-
+    switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         console.log("Checkout session completed:", session.id);

@@ -226,17 +226,40 @@ function SubscriptionManagement({ subscription }: { subscription: any }) {
     : null;
 
   return (
-    <Card>
+    <Card className={cn(isLegacy && "border-indigo-500 shadow-md bg-indigo-50/5 dark:bg-indigo-950/10")}>
       <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Settings className="h-5 w-5" />
-          Gerenciar Assinatura
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Gerenciar Assinatura
+          </CardTitle>
+          {isLegacy && (
+            <Badge variant="secondary" className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+              Migração Stripe Necessária
+            </Badge>
+          )}
+        </div>
         <CardDescription>
-          Detalhes da sua assinatura atual
+          {isLegacy 
+            ? "Estamos migrando nossa plataforma para o Stripe para oferecer uma melhor experiência." 
+            : "Detalhes da sua assinatura atual"
+          }
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        {isLegacy && (
+          <div className="bg-indigo-100/50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 p-3 rounded-lg flex gap-3 text-sm">
+            <AlertTriangle className="h-5 w-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+            <div className="space-y-1 text-indigo-900 dark:text-indigo-200">
+              <p className="font-semibold">Siga estes passos para migrar:</p>
+              <ol className="list-decimal list-inside space-y-1 opacity-90">
+                <li>Acesse o portal da Kiwify pelo botão abaixo</li>
+                <li><strong>Cancele sua assinatura atual</strong> para evitar cobranças duplicadas</li>
+                <li>Retorne aqui e assine o plano novamente via <strong>Stripe</strong></li>
+              </ol>
+            </div>
+          </div>
+        )}
         <div className="grid gap-3 sm:grid-cols-3">
           <div>
             <p className="text-xs text-muted-foreground">Status</p>

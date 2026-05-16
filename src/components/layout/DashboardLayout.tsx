@@ -10,6 +10,7 @@ import { useOrganization } from '@/contexts/OrganizationContext';
 import { useAdminView } from '@/contexts/AdminViewContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useSubscriptionStatus } from '@/hooks/useSubscriptionStatus';
+import { useAuth } from '@/contexts/AuthContext';
 import { OrganizationPickerDialog } from '@/components/organization/OrganizationPickerDialog';
 import { Eye, AlertTriangle } from 'lucide-react';
 
@@ -22,7 +23,8 @@ export function DashboardLayout() {
   const { currentOrganization, organizations } = useOrganization();
   const { progress, isLoading } = useOnboarding();
   const { isUserMode, toggleViewMode, simulatedPlan, exitSimulation } = useAdminView();
-  const { isPastDue } = useSubscriptionStatus();
+  const { isPastDue, isLegacyKiwify } = useSubscriptionStatus();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -125,11 +127,32 @@ export function DashboardLayout() {
         </div>
       )}
 
+      {/* Legacy Kiwify Migration Banner */}
+      {isLegacyKiwify && !isUserMode && (
+        <div
+          className={cn(
+            'fixed top-16 right-0 z-20 flex items-center justify-center gap-2 bg-indigo-600 text-white text-sm py-2 px-4 transition-all duration-300',
+            isMobile ? 'left-0' : sidebarCollapsed ? 'left-16' : 'left-64'
+          )}
+        >
+          <AlertTriangle className="h-4 w-4" />
+          <span className="text-xs sm:text-sm">
+            <strong>Ação necessária:</strong> Estamos migrando para o Stripe. Por favor, <strong>cancele sua assinatura na Kiwify</strong> e assine novamente aqui para garantir a continuidade do seu serviço.
+          </span>
+          <button
+            onClick={() => navigate('/plans')}
+            className="ml-2 underline font-medium hover:opacity-80 text-xs sm:text-sm"
+          >
+            Migrar Agora
+          </button>
+        </div>
+      )}
+
       <main
         className={cn(
           'min-h-screen transition-all duration-300',
           isMobile ? 'pl-0' : sidebarCollapsed ? 'pl-16' : 'pl-64',
-          isUserMode || isPastDue ? 'pt-[calc(4rem+2rem)]' : 'pt-16'
+          isUserMode || isPastDue || isLegacyKiwify ? 'pt-[calc(4rem+2.5rem)]' : 'pt-16'
         )}
       >
         <div className="p-3 sm:p-6">

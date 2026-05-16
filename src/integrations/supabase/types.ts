@@ -5844,6 +5844,7 @@ export type Database = {
           id: string
           processed_at: string | null
           status: string | null
+          status_message: string | null
         }
         Insert: {
           created_at?: string
@@ -5851,6 +5852,7 @@ export type Database = {
           id?: string
           processed_at?: string | null
           status?: string | null
+          status_message?: string | null
         }
         Update: {
           created_at?: string
@@ -5858,6 +5860,7 @@ export type Database = {
           id?: string
           processed_at?: string | null
           status?: string | null
+          status_message?: string | null
         }
         Relationships: []
       }

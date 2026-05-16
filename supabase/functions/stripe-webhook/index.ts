@@ -151,26 +151,27 @@ async function handleNewUserSignup(
   }
 
   // Check if user already exists
-  const { data: existingUser } = await supabase.auth.admin.listUsers();
-  const userExists = existingUser.users.some((u: { email?: string }) => u.email === email);
+  const { data: userSearch } = await supabase.auth.admin.listUsers();
+  // Using listUsers as a fallback, but let's try to find specifically
+  const existingUser = userSearch.users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
   
-  if (userExists) {
+  if (existingUser) {
     console.log("User already exists, checking for organization to link subscription:", email);
-    const { data: userRecord } = await supabase.auth.admin.listUsers();
-    const existingUser = userRecord.users.find((u: { email?: string }) => u.email === email);
     
-    if (existingUser) {
-      const { data: membership } = await supabase
-        .from('organization_members')
-        .select('organization_id')
-        .eq('user_id', existingUser.id)
-        .eq('role', 'owner')
-        .maybeSingle();
-      
-      if (membership) {
-        console.log("Linking new subscription to existing organization:", membership.organization_id);
-        await updateSubscriptionForExistingOrg(supabase, membership.organization_id, planId, billingCycle, session);
-      }
+    const { data: membership } = await supabase
+      .from('organization_members')
+      .select('organization_id')
+      .eq('user_id', existingUser.id)
+      .eq('role', 'owner')
+      .maybeSingle();
+    
+    if (membership) {
+      console.log("Linking new subscription to existing organization:", membership.organization_id);
+      await updateSubscriptionForExistingOrg(supabase, membership.organization_id, planId, billingCycle, session);
+    } else {
+      // User exists but has no organization? Create one or link to first available
+      console.log("User exists but no 'owner' membership found. Creating new organization.");
+      await createNewOrgForUser(supabase, existingUser.id, organizationName, planId, billingCycle, session);
     }
     return;
   }

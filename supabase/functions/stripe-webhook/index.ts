@@ -141,6 +141,11 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Mark event as completed
+    await supabase.from('stripe_events')
+      .update({ status: 'completed', processed_at: new Date().toISOString() })
+      .eq('event_id', event.id);
+
     return new Response(
       JSON.stringify({ received: true }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

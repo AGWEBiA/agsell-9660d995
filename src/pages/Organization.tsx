@@ -45,6 +45,7 @@ import {
   Clock,
   Check,
   X,
+  CreditCard,
 } from 'lucide-react';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useOrganizationMembers } from '@/hooks/useOrganizationMembers';

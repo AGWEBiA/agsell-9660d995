@@ -316,7 +316,7 @@ async function createNewOrgForUser(
   await updateSubscriptionForExistingOrg(supabase, orgId as string, planId, billingCycle, session);
 }
 
-
+async function updateSubscriptionForExistingOrg(
   supabase: SupabaseClientType,
   organizationId: string,
   planId: string,

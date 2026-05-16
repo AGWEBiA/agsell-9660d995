@@ -144,7 +144,23 @@ async function handleNewUserSignup(
   const userExists = existingUser.users.some((u: { email?: string }) => u.email === email);
   
   if (userExists) {
-    console.log("User already exists:", email);
+    console.log("User already exists, checking for organization to link subscription:", email);
+    const { data: userRecord } = await supabase.auth.admin.listUsers();
+    const existingUser = userRecord.users.find((u: { email?: string }) => u.email === email);
+    
+    if (existingUser) {
+      const { data: membership } = await supabase
+        .from('organization_members')
+        .select('organization_id')
+        .eq('user_id', existingUser.id)
+        .eq('role', 'owner')
+        .maybeSingle();
+      
+      if (membership) {
+        console.log("Linking new subscription to existing organization:", membership.organization_id);
+        await updateSubscriptionForExistingOrg(supabase, membership.organization_id, planId, billingCycle, session);
+      }
+    }
     return;
   }
 

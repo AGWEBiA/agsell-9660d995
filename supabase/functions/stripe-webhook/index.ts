@@ -274,7 +274,49 @@ async function handleNewUserSignup(
   console.log("New user account created successfully:", email);
 }
 
-async function updateSubscriptionForExistingOrg(
+async function createNewOrgForUser(
+  supabase: SupabaseClientType,
+  userId: string,
+  organizationName: string,
+  planId: string,
+  billingCycle: string,
+  session: Stripe.Checkout.Session
+) {
+  const slug = organizationName.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  const { data: orgId, error: orgError } = await supabase.rpc('create_organization_with_owner_service', {
+    org_name: organizationName,
+    org_slug: `${slug}-${Date.now()}`,
+    owner_id: userId
+  });
+
+  if (orgError) {
+    console.error("Error creating organization with RPC:", orgError);
+    // Fallback if RPC fails
+    const { data: newOrg } = await supabase.from('organizations').insert({
+      name: organizationName,
+      slug: `${slug}-${Date.now()}`,
+      plan_id: planId
+    }).select('id').single();
+    
+    if (newOrg) {
+      await supabase.from('organization_members').insert({
+        organization_id: newOrg.id,
+        user_id: userId,
+        role: 'owner'
+      });
+      await updateSubscriptionForExistingOrg(supabase, newOrg.id, planId, billingCycle, session);
+    }
+    return;
+  }
+
+  await updateSubscriptionForExistingOrg(supabase, orgId as string, planId, billingCycle, session);
+}
+
+
   supabase: SupabaseClientType,
   organizationId: string,
   planId: string,

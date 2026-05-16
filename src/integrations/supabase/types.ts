@@ -5837,6 +5837,30 @@ export type Database = {
           },
         ]
       }
+      stripe_events: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          processed_at: string | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          processed_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          processed_at?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           billing_cycle: string | null

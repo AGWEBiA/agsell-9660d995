@@ -152,6 +152,14 @@ Deno.serve(async (req) => {
     );
   } catch (error: unknown) {
     console.error("Stripe webhook error:", error);
+    
+    // Mark event as failed if we have the event ID
+    if (typeof event !== 'undefined' && event?.id) {
+      await supabase.from('stripe_events')
+        .update({ status: 'failed', status_message: error instanceof Error ? error.message : 'Unknown error' })
+        .eq('event_id', event.id);
+    }
+
     return new Response(
       JSON.stringify({ error: "Webhook processing failed" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

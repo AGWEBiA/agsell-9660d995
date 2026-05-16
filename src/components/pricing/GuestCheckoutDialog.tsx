@@ -34,7 +34,7 @@ export function GuestCheckoutDialog({
     email: '',
     organizationName: '',
     couponCode: '',
-    paymentProvider: 'kiwify',
+    paymentProvider: 'stripe',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [showCouponField, setShowCouponField] = useState(false);
@@ -196,7 +196,7 @@ export function GuestCheckoutDialog({
             <Shield className="h-4 w-4" />
             {isFree 
               ? 'Seus dados estão protegidos' 
-              : 'Pagamento seguro processado pela Kiwify'
+              : 'Pagamento seguro processado pelo Stripe'
             }
           </div>
 

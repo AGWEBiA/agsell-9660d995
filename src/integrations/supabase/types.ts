@@ -1086,6 +1086,7 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean
+          lifecycle_status: string
           name: string
           nodes: Json
           organization_id: string
@@ -1101,6 +1102,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          lifecycle_status?: string
           name: string
           nodes?: Json
           organization_id: string
@@ -1116,6 +1118,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          lifecycle_status?: string
           name?: string
           nodes?: Json
           organization_id?: string

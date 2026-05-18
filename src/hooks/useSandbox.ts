@@ -42,11 +42,22 @@ export function useStartSandbox() {
       organization_id: string;
       instance_id?: string;
     }) => {
+      console.log("Iniciando sandbox com parâmetros:", params);
       const { data, error } = await supabase.functions.invoke("execute-sandbox", {
         body: params,
       });
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.error ?? "Falha ao iniciar simulação");
+      
+      if (error) {
+        console.error("Erro na chamada da Edge Function:", error);
+        // Tenta extrair mensagem útil do erro do Supabase
+        const errorMsg = error.message || (typeof error === 'string' ? error : "Erro desconhecido na rede");
+        throw new Error(`Falha na conexão com o servidor: ${errorMsg}. Por favor, verifique sua internet ou tente novamente em instantes.`);
+      }
+      
+      if (!data?.success) {
+        throw new Error(data?.error || "O servidor não conseguiu processar o início da simulação.");
+      }
+      
       return data.execution_id as string;
     },
     onSuccess: () => {

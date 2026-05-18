@@ -11,3 +11,5 @@ project_id = "rcxrkvwxlzwzrllwdwgz"
     verify_jwt = false
   [functions.upload-media]
     verify_jwt = false
+  [functions.execute-sandbox]
+    verify_jwt = true

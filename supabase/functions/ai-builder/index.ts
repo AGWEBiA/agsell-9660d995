@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAI } from "../_shared/ai-router.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,7 +13,6 @@ serve(async (req) => {
   }
 
   try {
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY")!;
     const { type, prompt, organization_id } = await req.json();
 
     if (!type || !prompt) {
@@ -42,27 +42,17 @@ serve(async (req) => {
 {"segments": [{"name": "nome", "description": "desc", "criteria": "critérios", "estimated_contacts": N, "impact": "high|medium|low", "icon": "trending|alert|cart|users"}]}`,
     };
 
-    const aiResponse = await fetch("https://api.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${lovableApiKey}`,
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompts[type] || systemPrompts.email_campaign },
-          { role: "user", content: prompt },
-        ],
-        temperature: 0.7,
-        max_tokens: 4000,
-      }),
+    const aiResult = await callAI({
+      task: "fast",
+      messages: [
+        { role: "system", content: systemPrompts[type] || systemPrompts.email_campaign },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.7,
+      maxTokens: 4000,
+      jsonMode: true,
     });
-
-    if (!aiResponse.ok) throw new Error(`AI API error: ${aiResponse.status}`);
-
-    const aiData = await aiResponse.json();
-    const rawContent = aiData.choices?.[0]?.message?.content || "{}";
+    const rawContent = aiResult.content || "{}";
 
     let parsed;
     try {

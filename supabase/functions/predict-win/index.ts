@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAI } from "../_shared/ai-router.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,7 +15,6 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { deal_id, organization_id } = await req.json();
@@ -65,32 +65,22 @@ serve(async (req) => {
       notes: deal.notes?.substring(0, 200) || "",
     };
 
-    const aiResponse = await fetch("https://api.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${lovableApiKey}`,
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
-        messages: [
-          {
-            role: "system",
-            content: `You are a sales prediction AI. Analyze the deal data and predict win probability. Respond ONLY with a JSON:
+    const aiResult = await callAI({
+      task: "nano",
+      messages: [
+        {
+          role: "system",
+          content: `You are a sales prediction AI. Analyze the deal data and predict win probability. Respond ONLY with a JSON:
 {"win_probability": 0-100, "factors": {"positive": ["factor1"], "negative": ["factor1"], "suggestions": ["suggestion1"]}}
 Consider: deal value, stage progression, activity count, days open, lead score, contact/company presence.`,
-          },
-          { role: "user", content: JSON.stringify(dealContext) },
-        ],
-        temperature: 0.2,
-        max_tokens: 300,
-      }),
+        },
+        { role: "user", content: JSON.stringify(dealContext) },
+      ],
+      temperature: 0.2,
+      maxTokens: 300,
+      jsonMode: true,
     });
-
-    if (!aiResponse.ok) throw new Error(`AI error: ${aiResponse.status}`);
-
-    const aiData = await aiResponse.json();
-    const rawContent = aiData.choices?.[0]?.message?.content || "{}";
+    const rawContent = aiResult.content || "{}";
 
     let parsed;
     try {

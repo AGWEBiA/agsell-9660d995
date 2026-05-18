@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAI } from "../_shared/ai-router.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,8 +11,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    // AI provider config carregada dinamicamente via ai-router
+
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -66,64 +67,25 @@ Tags: ${tags.map((t: any) => t.tags?.name).filter(Boolean).join(', ') || 'none'}
 Return a JSON with predicted_score (0-100), confidence (0-1), and factors array [{name, impact (-10 to +10), description}]. Max 5 factors.`;
 
       try {
-        const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash-lite",
-            messages: [
-              { role: "system", content: "You are a lead scoring AI. Return ONLY valid JSON, no markdown." },
-              { role: "user", content: prompt },
-            ],
-            tools: [{
-              type: "function",
-              function: {
-                name: "predict_score",
-                description: "Return predicted lead score",
-                parameters: {
-                  type: "object",
-                  properties: {
-                    predicted_score: { type: "number" },
-                    confidence: { type: "number" },
-                    factors: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          name: { type: "string" },
-                          impact: { type: "number" },
-                          description: { type: "string" },
-                        },
-                        required: ["name", "impact", "description"],
-                      },
-                    },
-                  },
-                  required: ["predicted_score", "confidence", "factors"],
-                },
-              },
-            }],
-            tool_choice: { type: "function", function: { name: "predict_score" } },
-          }),
+        const aiResult = await callAI({
+          task: "nano",
+          messages: [
+            { role: "system", content: `You are a lead scoring AI. Return ONLY valid JSON in this exact shape, no markdown:
+{"predicted_score": 0-100, "confidence": 0-1, "factors": [{"name": "...", "impact": -10 to 10, "description": "..."}]}` },
+            { role: "user", content: prompt },
+          ],
+          jsonMode: true,
+          maxTokens: 500,
         });
 
-        if (!aiResp.ok) {
-          if (aiResp.status === 429) {
-            console.log("Rate limited, waiting...");
-            await new Promise(r => setTimeout(r, 2000));
-            continue;
-          }
-          console.error("AI error:", aiResp.status);
+        let result;
+        try {
+          const m = aiResult.content.match(/\{[\s\S]*\}/);
+          result = JSON.parse(m ? m[0] : aiResult.content);
+        } catch (e) {
+          console.error("Failed to parse AI response:", e);
           continue;
         }
-
-        const aiData = await aiResp.json();
-        const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
-        if (!toolCall) continue;
-
-        const result = JSON.parse(toolCall.function.arguments);
         const score = Math.min(100, Math.max(0, Math.round(result.predicted_score)));
         const confidence = Math.min(1, Math.max(0, result.confidence));
 

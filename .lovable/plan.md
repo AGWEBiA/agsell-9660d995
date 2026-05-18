@@ -1,192 +1,110 @@
-# 🧪 Sandbox de Automações — Criar, Testar, Validar, Publicar
 
-Sistema completo para testar automações com dados reais (mas isolados) antes de ativá-las em produção, com timeline visual em tempo real e aprovação compartilhável com o cliente.
+## Objetivo
 
-## Fluxo do usuário
+Permitir cadastrar **OpenAI API Key** e **Gemini API Key** direto no painel admin (salvas em `platform_settings`), escolher qual provedor é o **padrão**, e fazer todas as edge functions de IA lerem dinamicamente do banco — sem depender de secrets do Supabase para isso.
 
-```
-Rascunho → ▶ Testar → Timeline ao vivo → 📤 Compartilhar p/ Cliente → ✅ Aprovado → 🚀 Publicar
-```
+## Arquitetura
 
-## Estados das Automações
-
-Adicionar coluna `lifecycle_status` em `automations`, `whatsapp_flows`, `sequences`, `communication_campaigns`:
-- `draft` — Criando
-- `testing` — Em validação (executou ao menos 1 simulação)
-- `pending_approval` — Aguardando OK do cliente (link compartilhado)
-- `approved` — Cliente aprovou, pronto para publicar
-- `published` — Ativa em produção
-
-Botão **"Publicar"** fica desabilitado até `lifecycle_status = 'approved'` (ou `testing` se for aprovação interna apenas).
-
-## Componentes Novos
-
-### 1. Painel Lateral "Modo Teste" (no Flow Builder e Automations)
-- **Componente**: `src/components/automation/SandboxTestPanel.tsx`
-- Campos:
-  - Número WhatsApp de teste (default = telefone do usuário logado)
-  - Contato Mock: criar lead fictício ou escolher contato existente marcado como `is_test`
-  - Variáveis customizadas (input dinâmico para `{{nome}}`, `{{empresa}}`, etc)
-  - Webhook URL de teste (opcional, para receber payloads)
-- Botão **"▶ Executar Simulação"**
-
-### 2. Timeline Visual em Tempo Real
-- **Componente**: `src/components/automation/SandboxTimeline.tsx`
-- Lista de execução de cada nó com:
-  - Ícone status (✅ sucesso / ⏳ executando / ❌ erro / ⏭ pulado)
-  - Timestamp
-  - Conteúdo enviado/recebido
-  - Branch tomada em condicionais
-- **Highlight no canvas**: nós ficam coloridos conforme execução (verde/vermelho/amarelo)
-- Subscribe via Supabase Realtime na tabela `sandbox_executions`
-
-### 3. Página de Aprovação do Cliente
-- **Rota pública**: `/aprovar-automacao/:token`
-- **Componente**: `src/pages/AutomationApproval.tsx`
-- Mostra:
-  - Nome e descrição da automação
-  - Canvas visual readonly do fluxo
-  - Botão "Testar no Meu WhatsApp" (executa sandbox com número do cliente)
-  - Lista de comentários por nó
-  - Botões: ✅ **Aprovar** / 🔄 **Solicitar Ajustes**
-- Sem login necessário (token único)
-
-## Arquitetura Técnica
-
-### Tabelas Novas (migration)
-
-```sql
--- Execuções de teste (logs)
-CREATE TABLE sandbox_executions (
-  id uuid PRIMARY KEY,
-  organization_id uuid NOT NULL,
-  automation_id uuid,
-  automation_type text, -- 'flow' | 'automation' | 'sequence' | 'campaign'
-  test_phone text,
-  test_contact_id uuid,
-  test_variables jsonb,
-  status text, -- 'running' | 'completed' | 'failed' | 'cancelled'
-  started_at timestamptz,
-  completed_at timestamptz,
-  triggered_by uuid -- user_id
-);
-
--- Cada step executado
-CREATE TABLE sandbox_step_logs (
-  id uuid PRIMARY KEY,
-  execution_id uuid REFERENCES sandbox_executions,
-  node_id text,
-  node_type text,
-  status text, -- 'pending' | 'running' | 'success' | 'error' | 'skipped'
-  input jsonb,
-  output jsonb,
-  error_message text,
-  duration_ms int,
-  executed_at timestamptz
-);
-
--- Links de aprovação
-CREATE TABLE automation_approval_links (
-  id uuid PRIMARY KEY,
-  organization_id uuid,
-  automation_id uuid,
-  automation_type text,
-  token text UNIQUE, -- url-safe random
-  status text, -- 'pending' | 'approved' | 'changes_requested'
-  client_feedback text,
-  client_test_phone text,
-  expires_at timestamptz,
-  approved_at timestamptz,
-  created_by uuid
-);
-
--- Comentários por nó (cliente solicita ajustes)
-CREATE TABLE automation_node_comments (
-  id uuid PRIMARY KEY,
-  approval_link_id uuid,
-  node_id text,
-  comment text,
-  resolved boolean DEFAULT false,
-  created_at timestamptz
-);
+```text
+Admin Panel (UI)
+   ↓ salva
+platform_settings (DB)
+   ├─ ai_openai_api_key
+   ├─ ai_gemini_api_key
+   ├─ ai_default_provider   (openai | gemini)
+   └─ ai_model_mapping      (qual modelo usar p/ cada tarefa)
+   ↑ lê
+_shared/ai-router.ts  (helper compartilhado)
+   ↑ usa
+ai-builder, ai-chat, analyze-sentiment, crm-next-action,
+predict-win, lead-scoring, support-agent, etc.
 ```
 
-Adicionar coluna `lifecycle_status` e `is_test` (em contacts).
+## Etapas
 
-### Edge Functions Novas
+### 1. Banco (migration)
+- Garantir que `platform_settings` tenha as chaves:
+  - `ai_openai_api_key` (texto, criptografado/masked no retorno)
+  - `ai_gemini_api_key`
+  - `ai_default_provider` (`openai` | `gemini`)
+  - `ai_fallback_enabled` (bool — se padrão falhar, tenta o outro)
+- RPC `get_ai_config()` com `SECURITY DEFINER` que retorna apenas para **admin** ou para edge functions via service role. Para usuários comuns, retorna apenas mascarado (`sk-***...***xyz`).
 
-1. **`execute-sandbox`** — Engine de teste. Reusa lógica de `process-automation` / `execute-flow-step` mas com flag `mode='test'`:
-   - Mensagens WhatsApp só vão para `test_phone` cadastrado
-   - Webhooks externos: envia para URL de teste OU pula
-   - NÃO cria contatos/deals reais
-   - NÃO consome créditos SMS/VoIP (apenas registra)
-   - Respeita delays reais (decisão do usuário)
-   - Grava cada step em `sandbox_step_logs` para timeline realtime
+### 2. Shared helper: `supabase/functions/_shared/ai-router.ts`
+- Função `callAI({ task, messages, jsonMode, temperature, maxTokens })`
+- Lê config do banco (com cache de 60s em memória)
+- Roteia para OpenAI (`api.openai.com/v1/chat/completions`) ou Gemini (`generativelanguage.googleapis.com/v1beta/models/...:generateContent`)
+- Mapeia modelos por tarefa:
+  - `fast` → `gpt-4o-mini` | `gemini-2.5-flash`
+  - `reasoning` → `gpt-4o` | `gemini-2.5-pro`
+  - `nano` → `gpt-4o-mini` | `gemini-2.5-flash-lite`
+- Se `ai_fallback_enabled` e provedor padrão falhar (5xx/429/402), tenta o outro automaticamente
+- Normaliza resposta para um shape único: `{ content, model, provider, usage }`
 
-2. **`create-approval-link`** — Gera token único e URL compartilhável
+### 3. Refatorar edge functions de IA
+Substituir `fetch("api.lovable.dev/...")` por `callAI(...)` em:
+- `ai-builder`
+- `ai-chat`
+- `analyze-sentiment`
+- `crm-next-action`
+- `predict-win`
+- `lead-scoring` (se existir)
+- `support-agent` / agentes IA
+- `predictive-sending`
+- Qualquer outra que use `LOVABLE_API_KEY` + `api.lovable.dev`
 
-3. **`approve-automation`** — Endpoint público que valida token e atualiza status
+### 4. UI Admin
+Nova aba **"IA & Modelos"** em `src/pages/Admin.tsx` (ou seção existente de integrações):
+- Card **OpenAI**: input pra API Key (masked após salvar), botão "Testar conexão"
+- Card **Gemini**: idem
+- Toggle **Provedor padrão** (OpenAI / Gemini)
+- Toggle **Fallback automático**
+- Tabela mostrando o mapeamento de modelos por tarefa (read-only por enquanto)
+- Status: "✅ Configurado" / "⚠️ Não configurado"
+- Botão "Testar IA" que chama uma edge function `test-ai-config` e mostra resposta
 
-### Hooks
+### 5. Fallback de secrets (compatibilidade)
+O helper `callAI` segue esta ordem de prioridade ao buscar a key:
+1. `platform_settings.ai_openai_api_key` (DB)
+2. `Deno.env.get("OPENAI_API_KEY")` (secret do Supabase) — fallback
+3. Erro claro se nenhum dos dois existir
 
-- `useSandboxExecution(automationId)` — Subscribe realtime nos logs
-- `useApprovalLinks(automationId)` — CRUD de links de aprovação
-- `useAutomationLifecycle(id, type)` — Transições de estado
+Isso garante que a `OPENAI_API_KEY` que você já cadastrou no Supabase continua funcionando mesmo antes de configurar pelo painel.
 
-## Integrações por Módulo
+## Detalhes Técnicos
 
-| Módulo | Onde aparece o botão Testar |
-|---|---|
-| **Flow Builder** (WhatsApp Chatbot) | Toolbar topo, ao lado de "Salvar" |
-| **Automations V2** | Header da automação |
-| **Sequences** | Header da sequência |
-| **Communication Campaigns** | Antes do botão "Agendar/Enviar" |
+**Segurança da key no painel:**
+- RPC `get_ai_config_masked()` retorna `sk-proj-***...***a3f9` para a UI
+- RPC `update_ai_config(provider, api_key)` apenas para `has_role(auth.uid(), 'admin')`
+- Service role (edge functions) usa `get_ai_config_internal()` que retorna a key completa
 
-Cada um chama `execute-sandbox` com `automation_type` apropriado.
+**Cache no edge function:**
+- Cada cold start busca do DB 1x e mantém em memória por 60s
+- Evita 1 query por chamada de IA
 
-## Validações Automáticas (Pré-Publicação)
+**Tarefas → modelo:**
+Hardcoded no `_shared/ai-router.ts` (não precisa UI configurável agora):
+```ts
+const MODEL_MAP = {
+  openai: { fast: "gpt-4o-mini", reasoning: "gpt-4o", nano: "gpt-4o-mini" },
+  gemini: { fast: "gemini-2.5-flash", reasoning: "gemini-2.5-pro", nano: "gemini-2.5-flash-lite" }
+};
+```
 
-Antes de publicar, validar:
-- ✅ Ao menos 1 sandbox_execution com status `completed`
-- ✅ Sem nós órfãos (sem conexão de saída exceto end-nodes)
-- ✅ Todas mensagens preenchidas
-- ✅ Webhooks com URL válida (http/https)
-- ✅ Variáveis usadas existem no contexto disponível
+**Não vou mexer em:**
+- `LOVABLE_API_KEY` (já era esperado quebrar fora da Lovable Cloud)
+- Edge functions que não são de IA
 
-Componente `ValidationChecklist.tsx` mostra checklist visual.
+## Entregáveis
 
-## Plano de Entrega (3 fases)
+1. Migration adicionando colunas + 3 RPCs em `platform_settings`
+2. `supabase/functions/_shared/ai-router.ts`
+3. ~7-8 edge functions de IA refatoradas
+4. `supabase/functions/test-ai-config/index.ts` (novo, para o botão de teste)
+5. Nova aba no Admin: `src/components/admin/AIProviderSettings.tsx`
+6. Hook `src/hooks/useAIConfig.ts` para gerenciar estado
 
-### Fase 1 — Infraestrutura + Flow Builder (MVP funcional)
-1. Migration: tabelas + colunas
-2. Edge function `execute-sandbox` (suporte inicial: WhatsApp Flow)
-3. `SandboxTestPanel` + `SandboxTimeline` no Flow Builder
-4. Highlight de nós no canvas durante execução
-5. Estados de lifecycle no flow
-
-### Fase 2 — Aprovação do Cliente
-6. Migration: `automation_approval_links` + `automation_node_comments`
-7. Edge functions `create-approval-link` + `approve-automation`
-8. Página pública `/aprovar-automacao/:token`
-9. Dialog "Compartilhar para Aprovação" no Flow Builder
-10. Validações pré-publicação
-
-### Fase 3 — Cobertura Total
-11. Estender `execute-sandbox` para Automations V2
-12. Estender para Sequences
-13. Estender para Communication Campaigns
-14. Dashboard global de "Automações em Teste/Aprovação" no admin
-
-## Considerações Importantes
-
-- **Custo**: Mensagens WhatsApp de teste **são reais** (consomem instância), apenas roteadas para número de teste. Avisar isso ao usuário.
-- **Performance**: Subscribe realtime apenas durante execução ativa (cleanup ao desmontar).
-- **Segurança**: Token de aprovação expira em 7 dias (configurável), 1 link ativo por automação.
-- **Reaproveitamento**: O engine de teste reusa 90% do código de produção (apenas adapta saídas e flags `mode='test'`).
-
-## Estimativa
-Fase 1: ~6-8 arquivos novos + 2 migrations
-Fase 2: ~5 arquivos novos + 1 migration  
-Fase 3: ~3 arquivos modificados
-
-Após sua aprovação, começo pela **Fase 1** (modo teste funcionando ponta a ponta no Flow Builder do chatbot WhatsApp da imagem).
+## Fora de escopo (próxima fase, se quiser)
+- UI para customizar mapeamento tarefa→modelo
+- Métricas de uso (tokens/custo por provedor)
+- Suporte a Anthropic/outros provedores

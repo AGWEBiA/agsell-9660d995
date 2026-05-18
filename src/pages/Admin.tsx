@@ -30,7 +30,8 @@ import {
   ShoppingCart,
   Ticket,
   MessageSquare,
-  HeartPulse
+  HeartPulse,
+  Brain
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -57,6 +58,7 @@ import { VoipProviderConfig } from '@/components/admin/VoipProviderConfig';
 import { CommunicationPackagesAdmin } from '@/components/admin/CommunicationPackagesAdmin';
 import { AdminDomainReport } from '@/components/admin/AdminDomainReport';
 import { AdminIntegrationsConfig } from '@/components/admin/AdminIntegrationsConfig';
+import { AIProviderSettings } from '@/components/admin/AIProviderSettings';
 import { WebhookAuditDashboard } from '@/components/admin/WebhookAuditDashboard';
 
 export default function Admin() {
@@ -286,6 +288,10 @@ export default function Admin() {
           <TabsTrigger value="health" className="flex items-center gap-2">
             <HeartPulse className="h-4 w-4" />
             Saúde (Edge)
+          </TabsTrigger>
+          <TabsTrigger value="ai-providers" className="flex items-center gap-2">
+            <Brain className="h-4 w-4" />
+            IA & Modelos
           </TabsTrigger>
         </TabsList>
 
@@ -555,7 +561,12 @@ export default function Admin() {
         <TabsContent value="health">
           <EdgeFunctionHealthDashboard />
         </TabsContent>
+        <TabsContent value="ai-providers">
+          <AIProviderSettings />
+        </TabsContent>
       </Tabs>
+
+
 
 
       <AssignPlanDialog

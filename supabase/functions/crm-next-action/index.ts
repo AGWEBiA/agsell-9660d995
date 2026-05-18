@@ -1,5 +1,6 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
+import { callAI } from "../_shared/ai-router.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -73,31 +74,23 @@ Responda em JSON exatamente neste formato (sem markdown, sem texto fora do JSON)
   "reasoning": "Justificativa baseada nos dados (máx 200 chars)"
 }`;
 
-    const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${Deno.env.get('LOVABLE_API_KEY')}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+    let aiResult;
+    try {
+      aiResult = await callAI({
+        task: "fast",
         messages: [{ role: 'user', content: prompt }],
-        response_format: { type: 'json_object' },
-      }),
-    });
-
-    if (!aiRes.ok) {
-      const txt = await aiRes.text();
-      console.error('AI gateway error:', aiRes.status, txt);
-      if (aiRes.status === 429) return new Response(JSON.stringify({ error: 'Limite de IA atingido. Tente em alguns instantes.' }), { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      if (aiRes.status === 402) return new Response(JSON.stringify({ error: 'Créditos de IA esgotados.' }), { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      throw new Error('Falha na IA');
+        jsonMode: true,
+      });
+    } catch (e) {
+      console.error('AI router error:', e);
+      throw new Error('Falha na IA: ' + (e as Error).message);
     }
 
-    const aiData = await aiRes.json();
-    const content = aiData.choices?.[0]?.message?.content;
     let suggestion: any;
-    try { suggestion = JSON.parse(content); } catch {
+    try {
+      const match = aiResult.content.match(/\{[\s\S]*\}/);
+      suggestion = JSON.parse(match ? match[0] : aiResult.content);
+    } catch {
       throw new Error('IA retornou formato inválido');
     }
 
@@ -113,7 +106,7 @@ Responda em JSON exatamente neste formato (sem markdown, sem texto fora do JSON)
         priority: ['low','medium','high','urgent'].includes(suggestion.priority) ? suggestion.priority : 'medium',
         channel: suggestion.channel || null,
         reasoning: suggestion.reasoning || null,
-        ai_model: 'google/gemini-2.5-flash',
+        ai_model: aiResult.model,
         status: 'pending',
       })
       .select()

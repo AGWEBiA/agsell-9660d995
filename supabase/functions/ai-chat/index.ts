@@ -1,6 +1,8 @@
 // AI Chat Edge Function for AG Sell Assistant — supports custom AI agents
+// Uses dynamic AI Router (OpenAI / Gemini configurable via Admin panel)
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAI } from "../_shared/ai-router.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -51,17 +53,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
-
-    const { messages, agent_id, context, model: requestedModel } = (await req.json()) as RequestBody;
+    const { messages, agent_id, context } = (await req.json()) as RequestBody;
 
     if (!messages || !Array.isArray(messages)) {
       throw new Error("Messages array is required");
     }
 
     let systemPrompt: string;
-    let model = requestedModel || "google/gemini-3-flash-preview";
     let temperature = 0.7;
     let maxTokens = 1024;
 
@@ -108,7 +106,6 @@ Deno.serve(async (req) => {
         : "";
 
       systemPrompt = `${agent.system_prompt}${knowledgeContext}`;
-      model = agent.model || model;
       temperature = agent.temperature || temperature;
       maxTokens = agent.max_tokens || maxTokens;
     } else {
@@ -135,47 +132,18 @@ Responda sempre em português brasileiro.
 Use emojis ocasionalmente para tornar a conversa mais amigável.`;
     }
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...messages,
-        ],
-        max_tokens: maxTokens,
-        temperature,
-      }),
+    const result = await callAI({
+      task: "fast",
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...messages,
+      ],
+      temperature,
+      maxTokens,
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("AI Gateway error:", response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Limite de requisições excedido. Tente novamente em alguns instantes." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Créditos de IA insuficientes. Entre em contato com o suporte." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      throw new Error(`AI Gateway error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const assistantMessage = data.choices?.[0]?.message?.content || "Desculpe, não consegui processar sua mensagem.";
-
     return new Response(
-      JSON.stringify({ message: assistantMessage }),
+      JSON.stringify({ message: result.content || "Desculpe, não consegui processar sua mensagem.", provider: result.provider, model: result.model }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: unknown) {

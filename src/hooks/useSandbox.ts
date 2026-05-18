@@ -154,10 +154,14 @@ export function useSandboxHealth() {
     queryKey: ["sandbox-health"],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase.functions.invoke("execute-sandbox", {
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/execute-sandbox?health=true`, {
           method: "GET",
+          headers: {
+            "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY
+          }
         });
-        if (error) throw error;
+        if (!res.ok) return false;
+        const data = await res.json();
         return data?.status === "ok";
       } catch (err) {
         console.error("Sandbox health check failed:", err);

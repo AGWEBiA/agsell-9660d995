@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
   // Health check endpoint (must be BEFORE auth)
   const url = new URL(req.url);
   if (req.method === "GET" || url.searchParams.get("health") === "true") {
-    console.log("Health check received (v2)");
+    console.log(`Health check received (v3) - URL: ${req.url}`);
     return new Response(JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

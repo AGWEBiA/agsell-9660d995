@@ -1102,6 +1102,7 @@ export default function ChatbotBuilderPage() {
         isActive: row.is_active,
         whatsapp_instance_id: row.whatsapp_instance_id ?? null,
         settings: (row.settings as ChatbotSettings) || {},
+        lifecycle_status: row.lifecycle_status as any || 'draft',
       }));
     },
     enabled: !!orgId,

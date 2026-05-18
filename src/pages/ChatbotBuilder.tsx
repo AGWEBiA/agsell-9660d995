@@ -1056,14 +1056,14 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
           </ScrollArea>
         </div>
       </div>
-      {chatbot.id && currentOrganizationIdForSandbox && (
+      {chatbot.id && chatbot.organization_id && (
         <SandboxTestPanel
           open={sandboxOpen}
           onOpenChange={setSandboxOpen}
           automationId={chatbot.id}
           automationType="chatbot"
-          organizationId={currentOrganizationIdForSandbox}
-          defaultInstanceId={whatsappInstanceId ?? undefined}
+          organizationId={chatbot.organization_id}
+          automationName={name}
         />
       )}
     </div>

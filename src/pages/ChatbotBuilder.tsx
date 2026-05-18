@@ -1284,6 +1284,15 @@ export default function ChatbotBuilderPage() {
                     <Button
                       size="icon"
                       variant="ghost"
+                      className="h-7 w-7"
+                      title="Renomear"
+                      onClick={() => setRenamingBot({ id: bot.id, name: bot.name })}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
                       className="h-7 w-7 text-destructive"
                       onClick={() => { if (confirm(`Excluir "${bot.name}"?`)) deleteMutation.mutate(bot.id); }}
                     >

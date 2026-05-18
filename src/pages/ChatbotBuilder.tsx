@@ -23,6 +23,72 @@ import {
 import { toast } from 'sonner';
 import { evaluateChatbotSchedule } from '@/lib/chatbot/schedule';
 
+// Chip input: commit token on Enter or comma, backspace removes last
+function ChipsInput({
+  values,
+  onChange,
+  placeholder,
+  chipClassName,
+}: {
+  values: string[];
+  onChange: (next: string[]) => void;
+  placeholder?: string;
+  chipClassName?: string;
+}) {
+  const [draft, setDraft] = useState('');
+  const commit = (raw: string) => {
+    const parts = raw.split(',').map(s => s.trim()).filter(Boolean);
+    if (!parts.length) return;
+    const set = new Set(values);
+    parts.forEach(p => set.add(p));
+    onChange(Array.from(set));
+    setDraft('');
+  };
+  return (
+    <div className="flex flex-wrap items-center gap-1 min-h-7 rounded-md border border-input bg-background px-2 py-1 text-xs focus-within:ring-1 focus-within:ring-ring">
+      {values.map((v, i) => (
+        <Badge
+          key={`${v}-${i}`}
+          variant="secondary"
+          className={`text-[10px] gap-1 pr-1 ${chipClassName ?? ''}`}
+        >
+          {v}
+          <button
+            type="button"
+            onClick={() => onChange(values.filter((_, idx) => idx !== i))}
+            className="hover:text-destructive"
+            aria-label={`Remover ${v}`}
+          >
+            <X className="h-2.5 w-2.5" />
+          </button>
+        </Badge>
+      ))}
+      <input
+        value={draft}
+        onChange={e => {
+          const val = e.target.value;
+          if (val.endsWith(',')) {
+            commit(val.slice(0, -1));
+          } else {
+            setDraft(val);
+          }
+        }}
+        onKeyDown={e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            commit(draft);
+          } else if (e.key === 'Backspace' && !draft && values.length) {
+            onChange(values.slice(0, -1));
+          }
+        }}
+        onBlur={() => draft.trim() && commit(draft)}
+        placeholder={values.length === 0 ? placeholder : ''}
+        className="flex-1 min-w-[60px] bg-transparent outline-none text-xs"
+      />
+    </div>
+  );
+}
+
 // ─── Chatbot Node Types ───
 type ChatbotNodeType =
   | 'welcome' | 'text_message' | 'menu' | 'ask_input'

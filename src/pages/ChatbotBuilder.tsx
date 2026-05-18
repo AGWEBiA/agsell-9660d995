@@ -18,7 +18,7 @@ import {
   Bot, Plus, Trash2, Settings, MessageSquare, ArrowRight, GitBranch,
   Phone, Mail, Tag, Clock, Users, Shield, X, ChevronDown, ChevronUp,
   Copy, Save, Loader2, PlayCircle, PauseCircle, GripVertical,
-  MessageCircle, UserPlus, PhoneForwarded, XCircle, Zap, Brain,
+  MessageCircle, UserPlus, PhoneForwarded, XCircle, Zap, Brain, Pencil,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { evaluateChatbotSchedule } from '@/lib/chatbot/schedule';
@@ -1182,6 +1182,21 @@ export default function ChatbotBuilderPage() {
     onError: (e: any) => toast.error(`Erro: ${e.message}`),
   });
 
+  const renameMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase.from('chatbots').update({ name }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chatbots', orgId] });
+      toast.success('Nome atualizado');
+      setRenamingBot(null);
+    },
+    onError: (e: any) => toast.error(`Erro: ${e.message}`),
+  });
+
+  const [renamingBot, setRenamingBot] = useState<{ id: string; name: string } | null>(null);
+
   const handleCreate = () => {
     if (!newBot.name) return toast.error('Nome é obrigatório');
     createMutation.mutate(newBot);
@@ -1269,6 +1284,15 @@ export default function ChatbotBuilderPage() {
                     <Button
                       size="icon"
                       variant="ghost"
+                      className="h-7 w-7"
+                      title="Renomear"
+                      onClick={() => setRenamingBot({ id: bot.id, name: bot.name })}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
                       className="h-7 w-7 text-destructive"
                       onClick={() => { if (confirm(`Excluir "${bot.name}"?`)) deleteMutation.mutate(bot.id); }}
                     >
@@ -1287,6 +1311,35 @@ export default function ChatbotBuilderPage() {
           ))}
         </div>
       )}
+
+      <Dialog open={!!renamingBot} onOpenChange={(o) => !o && setRenamingBot(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Renomear chatbot</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Nome</Label>
+              <Input
+                value={renamingBot?.name || ''}
+                onChange={e => setRenamingBot(p => p ? { ...p, name: e.target.value } : p)}
+                placeholder="Nome do chatbot"
+                autoFocus
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setRenamingBot(null)}>Cancelar</Button>
+              <Button
+                onClick={() => {
+                  if (!renamingBot?.name.trim()) return toast.error('Nome é obrigatório');
+                  renameMutation.mutate({ id: renamingBot.id, name: renamingBot.name.trim() });
+                }}
+                disabled={renameMutation.isPending}
+              >
+                {renameMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Salvar'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

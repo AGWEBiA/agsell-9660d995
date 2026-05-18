@@ -514,8 +514,12 @@ function RulesEditor({ rules, onUpdate }: { rules: ChatbotRule[]; onUpdate: (rul
             </div>
 
             <div>
-              <Label className="text-xs">Departamentos (separar por vírgula)</Label>
-              <Input value={rule.departments.join(', ')} onChange={e => updateRule(rule.id, { departments: e.target.value.split(',').map(d => d.trim()).filter(Boolean) })} className="h-7 text-xs" placeholder="Vendas, Suporte" />
+              <Label className="text-xs">Departamentos</Label>
+              <ChipsInput
+                values={rule.departments}
+                onChange={vals => updateRule(rule.id, { departments: vals })}
+                placeholder="Digite e pressione Enter ou vírgula"
+              />
             </div>
 
             <div>

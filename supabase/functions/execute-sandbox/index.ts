@@ -392,6 +392,48 @@ async function executeNode(
   };
 }
 
+// Chatbot node executor (chatbots table uses different node shape)
+async function executeChatbotNode(
+  node: any,
+  ctx: {
+    admin: any; organizationId: string; testPhone: string;
+    instanceId?: string; variables: Record<string, any>;
+  },
+): Promise<{ output: any }> {
+  const { admin, organizationId, testPhone, instanceId, variables } = ctx;
+  const cfg = node.config ?? {};
+  const t = node.type;
+
+  if (t === "text_message" || t === "no_interaction" || t === "transfer_human" || t === "close_conversation") {
+    const msg = interpolate(String(cfg.message ?? ""), variables);
+    if (!msg.trim()) return { output: { skipped: true, reason: "Mensagem vazia" } };
+    const r = await sendWhatsAppTest(admin, organizationId, instanceId, testPhone, msg);
+    return { output: { sent_to: testPhone, message: msg, ...r } };
+  }
+
+  if (t === "menu") {
+    const title = interpolate(String(cfg.title ?? cfg.message ?? "Menu"), variables);
+    const opts: any[] = Array.isArray(cfg.options) ? cfg.options : [];
+    const body = `${title}\n\n` + opts.map((o, i) => `${i + 1}. ${o.label ?? o.text ?? ""}`).join("\n");
+    const r = await sendWhatsAppTest(admin, organizationId, instanceId, testPhone, body);
+    return { output: { sent_to: testPhone, menu_options: opts.length, ...r } };
+  }
+
+  if (t === "delay") {
+    const ms = Math.min(Number(cfg.seconds ?? 1) * 1000, MAX_DELAY_MS);
+    await sleep(ms);
+    return { output: { waited_ms: ms } };
+  }
+
+  if (t === "ai_response" || t === "ai_mission") {
+    return { output: { skipped: true, reason: "Bloco de IA simulado (não executa em teste)", mission: cfg.mission ?? cfg.systemPrompt } };
+  }
+
+  // add_tag, remove_tag, transfer_department, webhook → registrar mas não executar de verdade
+  return { output: { skipped: true, reason: `Bloco "${t}" registrado mas não executado em modo teste`, config: cfg } };
+}
+
+
 async function sendWhatsAppTest(
   admin: any,
   organizationId: string,

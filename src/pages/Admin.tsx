@@ -30,7 +30,8 @@ import {
   ShoppingCart,
   Ticket,
   MessageSquare,
-  HeartPulse
+  HeartPulse,
+  Brain
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';

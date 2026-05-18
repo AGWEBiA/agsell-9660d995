@@ -94,9 +94,12 @@ export function useStartSandbox() {
       toast({ title: "Simulação iniciada", description: "Acompanhe a execução na timeline." });
     },
     onError: (err: any) => {
+      const isMissingTable = err?.message?.includes("sandbox_executions");
       toast({
-        title: "Erro ao iniciar simulação",
-        description: err?.message ?? String(err),
+        title: isMissingTable ? "Banco de dados desatualizado" : "Erro ao iniciar simulação",
+        description: isMissingTable 
+          ? "A tabela de execução não foi encontrada no seu projeto Supabase. Verifique as migrações."
+          : err?.message ?? String(err),
         variant: "destructive",
       });
     },

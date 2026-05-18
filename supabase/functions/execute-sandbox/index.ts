@@ -27,6 +27,12 @@ type ProjectRuntime = {
   label: "runtime" | "target";
 };
 
+type AuthenticatedProject = {
+  project: ProjectRuntime;
+  user: { id: string };
+  isServiceRole: boolean;
+};
+
 function getProjectRuntimes(): ProjectRuntime[] {
   const runtimeUrl = Deno.env.get("SUPABASE_URL");
   const runtimeKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -58,7 +64,8 @@ Deno.serve(async (req) => {
 
   // Health check endpoint (must be BEFORE auth)
   const url = new URL(req.url);
-  if (req.method === "GET" || url.searchParams.get("health") === "true") {
+  const getAction = url.searchParams.get("action");
+  if ((req.method === "GET" && !getAction) || url.searchParams.get("health") === "true") {
     console.log(`Health check received (v4-BRIDGE) - URL: ${req.url}`);
     return new Response(JSON.stringify({
       status: "ok",
@@ -92,7 +99,16 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const { project, user } = authResult;
+    const { project, user, isServiceRole } = authResult;
+
+    if (req.method === "GET") {
+      const admin = createClient(project.url, project.serviceRole);
+      const readResponse = await handleReadAction(url, admin, user.id, isServiceRole);
+      return new Response(JSON.stringify(readResponse.body), {
+        status: readResponse.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const body = await req.json();
     console.log("Recebendo solicitação de sandbox:", JSON.stringify(body, null, 2));
@@ -114,6 +130,14 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(project.url, project.serviceRole);
+
+    const hasAccess = await canAccessOrganization(admin, organization_id, user.id, isServiceRole);
+    if (!hasAccess) {
+      return new Response(JSON.stringify({ error: "Forbidden", detail: "Usuário sem acesso à organização informada." }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Create execution record
     const { data: exec, error: execErr } = await admin
@@ -358,13 +382,7 @@ Deno.serve(async (req) => {
       }
     };
 
-    // @ts-ignore Deno background task
-    if (typeof EdgeRuntime !== "undefined" && (EdgeRuntime as any).waitUntil) {
-      // @ts-ignore
-      EdgeRuntime.waitUntil(runFlow());
-    } else {
-      runFlow();
-    }
+    await runFlow();
 
     return new Response(
       JSON.stringify({ success: true, execution_id: executionId }),

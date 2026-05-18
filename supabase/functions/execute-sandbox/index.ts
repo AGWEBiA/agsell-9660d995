@@ -370,14 +370,15 @@ async function resolveAuthenticatedProject(token: string): Promise<
   | { project: ProjectRuntime; user: { id: string } }
   | { error: "Unauthorized"; detail: string }
 > {
+  const serviceProject = await resolveServiceRoleProject(token);
+  if (serviceProject) {
+    console.log(`Auth authorized via Service Role (${serviceProject.label})`);
+    return { project: serviceProject, user: { id: "00000000-0000-0000-0000-000000000000" } };
+  }
+
   let lastAuthError = "Token não reconhecido";
 
   for (const project of getProjectRuntimes()) {
-    if (token === project.serviceRole || await isValidServiceRoleToken(project.url, token)) {
-      console.log(`Auth authorized via Service Role (${project.label})`);
-      return { project, user: { id: "00000000-0000-0000-0000-000000000000" } };
-    }
-
     const authClient = createClient(project.url, project.serviceRole, { auth: { persistSession: false } });
     const { data: { user }, error } = await authClient.auth.getUser(token);
     if (!error && user) {
@@ -390,14 +391,21 @@ async function resolveAuthenticatedProject(token: string): Promise<
   return { error: "Unauthorized", detail: lastAuthError };
 }
 
-async function isValidServiceRoleToken(projectUrl: string, token: string): Promise<boolean> {
-  const res = await fetch(`${projectUrl}/auth/v1/admin/users?page=1&per_page=1`, {
+async function resolveServiceRoleProject(token: string): Promise<ProjectRuntime | null> {
+  for (const project of getProjectRuntimes()) {
+    if (token === project.serviceRole || await canListUsers(project.url, token)) return project;
+  }
+  return null;
+}
+
+async function canListUsers(projectUrl: string, token: string): Promise<boolean> {
+  const result = await fetch(`${projectUrl}/auth/v1/admin/users?page=1&per_page=1`, {
     headers: {
       apikey: token,
       Authorization: `Bearer ${token}`,
     },
   }).catch(() => null);
-  return res?.ok === true;
+  return result?.ok === true;
 }
 
 async function executeNode(

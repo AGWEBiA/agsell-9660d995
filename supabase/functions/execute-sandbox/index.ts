@@ -363,6 +363,30 @@ Deno.serve(async (req) => {
   }
 });
 
+async function resolveAuthenticatedProject(token: string): Promise<
+  | { project: ProjectRuntime; user: { id: string } }
+  | { error: "Unauthorized"; detail: string }
+> {
+  let lastAuthError = "Token não reconhecido";
+
+  for (const project of getProjectRuntimes()) {
+    if (token === project.serviceRole) {
+      console.log(`Auth authorized via Service Role (${project.label})`);
+      return { project, user: { id: "00000000-0000-0000-0000-000000000000" } };
+    }
+
+    const authClient = createClient(project.url, project.serviceRole, { auth: { persistSession: false } });
+    const { data: { user }, error } = await authClient.auth.getUser(token);
+    if (!error && user) {
+      console.log(`Auth authorized via user JWT (${project.label})`);
+      return { project, user };
+    }
+    lastAuthError = error?.message ?? lastAuthError;
+  }
+
+  return { error: "Unauthorized", detail: lastAuthError };
+}
+
 async function executeNode(
   node: FlowNode,
   ctx: {

@@ -1,34 +1,34 @@
 import React from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogTrigger,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { HelpCircle, ShieldCheck, Zap, MessageSquare, Play, List } from "lucide-react";
 
 export function SandboxQuickGuide() {
   return (
-    <Dialog>
-      <DialogTrigger asChild>
+    <Sheet>
+      <SheetTrigger asChild>
         <Button variant="ghost" size="sm" className="h-8 gap-2 text-muted-foreground hover:text-foreground">
           <HelpCircle className="h-4 w-4" />
           Como funciona?
         </Button>
-      </DialogTrigger>
-      <DialogContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      </SheetTrigger>
+      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-green-500" />
             Guia do Ambiente de Testes (Sandbox)
-          </DialogTitle>
-          <DialogDescription>
+          </SheetTitle>
+          <SheetDescription>
             Entenda como validar suas automações com segurança total.
-          </DialogDescription>
-        </DialogHeader>
+          </SheetDescription>
+        </SheetHeader>
 
         <div className="space-y-6 mt-6 pb-10">
           <section className="space-y-2">
@@ -88,7 +88,7 @@ export function SandboxQuickGuide() {
             </p>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

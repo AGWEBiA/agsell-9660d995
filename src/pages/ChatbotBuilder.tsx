@@ -1311,6 +1311,35 @@ export default function ChatbotBuilderPage() {
           ))}
         </div>
       )}
+
+      <Dialog open={!!renamingBot} onOpenChange={(o) => !o && setRenamingBot(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Renomear chatbot</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Nome</Label>
+              <Input
+                value={renamingBot?.name || ''}
+                onChange={e => setRenamingBot(p => p ? { ...p, name: e.target.value } : p)}
+                placeholder="Nome do chatbot"
+                autoFocus
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setRenamingBot(null)}>Cancelar</Button>
+              <Button
+                onClick={() => {
+                  if (!renamingBot?.name.trim()) return toast.error('Nome é obrigatório');
+                  renameMutation.mutate({ id: renamingBot.id, name: renamingBot.name.trim() });
+                }}
+                disabled={renameMutation.isPending}
+              >
+                {renameMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Salvar'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

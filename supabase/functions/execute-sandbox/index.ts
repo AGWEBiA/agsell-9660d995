@@ -206,7 +206,49 @@ Deno.serve(async (req) => {
           return;
         }
 
-        // ===== Flow / Automation engine =====
+        // ===== Chatbot engine (chatbots table) =====
+        if (automation_type === "chatbot") {
+          const cbNodes: any[] = flowJson.chatbotNodes ?? [];
+          if (cbNodes.length === 0) throw new Error("Chatbot sem blocos");
+          const effectiveInstance = instance_id ?? flowJson.chatbotInstance ?? undefined;
+          let current: any = cbNodes[0];
+          const visited = new Set<string>();
+          let safety = 0;
+          while (current && safety < 50) {
+            safety++;
+            if (visited.has(current.id)) {
+              await log(current.id, current.type, current.label ?? current.type, "skipped", {
+                output: { reason: "Loop detectado" },
+              });
+              break;
+            }
+            visited.add(current.id);
+            const start = Date.now();
+            const label = current.label || current.config?.title || current.type;
+            await log(current.id, current.type, label, "running", { input: current.config });
+            try {
+              const result = await executeChatbotNode(current, {
+                admin, organizationId: organization_id, testPhone: test_phone,
+                instanceId: effectiveInstance, variables: test_variables,
+              });
+              await log(current.id, current.type, label, "success", {
+                output: result.output, duration_ms: Date.now() - start,
+              });
+            } catch (err) {
+              await log(current.id, current.type, label, "error", {
+                error_message: String(err), duration_ms: Date.now() - start,
+              });
+            }
+            // Next node: first connection's targetId
+            const nextId = current.connections?.[0]?.targetId;
+            current = nextId ? cbNodes.find((n: any) => n.id === nextId) : null;
+          }
+          await admin.from("sandbox_executions").update({
+            status: "completed", completed_at: new Date().toISOString(),
+          }).eq("id", executionId);
+          return;
+        }
+
         // Find trigger node
         let current = nodes.find((n) => n.type === "trigger") ?? nodes[0];
         if (!current) throw new Error("Nenhum nó inicial encontrado");

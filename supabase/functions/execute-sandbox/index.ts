@@ -58,12 +58,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    const userClient = createClient(SUPABASE_URL, ANON_KEY, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    const { data: { user } } = await userClient.auth.getUser();
-    if (!user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    // Validate JWT against the TARGET project (where the user actually lives)
+    const token = authHeader.replace(/^Bearer\s+/i, "");
+    const authClient = createClient(SUPABASE_URL, SERVICE_ROLE);
+    const { data: { user }, error: authError } = await authClient.auth.getUser(token);
+    if (authError || !user) {
+      console.error("Auth validation failed:", authError?.message, "URL:", SUPABASE_URL);
+      return new Response(JSON.stringify({ error: "Unauthorized", detail: authError?.message }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

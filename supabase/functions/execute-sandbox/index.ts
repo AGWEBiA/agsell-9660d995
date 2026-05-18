@@ -132,7 +132,16 @@ Deno.serve(async (req) => {
       .single();
 
     if (execErr || !exec) {
-      return new Response(JSON.stringify({ error: execErr?.message ?? "Failed to create execution" }), {
+      const isMissingTable = execErr?.message?.includes("sandbox_executions") || execErr?.code === "PGRST204";
+      const errorMessage = isMissingTable 
+        ? "Tabela 'sandbox_executions' não encontrada no projeto de destino. Por favor, execute as migrações no banco de dados."
+        : execErr?.message ?? "Failed to create execution";
+        
+      return new Response(JSON.stringify({ 
+        error: errorMessage, 
+        code: execErr?.code,
+        hint: isMissingTable ? "Run: supabase db push" : undefined
+      }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

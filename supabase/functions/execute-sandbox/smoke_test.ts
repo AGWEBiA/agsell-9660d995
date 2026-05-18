@@ -5,7 +5,8 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 Deno.test("execute-sandbox health check", async () => {
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/execute-sandbox/health`, {
+  // Use query param health=true which is easier to handle in the function routing
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/execute-sandbox?health=true`, {
     method: "GET",
   });
   const data = await res.json();
@@ -19,13 +20,13 @@ Deno.test("execute-sandbox validation check", async () => {
     body: {}, // Empty body to trigger validation error
   });
   
-  // Should return 400 or error message about missing fields
-  // Note: supabase-js might wrap this or return it in data.error
+  // Close the client to avoid leaks
+  await client.auth.signOut();
+  
   if (data) {
     assertEquals(data.success, undefined);
     assertEquals(typeof data.error, "string");
   } else {
-    // If invoke throws/returns error object
     assertEquals(error !== null, true);
   }
 });

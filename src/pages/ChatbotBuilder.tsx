@@ -19,6 +19,7 @@ import {
   Phone, Mail, Tag, Clock, Users, Shield, X, ChevronDown, ChevronUp,
   Copy, Save, Loader2, PlayCircle, PauseCircle, GripVertical,
   MessageCircle, UserPlus, PhoneForwarded, XCircle, Zap, Brain, Pencil,
+  FlaskConical,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { evaluateChatbotSchedule } from '@/lib/chatbot/schedule';

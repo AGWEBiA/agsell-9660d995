@@ -41,9 +41,6 @@ function getProjectRuntimes(): ProjectRuntime[] {
   return projects;
 }
 
-const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-
 // Cap for delay nodes in sandbox (so user doesn't wait hours)
 const MAX_DELAY_MS = 10_000;
 

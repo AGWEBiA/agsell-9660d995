@@ -8,8 +8,8 @@ const SUPABASE_PUBLISHABLE_KEY =
   "";
 
 // Use the internal Lovable project for Edge Functions even if the data is external
-// Internal Project Ref: rcxrkvwxlzwzrllwdwgz
-const INTERNAL_FUNCTIONS_URL = "https://rcxrkvwxlzwzrllwdwgz.supabase.co/functions/v1";
+// Internal Project Ref: gmemxbfibakfpsjbsvyt
+const INTERNAL_FUNCTIONS_URL = "https://gmemxbfibakfpsjbsvyt.supabase.co/functions/v1";
 
 // Create the main client with the internal functions URL configuration
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {

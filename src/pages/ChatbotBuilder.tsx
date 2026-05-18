@@ -1063,7 +1063,7 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
           onOpenChange={setSandboxOpen}
           automationId={chatbot.id}
           automationType="chatbot"
-          organizationId={chatbot.organization_id}
+          organizationId={currentOrganization.id}
           automationName={name}
         />
       )}

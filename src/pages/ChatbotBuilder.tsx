@@ -771,6 +771,25 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
             <FlaskConical className="h-4 w-4 mr-1" />
             Simular
           </Button>
+          {chatbot.id && (
+            <Select 
+              value={chatbot.lifecycle_status} 
+              onValueChange={(v) => {
+                const next = { ...chatbot, lifecycle_status: v as any };
+                onSave(next);
+              }}
+            >
+              <SelectTrigger className="h-9 w-[140px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="draft">Rascunho</SelectItem>
+                <SelectItem value="testing">Em Teste</SelectItem>
+                <SelectItem value="approved">Aprovado</SelectItem>
+                <SelectItem value="published">Publicado</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           <Button size="sm" onClick={handleSave} disabled={isSaving}>
             {isSaving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
             {isSaving ? 'Salvando...' : 'Salvar'}

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { callAI } from "../_shared/ai-router.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,7 +15,6 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { message, message_id, conversation_id, contact_id, organization_id } = await req.json();
@@ -27,32 +27,22 @@ serve(async (req) => {
     }
 
     // Call AI to analyze sentiment
-    const aiResponse = await fetch("https://api.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${lovableApiKey}`,
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash-lite",
-        messages: [
-          {
-            role: "system",
-            content: `You are a sentiment analysis engine. Analyze the message and respond ONLY with a JSON object:
+    const aiResult = await callAI({
+      task: "nano",
+      messages: [
+        {
+          role: "system",
+          content: `You are a sentiment analysis engine. Analyze the message and respond ONLY with a JSON object:
 {"sentiment": "positive"|"negative"|"neutral", "confidence": 0.0-1.0, "keywords": ["key1","key2"], "summary": "brief summary in Portuguese"}
 No other text, just JSON.`,
-          },
-          { role: "user", content: message },
-        ],
-        temperature: 0.1,
-        max_tokens: 200,
-      }),
+        },
+        { role: "user", content: message },
+      ],
+      temperature: 0.1,
+      maxTokens: 200,
+      jsonMode: true,
     });
-
-    if (!aiResponse.ok) throw new Error(`AI API error: ${aiResponse.status}`);
-
-    const aiData = await aiResponse.json();
-    const rawContent = aiData.choices?.[0]?.message?.content || '{"sentiment":"neutral","confidence":0.5,"keywords":[],"summary":"Não foi possível analisar"}';
+    const rawContent = aiResult.content || '{"sentiment":"neutral","confidence":0.5,"keywords":[],"summary":"Não foi possível analisar"}';
     
     let parsed;
     try {

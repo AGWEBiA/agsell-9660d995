@@ -761,11 +761,12 @@ async function getQRCode(
   return jsonResponse({
     success: false,
     error: lastError
-      ? `Erro ao obter QR Code: ${lastError.status}`
+      ? `Erro ao obter QR Code (${lastError.instance}): ${lastError.status}`
       : "Instância não encontrada na Evolution API",
     details: lastError?.details || null,
     instance_name: lastError?.instance || requestedInstanceName,
     instance_candidates: candidates,
+    server_url: baseUrl,
   });
 }
 

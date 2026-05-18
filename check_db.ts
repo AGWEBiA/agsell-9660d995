@@ -6,27 +6,15 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function checkState() {
-  const { data: tables, error: tableError } = await supabase
-    .from('user_roles')
+  const { data, error } = await supabase
+    .from('whatsapp_connection_history')
     .select('*')
     .limit(1);
 
-  if (tableError) {
-    console.log('user_roles table does NOT exist or error:', tableError.message);
+  if (error) {
+    console.log('whatsapp_connection_history table does NOT exist or error:', error.message);
   } else {
-    console.log('user_roles table EXISTS.');
-  }
-
-  // Check another table likely to be there if it was configured
-  const { data: profiles, error: profileError } = await supabase
-    .from('profiles')
-    .select('*')
-    .limit(1);
-
-  if (profileError) {
-    console.log('profiles table does NOT exist or error:', profileError.message);
-  } else {
-    console.log('profiles table EXISTS.');
+    console.log('whatsapp_connection_history table EXISTS.');
   }
 }
 

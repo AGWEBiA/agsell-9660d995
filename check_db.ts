@@ -5,20 +5,29 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function checkMigrations() {
-  const { data, error } = await supabase
-    .from('_migrations')
+async function checkState() {
+  const { data: tables, error: tableError } = await supabase
+    .from('user_roles')
     .select('*')
     .limit(1);
 
-  if (error) {
-    console.log('Error checking _migrations:', error.message);
-    // Try supabase_migrations schema
-    const { data: data2, error: error2 } = await supabase.rpc('get_migrations'); // Custom RPC?
-    console.log('RPC check error:', error2?.message);
+  if (tableError) {
+    console.log('user_roles table does NOT exist or error:', tableError.message);
   } else {
-    console.log('Migrations table exists, found:', data.length, 'records');
+    console.log('user_roles table EXISTS.');
+  }
+
+  // Check another table likely to be there if it was configured
+  const { data: profiles, error: profileError } = await supabase
+    .from('profiles')
+    .select('*')
+    .limit(1);
+
+  if (profileError) {
+    console.log('profiles table does NOT exist or error:', profileError.message);
+  } else {
+    console.log('profiles table EXISTS.');
   }
 }
 
-checkMigrations();
+checkState();

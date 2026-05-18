@@ -452,18 +452,18 @@ async function executeNode(
 async function executeChatbotNode(
   node: any,
   ctx: {
-    admin: any; organizationId: string; testPhone: string;
+    admin: any; project: ProjectRuntime; organizationId: string; testPhone: string;
     instanceId?: string; variables: Record<string, any>;
   },
 ): Promise<{ output: any }> {
-  const { admin, organizationId, testPhone, instanceId, variables } = ctx;
+  const { admin, project, organizationId, testPhone, instanceId, variables } = ctx;
   const cfg = node.config ?? {};
   const t = node.type;
 
   if (t === "text_message" || t === "no_interaction" || t === "transfer_human" || t === "close_conversation") {
     const msg = interpolate(String(cfg.message ?? ""), variables);
     if (!msg.trim()) return { output: { skipped: true, reason: "Mensagem vazia" } };
-    const r = await sendWhatsAppTest(admin, organizationId, instanceId, testPhone, msg);
+    const r = await sendWhatsAppTest(admin, project, organizationId, instanceId, testPhone, msg);
     return { output: { sent_to: testPhone, message: msg, ...r } };
   }
 
@@ -471,7 +471,7 @@ async function executeChatbotNode(
     const title = interpolate(String(cfg.title ?? cfg.message ?? "Menu"), variables);
     const opts: any[] = Array.isArray(cfg.options) ? cfg.options : [];
     const body = `${title}\n\n` + opts.map((o, i) => `${i + 1}. ${o.label ?? o.text ?? ""}`).join("\n");
-    const r = await sendWhatsAppTest(admin, organizationId, instanceId, testPhone, body);
+    const r = await sendWhatsAppTest(admin, project, organizationId, instanceId, testPhone, body);
     return { output: { sent_to: testPhone, menu_options: opts.length, ...r } };
   }
 

@@ -1057,7 +1057,7 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
           </ScrollArea>
         </div>
       </div>
-      {chatbot.id && chatbot.organization_id && (
+      {chatbot.id && currentOrganization?.id && (
         <SandboxTestPanel
           open={sandboxOpen}
           onOpenChange={setSandboxOpen}

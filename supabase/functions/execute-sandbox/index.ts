@@ -1,4 +1,4 @@
-// Sandbox engine - v3 (Fixed Routing)
+// Sandbox engine - v4 (Ambiente Lovable Central - Bridge para Produção)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
   // Health check endpoint (must be BEFORE auth)
   const url = new URL(req.url);
   if (req.method === "GET" || url.searchParams.get("health") === "true") {
-    console.log(`Health check received (v3) - URL: ${req.url}`);
+    console.log(`Health check received (v4-BRIDGE) - URL: ${req.url}`);
     return new Response(JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

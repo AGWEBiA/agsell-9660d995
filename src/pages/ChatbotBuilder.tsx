@@ -19,6 +19,7 @@ import {
   Phone, Mail, Tag, Clock, Users, Shield, X, ChevronDown, ChevronUp,
   Copy, Save, Loader2, PlayCircle, PauseCircle, GripVertical,
   MessageCircle, UserPlus, PhoneForwarded, XCircle, Zap, Brain, Pencil,
+  FlaskConical,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { evaluateChatbotSchedule } from '@/lib/chatbot/schedule';
@@ -148,6 +149,7 @@ interface Chatbot {
   channel: string;
   whatsapp_instance_id?: string | null;
   settings?: ChatbotSettings;
+  lifecycle_status: 'draft' | 'testing' | 'pending_approval' | 'approved' | 'published';
 }
 
 const nodeTypes: { type: ChatbotNodeType; label: string; icon: typeof Bot; color: string; category: string }[] = [
@@ -727,7 +729,17 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
     if (hasAi && !settings.human_fallback_enabled) {
       toast.warning('Recomendamos manter o fallback para humano ativo quando há blocos de IA');
     }
-    onSave({ ...chatbot, name, nodes, rules: finalRules, whatsapp_instance_id: whatsappInstanceId, settings });
+    // If we're saving while sandbox is open, it's likely we're in testing phase
+    const nextStatus = sandboxOpen && chatbot.lifecycle_status === 'draft' ? 'testing' : chatbot.lifecycle_status;
+    onSave({ 
+      ...chatbot, 
+      name, 
+      nodes, 
+      rules: finalRules, 
+      whatsapp_instance_id: whatsappInstanceId, 
+      settings,
+      lifecycle_status: nextStatus
+    });
   };
 
   const categories = [...new Set(nodeTypes.map(n => n.category))];
@@ -760,6 +772,25 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
             <FlaskConical className="h-4 w-4 mr-1" />
             Simular
           </Button>
+          {chatbot.id && (
+            <Select 
+              value={chatbot.lifecycle_status} 
+              onValueChange={(v) => {
+                const next = { ...chatbot, lifecycle_status: v as any };
+                onSave(next);
+              }}
+            >
+              <SelectTrigger className="h-9 w-[140px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="draft">Rascunho</SelectItem>
+                <SelectItem value="testing">Em Teste</SelectItem>
+                <SelectItem value="approved">Aprovado</SelectItem>
+                <SelectItem value="published">Publicado</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           <Button size="sm" onClick={handleSave} disabled={isSaving}>
             {isSaving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
             {isSaving ? 'Salvando...' : 'Salvar'}
@@ -1065,6 +1096,11 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
           automationType="chatbot"
           organizationId={currentOrganization.id}
           automationName={name}
+          onExecutionComplete={(success) => {
+            if (success && chatbot.lifecycle_status === 'testing') {
+              toast.success('Simulação concluída com sucesso! Agora você pode solicitar aprovação ou publicar.');
+            }
+          }}
         />
       )}
     </div>
@@ -1101,6 +1137,7 @@ export default function ChatbotBuilderPage() {
         isActive: row.is_active,
         whatsapp_instance_id: row.whatsapp_instance_id ?? null,
         settings: (row.settings as ChatbotSettings) || {},
+        lifecycle_status: row.lifecycle_status as any || 'draft',
       }));
     },
     enabled: !!orgId,
@@ -1148,6 +1185,7 @@ export default function ChatbotBuilderPage() {
         isActive: row.is_active,
         whatsapp_instance_id: row.whatsapp_instance_id ?? null,
         settings: (row.settings as ChatbotSettings) || {},
+        lifecycle_status: row.lifecycle_status as any || 'draft',
       });
       toast.success('Chatbot criado!');
     },
@@ -1167,6 +1205,7 @@ export default function ChatbotBuilderPage() {
           is_active: updated.isActive,
           whatsapp_instance_id: updated.whatsapp_instance_id ?? null,
           settings: (updated.settings ?? {}) as any,
+          lifecycle_status: updated.lifecycle_status,
         })
         .eq('id', updated.id);
       if (error) throw error;
@@ -1292,6 +1331,19 @@ export default function ChatbotBuilderPage() {
                     <div>
                       <CardTitle className="text-base">{bot.name}</CardTitle>
                       <CardDescription className="text-xs">{bot.channel}</CardDescription>
+                      <div className="mt-1">
+                        <Badge variant="outline" className={`text-[10px] h-4 ${
+                          bot.lifecycle_status === 'published' ? 'border-green-500 text-green-600 bg-green-50' :
+                          bot.lifecycle_status === 'approved' ? 'border-blue-500 text-blue-600 bg-blue-50' :
+                          bot.lifecycle_status === 'testing' ? 'border-orange-500 text-orange-600 bg-orange-50' :
+                          'border-muted text-muted-foreground'
+                        }`}>
+                          {bot.lifecycle_status === 'draft' ? 'Rascunho' :
+                           bot.lifecycle_status === 'testing' ? 'Em Teste' :
+                           bot.lifecycle_status === 'pending_approval' ? 'Pend. Aprovação' :
+                           bot.lifecycle_status === 'approved' ? 'Aprovado' : 'Publicado'}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>

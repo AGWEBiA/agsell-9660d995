@@ -205,7 +205,7 @@ Deno.serve(async (req) => {
             try {
               if (step.action_type === "send_message") {
                 const msg = interpolate(String(step.content?.message ?? ""), test_variables);
-                await sendWhatsAppTest(admin, organization_id, instance_id, test_phone, msg);
+                await sendWhatsAppTest(admin, project, organization_id, instance_id, test_phone, msg);
                 await log(step.id, step.action_type, step.action_type, "success", {
                   output: { message: msg, sent_to: test_phone },
                   duration_ms: Date.now() - start,
@@ -258,7 +258,7 @@ Deno.serve(async (req) => {
             await log(current.id, current.type, label, "running", { input: current.config });
             try {
               const result = await executeChatbotNode(current, {
-                admin, organizationId: organization_id, testPhone: test_phone,
+                admin, project, organizationId: organization_id, testPhone: test_phone,
                 instanceId: effectiveInstance, variables: test_variables,
               });
               await log(current.id, current.type, label, "success", {
@@ -304,7 +304,8 @@ Deno.serve(async (req) => {
           let nextPort: "default" | "yes" | "no" = "default";
           try {
             const result = await executeNode(current, {
-              admin,
+                admin,
+                project,
               organizationId: organization_id,
               testPhone: test_phone,
               instanceId: instance_id,

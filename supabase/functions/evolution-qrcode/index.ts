@@ -682,15 +682,17 @@ async function getQRCode(
   signal: AbortSignal,
   allowAutoCreate = true,
 ): Promise<any> {
+  console.log(`[evolution-qrcode] Starting getQRCode for ${requestedInstanceName}. allowAutoCreate=${allowAutoCreate}`);
   const candidates = await resolveInstanceCandidates(baseUrl, apiKey, requestedInstanceName, signal);
+  console.log(`[evolution-qrcode] Resolved candidates:`, JSON.stringify(candidates));
 
   for (const candidate of candidates) {
-    const statusRes = await fetch(
-      `${baseUrl}/instance/connectionState/${encodeURIComponent(candidate)}`,
-      { headers: { apikey: apiKey }, signal },
-    );
+    const statusUrl = `${baseUrl}/instance/connectionState/${encodeURIComponent(candidate)}`;
+    console.log(`[evolution-qrcode] Checking connection state: ${statusUrl}`);
+    const statusRes = await fetch(statusUrl, { headers: { apikey: apiKey }, signal });
 
     if (!statusRes.ok) {
+      console.log(`[evolution-qrcode] connectionState for ${candidate} failed: ${statusRes.status}`);
       await statusRes.text();
       continue;
     }

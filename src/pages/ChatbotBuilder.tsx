@@ -148,6 +148,7 @@ interface Chatbot {
   channel: string;
   whatsapp_instance_id?: string | null;
   settings?: ChatbotSettings;
+  lifecycle_status: 'draft' | 'testing' | 'pending_approval' | 'approved' | 'published';
 }
 
 const nodeTypes: { type: ChatbotNodeType; label: string; icon: typeof Bot; color: string; category: string }[] = [

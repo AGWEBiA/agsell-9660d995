@@ -21,6 +21,9 @@ export default defineConfig(({ mode }) => {
     ].filter(Boolean),
     resolve: {
       alias: {
+        // OVERRIDE: força todos os imports do client Supabase a usar o banco externo
+        // (ggkjishigcahzjdlwfat) em vez do Lovable Cloud auto-gerado.
+        "@/integrations/supabase/client": path.resolve(__dirname, "./src/integrations/supabase/external-client.ts"),
         "@": path.resolve(__dirname, "./src"),
       },
     },

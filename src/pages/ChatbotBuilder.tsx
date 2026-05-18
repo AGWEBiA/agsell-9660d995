@@ -552,21 +552,28 @@ function RulesEditor({ rules, onUpdate }: { rules: ChatbotRule[]; onUpdate: (rul
             </div>
 
             <div>
-              <Label className="text-xs text-green-600">Tags Inclusão (vírgula)</Label>
-              <Input value={rule.includeTags.join(', ')} onChange={e => updateRule(rule.id, { includeTags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })} className="h-7 text-xs" placeholder="cliente, vip" />
+              <Label className="text-xs text-green-600">Tags Inclusão</Label>
+              <ChipsInput
+                values={rule.includeTags}
+                onChange={vals => updateRule(rule.id, { includeTags: vals })}
+                placeholder="Enter ou vírgula (ex: cliente, vip)"
+              />
             </div>
             <div>
-              <Label className="text-xs text-red-600">Tags Exclusão (vírgula)</Label>
-              <Input value={rule.excludeTags.join(', ')} onChange={e => updateRule(rule.id, { excludeTags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })} className="h-7 text-xs" placeholder="spam, bloqueado" />
+              <Label className="text-xs text-red-600">Tags Exclusão</Label>
+              <ChipsInput
+                values={rule.excludeTags}
+                onChange={vals => updateRule(rule.id, { excludeTags: vals })}
+                placeholder="Enter ou vírgula (ex: spam, bloqueado)"
+              />
             </div>
             <Separator />
             <div>
-              <Label className="text-xs text-primary">Palavras-chave de disparo (vírgula)</Label>
-              <Input
-                value={(rule.keywords || []).join(', ')}
-                onChange={e => updateRule(rule.id, { keywords: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })}
-                className="h-7 text-xs"
-                placeholder="oi, olá, atendimento"
+              <Label className="text-xs text-primary">Palavras-chave de disparo</Label>
+              <ChipsInput
+                values={rule.keywords || []}
+                onChange={vals => updateRule(rule.id, { keywords: vals })}
+                placeholder="Enter ou vírgula (ex: oi, olá, atendimento)"
               />
               <p className="text-[10px] text-muted-foreground mt-1">Deixe vazio para disparar em qualquer mensagem recebida</p>
             </div>

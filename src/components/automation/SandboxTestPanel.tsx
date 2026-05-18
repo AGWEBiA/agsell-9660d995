@@ -15,7 +15,7 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   automationId: string;
-  automationType: "flow" | "automation" | "sequence" | "campaign";
+  automationType: "flow" | "automation" | "sequence" | "campaign" | "chatbot";
   organizationId: string;
   automationName?: string;
   /** Called when execution finishes — useful to update lifecycle status */

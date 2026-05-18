@@ -23,6 +23,72 @@ import {
 import { toast } from 'sonner';
 import { evaluateChatbotSchedule } from '@/lib/chatbot/schedule';
 
+// Chip input: commit token on Enter or comma, backspace removes last
+function ChipsInput({
+  values,
+  onChange,
+  placeholder,
+  chipClassName,
+}: {
+  values: string[];
+  onChange: (next: string[]) => void;
+  placeholder?: string;
+  chipClassName?: string;
+}) {
+  const [draft, setDraft] = useState('');
+  const commit = (raw: string) => {
+    const parts = raw.split(',').map(s => s.trim()).filter(Boolean);
+    if (!parts.length) return;
+    const set = new Set(values);
+    parts.forEach(p => set.add(p));
+    onChange(Array.from(set));
+    setDraft('');
+  };
+  return (
+    <div className="flex flex-wrap items-center gap-1 min-h-7 rounded-md border border-input bg-background px-2 py-1 text-xs focus-within:ring-1 focus-within:ring-ring">
+      {values.map((v, i) => (
+        <Badge
+          key={`${v}-${i}`}
+          variant="secondary"
+          className={`text-[10px] gap-1 pr-1 ${chipClassName ?? ''}`}
+        >
+          {v}
+          <button
+            type="button"
+            onClick={() => onChange(values.filter((_, idx) => idx !== i))}
+            className="hover:text-destructive"
+            aria-label={`Remover ${v}`}
+          >
+            <X className="h-2.5 w-2.5" />
+          </button>
+        </Badge>
+      ))}
+      <input
+        value={draft}
+        onChange={e => {
+          const val = e.target.value;
+          if (val.endsWith(',')) {
+            commit(val.slice(0, -1));
+          } else {
+            setDraft(val);
+          }
+        }}
+        onKeyDown={e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            commit(draft);
+          } else if (e.key === 'Backspace' && !draft && values.length) {
+            onChange(values.slice(0, -1));
+          }
+        }}
+        onBlur={() => draft.trim() && commit(draft)}
+        placeholder={values.length === 0 ? placeholder : ''}
+        className="flex-1 min-w-[60px] bg-transparent outline-none text-xs"
+      />
+    </div>
+  );
+}
+
 // ─── Chatbot Node Types ───
 type ChatbotNodeType =
   | 'welcome' | 'text_message' | 'menu' | 'ask_input'
@@ -448,8 +514,12 @@ function RulesEditor({ rules, onUpdate }: { rules: ChatbotRule[]; onUpdate: (rul
             </div>
 
             <div>
-              <Label className="text-xs">Departamentos (separar por vírgula)</Label>
-              <Input value={rule.departments.join(', ')} onChange={e => updateRule(rule.id, { departments: e.target.value.split(',').map(d => d.trim()).filter(Boolean) })} className="h-7 text-xs" placeholder="Vendas, Suporte" />
+              <Label className="text-xs">Departamentos</Label>
+              <ChipsInput
+                values={rule.departments}
+                onChange={vals => updateRule(rule.id, { departments: vals })}
+                placeholder="Digite e pressione Enter ou vírgula"
+              />
             </div>
 
             <div>
@@ -482,21 +552,28 @@ function RulesEditor({ rules, onUpdate }: { rules: ChatbotRule[]; onUpdate: (rul
             </div>
 
             <div>
-              <Label className="text-xs text-green-600">Tags Inclusão (vírgula)</Label>
-              <Input value={rule.includeTags.join(', ')} onChange={e => updateRule(rule.id, { includeTags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })} className="h-7 text-xs" placeholder="cliente, vip" />
+              <Label className="text-xs text-green-600">Tags Inclusão</Label>
+              <ChipsInput
+                values={rule.includeTags}
+                onChange={vals => updateRule(rule.id, { includeTags: vals })}
+                placeholder="Enter ou vírgula (ex: cliente, vip)"
+              />
             </div>
             <div>
-              <Label className="text-xs text-red-600">Tags Exclusão (vírgula)</Label>
-              <Input value={rule.excludeTags.join(', ')} onChange={e => updateRule(rule.id, { excludeTags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })} className="h-7 text-xs" placeholder="spam, bloqueado" />
+              <Label className="text-xs text-red-600">Tags Exclusão</Label>
+              <ChipsInput
+                values={rule.excludeTags}
+                onChange={vals => updateRule(rule.id, { excludeTags: vals })}
+                placeholder="Enter ou vírgula (ex: spam, bloqueado)"
+              />
             </div>
             <Separator />
             <div>
-              <Label className="text-xs text-primary">Palavras-chave de disparo (vírgula)</Label>
-              <Input
-                value={(rule.keywords || []).join(', ')}
-                onChange={e => updateRule(rule.id, { keywords: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })}
-                className="h-7 text-xs"
-                placeholder="oi, olá, atendimento"
+              <Label className="text-xs text-primary">Palavras-chave de disparo</Label>
+              <ChipsInput
+                values={rule.keywords || []}
+                onChange={vals => updateRule(rule.id, { keywords: vals })}
+                placeholder="Enter ou vírgula (ex: oi, olá, atendimento)"
               />
               <p className="text-[10px] text-muted-foreground mt-1">Deixe vazio para disparar em qualquer mensagem recebida</p>
             </div>
@@ -621,8 +698,7 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
       return;
     }
     if (instanceWarning) {
-      toast.error(instanceWarning);
-      return;
+      toast.warning(instanceWarning + ' Você poderá vincular a instância depois.');
     }
     // Garante pelo menos uma regra de ativação
     let finalRules = rules;

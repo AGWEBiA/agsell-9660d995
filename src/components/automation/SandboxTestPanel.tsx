@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Play, FlaskConical, Info, AlertTriangle, X } from "lucide-react";
 import { useStartSandbox, useSandboxExecution } from "@/hooks/useSandbox";
 import { SandboxTimeline } from "./SandboxTimeline";
+import { SandboxQuickGuide } from "./SandboxQuickGuide";
 import { WhatsAppInstanceSelector } from "@/components/whatsapp/WhatsAppInstanceSelector";
 
 interface Props {
@@ -74,9 +75,12 @@ export function SandboxTestPanel({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col">
         <SheetHeader className="px-4 py-3 border-b">
-          <SheetTitle className="flex items-center gap-2">
-            <FlaskConical className="h-5 w-5 text-amber-500" />
-            Modo Teste
+          <SheetTitle className="flex items-center justify-between w-full pr-4">
+            <div className="flex items-center gap-2">
+              <FlaskConical className="h-5 w-5 text-amber-500" />
+              Modo Teste
+            </div>
+            <SandboxQuickGuide />
           </SheetTitle>
           <SheetDescription className="text-xs">
             {automationName ?? "Automação"} — execução sandbox isolada

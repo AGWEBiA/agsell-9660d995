@@ -36,7 +36,7 @@ export function useStartSandbox() {
   return useMutation({
     mutationFn: async (params: {
       automation_id: string;
-      automation_type: "flow" | "automation" | "sequence" | "campaign";
+      automation_type: "flow" | "automation" | "sequence" | "campaign" | "chatbot";
       test_phone: string;
       test_variables?: Record<string, any>;
       organization_id: string;

@@ -290,8 +290,9 @@ async function resolveEvolutionConfig(
       const name = row.config?.instance_name?.trim();
       return !!name && normalize(name) === target;
     });
-
-    integrationConfig = matched?.config || (integrations || [])[0]?.config || null;
+    
+    // Use the matched config if found, otherwise keep as null to use global config
+    integrationConfig = matched?.config || null;
   }
 
   const { data: globalConfig } = await supabase

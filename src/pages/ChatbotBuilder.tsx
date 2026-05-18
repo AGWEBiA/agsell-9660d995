@@ -698,8 +698,7 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
       return;
     }
     if (instanceWarning) {
-      toast.error(instanceWarning);
-      return;
+      toast.warning(instanceWarning + ' Você poderá vincular a instância depois.');
     }
     // Garante pelo menos uma regra de ativação
     let finalRules = rules;

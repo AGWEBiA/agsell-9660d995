@@ -368,7 +368,7 @@ async function resolveAuthenticatedProject(token: string): Promise<
   let lastAuthError = "Token não reconhecido";
 
   for (const project of getProjectRuntimes()) {
-    if (token === project.serviceRole) {
+    if (token === project.serviceRole || await isValidServiceRoleToken(project.url, token)) {
       console.log(`Auth authorized via Service Role (${project.label})`);
       return { project, user: { id: "00000000-0000-0000-0000-000000000000" } };
     }
@@ -383,6 +383,16 @@ async function resolveAuthenticatedProject(token: string): Promise<
   }
 
   return { error: "Unauthorized", detail: lastAuthError };
+}
+
+async function isValidServiceRoleToken(projectUrl: string, token: string): Promise<boolean> {
+  const res = await fetch(`${projectUrl}/auth/v1/admin/users?page=1&per_page=1`, {
+    headers: {
+      apikey: token,
+      Authorization: `Bearer ${token}`,
+    },
+  }).catch(() => null);
+  return res?.ok === true;
 }
 
 async function executeNode(

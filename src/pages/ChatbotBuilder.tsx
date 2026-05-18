@@ -1076,6 +1076,11 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
           automationType="chatbot"
           organizationId={currentOrganization.id}
           automationName={name}
+          onExecutionComplete={(success) => {
+            if (success && chatbot.lifecycle_status === 'testing') {
+              toast.success('Simulação concluída com sucesso! Agora você pode solicitar aprovação ou publicar.');
+            }
+          }}
         />
       )}
     </div>

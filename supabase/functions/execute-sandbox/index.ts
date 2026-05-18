@@ -578,9 +578,17 @@ async function executeChatbotNode(
   const cfg = node.config ?? {};
   const t = node.type;
 
-  if (t === "text_message" || t === "no_interaction" || t === "transfer_human" || t === "close_conversation") {
+  if (t === "welcome" || t === "text_message" || t === "no_interaction" || t === "transfer_human" || t === "close_conversation") {
     const msg = interpolate(String(cfg.message ?? ""), variables);
     if (!msg.trim()) return { output: { skipped: true, reason: "Mensagem vazia" } };
+    if (Number(cfg.delay_ms) > 0) await sleep(Math.min(Number(cfg.delay_ms), MAX_DELAY_MS));
+    const r = await sendWhatsAppTest(admin, project, organizationId, instanceId, testPhone, msg);
+    return { output: { sent_to: testPhone, message: msg, ...r } };
+  }
+
+  if (t === "ask_input") {
+    const msg = interpolate(String(cfg.prompt ?? cfg.message ?? ""), variables);
+    if (!msg.trim()) return { output: { skipped: true, reason: "Pergunta vazia" } };
     const r = await sendWhatsAppTest(admin, project, organizationId, instanceId, testPhone, msg);
     return { output: { sent_to: testPhone, message: msg, ...r } };
   }

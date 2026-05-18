@@ -1182,6 +1182,21 @@ export default function ChatbotBuilderPage() {
     onError: (e: any) => toast.error(`Erro: ${e.message}`),
   });
 
+  const renameMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase.from('chatbots').update({ name }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chatbots', orgId] });
+      toast.success('Nome atualizado');
+      setRenamingBot(null);
+    },
+    onError: (e: any) => toast.error(`Erro: ${e.message}`),
+  });
+
+  const [renamingBot, setRenamingBot] = useState<{ id: string; name: string } | null>(null);
+
   const handleCreate = () => {
     if (!newBot.name) return toast.error('Nome é obrigatório');
     createMutation.mutate(newBot);

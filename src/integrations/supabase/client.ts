@@ -74,12 +74,19 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
             }
           });
         }
-        if (prop === 'from') return () => ({ 
-          select: () => ({ order: () => ({ limit: () => Promise.reject(new Error("Supabase Offline")) }) }),
-          insert: () => Promise.reject(new Error("Supabase Offline")),
-          update: () => Promise.reject(new Error("Supabase Offline")),
-          delete: () => Promise.reject(new Error("Supabase Offline"))
-        });
+        if (prop === 'from') return () => {
+          const chain = {
+            select: () => chain,
+            eq: () => chain,
+            in: () => chain,
+            order: () => chain,
+            limit: () => chain,
+            single: () => Promise.reject(new Error("Supabase Offline")),
+            then: (resolve: any) => resolve({ data: null, error: new Error("Supabase Offline") }),
+          };
+          return chain;
+        };
+        if (prop === 'rpc') return () => Promise.reject(new Error("Supabase Offline"));
         return handleSupabaseError(prop);
       }
     }) as any;

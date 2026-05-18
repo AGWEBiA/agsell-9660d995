@@ -7,8 +7,10 @@ const SUPABASE_PUBLISHABLE_KEY =
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
   "";
 
+
 // Edge Functions live in the SAME Supabase project as the data.
 // Do NOT override functions.url — using a different project ref would cause
+
 // 401 "Invalid API key" because the apikey/JWT belong to SUPABASE_URL's project.
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {

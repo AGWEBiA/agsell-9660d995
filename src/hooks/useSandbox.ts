@@ -154,10 +154,12 @@ export function useSandboxHealth() {
     queryKey: ["sandbox-health"],
     queryFn: async () => {
       try {
+        const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
         const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/execute-sandbox?health=true`, {
           method: "GET",
           headers: {
-            "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY
+            "apikey": anonKey,
+            "Authorization": `Bearer ${anonKey}`,
           }
         });
         if (!res.ok) return false;

@@ -1170,6 +1170,7 @@ export default function ChatbotBuilderPage() {
           is_active: updated.isActive,
           whatsapp_instance_id: updated.whatsapp_instance_id ?? null,
           settings: (updated.settings ?? {}) as any,
+          lifecycle_status: updated.lifecycle_status,
         })
         .eq('id', updated.id);
       if (error) throw error;

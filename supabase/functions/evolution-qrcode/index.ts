@@ -850,7 +850,9 @@ function getErrorMessage(value: unknown): string {
 }
 
 function isInstanceNotFound(status: number, data: unknown): boolean {
-  if (status !== 404 && status !== 400) return false;
+  // Any 404 from Evolution API means the instance does not exist on that server.
+  if (status === 404) return true;
+  if (status !== 400) return false;
 
   const message = getErrorMessage(data).toLowerCase();
   return (

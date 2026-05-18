@@ -37,20 +37,23 @@ const getSandboxFunctionUrl = () => {
   return baseUrl ? `${baseUrl}/functions/v1/execute-sandbox` : null;
 };
 
-const invokeSandboxBridge = async (method: "GET" | "POST", body?: unknown) => {
-  const url = getSandboxFunctionUrl();
+const invokeSandboxBridge = async (method: "GET" | "POST", body?: unknown, query?: Record<string, string>) => {
+  const baseUrl = getSandboxFunctionUrl();
   const env = import.meta.env as Record<string, string | undefined>;
   const publishableKey = env.VITE_SUPABASE_PUBLISHABLE_KEY ?? env.VITE_SUPABASE_ANON_KEY;
 
-  if (!url || !publishableKey) {
+  if (!baseUrl || !publishableKey) {
     const { data, error } = await supabase.functions.invoke("execute-sandbox", { method, body });
     if (error) throw new Error(error.message || "Falha na conexão com o servidor.");
     return data;
   }
 
+  const url = new URL(baseUrl);
+  Object.entries(query ?? {}).forEach(([key, value]) => url.searchParams.set(key, value));
+
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token ?? publishableKey;
-  const response = await fetch(url, {
+  const response = await fetch(url.toString(), {
     method,
     headers: {
       apikey: publishableKey,
@@ -118,23 +121,21 @@ export function useSandboxExecution(executionId: string | null) {
     }
 
     let mounted = true;
+    let interval: ReturnType<typeof setInterval> | null = null;
 
-    // Initial fetch
-    (async () => {
-      const { data: exec } = await supabase
-        .from("sandbox_executions")
-        .select("*")
-        .eq("id", executionId)
-        .single();
-      if (mounted && exec) setExecution(exec as any);
+    const loadExecution = async () => {
+      try {
+        const data = await invokeSandboxBridge("GET", undefined, { action: "execution", execution_id: executionId });
+        if (!mounted) return;
+        setExecution((data?.execution ?? null) as SandboxExecution | null);
+        setSteps((data?.steps ?? []) as SandboxStepLog[]);
+      } catch (err) {
+        console.error("Falha ao carregar execução sandbox:", err);
+      }
+    };
 
-      const { data: stepData } = await supabase
-        .from("sandbox_step_logs")
-        .select("*")
-        .eq("execution_id", executionId)
-        .order("step_order");
-      if (mounted && stepData) setSteps(stepData as any);
-    })();
+    loadExecution();
+    interval = setInterval(loadExecution, 1500);
 
     // Realtime subscriptions
     const channel = supabase
@@ -157,6 +158,7 @@ export function useSandboxExecution(executionId: string | null) {
 
     return () => {
       mounted = false;
+      if (interval) clearInterval(interval);
       supabase.removeChannel(channel);
     };
   }, [executionId]);
@@ -169,14 +171,8 @@ export function useRecentSandboxExecutions(automationId: string | null) {
     queryKey: ["sandbox-executions", automationId],
     enabled: !!automationId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("sandbox_executions")
-        .select("*")
-        .eq("automation_id", automationId!)
-        .order("started_at", { ascending: false })
-        .limit(10);
-      if (error) throw error;
-      return (data ?? []) as SandboxExecution[];
+      const data = await invokeSandboxBridge("GET", undefined, { action: "history", automation_id: automationId! });
+      return (data?.executions ?? []) as SandboxExecution[];
     },
   });
 }

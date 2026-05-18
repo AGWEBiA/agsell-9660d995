@@ -392,13 +392,14 @@ async function executeNode(
   node: FlowNode,
   ctx: {
     admin: any;
+    project: ProjectRuntime;
     organizationId: string;
     testPhone: string;
     instanceId?: string;
     variables: Record<string, any>;
   },
 ): Promise<{ nextPort?: "default" | "yes" | "no"; output: any }> {
-  const { admin, organizationId, testPhone, instanceId, variables } = ctx;
+  const { admin, project, organizationId, testPhone, instanceId, variables } = ctx;
   const cfg = node.config ?? {};
 
   // ── Trigger nodes: just pass through
@@ -413,7 +414,7 @@ async function executeNode(
     node.type === "action" && (cfg.message || cfg.message_kind)
   ) {
     const msg = interpolate(String(cfg.message ?? ""), variables);
-    const result = await sendWhatsAppTest(admin, organizationId, instanceId, testPhone, msg, cfg);
+    const result = await sendWhatsAppTest(admin, project, organizationId, instanceId, testPhone, msg, cfg);
     return { output: { sent_to: testPhone, message: msg, ...result } };
   }
 

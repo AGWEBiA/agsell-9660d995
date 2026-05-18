@@ -64,6 +64,9 @@ Deno.serve(async (req) => {
       status: "ok",
       version: "v5-auth-project-resolver",
       runtimes: getProjectRuntimes().map((project) => ({ label: project.label, host: new URL(project.url).host })),
+      targetAdminReachable: Deno.env.get("TARGET_SUPABASE_URL") && Deno.env.get("TARGET_SUPABASE_SERVICE_ROLE_KEY")
+        ? await canListUsers(Deno.env.get("TARGET_SUPABASE_URL")!, Deno.env.get("TARGET_SUPABASE_SERVICE_ROLE_KEY")!)
+        : false,
       timestamp: new Date().toISOString(),
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

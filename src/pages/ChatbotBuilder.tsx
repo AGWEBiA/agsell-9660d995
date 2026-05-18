@@ -24,7 +24,6 @@ import {
 import { toast } from 'sonner';
 import { evaluateChatbotSchedule } from '@/lib/chatbot/schedule';
 import { SandboxTestPanel } from '@/components/automation/SandboxTestPanel';
-import { FlaskConical } from 'lucide-react';
 
 // Chip input: commit token on Enter or comma, backspace removes last
 function ChipsInput({

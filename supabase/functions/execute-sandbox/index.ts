@@ -61,13 +61,22 @@ Deno.serve(async (req) => {
     // Validate JWT against the TARGET project (where the user actually lives)
     const token = authHeader.replace(/^Bearer\s+/i, "");
     const authClient = createClient(SUPABASE_URL, SERVICE_ROLE);
-    const { data: { user }, error: authError } = await authClient.auth.getUser(token);
-    if (authError || !user) {
-      console.error("Auth validation failed:", authError?.message, "URL:", SUPABASE_URL);
-      return new Response(JSON.stringify({ error: "Unauthorized", detail: authError?.message }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    
+    // Se o token for a própria service role key, permitimos (para testes do admin)
+    let user;
+    if (token === SERVICE_ROLE || token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
+      console.log("Auth authorized via Service Role");
+      user = { id: "system-admin" };
+    } else {
+      const { data: { user: authedUser }, error: authError } = await authClient.auth.getUser(token);
+      if (authError || !authedUser) {
+        console.error("Auth validation failed:", authError?.message, "URL:", SUPABASE_URL);
+        return new Response(JSON.stringify({ error: "Unauthorized", detail: authError?.message }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      user = authedUser;
     }
 
     const body = await req.json();

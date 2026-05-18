@@ -28,8 +28,8 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   const startedAt = Date.now();
-  const url = Deno.env.get("SUPABASE_URL");
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const url = Deno.env.get("TARGET_SUPABASE_URL") || Deno.env.get("SUPABASE_URL");
+  const serviceKey = Deno.env.get("TARGET_SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const configOk = Boolean(url && serviceKey);
 
   return jsonResponse({
@@ -74,6 +74,8 @@ serve(async (req) => {
     secrets: {
       SUPABASE_URL: envCheck("SUPABASE_URL"),
       SUPABASE_SERVICE_ROLE_KEY: envCheck("SUPABASE_SERVICE_ROLE_KEY"),
+      TARGET_SUPABASE_URL: envCheck("TARGET_SUPABASE_URL"),
+      TARGET_SUPABASE_SERVICE_ROLE_KEY: envCheck("TARGET_SUPABASE_SERVICE_ROLE_KEY"),
     },
     request: {
       method: req.method,

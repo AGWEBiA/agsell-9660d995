@@ -42,8 +42,9 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   // Health check endpoint (must be BEFORE auth)
-  if (req.method === "GET") {
-    console.log("Health check received");
+  const url = new URL(req.url);
+  if (req.method === "GET" || url.searchParams.get("health") === "true") {
+    console.log("Health check received (v2)");
     return new Response(JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

@@ -730,17 +730,22 @@ async function getQRCode(
     }
 
     lastError = { status: qrRes.status, details: qrData, instance: candidate };
+    console.log(`[evolution-qrcode] Failed to connect to ${candidate}: ${qrRes.status}. Data:`, JSON.stringify(qrData));
 
     if (!isInstanceNotFound(qrRes.status, qrData)) {
+      console.log(`[evolution-qrcode] Error ${qrRes.status} is not a "not found" error, breaking.`);
       break;
     }
   }
+
+  console.log(`[evolution-qrcode] All candidates failed. allowAutoCreate=${allowAutoCreate}, lastError.status=${lastError?.status}`);
 
   if (
     allowAutoCreate &&
     lastError &&
     isInstanceNotFound(lastError.status, lastError.details)
   ) {
+    console.log(`[evolution-qrcode] Triggering auto-create for ${requestedInstanceName}`);
     return await createInstanceAndFetchQRCode(
       baseUrl,
       apiKey,

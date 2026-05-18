@@ -7,19 +7,14 @@ const SUPABASE_PUBLISHABLE_KEY =
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
   "";
 
-// Use the internal Lovable project for Edge Functions even if the data is external
-// Internal Project Ref: gmemxbfibakfpsjbsvyt
-const INTERNAL_FUNCTIONS_URL = "https://gmemxbfibakfpsjbsvyt.supabase.co/functions/v1";
-
-// Create the main client with the internal functions URL configuration
+// Edge Functions live in the SAME Supabase project as the data.
+// Do NOT override functions.url — using a different project ref would cause
+// 401 "Invalid API key" because the apikey/JWT belong to SUPABASE_URL's project.
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
     persistSession: true,
     autoRefreshToken: true,
-  },
-  functions: {
-    url: INTERNAL_FUNCTIONS_URL,
   },
   global: {
     headers: {

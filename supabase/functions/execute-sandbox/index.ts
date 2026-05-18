@@ -83,6 +83,7 @@ Deno.serve(async (req) => {
     // Create execution record
     const { data: exec, error: execErr } = await admin
       .from("sandbox_executions")
+      // Note: automation_type 'chatbot' uses lifecycle stored as 'flow' for stats; CHECK constraint added below
       .insert({
         organization_id,
         automation_id,

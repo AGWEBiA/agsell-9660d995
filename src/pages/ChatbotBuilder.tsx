@@ -18,7 +18,7 @@ import {
   Bot, Plus, Trash2, Settings, MessageSquare, ArrowRight, GitBranch,
   Phone, Mail, Tag, Clock, Users, Shield, X, ChevronDown, ChevronUp,
   Copy, Save, Loader2, PlayCircle, PauseCircle, GripVertical,
-  MessageCircle, UserPlus, PhoneForwarded, XCircle, Zap, Brain,
+  MessageCircle, UserPlus, PhoneForwarded, XCircle, Zap, Brain, Pencil,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { evaluateChatbotSchedule } from '@/lib/chatbot/schedule';

@@ -604,6 +604,7 @@ function RulesEditor({ rules, onUpdate }: { rules: ChatbotRule[]; onUpdate: (rul
 // ─── Chatbot Visual Builder ───
 function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { chatbot: Chatbot; onSave: (c: Chatbot) => void; onClose: () => void; isSaving?: boolean }) {
   const { currentOrganization } = useOrganization();
+  const { currentOrganization } = useOrganization();
   const [nodes, setNodes] = useState<ChatbotNode[]>(chatbot.nodes);
   const [rules, setRules] = useState<ChatbotRule[]>(chatbot.rules);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);

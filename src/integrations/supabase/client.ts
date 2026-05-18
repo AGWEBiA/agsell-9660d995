@@ -48,17 +48,21 @@ const handleSupabaseError = (prop: string | symbol) => {
 
 // Recursive Proxy to handle chained Supabase calls gracefully when offline/misconfigured
 const createRecursiveProxy = (): any => {
-  const noop: any = () => noop;
-  noop.then = (resolve: any, reject: any) => {
-    handleSupabaseError('promise').then(resolve).catch(reject);
-  };
-  return new Proxy(noop, {
+  const handler: ProxyHandler<any> = {
     get: (target, prop) => {
-      if (prop === 'then') return target.then;
+      if (prop === 'then') {
+        return (resolve: any, reject: any) => {
+          handleSupabaseError('promise').then(resolve).catch(reject);
+        };
+      }
       if (typeof prop === 'symbol') return undefined;
-      return noop;
+      return new Proxy(() => {}, handler);
+    },
+    apply: () => {
+      return new Proxy(() => {}, handler);
     }
-  });
+  };
+  return new Proxy(() => {}, handler);
 };
 
 export const supabase = (supabaseUrl && supabaseAnonKey)

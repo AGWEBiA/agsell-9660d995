@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { evaluateChatbotSchedule } from '@/lib/chatbot/schedule';
+import { SandboxTestPanel } from '@/components/automation/SandboxTestPanel';
+import { FlaskConical } from 'lucide-react';
 
 // Chip input: commit token on Enter or comma, backspace removes last
 function ChipsInput({
@@ -602,12 +604,14 @@ function RulesEditor({ rules, onUpdate }: { rules: ChatbotRule[]; onUpdate: (rul
 // ─── Chatbot Visual Builder ───
 function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { chatbot: Chatbot; onSave: (c: Chatbot) => void; onClose: () => void; isSaving?: boolean }) {
   const { currentOrganization } = useOrganization();
+  const { currentOrganization } = useOrganization();
   const [nodes, setNodes] = useState<ChatbotNode[]>(chatbot.nodes);
   const [rules, setRules] = useState<ChatbotRule[]>(chatbot.rules);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'nodes' | 'rules' | 'settings'>('nodes');
   const [name, setName] = useState(chatbot.name);
   const [whatsappInstanceId, setWhatsappInstanceId] = useState<string | null>(chatbot.whatsapp_instance_id ?? null);
+  const [sandboxOpen, setSandboxOpen] = useState(false);
   const [settings, setSettings] = useState<ChatbotSettings>(chatbot.settings ?? {
     agent_prompt: '',
     human_fallback_enabled: true,
@@ -752,6 +756,10 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
               </Badge>
             );
           })()}
+          <Button size="sm" variant="outline" onClick={() => setSandboxOpen(true)} disabled={!chatbot.id}>
+            <FlaskConical className="h-4 w-4 mr-1" />
+            Simular
+          </Button>
           <Button size="sm" onClick={handleSave} disabled={isSaving}>
             {isSaving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
             {isSaving ? 'Salvando...' : 'Salvar'}
@@ -1049,6 +1057,16 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
           </ScrollArea>
         </div>
       </div>
+      {chatbot.id && currentOrganization?.id && (
+        <SandboxTestPanel
+          open={sandboxOpen}
+          onOpenChange={setSandboxOpen}
+          automationId={chatbot.id}
+          automationType="chatbot"
+          organizationId={currentOrganization.id}
+          automationName={name}
+        />
+      )}
     </div>
   );
 }

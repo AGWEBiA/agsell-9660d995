@@ -950,6 +950,7 @@ export type Database = {
           executions_count: number | null
           id: string
           is_active: boolean | null
+          lifecycle_status: string
           name: string
           organization_id: string | null
           trigger_config: Json | null
@@ -963,6 +964,7 @@ export type Database = {
           executions_count?: number | null
           id?: string
           is_active?: boolean | null
+          lifecycle_status?: string
           name: string
           organization_id?: string | null
           trigger_config?: Json | null
@@ -976,6 +978,7 @@ export type Database = {
           executions_count?: number | null
           id?: string
           is_active?: boolean | null
+          lifecycle_status?: string
           name?: string
           organization_id?: string | null
           trigger_config?: Json | null
@@ -1083,6 +1086,7 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean
+          lifecycle_status: string
           name: string
           nodes: Json
           organization_id: string
@@ -1098,6 +1102,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          lifecycle_status?: string
           name: string
           nodes?: Json
           organization_id: string
@@ -1113,6 +1118,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean
+          lifecycle_status?: string
           name?: string
           nodes?: Json
           organization_id?: string
@@ -1579,6 +1585,7 @@ export type Database = {
           email: string | null
           first_name: string
           id: string
+          is_test: boolean
           last_crm_sync_at: string | null
           last_name: string | null
           lead_score: number | null
@@ -1598,6 +1605,7 @@ export type Database = {
           email?: string | null
           first_name: string
           id?: string
+          is_test?: boolean
           last_crm_sync_at?: string | null
           last_name?: string | null
           lead_score?: number | null
@@ -1617,6 +1625,7 @@ export type Database = {
           email?: string | null
           first_name?: string
           id?: string
+          is_test?: boolean
           last_crm_sync_at?: string | null
           last_name?: string | null
           lead_score?: number | null
@@ -5103,6 +5112,118 @@ export type Database = {
           },
         ]
       }
+      sandbox_executions: {
+        Row: {
+          automation_id: string
+          automation_type: string
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          organization_id: string
+          started_at: string
+          status: string
+          test_contact_id: string | null
+          test_phone: string | null
+          test_variables: Json | null
+          triggered_by: string
+        }
+        Insert: {
+          automation_id: string
+          automation_type: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          organization_id: string
+          started_at?: string
+          status?: string
+          test_contact_id?: string | null
+          test_phone?: string | null
+          test_variables?: Json | null
+          triggered_by: string
+        }
+        Update: {
+          automation_id?: string
+          automation_type?: string
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          organization_id?: string
+          started_at?: string
+          status?: string
+          test_contact_id?: string | null
+          test_phone?: string | null
+          test_variables?: Json | null
+          triggered_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sandbox_executions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sandbox_step_logs: {
+        Row: {
+          duration_ms: number | null
+          error_message: string | null
+          executed_at: string
+          execution_id: string
+          id: string
+          input: Json | null
+          node_id: string
+          node_label: string | null
+          node_type: string
+          organization_id: string
+          output: Json | null
+          status: string
+          step_order: number
+        }
+        Insert: {
+          duration_ms?: number | null
+          error_message?: string | null
+          executed_at?: string
+          execution_id: string
+          id?: string
+          input?: Json | null
+          node_id: string
+          node_label?: string | null
+          node_type: string
+          organization_id: string
+          output?: Json | null
+          status?: string
+          step_order?: number
+        }
+        Update: {
+          duration_ms?: number | null
+          error_message?: string | null
+          executed_at?: string
+          execution_id?: string
+          id?: string
+          input?: Json | null
+          node_id?: string
+          node_label?: string | null
+          node_type?: string
+          organization_id?: string
+          output?: Json | null
+          status?: string
+          step_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sandbox_step_logs_execution_id_fkey"
+            columns: ["execution_id"]
+            isOneToOne: false
+            referencedRelation: "sandbox_executions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_alerts: {
         Row: {
           alert_type: string
@@ -5324,6 +5445,7 @@ export type Database = {
           description: string | null
           enrolled_count: number | null
           id: string
+          lifecycle_status: string
           name: string
           organization_id: string
           status: string
@@ -5339,6 +5461,7 @@ export type Database = {
           description?: string | null
           enrolled_count?: number | null
           id?: string
+          lifecycle_status?: string
           name: string
           organization_id: string
           status?: string
@@ -5354,6 +5477,7 @@ export type Database = {
           description?: string | null
           enrolled_count?: number | null
           id?: string
+          lifecycle_status?: string
           name?: string
           organization_id?: string
           status?: string
@@ -7505,6 +7629,7 @@ export type Database = {
           flow_json: Json
           id: string
           is_active: boolean
+          lifecycle_status: string
           name: string
           organization_id: string
           response_message: string | null
@@ -7522,6 +7647,7 @@ export type Database = {
           flow_json?: Json
           id?: string
           is_active?: boolean
+          lifecycle_status?: string
           name: string
           organization_id: string
           response_message?: string | null
@@ -7539,6 +7665,7 @@ export type Database = {
           flow_json?: Json
           id?: string
           is_active?: boolean
+          lifecycle_status?: string
           name?: string
           organization_id?: string
           response_message?: string | null

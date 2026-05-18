@@ -3,28 +3,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
-const SANDBOX_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/execute-sandbox`;
-const SANDBOX_FUNCTION_KEY =
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-async function invokeSandboxFunction<T>(init: RequestInit = {}) {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const headers = new Headers(init.headers);
-  headers.set("Content-Type", "application/json");
-  if (SANDBOX_FUNCTION_KEY) headers.set("apikey", SANDBOX_FUNCTION_KEY);
-  const token = sessionData.session?.access_token;
-  if (token) headers.set("Authorization", `Bearer ${token}`);
-
-  const res = await fetch(SANDBOX_FUNCTION_URL, { ...init, headers });
-  const payload = (await res.json().catch(() => null)) as T & { error?: string; detail?: string };
-
-  if (!res.ok) {
-    throw new Error(payload?.error || payload?.detail || `Servidor retornou HTTP ${res.status}`);
-  }
-
-  return payload;
-}
-
 export interface SandboxExecution {
   id: string;
   organization_id: string;
@@ -65,10 +43,14 @@ export function useStartSandbox() {
       instance_id?: string;
     }) => {
       console.log("Iniciando sandbox com parâmetros:", params);
-      const data = await invokeSandboxFunction<{ success?: boolean; execution_id?: string; error?: string }>({
-        method: "POST",
-        body: JSON.stringify(params),
+      
+      const { data, error } = await supabase.functions.invoke("execute-sandbox", {
+        body: params,
       });
+      
+      if (error) {
+        throw new Error(error.message || "O servidor não conseguiu processar o início da simulação.");
+      }
       
       if (!data?.success) {
         throw new Error(data?.error || "O servidor não conseguiu processar o início da simulação.");
@@ -170,10 +152,11 @@ export function useSandboxHealth() {
     queryKey: ["sandbox-health"],
     queryFn: async () => {
       try {
-        const data = await invokeSandboxFunction<{ status?: string }>({
+        const { data, error } = await supabase.functions.invoke("execute-sandbox", {
           method: "GET",
         });
         
+        if (error) return false;
         return data?.status === "ok";
       } catch (err) {
         console.error("Sandbox health check failed:", err);

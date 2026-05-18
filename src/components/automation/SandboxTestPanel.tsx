@@ -38,6 +38,7 @@ export function SandboxTestPanel({
     '{\n  "nome": "Cliente Teste",\n  "empresa": "Empresa XYZ"\n}',
   );
   const [executionId, setExecutionId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const start = useStartSandbox();
   const { execution, steps } = useSandboxExecution(executionId);
@@ -48,28 +49,82 @@ export function SandboxTestPanel({
     }
   }, [execution?.status]);
 
-  const handleRun = async () => {
-    let vars: Record<string, any> = {};
-    try {
-      vars = variablesText ? JSON.parse(variablesText) : {};
-    } catch {
-      vars = {};
+  const formatPhone = (value: string) => {
+    // Remove tudo que não é dígito
+    const digits = value.replace(/\D/g, "");
+    
+    // Formato: 55 11 99999-9999 ou 11 99999-9999
+    if (digits.length <= 11) {
+      // Formato nacional (sem DDI 55)
+      return digits
+        .replace(/^(\d{2})(\d)/g, "($1) $2")
+        .replace(/(\d{5})(\d)/, "$1-$2")
+        .substring(0, 15);
+    } else {
+      // Formato internacional (com DDI)
+      return digits
+        .replace(/^(\d{2})(\d{2})(\d)/g, "+$1 ($2) $3")
+        .replace(/(\d{5})(\d)/, "$1-$2")
+        .substring(0, 19);
     }
-    const cleanPhone = phone.replace(/\D/g, "");
-    if (cleanPhone.length < 10) return;
-
-    const id = await start.mutateAsync({
-      automation_id: automationId,
-      automation_type: automationType,
-      test_phone: cleanPhone,
-      test_variables: vars,
-      organization_id: organizationId,
-      instance_id: instanceId,
-    });
-    setExecutionId(id);
   };
 
-  const handleReset = () => setExecutionId(null);
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhone(e.target.value);
+    setPhone(formatted);
+    setError(null);
+  };
+
+  const handleRun = async () => {
+    setError(null);
+    let vars: Record<string, any> = {};
+    
+    // Validação de JSON
+    try {
+      vars = variablesText ? JSON.parse(variablesText) : {};
+    } catch (e) {
+      setError("O campo de variáveis deve ser um JSON válido.");
+      return;
+    }
+
+    const cleanPhone = phone.replace(/\D/g, "");
+    
+    // Validações explícitas
+    if (!cleanPhone) {
+      setError("Por favor, informe o número de WhatsApp de teste.");
+      return;
+    }
+
+    if (cleanPhone.length < 10) {
+      setError("O número de WhatsApp deve ter pelo menos 10 dígitos (DDD + número).");
+      return;
+    }
+
+    if (!automationId) {
+      setError("ID da automação não encontrado.");
+      return;
+    }
+
+    try {
+      const id = await start.mutateAsync({
+        automation_id: automationId,
+        automation_type: automationType,
+        test_phone: cleanPhone,
+        test_variables: vars,
+        organization_id: organizationId,
+        instance_id: instanceId,
+      });
+      setExecutionId(id);
+    } catch (err: any) {
+      // O erro já é tratado no hook (toast), mas podemos mostrar aqui também
+      setError(err?.message || "Ocorreu um erro ao iniciar a simulação.");
+    }
+  };
+
+  const handleReset = () => {
+    setExecutionId(null);
+    setError(null);
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -98,17 +153,27 @@ export function SandboxTestPanel({
             </Alert>
 
             <div>
-              <Label>Número WhatsApp de teste</Label>
+              <Label htmlFor="test_phone">Número WhatsApp de teste</Label>
               <Input
-                placeholder="55 11 99999-9999"
+                id="test_phone"
+                placeholder="(11) 99999-9999"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="mt-1"
+                onChange={handlePhoneChange}
+                className={`mt-1 ${error && !phone ? "border-destructive" : ""}`}
               />
               <p className="text-[11px] text-muted-foreground mt-1">
-                Use seu próprio número para receber as mensagens.
+                Use seu próprio número para receber as mensagens (ex: 55119...).
               </p>
             </div>
+
+            {error && (
+              <Alert variant="destructive" className="py-2">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  {error}
+                </AlertDescription>
+              </Alert>
+            )}
 
             <WhatsAppInstanceSelector
               value={instanceId}

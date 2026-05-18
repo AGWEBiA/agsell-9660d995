@@ -37,19 +37,33 @@ const fetchWithRetry = async (url: string, options: any, retryCount = 0): Promis
 
 // Centralized error handling for connectivity issues
 const handleSupabaseError = (prop: string | symbol) => {
-  return (...args: any[]) => {
-    const errorMsg = "Conexão lenta ou indisponível com o servidor. Tentando reconectar...";
-    console.error(`[Supabase Proxy Error] Accessing ${String(prop)}:`, errorMsg);
-    
-    if (typeof window !== 'undefined') {
-      toast.error(errorMsg, {
-        description: "Verifique sua internet ou aguarde um momento.",
-        id: "supabase-offline-toast"
-      });
+  const errorMsg = "Conexão com Lovable Cloud indisponível. Verifique suas configurações.";
+  if (typeof window !== 'undefined') {
+    toast.error(errorMsg, {
+      id: "supabase-offline-toast"
+    });
+  }
+  return Promise.reject(new Error(errorMsg));
+};
+
+// Recursive Proxy to handle chained Supabase calls gracefully when offline/misconfigured
+const createRecursiveProxy = (path: string = ''): any => {
+  const proxy: any = new Proxy(() => proxy, {
+    get: (_t, prop) => {
+      if (prop === 'then') {
+        // Handle as a promise when awaited
+        return (resolve: any, reject: any) => {
+          handleSupabaseError(path).then(resolve).catch(reject);
+        };
+      }
+      if (typeof prop === 'symbol') return undefined;
+      return createRecursiveProxy(path ? `${path}.${prop}` : prop);
+    },
+    apply: (_t, _thisArg, _args) => {
+      return proxy;
     }
-    
-    return Promise.reject(new Error(errorMsg));
-  };
+  });
+  return proxy;
 };
 
 export const supabase = (supabaseUrl && supabaseAnonKey)
@@ -64,29 +78,4 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
         headers: { 'x-application-name': 'agsell-resilient-client' }
       }
     })
-  : new Proxy({}, {
-      get: (_t, prop) => {
-        if (prop === 'auth') {
-          return new Proxy({}, {
-            get: (_t2, authProp) => {
-              if (authProp === 'onAuthStateChange') return () => ({ data: { subscription: { unsubscribe: () => {} } } });
-              return handleSupabaseError(`auth.${String(authProp)}`);
-            }
-          });
-        }
-        if (prop === 'from') return () => {
-          const chain = {
-            select: () => chain,
-            eq: () => chain,
-            in: () => chain,
-            order: () => chain,
-            limit: () => chain,
-            single: () => Promise.reject(new Error("Supabase Offline")),
-            then: (resolve: any) => resolve({ data: null, error: new Error("Supabase Offline") }),
-          };
-          return chain;
-        };
-        if (prop === 'rpc') return () => Promise.reject(new Error("Supabase Offline"));
-        return handleSupabaseError(prop);
-      }
-    }) as any;
+  : createRecursiveProxy('supabase');

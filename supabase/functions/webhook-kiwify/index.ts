@@ -896,138 +896,131 @@ Deno.serve(async (req) => {
       }
     }
 
-    // --- Handle refunds and chargebacks ---
+    // --- Handle refunds, cancellations and chargebacks ---
     if (
       (payload.order_status === "refunded" ||
-        payload.order_status === "chargedback") &&
+        payload.order_status === "chargedback" ||
+        nativeEventType === "subscription_canceled" ||
+        nativeEventType === "subscription_late") &&
       customerEmail
     ) {
-      await logStep(supabase, "Processing cancellation/refund", {
+      await logStep(supabase, "Processing cancellation/refund/late", {
         orderId: payload.order_id,
         subscriptionId: payload.Subscription?.id,
+        nativeEventType,
+        orderStatus: payload.order_status,
       });
 
-      // Strategy: find the specific subscription by provider_subscription_id or order_id
-      // This ensures only the affected org is blocked, not all orgs of the same user
-      const subscriptionId =
-        payload.Subscription?.id || payload.subscription_id;
+      // IMPORTANT: Only process if this is an AG Sell product
+      if (!plan) {
+        await logStep(supabase, "SKIPPED: cancellation for non-AG Sell product", {
+          productId,
+          productName: payload.Product?.product_name || payload.product_name,
+        });
+        if (webhookEventId) {
+          await updateWebhookEvent(supabase, webhookEventId, {
+            processed: true,
+            error_message: "Skipped: cancellation for non-AG Sell product",
+          });
+        }
+        return new Response(JSON.stringify({ success: true, skipped: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const subscriptionId = payload.Subscription?.id || payload.subscription_id;
       const orderId = payload.order_id;
 
-      let targetSub: { id: string; organization_id: string } | null = null;
+      let targetSub: { id: string; organization_id: string; status: string } | null = null;
 
       // Try matching by subscription_id first (most precise)
       if (subscriptionId) {
         const { data } = await supabase
           .from("subscriptions")
-          .select("id, organization_id")
+          .select("id, organization_id, status")
           .eq("provider_subscription_id", subscriptionId)
           .eq("payment_provider", "kiwify")
           .maybeSingle();
         if (data) targetSub = data;
       }
 
-      // Fallback: match by order_id stored in provider_subscription_id
+      // Fallback 1: match by order_id
       if (!targetSub && orderId) {
         const { data } = await supabase
           .from("subscriptions")
-          .select("id, organization_id")
+          .select("id, organization_id, status")
           .eq("provider_subscription_id", orderId)
           .eq("payment_provider", "kiwify")
           .maybeSingle();
         if (data) targetSub = data;
       }
 
-      // Last resort: if user has only ONE kiwify subscription, use that
-      if (!targetSub && customerEmail) {
-        const { data: userData } = await supabase.auth.admin.listUsers();
-        const existingUser = userData?.users?.find(
-          (u: any) => u.email?.toLowerCase() === customerEmail,
-        );
-        if (existingUser) {
-          const { data: memberships } = await supabase
-            .from("organization_members")
-            .select("organization_id")
-            .eq("user_id", existingUser.id);
-
-          if (memberships && memberships.length > 0) {
-            const orgIds = memberships.map((m: any) => m.organization_id);
-            const { data: subs } = await supabase
-              .from("subscriptions")
-              .select("id, organization_id")
-              .in("organization_id", orgIds)
-              .eq("payment_provider", "kiwify")
-              .eq("status", "active");
-
-            if (subs && subs.length === 1) {
-              targetSub = subs[0];
-              await logStep(
-                supabase,
-                "Matched single active kiwify subscription as fallback",
-              );
-            } else {
-              await logStep(
-                supabase,
-                "WARNING: Could not determine which subscription to cancel",
-                {
-                  activeSubs: subs?.length || 0,
-                  orderId,
-                  subscriptionId,
-                },
-              );
-            }
-          }
-        }
-      }
-
       if (targetSub) {
-        const newStatus =
-          payload.order_status === "refunded" ? "canceled" : "past_due";
+        // Decide whether to deactivate immediately or just update status
+        // Kiwify subscription_canceled usually means "don't renew", user should keep access until period ends.
+        const isImmediateDeactivation = 
+          payload.order_status === "refunded" || 
+          payload.order_status === "chargedback" ||
+          (nativeEventType === "subscription_late" && payload.order_status === "refused");
 
-        // 1. Cancel the subscription
+        const newStatus = 
+          (payload.order_status === "refunded" || nativeEventType === "subscription_canceled") 
+            ? "canceled" 
+            : "past_due";
+
+        // 1. Update the subscription status
         await supabase
           .from("subscriptions")
-          .update({ status: newStatus })
+          .update({ 
+            status: newStatus,
+            updated_at: new Date().toISOString()
+          })
           .eq("id", targetSub.id);
 
-        // 2. Remove plan from the organization
-        await supabase
-          .from("organizations")
-          .update({ plan_id: null })
-          .eq("id", targetSub.organization_id);
+        // 2. Only remove plan_id if it's an immediate deactivation (refund/chargeback/late)
+        // For "canceled" (stop renewal), we keep the plan_id so they have access until period ends
+        if (isImmediateDeactivation) {
+          await supabase
+            .from("organizations")
+            .update({ plan_id: null })
+            .eq("id", targetSub.organization_id);
+            
+          await logStep(supabase, "Plan deactivated immediately", {
+            orgId: targetSub.organization_id,
+            status: newStatus,
+            reason: payload.order_status || nativeEventType,
+          });
 
-        await logStep(supabase, "Subscription deactivated and plan removed", {
-          orgId: targetSub.organization_id,
-          status: newStatus,
-          reason: payload.order_status,
-        });
+          // Sync WhatsApp groups - remove from deactivated org's users
+          const { data: orgMembers } = await supabase
+            .from("organization_members")
+            .select("user_id")
+            .eq("organization_id", targetSub.organization_id);
 
-        // Sync WhatsApp groups - remove from canceled org's user
-        const { data: orgMembers } = await supabase
-          .from("organization_members")
-          .select("user_id")
-          .eq("organization_id", targetSub.organization_id);
-
-        if (orgMembers) {
-          for (const member of orgMembers) {
-            await callSyncUser(member.user_id, false);
+          if (orgMembers) {
+            for (const member of orgMembers) {
+              await callSyncUser(member.user_id, false);
+            }
           }
+        } else {
+          await logStep(supabase, "Subscription status updated (access maintained until period ends)", {
+            orgId: targetSub.organization_id,
+            status: newStatus,
+          });
         }
       } else {
         await logStep(
           supabase,
-          "WARNING: No matching subscription found for refund/chargeback",
-          { orderId, subscriptionId },
+          "WARNING: No matching subscription found for cancellation/refund",
+          { orderId, subscriptionId, email: customerEmail },
         );
       }
 
       if (webhookEventId) {
-        await supabase
-          .from("webhook_events")
-          .update({
-            processed: true,
-            processed_at: new Date().toISOString(),
-          })
-          .eq("id", webhookEventId);
+        await updateWebhookEvent(supabase, webhookEventId, {
+          processed: true,
+          processed_at: new Date().toISOString(),
+        });
       }
     }
 

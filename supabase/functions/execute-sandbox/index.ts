@@ -1,11 +1,10 @@
-// Sandbox engine - executes automation in test mode
-// Redirects messages to test_phone, skips real CRM writes/webhooks
+// Sandbox engine - v3 (Fixed Routing)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
 };
 
 interface FlowNode {
@@ -39,13 +38,12 @@ async function sleep(ms: number) {
 }
 
 Deno.serve(async (req) => {
-  console.log(`Request: ${req.method} ${req.url}`);
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   // Health check endpoint (must be BEFORE auth)
   const url = new URL(req.url);
-  if (req.method === "GET" && (url.pathname.endsWith("/health") || url.searchParams.get("health") === "true")) {
-    console.log("Health check received");
+  if (req.method === "GET" || url.searchParams.get("health") === "true") {
+    console.log(`Health check received (v3) - URL: ${req.url}`);
     return new Response(JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

@@ -27,6 +27,12 @@ type ProjectRuntime = {
   label: "runtime" | "target";
 };
 
+type AuthenticatedProject = {
+  project: ProjectRuntime;
+  user: { id: string };
+  isServiceRole: boolean;
+};
+
 function getProjectRuntimes(): ProjectRuntime[] {
   const runtimeUrl = Deno.env.get("SUPABASE_URL");
   const runtimeKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -58,7 +64,8 @@ Deno.serve(async (req) => {
 
   // Health check endpoint (must be BEFORE auth)
   const url = new URL(req.url);
-  if (req.method === "GET" || url.searchParams.get("health") === "true") {
+  const getAction = url.searchParams.get("action");
+  if ((req.method === "GET" && !getAction) || url.searchParams.get("health") === "true") {
     console.log(`Health check received (v4-BRIDGE) - URL: ${req.url}`);
     return new Response(JSON.stringify({
       status: "ok",
@@ -92,7 +99,16 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const { project, user } = authResult;
+    const { project, user, isServiceRole } = authResult;
+
+    if (req.method === "GET") {
+      const admin = createClient(project.url, project.serviceRole);
+      const readResponse = await handleReadAction(url, admin, user.id, isServiceRole);
+      return new Response(JSON.stringify(readResponse.body), {
+        status: readResponse.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const body = await req.json();
     console.log("Recebendo solicitação de sandbox:", JSON.stringify(body, null, 2));
@@ -114,6 +130,14 @@ Deno.serve(async (req) => {
     }
 
     const admin = createClient(project.url, project.serviceRole);
+
+    const hasAccess = await canAccessOrganization(admin, organization_id, user.id, isServiceRole);
+    if (!hasAccess) {
+      return new Response(JSON.stringify({ error: "Forbidden", detail: "Usuário sem acesso à organização informada." }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Create execution record
     const { data: exec, error: execErr } = await admin
@@ -358,13 +382,7 @@ Deno.serve(async (req) => {
       }
     };
 
-    // @ts-ignore Deno background task
-    if (typeof EdgeRuntime !== "undefined" && (EdgeRuntime as any).waitUntil) {
-      // @ts-ignore
-      EdgeRuntime.waitUntil(runFlow());
-    } else {
-      runFlow();
-    }
+    await runFlow();
 
     return new Response(
       JSON.stringify({ success: true, execution_id: executionId }),
@@ -379,13 +397,13 @@ Deno.serve(async (req) => {
 });
 
 async function resolveAuthenticatedProject(token: string): Promise<
-  | { project: ProjectRuntime; user: { id: string } }
+  | AuthenticatedProject
   | { error: "Unauthorized"; detail: string }
 > {
   const serviceProject = await resolveServiceRoleProject(token);
   if (serviceProject) {
     console.log(`Auth authorized via Service Role (${serviceProject.label})`);
-    return { project: serviceProject, user: { id: "00000000-0000-0000-0000-000000000000" } };
+    return { project: serviceProject, user: { id: "00000000-0000-0000-0000-000000000000" }, isServiceRole: true };
   }
 
   let lastAuthError = "Token não reconhecido";
@@ -395,7 +413,7 @@ async function resolveAuthenticatedProject(token: string): Promise<
     const { data: { user }, error } = await authClient.auth.getUser(token);
     if (!error && user) {
       console.log(`Auth authorized via user JWT (${project.label})`);
-      return { project, user };
+      return { project, user, isServiceRole: false };
     }
     lastAuthError = error?.message ?? lastAuthError;
   }
@@ -418,6 +436,74 @@ async function canListUsers(projectUrl: string, token: string): Promise<boolean>
     },
   }).catch(() => null);
   return result?.ok === true;
+}
+
+async function canAccessOrganization(admin: any, organizationId: string, userId: string, isServiceRole: boolean): Promise<boolean> {
+  if (isServiceRole) return true;
+  const { data, error } = await admin.rpc("is_org_member", { _org_id: organizationId, _user_id: userId });
+  if (error) {
+    console.error("Organization access check failed:", error.message);
+    return false;
+  }
+  return data === true;
+}
+
+async function handleReadAction(
+  url: URL,
+  admin: any,
+  userId: string,
+  isServiceRole: boolean,
+): Promise<{ status: number; body: Record<string, any> }> {
+  const action = url.searchParams.get("action");
+  if (action === "execution") {
+    const executionId = url.searchParams.get("execution_id");
+    if (!executionId) return { status: 400, body: { error: "Missing execution_id" } };
+
+    const { data: execution, error: execError } = await admin
+      .from("sandbox_executions")
+      .select("*")
+      .eq("id", executionId)
+      .single();
+
+    if (execError || !execution) {
+      return { status: 404, body: { error: execError?.message ?? "Execução não encontrada" } };
+    }
+
+    const hasAccess = await canAccessOrganization(admin, execution.organization_id, userId, isServiceRole);
+    if (!hasAccess) return { status: 403, body: { error: "Forbidden" } };
+
+    const { data: steps, error: stepsError } = await admin
+      .from("sandbox_step_logs")
+      .select("*")
+      .eq("execution_id", executionId)
+      .order("step_order");
+
+    if (stepsError) return { status: 500, body: { error: stepsError.message } };
+    return { status: 200, body: { execution, steps: steps ?? [] } };
+  }
+
+  if (action === "history") {
+    const automationId = url.searchParams.get("automation_id");
+    if (!automationId) return { status: 400, body: { error: "Missing automation_id" } };
+
+    const { data: executions, error } = await admin
+      .from("sandbox_executions")
+      .select("*")
+      .eq("automation_id", automationId)
+      .order("started_at", { ascending: false })
+      .limit(10);
+
+    if (error) return { status: 500, body: { error: error.message } };
+    const visibleExecutions = [];
+    for (const execution of executions ?? []) {
+      if (await canAccessOrganization(admin, execution.organization_id, userId, isServiceRole)) {
+        visibleExecutions.push(execution);
+      }
+    }
+    return { status: 200, body: { executions: visibleExecutions } };
+  }
+
+  return { status: 400, body: { error: "Invalid action" } };
 }
 
 async function executeNode(
@@ -492,9 +578,17 @@ async function executeChatbotNode(
   const cfg = node.config ?? {};
   const t = node.type;
 
-  if (t === "text_message" || t === "no_interaction" || t === "transfer_human" || t === "close_conversation") {
+  if (t === "welcome" || t === "text_message" || t === "no_interaction" || t === "transfer_human" || t === "close_conversation") {
     const msg = interpolate(String(cfg.message ?? ""), variables);
     if (!msg.trim()) return { output: { skipped: true, reason: "Mensagem vazia" } };
+    if (Number(cfg.delay_ms) > 0) await sleep(Math.min(Number(cfg.delay_ms), MAX_DELAY_MS));
+    const r = await sendWhatsAppTest(admin, project, organizationId, instanceId, testPhone, msg);
+    return { output: { sent_to: testPhone, message: msg, ...r } };
+  }
+
+  if (t === "ask_input") {
+    const msg = interpolate(String(cfg.prompt ?? cfg.message ?? ""), variables);
+    if (!msg.trim()) return { output: { skipped: true, reason: "Pergunta vazia" } };
     const r = await sendWhatsAppTest(admin, project, organizationId, instanceId, testPhone, msg);
     return { output: { sent_to: testPhone, message: msg, ...r } };
   }

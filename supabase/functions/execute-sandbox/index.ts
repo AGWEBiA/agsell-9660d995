@@ -62,6 +62,8 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json();
+    console.log("Recebendo solicitação de sandbox:", JSON.stringify(body, null, 2));
+
     const {
       automation_id,
       automation_type,

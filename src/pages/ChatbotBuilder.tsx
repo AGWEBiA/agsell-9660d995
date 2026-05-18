@@ -754,6 +754,10 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
               </Badge>
             );
           })()}
+          <Button size="sm" variant="outline" onClick={() => setSandboxOpen(true)} disabled={!chatbot.id}>
+            <FlaskConical className="h-4 w-4 mr-1" />
+            Simular
+          </Button>
           <Button size="sm" onClick={handleSave} disabled={isSaving}>
             {isSaving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
             {isSaving ? 'Salvando...' : 'Salvar'}

@@ -137,29 +137,9 @@ export function useSandboxExecution(executionId: string | null) {
     loadExecution();
     interval = setInterval(loadExecution, 1500);
 
-    // Realtime subscriptions
-    const channel = supabase
-      .channel(`sandbox-${executionId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "sandbox_executions", filter: `id=eq.${executionId}` },
-        (payload) => {
-          if (payload.new) setExecution(payload.new as any);
-        },
-      )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "sandbox_step_logs", filter: `execution_id=eq.${executionId}` },
-        (payload) => {
-          setSteps((prev) => [...prev, payload.new as any].sort((a, b) => a.step_order - b.step_order));
-        },
-      )
-      .subscribe();
-
     return () => {
       mounted = false;
       if (interval) clearInterval(interval);
-      supabase.removeChannel(channel);
     };
   }, [executionId]);
 

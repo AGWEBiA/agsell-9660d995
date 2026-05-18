@@ -728,7 +728,17 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
     if (hasAi && !settings.human_fallback_enabled) {
       toast.warning('Recomendamos manter o fallback para humano ativo quando há blocos de IA');
     }
-    onSave({ ...chatbot, name, nodes, rules: finalRules, whatsapp_instance_id: whatsappInstanceId, settings });
+    // If we're saving while sandbox is open, it's likely we're in testing phase
+    const nextStatus = sandboxOpen && chatbot.lifecycle_status === 'draft' ? 'testing' : chatbot.lifecycle_status;
+    onSave({ 
+      ...chatbot, 
+      name, 
+      nodes, 
+      rules: finalRules, 
+      whatsapp_instance_id: whatsappInstanceId, 
+      settings,
+      lifecycle_status: nextStatus
+    });
   };
 
   const categories = [...new Set(nodeTypes.map(n => n.category))];

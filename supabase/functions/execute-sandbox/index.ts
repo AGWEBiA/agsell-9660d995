@@ -60,7 +60,12 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   if (req.method === "GET" || url.searchParams.get("health") === "true") {
     console.log(`Health check received (v4-BRIDGE) - URL: ${req.url}`);
-    return new Response(JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }), {
+    return new Response(JSON.stringify({
+      status: "ok",
+      version: "v5-auth-project-resolver",
+      runtimes: getProjectRuntimes().map((project) => ({ label: project.label, host: new URL(project.url).host })),
+      timestamp: new Date().toISOString(),
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

@@ -7,8 +7,6 @@ const SUPABASE_PUBLISHABLE_KEY =
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
   "";
 
-console.log("Supabase Client initialized with URL:", SUPABASE_URL);
-console.log("Supabase Key starts with:", SUPABASE_PUBLISHABLE_KEY?.substring(0, 15) + "...");
 
 // Edge Functions live in the SAME Supabase project as the data.
 // Do NOT override functions.url — using a different project ref would cause

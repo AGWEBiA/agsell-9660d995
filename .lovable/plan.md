@@ -1,84 +1,192 @@
+# 🧪 Sandbox de Automações — Criar, Testar, Validar, Publicar
 
-## Roadmap de Expansão - AG Sell
+Sistema completo para testar automações com dados reais (mas isolados) antes de ativá-las em produção, com timeline visual em tempo real e aprovação compartilhável com o cliente.
 
-### ✅ Etapa 1: Automação de Instagram
-- [x] Tabelas: `instagram_accounts`, `instagram_automations`, `instagram_automation_logs`
-- [x] Página `/instagram` com abas (Automações, Contas, Histórico)
-- [x] Hook `useInstagram.ts`
-- [x] Rota e item no sidebar
+## Fluxo do usuário
 
-### ✅ Etapa 2: WhatsApp Flows
-- [x] Tabelas: `whatsapp_flows`, `whatsapp_flow_submissions`
-- [x] Página `/whatsapp-flows` com builder de formulários
-- [x] Hook `useWhatsAppFlows.ts`
-- [x] Rota e item no sidebar
+```
+Rascunho → ▶ Testar → Timeline ao vivo → 📤 Compartilhar p/ Cliente → ✅ Aprovado → 🚀 Publicar
+```
 
-### ✅ Etapa 3: Agentes de IA por Setor
-- [x] Templates pré-configurados por nicho (imobiliário, e-commerce, saúde, educação, serviços, alimentação, automotivo)
-- [x] Prompts e knowledge base iniciais por template
-- [x] Auto-inserção de knowledge snippets ao criar via template
+## Estados das Automações
 
-### ✅ Etapa 4: Performance dos Agentes de IA
-- [x] Dashboard de performance por agente (conversas, satisfação, transferências)
-- [x] Métricas consolidadas (total conversas, satisfação média, taxa de resolução)
-- [x] Gráfico de conversas por agente
-- [x] Breakdown individual por agente
+Adicionar coluna `lifecycle_status` em `automations`, `whatsapp_flows`, `sequences`, `communication_campaigns`:
+- `draft` — Criando
+- `testing` — Em validação (executou ao menos 1 simulação)
+- `pending_approval` — Aguardando OK do cliente (link compartilhado)
+- `approved` — Cliente aprovou, pronto para publicar
+- `published` — Ativa em produção
 
-### ✅ Etapa 5: Triggers e Workers
-- [x] Trigger de automação para `deal_stage_changed`
-- [x] Trigger de automação para `form_submitted`
-- [x] Trigger de automação para `deal_won`
-- [x] Worker de Instagram para triggers em tempo real (webhook com auto-reply DM/comment)
-- [x] Realtime habilitado para conversations, messages, notifications
+Botão **"Publicar"** fica desabilitado até `lifecycle_status = 'approved'` (ou `testing` se for aprovação interna apenas).
 
-### ✅ Etapa 6: Paridade ManyChat
-- [x] Testes A/B de mensagens (tabela `ab_tests`, página `/ab-tests`)
-- [x] Growth Tools - links, QR codes, widgets (tabela `growth_tools`, página `/growth-tools`)
-- [x] Sequências / Drip Campaigns (tabelas `sequences`, `sequence_steps`, `sequence_enrollments`, página `/sequences`)
-- [x] Condições avançadas (if/else) nos steps de sequências
-- [x] Canais: Telegram (tabela `telegram_bots`), SMS (tabela `sms_configs`), Shopify (tabela `shopify_integrations`)
-- [x] Página unificada de canais `/channels`
+## Componentes Novos
 
-### ✅ Etapa 7: Flow Builder Visual
-- [x] Construtor visual de funis estilo ManyChat
-- [x] Gatilhos: Instagram (comentário, DM, story, menção, seguidor), WhatsApp (mensagem, palavra-chave, automação, origem), CRM (contato, formulário, fonte)
-- [x] Ações: enviar mensagem, adicionar/remover tag, lead score, notificar, criar tarefa
-- [x] Condições: tag, palavra-chave, score
-- [x] Timer/espera configurável
-- [x] Enquetes com ramificação por resposta
-- [x] Teste A/B (Split) inline
-- [x] Requisição HTTP customizável
+### 1. Painel Lateral "Modo Teste" (no Flow Builder e Automations)
+- **Componente**: `src/components/automation/SandboxTestPanel.tsx`
+- Campos:
+  - Número WhatsApp de teste (default = telefone do usuário logado)
+  - Contato Mock: criar lead fictício ou escolher contato existente marcado como `is_test`
+  - Variáveis customizadas (input dinâmico para `{{nome}}`, `{{empresa}}`, etc)
+  - Webhook URL de teste (opcional, para receber payloads)
+- Botão **"▶ Executar Simulação"**
 
-### ✅ Etapa 8: E-mail Avançado
-- [x] Configuração de domínio personalizado (SPF, DKIM, DMARC)
-- [x] Caixas postais com limites diários de envio e presets inteligentes
-- [x] Warmup de domínio com acompanhamento visual
-- [x] Assinaturas personalizadas com logo e redes sociais
-- [x] Inbox de e-mail para recebimento e resposta
-- [x] Campanhas de e-mail com templates visuais
+### 2. Timeline Visual em Tempo Real
+- **Componente**: `src/components/automation/SandboxTimeline.tsx`
+- Lista de execução de cada nó com:
+  - Ícone status (✅ sucesso / ⏳ executando / ❌ erro / ⏭ pulado)
+  - Timestamp
+  - Conteúdo enviado/recebido
+  - Branch tomada em condicionais
+- **Highlight no canvas**: nós ficam coloridos conforme execução (verde/vermelho/amarelo)
+- Subscribe via Supabase Realtime na tabela `sandbox_executions`
 
-### ✅ Etapa 9: Documentação e Ajuda
-- [x] Central de Ajuda completa estilo GitBook (`/help-center`)
-- [x] Guia do Sistema interno (`/system-guide`)
-- [x] Manual Técnico para administradores (`/manual-tecnico`)
-- [x] Artigos organizados por categorias: Primeiros Passos, CRM, Comunicação, Marketing, Inteligência, Configurações
-- [x] Busca global na documentação
-- [x] Live previews das rotas do sistema
+### 3. Página de Aprovação do Cliente
+- **Rota pública**: `/aprovar-automacao/:token`
+- **Componente**: `src/pages/AutomationApproval.tsx`
+- Mostra:
+  - Nome e descrição da automação
+  - Canvas visual readonly do fluxo
+  - Botão "Testar no Meu WhatsApp" (executa sandbox com número do cliente)
+  - Lista de comentários por nó
+  - Botões: ✅ **Aprovar** / 🔄 **Solicitar Ajustes**
+- Sem login necessário (token único)
 
-### ✅ Etapa 10: Gestão e Governança
-- [x] Modo Agência multi-tenant com convites e níveis de acesso
-- [x] Permissões granulares com Feature Gate
-- [x] Gamificação (XP, níveis, ranking, conquistas)
-- [x] API Keys com rate limiting e permissões
-- [x] Webhooks de entrada e saída com integrações (Stripe, Hotmart, Eduzz, Kiwify, Shopify)
-- [x] LGPD (exportação e exclusão de dados)
+## Arquitetura Técnica
 
-### 🏁 Status: Plataforma Completa
-Todas as funcionalidades planejadas foram implementadas. O sistema está pronto para produção com:
+### Tabelas Novas (migration)
 
-- **CRM completo**: Contatos, Empresas, Pipeline Kanban, Tags, Tarefas
-- **Comunicação multicanal**: WhatsApp, E-mail, Instagram, Telegram, SMS
-- **Automação avançada**: Automações, Flow Builder visual, Sequências, Testes A/B
-- **Inteligência**: Analytics, Assistente IA, Agentes de IA, Lead Scoring, Gamificação
-- **Integrações**: Stripe, Hotmart, Eduzz, Kiwify, Shopify, Evolution API, Z-API
-- **Governança**: Planos, Permissões, API Keys, Webhooks, Modo Agência, LGPD
+```sql
+-- Execuções de teste (logs)
+CREATE TABLE sandbox_executions (
+  id uuid PRIMARY KEY,
+  organization_id uuid NOT NULL,
+  automation_id uuid,
+  automation_type text, -- 'flow' | 'automation' | 'sequence' | 'campaign'
+  test_phone text,
+  test_contact_id uuid,
+  test_variables jsonb,
+  status text, -- 'running' | 'completed' | 'failed' | 'cancelled'
+  started_at timestamptz,
+  completed_at timestamptz,
+  triggered_by uuid -- user_id
+);
+
+-- Cada step executado
+CREATE TABLE sandbox_step_logs (
+  id uuid PRIMARY KEY,
+  execution_id uuid REFERENCES sandbox_executions,
+  node_id text,
+  node_type text,
+  status text, -- 'pending' | 'running' | 'success' | 'error' | 'skipped'
+  input jsonb,
+  output jsonb,
+  error_message text,
+  duration_ms int,
+  executed_at timestamptz
+);
+
+-- Links de aprovação
+CREATE TABLE automation_approval_links (
+  id uuid PRIMARY KEY,
+  organization_id uuid,
+  automation_id uuid,
+  automation_type text,
+  token text UNIQUE, -- url-safe random
+  status text, -- 'pending' | 'approved' | 'changes_requested'
+  client_feedback text,
+  client_test_phone text,
+  expires_at timestamptz,
+  approved_at timestamptz,
+  created_by uuid
+);
+
+-- Comentários por nó (cliente solicita ajustes)
+CREATE TABLE automation_node_comments (
+  id uuid PRIMARY KEY,
+  approval_link_id uuid,
+  node_id text,
+  comment text,
+  resolved boolean DEFAULT false,
+  created_at timestamptz
+);
+```
+
+Adicionar coluna `lifecycle_status` e `is_test` (em contacts).
+
+### Edge Functions Novas
+
+1. **`execute-sandbox`** — Engine de teste. Reusa lógica de `process-automation` / `execute-flow-step` mas com flag `mode='test'`:
+   - Mensagens WhatsApp só vão para `test_phone` cadastrado
+   - Webhooks externos: envia para URL de teste OU pula
+   - NÃO cria contatos/deals reais
+   - NÃO consome créditos SMS/VoIP (apenas registra)
+   - Respeita delays reais (decisão do usuário)
+   - Grava cada step em `sandbox_step_logs` para timeline realtime
+
+2. **`create-approval-link`** — Gera token único e URL compartilhável
+
+3. **`approve-automation`** — Endpoint público que valida token e atualiza status
+
+### Hooks
+
+- `useSandboxExecution(automationId)` — Subscribe realtime nos logs
+- `useApprovalLinks(automationId)` — CRUD de links de aprovação
+- `useAutomationLifecycle(id, type)` — Transições de estado
+
+## Integrações por Módulo
+
+| Módulo | Onde aparece o botão Testar |
+|---|---|
+| **Flow Builder** (WhatsApp Chatbot) | Toolbar topo, ao lado de "Salvar" |
+| **Automations V2** | Header da automação |
+| **Sequences** | Header da sequência |
+| **Communication Campaigns** | Antes do botão "Agendar/Enviar" |
+
+Cada um chama `execute-sandbox` com `automation_type` apropriado.
+
+## Validações Automáticas (Pré-Publicação)
+
+Antes de publicar, validar:
+- ✅ Ao menos 1 sandbox_execution com status `completed`
+- ✅ Sem nós órfãos (sem conexão de saída exceto end-nodes)
+- ✅ Todas mensagens preenchidas
+- ✅ Webhooks com URL válida (http/https)
+- ✅ Variáveis usadas existem no contexto disponível
+
+Componente `ValidationChecklist.tsx` mostra checklist visual.
+
+## Plano de Entrega (3 fases)
+
+### Fase 1 — Infraestrutura + Flow Builder (MVP funcional)
+1. Migration: tabelas + colunas
+2. Edge function `execute-sandbox` (suporte inicial: WhatsApp Flow)
+3. `SandboxTestPanel` + `SandboxTimeline` no Flow Builder
+4. Highlight de nós no canvas durante execução
+5. Estados de lifecycle no flow
+
+### Fase 2 — Aprovação do Cliente
+6. Migration: `automation_approval_links` + `automation_node_comments`
+7. Edge functions `create-approval-link` + `approve-automation`
+8. Página pública `/aprovar-automacao/:token`
+9. Dialog "Compartilhar para Aprovação" no Flow Builder
+10. Validações pré-publicação
+
+### Fase 3 — Cobertura Total
+11. Estender `execute-sandbox` para Automations V2
+12. Estender para Sequences
+13. Estender para Communication Campaigns
+14. Dashboard global de "Automações em Teste/Aprovação" no admin
+
+## Considerações Importantes
+
+- **Custo**: Mensagens WhatsApp de teste **são reais** (consomem instância), apenas roteadas para número de teste. Avisar isso ao usuário.
+- **Performance**: Subscribe realtime apenas durante execução ativa (cleanup ao desmontar).
+- **Segurança**: Token de aprovação expira em 7 dias (configurável), 1 link ativo por automação.
+- **Reaproveitamento**: O engine de teste reusa 90% do código de produção (apenas adapta saídas e flags `mode='test'`).
+
+## Estimativa
+Fase 1: ~6-8 arquivos novos + 2 migrations
+Fase 2: ~5 arquivos novos + 1 migration  
+Fase 3: ~3 arquivos modificados
+
+Após sua aprovação, começo pela **Fase 1** (modo teste funcionando ponta a ponta no Flow Builder do chatbot WhatsApp da imagem).

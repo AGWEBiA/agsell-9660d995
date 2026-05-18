@@ -21,9 +21,25 @@ interface FlowConnection {
   fromPort: "default" | "yes" | "no";
 }
 
-const SUPABASE_URL = Deno.env.get("TARGET_SUPABASE_URL") || Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE = Deno.env.get("TARGET_SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
+type ProjectRuntime = {
+  url: string;
+  serviceRole: string;
+  label: "runtime" | "target";
+};
+
+function getProjectRuntimes(): ProjectRuntime[] {
+  const runtimeUrl = Deno.env.get("SUPABASE_URL");
+  const runtimeKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const targetUrl = Deno.env.get("TARGET_SUPABASE_URL");
+  const targetKey = Deno.env.get("TARGET_SUPABASE_SERVICE_ROLE_KEY");
+
+  const projects: ProjectRuntime[] = [];
+  if (runtimeUrl && runtimeKey) projects.push({ url: runtimeUrl, serviceRole: runtimeKey, label: "runtime" });
+  if (targetUrl && targetKey && targetUrl !== runtimeUrl) {
+    projects.push({ url: targetUrl, serviceRole: targetKey, label: "target" });
+  }
+  return projects;
+}
 
 // Cap for delay nodes in sandbox (so user doesn't wait hours)
 const MAX_DELAY_MS = 10_000;
@@ -44,7 +60,15 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   if (req.method === "GET" || url.searchParams.get("health") === "true") {
     console.log(`Health check received (v4-BRIDGE) - URL: ${req.url}`);
-    return new Response(JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }), {
+    return new Response(JSON.stringify({
+      status: "ok",
+      version: "v5-auth-project-resolver",
+      runtimes: getProjectRuntimes().map((project) => ({ label: project.label, host: new URL(project.url).host })),
+      targetAdminReachable: Deno.env.get("TARGET_SUPABASE_URL") && Deno.env.get("TARGET_SUPABASE_SERVICE_ROLE_KEY")
+        ? await canListUsers(Deno.env.get("TARGET_SUPABASE_URL")!, Deno.env.get("TARGET_SUPABASE_SERVICE_ROLE_KEY")!)
+        : false,
+      timestamp: new Date().toISOString(),
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
@@ -58,26 +82,17 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Validate JWT against the TARGET project (where the user actually lives)
+    // Validate JWT against the project that issued it, then run against that same DB.
     const token = authHeader.replace(/^Bearer\s+/i, "");
-    const authClient = createClient(SUPABASE_URL, SERVICE_ROLE);
-    
-    // Se o token for a própria service role key, permitimos (para testes do admin)
-    let user;
-    if (token === SERVICE_ROLE || token === Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")) {
-      console.log("Auth authorized via Service Role");
-      user = { id: "system-admin" };
-    } else {
-      const { data: { user: authedUser }, error: authError } = await authClient.auth.getUser(token);
-      if (authError || !authedUser) {
-        console.error("Auth validation failed:", authError?.message, "URL:", SUPABASE_URL);
-        return new Response(JSON.stringify({ error: "Unauthorized", detail: authError?.message }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      user = authedUser;
+    const authResult = await resolveAuthenticatedProject(token);
+    if ("error" in authResult) {
+      console.error("Auth validation failed:", authResult.detail);
+      return new Response(JSON.stringify({ error: "Unauthorized", detail: authResult.detail }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
+    const { project, user } = authResult;
 
     const body = await req.json();
     console.log("Recebendo solicitação de sandbox:", JSON.stringify(body, null, 2));
@@ -98,7 +113,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const admin = createClient(SUPABASE_URL, SERVICE_ROLE);
+    const admin = createClient(project.url, project.serviceRole);
 
     // Create execution record
     const { data: exec, error: execErr } = await admin
@@ -195,7 +210,7 @@ Deno.serve(async (req) => {
             try {
               if (step.action_type === "send_message") {
                 const msg = interpolate(String(step.content?.message ?? ""), test_variables);
-                await sendWhatsAppTest(admin, organization_id, instance_id, test_phone, msg);
+                await sendWhatsAppTest(admin, project, organization_id, instance_id, test_phone, msg);
                 await log(step.id, step.action_type, step.action_type, "success", {
                   output: { message: msg, sent_to: test_phone },
                   duration_ms: Date.now() - start,
@@ -248,7 +263,7 @@ Deno.serve(async (req) => {
             await log(current.id, current.type, label, "running", { input: current.config });
             try {
               const result = await executeChatbotNode(current, {
-                admin, organizationId: organization_id, testPhone: test_phone,
+                admin, project, organizationId: organization_id, testPhone: test_phone,
                 instanceId: effectiveInstance, variables: test_variables,
               });
               await log(current.id, current.type, label, "success", {
@@ -294,7 +309,8 @@ Deno.serve(async (req) => {
           let nextPort: "default" | "yes" | "no" = "default";
           try {
             const result = await executeNode(current, {
-              admin,
+                admin,
+                project,
               organizationId: organization_id,
               testPhone: test_phone,
               instanceId: instance_id,
@@ -353,17 +369,60 @@ Deno.serve(async (req) => {
   }
 });
 
+async function resolveAuthenticatedProject(token: string): Promise<
+  | { project: ProjectRuntime; user: { id: string } }
+  | { error: "Unauthorized"; detail: string }
+> {
+  const serviceProject = await resolveServiceRoleProject(token);
+  if (serviceProject) {
+    console.log(`Auth authorized via Service Role (${serviceProject.label})`);
+    return { project: serviceProject, user: { id: "00000000-0000-0000-0000-000000000000" } };
+  }
+
+  let lastAuthError = "Token não reconhecido";
+
+  for (const project of getProjectRuntimes()) {
+    const authClient = createClient(project.url, project.serviceRole, { auth: { persistSession: false } });
+    const { data: { user }, error } = await authClient.auth.getUser(token);
+    if (!error && user) {
+      console.log(`Auth authorized via user JWT (${project.label})`);
+      return { project, user };
+    }
+    lastAuthError = error?.message ?? lastAuthError;
+  }
+
+  return { error: "Unauthorized", detail: lastAuthError };
+}
+
+async function resolveServiceRoleProject(token: string): Promise<ProjectRuntime | null> {
+  for (const project of getProjectRuntimes()) {
+    if (token === project.serviceRole || await canListUsers(project.url, token)) return project;
+  }
+  return null;
+}
+
+async function canListUsers(projectUrl: string, token: string): Promise<boolean> {
+  const result = await fetch(`${projectUrl}/auth/v1/admin/users?page=1&per_page=1`, {
+    headers: {
+      apikey: token,
+      Authorization: `Bearer ${token}`,
+    },
+  }).catch(() => null);
+  return result?.ok === true;
+}
+
 async function executeNode(
   node: FlowNode,
   ctx: {
     admin: any;
+    project: ProjectRuntime;
     organizationId: string;
     testPhone: string;
     instanceId?: string;
     variables: Record<string, any>;
   },
 ): Promise<{ nextPort?: "default" | "yes" | "no"; output: any }> {
-  const { admin, organizationId, testPhone, instanceId, variables } = ctx;
+  const { admin, project, organizationId, testPhone, instanceId, variables } = ctx;
   const cfg = node.config ?? {};
 
   // ── Trigger nodes: just pass through
@@ -378,7 +437,7 @@ async function executeNode(
     node.type === "action" && (cfg.message || cfg.message_kind)
   ) {
     const msg = interpolate(String(cfg.message ?? ""), variables);
-    const result = await sendWhatsAppTest(admin, organizationId, instanceId, testPhone, msg, cfg);
+    const result = await sendWhatsAppTest(admin, project, organizationId, instanceId, testPhone, msg, cfg);
     return { output: { sent_to: testPhone, message: msg, ...result } };
   }
 
@@ -416,18 +475,18 @@ async function executeNode(
 async function executeChatbotNode(
   node: any,
   ctx: {
-    admin: any; organizationId: string; testPhone: string;
+    admin: any; project: ProjectRuntime; organizationId: string; testPhone: string;
     instanceId?: string; variables: Record<string, any>;
   },
 ): Promise<{ output: any }> {
-  const { admin, organizationId, testPhone, instanceId, variables } = ctx;
+  const { admin, project, organizationId, testPhone, instanceId, variables } = ctx;
   const cfg = node.config ?? {};
   const t = node.type;
 
   if (t === "text_message" || t === "no_interaction" || t === "transfer_human" || t === "close_conversation") {
     const msg = interpolate(String(cfg.message ?? ""), variables);
     if (!msg.trim()) return { output: { skipped: true, reason: "Mensagem vazia" } };
-    const r = await sendWhatsAppTest(admin, organizationId, instanceId, testPhone, msg);
+    const r = await sendWhatsAppTest(admin, project, organizationId, instanceId, testPhone, msg);
     return { output: { sent_to: testPhone, message: msg, ...r } };
   }
 
@@ -435,7 +494,7 @@ async function executeChatbotNode(
     const title = interpolate(String(cfg.title ?? cfg.message ?? "Menu"), variables);
     const opts: any[] = Array.isArray(cfg.options) ? cfg.options : [];
     const body = `${title}\n\n` + opts.map((o, i) => `${i + 1}. ${o.label ?? o.text ?? ""}`).join("\n");
-    const r = await sendWhatsAppTest(admin, organizationId, instanceId, testPhone, body);
+    const r = await sendWhatsAppTest(admin, project, organizationId, instanceId, testPhone, body);
     return { output: { sent_to: testPhone, menu_options: opts.length, ...r } };
   }
 
@@ -456,6 +515,7 @@ async function executeChatbotNode(
 
 async function sendWhatsAppTest(
   admin: any,
+  project: ProjectRuntime,
   organizationId: string,
   instanceId: string | undefined,
   to: string,
@@ -468,12 +528,12 @@ async function sendWhatsAppTest(
 
   // Use service-role invocation of send-whatsapp
   try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
+    const res = await fetch(`${project.url}/functions/v1/send-whatsapp`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${SERVICE_ROLE}`,
+        Authorization: `Bearer ${project.serviceRole}`,
         "Content-Type": "application/json",
-        apikey: SERVICE_ROLE,
+        apikey: project.serviceRole,
       },
       body: JSON.stringify({
         organization_id: organizationId,

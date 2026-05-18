@@ -31,6 +31,43 @@ export interface SandboxStepLog {
   executed_at: string;
 }
 
+const getSandboxFunctionUrl = () => {
+  const env = import.meta.env as Record<string, string | undefined>;
+  const baseUrl = env.VITE_SUPABASE_URL?.replace(/\/$/, "");
+  return baseUrl ? `${baseUrl}/functions/v1/execute-sandbox` : null;
+};
+
+const invokeSandboxBridge = async (method: "GET" | "POST", body?: unknown) => {
+  const url = getSandboxFunctionUrl();
+  const env = import.meta.env as Record<string, string | undefined>;
+  const publishableKey = env.VITE_SUPABASE_PUBLISHABLE_KEY ?? env.VITE_SUPABASE_ANON_KEY;
+
+  if (!url || !publishableKey) {
+    const { data, error } = await supabase.functions.invoke("execute-sandbox", { method, body });
+    if (error) throw new Error(error.message || "Falha na conexão com o servidor.");
+    return data;
+  }
+
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token ?? publishableKey;
+  const response = await fetch(url, {
+    method,
+    headers: {
+      apikey: publishableKey,
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: method === "POST" ? JSON.stringify(body ?? {}) : undefined,
+  });
+
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : null;
+  if (!response.ok) {
+    throw new Error(data?.detail || data?.error || `Servidor retornou HTTP ${response.status}.`);
+  }
+  return data;
+};
+
 export function useStartSandbox() {
   const qc = useQueryClient();
   return useMutation({
@@ -44,13 +81,7 @@ export function useStartSandbox() {
     }) => {
       console.log("Iniciando sandbox com parâmetros:", params);
       
-      const { data, error } = await supabase.functions.invoke("execute-sandbox", {
-        body: params,
-      });
-      
-      if (error) {
-        throw new Error(error.message || "O servidor não conseguiu processar o início da simulação.");
-      }
+      const data = await invokeSandboxBridge("POST", params);
       
       if (!data?.success) {
         throw new Error(data?.error || "O servidor não conseguiu processar o início da simulação.");
@@ -152,11 +183,7 @@ export function useSandboxHealth() {
     queryKey: ["sandbox-health"],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase.functions.invoke("execute-sandbox", {
-          method: "GET",
-        });
-        
-        if (error) return false;
+        const data = await invokeSandboxBridge("GET");
         return data?.status === "ok";
       } catch (err) {
         console.error("Sandbox health check failed:", err);

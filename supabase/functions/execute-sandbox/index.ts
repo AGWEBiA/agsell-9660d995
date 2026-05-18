@@ -151,6 +151,13 @@ Deno.serve(async (req) => {
             .eq("sequence_id", automation_id)
             .order("step_order");
           flowJson = { steps: data ?? [] };
+        } else if (automation_type === "chatbot") {
+          const { data } = await admin
+            .from("chatbots")
+            .select("nodes,name,whatsapp_instance_id")
+            .eq("id", automation_id)
+            .single();
+          flowJson = { chatbotNodes: data?.nodes ?? [], chatbotInstance: data?.whatsapp_instance_id };
         }
 
         if (!flowJson) {

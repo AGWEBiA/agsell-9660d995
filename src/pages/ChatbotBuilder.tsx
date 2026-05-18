@@ -610,6 +610,7 @@ function ChatbotVisualBuilder({ chatbot, onSave, onClose, isSaving = false }: { 
   const [activeTab, setActiveTab] = useState<'nodes' | 'rules' | 'settings'>('nodes');
   const [name, setName] = useState(chatbot.name);
   const [whatsappInstanceId, setWhatsappInstanceId] = useState<string | null>(chatbot.whatsapp_instance_id ?? null);
+  const [sandboxOpen, setSandboxOpen] = useState(false);
   const [settings, setSettings] = useState<ChatbotSettings>(chatbot.settings ?? {
     agent_prompt: '',
     human_fallback_enabled: true,

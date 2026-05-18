@@ -47,23 +47,18 @@ const handleSupabaseError = (prop: string | symbol) => {
 };
 
 // Recursive Proxy to handle chained Supabase calls gracefully when offline/misconfigured
-const createRecursiveProxy = (path: string = ''): any => {
-  const proxy: any = new Proxy(() => proxy, {
-    get: (_t, prop) => {
-      if (prop === 'then') {
-        // Handle as a promise when awaited
-        return (resolve: any, reject: any) => {
-          handleSupabaseError(path).then(resolve).catch(reject);
-        };
-      }
+const createRecursiveProxy = (): any => {
+  const noop: any = () => noop;
+  noop.then = (resolve: any, reject: any) => {
+    handleSupabaseError('promise').then(resolve).catch(reject);
+  };
+  return new Proxy(noop, {
+    get: (target, prop) => {
+      if (prop === 'then') return target.then;
       if (typeof prop === 'symbol') return undefined;
-      return createRecursiveProxy(path ? `${path}.${prop}` : prop);
-    },
-    apply: (_t, _thisArg, _args) => {
-      return proxy;
+      return noop;
     }
   });
-  return proxy;
 };
 
 export const supabase = (supabaseUrl && supabaseAnonKey)
@@ -78,4 +73,4 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
         headers: { 'x-application-name': 'agsell-resilient-client' }
       }
     })
-  : createRecursiveProxy('supabase');
+  : createRecursiveProxy();

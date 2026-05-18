@@ -21,8 +21,8 @@ interface FlowConnection {
   fromPort: "default" | "yes" | "no";
 }
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const SUPABASE_URL = Deno.env.get("TARGET_SUPABASE_URL") || Deno.env.get("SUPABASE_URL")!;
+const SERVICE_ROLE = Deno.env.get("TARGET_SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 
 // Cap for delay nodes in sandbox (so user doesn't wait hours)

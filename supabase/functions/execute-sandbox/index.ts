@@ -492,6 +492,7 @@ async function executeChatbotNode(
 
 async function sendWhatsAppTest(
   admin: any,
+  project: ProjectRuntime,
   organizationId: string,
   instanceId: string | undefined,
   to: string,
@@ -504,12 +505,12 @@ async function sendWhatsAppTest(
 
   // Use service-role invocation of send-whatsapp
   try {
-    const res = await fetch(`${SUPABASE_URL}/functions/v1/send-whatsapp`, {
+    const res = await fetch(`${project.url}/functions/v1/send-whatsapp`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${SERVICE_ROLE}`,
+        Authorization: `Bearer ${project.serviceRole}`,
         "Content-Type": "application/json",
-        apikey: SERVICE_ROLE,
+        apikey: project.serviceRole,
       },
       body: JSON.stringify({
         organization_id: organizationId,

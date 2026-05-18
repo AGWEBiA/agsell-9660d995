@@ -1,5 +1,4 @@
-// Sandbox engine - executes automation in test mode
-// Redirects messages to test_phone, skips real CRM writes/webhooks
+// Sandbox engine - v3 (Fixed Routing)
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {

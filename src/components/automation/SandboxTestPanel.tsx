@@ -7,9 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Play, FlaskConical, Info, AlertTriangle, X } from "lucide-react";
-import { useStartSandbox, useSandboxExecution } from "@/hooks/useSandbox";
+import { useStartSandbox, useSandboxExecution, useRecentSandboxExecutions, useSandboxHealth } from "@/hooks/useSandbox";
 import { SandboxTimeline } from "./SandboxTimeline";
 import { SandboxQuickGuide } from "./SandboxQuickGuide";
+import { History, RefreshCw, Activity } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { WhatsAppInstanceSelector } from "@/components/whatsapp/WhatsAppInstanceSelector";
 
 interface Props {
@@ -42,6 +46,10 @@ export function SandboxTestPanel({
 
   const start = useStartSandbox();
   const { execution, steps } = useSandboxExecution(executionId);
+  const health = useSandboxHealth();
+  const history = useRecentSandboxExecutions(automationId);
+
+  const [activeTab, setActiveTab] = useState("run");
 
   React.useEffect(() => {
     if (execution && (execution.status === "completed" || execution.status === "failed")) {

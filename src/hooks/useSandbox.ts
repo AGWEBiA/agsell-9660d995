@@ -148,3 +148,22 @@ export function useRecentSandboxExecutions(automationId: string | null) {
     },
   });
 }
+
+export function useSandboxHealth() {
+  return useQuery({
+    queryKey: ["sandbox-health"],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke("execute-sandbox", {
+          method: "GET",
+        });
+        if (error) throw error;
+        return data?.status === "ok";
+      } catch (err) {
+        console.error("Sandbox health check failed:", err);
+        return false;
+      }
+    },
+    refetchInterval: 30000, // Check every 30s
+  });
+}

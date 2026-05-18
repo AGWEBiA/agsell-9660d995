@@ -41,6 +41,13 @@ async function sleep(ms: number) {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  // Health check endpoint
+  if (req.method === "GET" && new URL(req.url).pathname.endsWith("/health")) {
+    return new Response(JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {

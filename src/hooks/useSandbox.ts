@@ -148,3 +148,26 @@ export function useRecentSandboxExecutions(automationId: string | null) {
     },
   });
 }
+
+export function useSandboxHealth() {
+  return useQuery({
+    queryKey: ["sandbox-health"],
+    queryFn: async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/execute-sandbox?health=true`, {
+          method: "GET",
+          headers: {
+            "apikey": import.meta.env.VITE_SUPABASE_ANON_KEY
+          }
+        });
+        if (!res.ok) return false;
+        const data = await res.json();
+        return data?.status === "ok";
+      } catch (err) {
+        console.error("Sandbox health check failed:", err);
+        return false;
+      }
+    },
+    refetchInterval: 30000, // Check every 30s
+  });
+}

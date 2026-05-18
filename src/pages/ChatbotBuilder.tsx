@@ -1296,6 +1296,19 @@ export default function ChatbotBuilderPage() {
                     <div>
                       <CardTitle className="text-base">{bot.name}</CardTitle>
                       <CardDescription className="text-xs">{bot.channel}</CardDescription>
+                      <div className="mt-1">
+                        <Badge variant="outline" className={`text-[10px] h-4 ${
+                          bot.lifecycle_status === 'published' ? 'border-green-500 text-green-600 bg-green-50' :
+                          bot.lifecycle_status === 'approved' ? 'border-blue-500 text-blue-600 bg-blue-50' :
+                          bot.lifecycle_status === 'testing' ? 'border-orange-500 text-orange-600 bg-orange-50' :
+                          'border-muted text-muted-foreground'
+                        }`}>
+                          {bot.lifecycle_status === 'draft' ? 'Rascunho' :
+                           bot.lifecycle_status === 'testing' ? 'Em Teste' :
+                           bot.lifecycle_status === 'pending_approval' ? 'Pend. Aprovação' :
+                           bot.lifecycle_status === 'approved' ? 'Aprovado' : 'Publicado'}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>

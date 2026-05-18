@@ -183,11 +183,7 @@ export function useSandboxHealth() {
     queryKey: ["sandbox-health"],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase.functions.invoke("execute-sandbox", {
-          method: "GET",
-        });
-        
-        if (error) return false;
+        const data = await invokeSandboxBridge("GET");
         return data?.status === "ok";
       } catch (err) {
         console.error("Sandbox health check failed:", err);
